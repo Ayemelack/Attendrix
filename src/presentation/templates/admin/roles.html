@@ -1,0 +1,1020 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Role Assignments - Attendrix</title>
+    <meta name="description" content="Role assignments management dashboard in Attendrix">
+    
+    <link rel="icon" type="image/x-icon" href="/static/images/favicon.ico">
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <link rel="stylesheet" href="{{ url_for('static', filename='css/landing.css') }}">
+    
+    <style>
+        :root {
+            --primary-color: #4f46e5;
+            --primary-dark: #4338ca;
+            --secondary-color: #64748b;
+            --accent-color: #6366f1;
+            --success-color: #10b981;
+            --warning-color: #f59e0b;
+            --error-color: #ef4444;
+            --bg-primary: #ffffff;
+            --bg-secondary: #f8fafc;
+            --text-primary: #1e293b;
+            --text-secondary: #64748b;
+            --border-color: #e2e8f0;
+            --shadow-sm: 0 1px 2px 0 rgb(0 0 0 / 0.05);
+            --shadow-md: 0 4px 6px -1px rgb(0 0 0 / 0.1);
+            --radius-sm: 6px;
+            --radius-md: 8px;
+            --radius-lg: 12px;
+        }
+
+        * { margin: 0; padding: 0; box-sizing: border-box; }
+        body { font-family: 'Inter', sans-serif; background: var(--bg-secondary); color: var(--text-primary); line-height: 1.6; }
+        .dashboard-layout { display: flex; min-height: 100vh; }
+        
+        .sidebar { width: 280px; background: var(--bg-primary); border-right: 1px solid var(--border-color); position: fixed; height: 100vh; left: 0; top: 0; z-index: 1000; transition: transform 0.3s ease; }
+        .sidebar-header { padding: 1.5rem; border-bottom: 1px solid var(--border-color); background: linear-gradient(135deg, var(--primary-color) 0%, var(--primary-dark) 100%); color: white; }
+        .sidebar-brand { display: flex; align-items: center; gap: 0.75rem; font-size: 1.25rem; font-weight: 700; text-decoration: none; color: white; }
+        .sidebar-nav { padding: 1rem 0; }
+        .sidebar-nav-item { display: block; padding: 0.875rem 1.5rem; color: var(--text-secondary); text-decoration: none; transition: all 0.2s ease; position: relative; font-weight: 500; }
+        .sidebar-nav-item:hover { background: var(--bg-secondary); color: var(--primary-color); }
+        .sidebar-nav-item.active { background: linear-gradient(90deg, rgba(79, 70, 229, 0.1) 0%, transparent 100%); color: var(--primary-color); font-weight: 600; }
+        .sidebar-nav-item.active::before { content: ''; position: absolute; left: 0; top: 0; bottom: 0; width: 4px; background: var(--primary-color); }
+        .sidebar-nav-item i { width: 20px; margin-right:  0.75rem; text-align: center; }
+        
+        .main-content { flex: 1; margin-left: 280px; display: flex; flex-direction: column; min-height: 100vh; }
+        .top-header { background: var(--bg-primary); border-bottom: 1px solid var(--border-color); padding: 1rem 2rem; display: flex; justify-content: space-between; align-items: center; box-shadow: var(--shadow-sm); position: sticky; top: 0; z-index: 100; }
+        .header-left { display: flex; align-items: center; gap: 1rem; }
+        .header-title { font-size: 1.5rem; font-weight: 700; color: var(--text-primary); }
+        .header-subtitle { color: var(--text-secondary); font-size: 0.875rem; }
+        .header-right { display: flex; align-items: center; gap: 1rem; }
+        .header-time { color: var(--text-secondary); font-size: 0.875rem; }
+        .profile-dropdown { position: relative; }
+        .profile-avatar { width: 40px; height: 40px; border-radius: var(--radius-md); background: linear-gradient(135deg, var(--primary-color) 0%, var(--accent-color) 100%); display: flex; align-items: center; justify-content: center; color: white; cursor: pointer; }
+        
+        .content-area { flex: 1; padding: 2rem; background: var(--bg-secondary); }
+        .page-content { background: var(--bg-primary); padding: 2rem; border-radius: var(--radius-lg); box-shadow: var(--shadow-sm); border: 1px solid var(--border-color); }
+        .page-header { margin-bottom: 2rem; }
+        .page-title { font-size: 1.75rem; font-weight: 700; color: var(--text-primary); margin-bottom: 0.5rem; }
+        .page-description { color: var(--text-secondary); font-size: 1rem; }
+        
+        .empty-state { text-align: center; padding: 4rem 2rem; color: var(--text-secondary); }
+        .empty-icon { font-size: 4rem; color: var(--primary-color); margin-bottom: 1.5rem; opacity: 0.5; }
+        .empty-title { font-size: 1.5rem; font-weight: 600; color: var(--text-primary); margin-bottom: 1rem; }
+        .empty-description { margin-bottom: 2rem; }
+        .empty-stats { display: grid; grid-template-columns: repeat(auto-fit, minmax(200px, 1fr)); gap: 1.5rem; margin-bottom: 2rem; }
+        .empty-stat-card { background: var(--bg-primary); padding: 1.5rem; border-radius: var(--radius-lg); border: 1px solid var(--border-color); box-shadow: var(--shadow-sm); text-align: center; }
+        .empty-stat-icon { width: 48px; height: 48px; border-radius: var(--radius-md); display: flex; align-items: center; justify-content: center; font-size: 1.25rem; margin: 0 auto 1rem; }
+        .empty-stat-value { font-size: 2rem; font-weight: 700; color: var(--text-primary); margin-bottom: 0.5rem; }
+        .empty-stat-label { color: var(--text-secondary); font-size: 0.875rem; }
+        
+        .feature-list { list-style: none; padding: 0; }
+        .feature-item { display: flex; align-items: center; gap: 1rem; padding: 1rem 0; border-bottom: 1px solid var(--border-color); }
+        .feature-item:last-child { border-bottom: none; }
+        .feature-icon { width: 40px; height: 40px; border-radius: var(--radius-md); display: flex; align-items: center; justify-content: center; font-size: 1rem; }
+        .feature-icon.users { background: rgba(139, 92, 246, 0.1); color: #8b5cf6; }
+        .feature-icon.user-shield { background: rgba(79, 70, 229, 0.1); color: var(--primary-color); }
+        .feature-icon.key { background: rgba(16, 185, 129, 0.1); color: var(--success-color); }
+        .feature-icon.cog { background: rgba(107, 114, 128, 0.1); color: #6b7280; }
+        .feature-icon.plus { background: rgba(16, 185, 129, 0.1); color: var(--success-color); }
+        .feature-content { flex: 1; }
+        .feature-title { font-weight: 500; color: var(--text-primary); margin-bottom: 0.25rem; }
+        .feature-description { font-size: 0.875rem; color: var(--text-secondary); }
+        
+        .btn-primary { background: linear-gradient(135deg, var(--primary-color) 0%, var(--primary-dark) 100%); border: none; color: white; padding: 0.75rem 1.5rem; border-radius: var(--radius-md); font-weight: 500; transition: all 0.2s ease; }
+        .btn-primary:hover { transform: translateY(-1px); box-shadow: var(--shadow-md); }
+        .btn-secondary { background: var(--bg-secondary); border: 1px solid var(--border-color); color: var(--text-primary); padding: 0.75rem 1.5rem; border-radius: var(--radius-md); font-weight: 500; transition: all 0.2s ease; }
+        .btn-secondary:hover { background: var(--border-color); }
+        .btn-success { background: linear-gradient(135deg, var(--success-color) 0%, #059669 100%); border: none; color: white; padding: 0.75rem 1.5rem; border-radius: var(--radius-md); font-weight: 500; transition: all 0.2s ease; }
+        .btn-success:hover { transform: translateY(-1px); box-shadow: var(--shadow-md); }
+        
+        @media (max-width: 768px) {
+            .sidebar { transform: translateX(-100%); z-index: 1050; }
+            .sidebar.open { transform: translateX(0); }
+            .main-content { margin-left: 0; }
+            .content-area { padding: 1rem; }
+            .header-title { font-size: 1.25rem; }
+            .page-content { padding: 1rem; }
+            .empty-stats { grid-template-columns: 1fr; }
+            .feature-item { flex-direction: column; align-items: flex-start; gap: 0.5rem; }
+        }
+        
+        .mobile-menu-btn { display: none; background: none; border: 1px solid var(--border-color); border-radius: var(--radius-sm); padding: 0.5rem; color: var(--text-secondary); cursor: pointer; }
+        .mobile-menu-btn:hover { background: var(--bg-secondary); color: var(--primary-color); }
+        @media (max-width: 768px) { .mobile-menu-btn { display: block; } }
+    </style>
+</head>
+<body>
+    <div class="dashboard-layout">
+        <div class="sidebar">
+            <div class="sidebar-header">
+                <a class="sidebar-brand" href="/admin/dashboard">
+                    <i class="fas fa-graduation-cap me-2"></i>
+                    <strong>Attendrix</strong>
+                </a>
+            </div>
+            <div class="sidebar-nav">
+                <a class="sidebar-nav-item" href="/admin/dashboard"><i class="fas fa-tachometer-alt me-2"></i>Dashboard</a>
+                <a class="sidebar-nav-item" href="/admin/create_institution"><i class="fas fa-building me-2"></i>Institutions</a>
+                <a class="sidebar-nav-item" href="/admin/users"><i class="fas fa-users me-2"></i>Users</a>
+                <a class="sidebar-nav-item" href="/admin/monitoring"><i class="fas fa-chart-line me-2"></i>Monitoring</a>
+                <a class="sidebar-nav-item" href="/admin/security"><i class="fas fa-shield-alt me-2"></i>Security</a>
+                <a class="sidebar-nav-item" href="/admin/backup"><i class="fas fa-database me-2"></i>Backup & Restore</a>
+                <a class="sidebar-nav-item" href="/admin/notifications"><i class="fas fa-bell me-2"></i>Notifications</a>
+                <a class="sidebar-nav-item" href="/admin/audit"><i class="fas fa-history me-2"></i>Audit Logs</a>
+                <a class="sidebar-nav-item active" href="/admin/roles"><i class="fas fa-user-shield me-2"></i>Role Assignments</a>
+                <a class="sidebar-nav-item" href="/admin/profile"><i class="fas fa-user me-2"></i>Profile</a>
+            </div>
+        </div>
+        <div class="main-content">
+            <div class="top-header">
+                <div class="header-left">
+                    <button class="mobile-menu-btn" onclick="toggleSidebar()"><i class="fas fa-bars"></i></button>
+                    <div>
+                        <h1 class="header-title">Role Assignments Dashboard</h1>
+                        <p class="header-subtitle">Manage user roles and permissions</p>
+                    </div>
+                </div>
+                <div class="header-right">
+                    <div class="header-time" id="currentTime"></div>
+                    <div class="profile-dropdown">
+                        <div class="profile-avatar" data-bs-toggle="dropdown"><i class="fas fa-user"></i></div>
+                        <ul class="dropdown-menu dropdown-menu-end">
+                            <li><a class="dropdown-item" href="/admin/profile"><i class="fas fa-user me-2"></i>Profile</a></li>
+                            <li><a class="dropdown-item" href="/admin/settings"><i class="fas fa-cog me-2"></i>Settings</a></li>
+                            <li><hr class="dropdown-divider"></li>
+                            <li><a class="dropdown-item" href="#" onclick="showLogoutConfirm()"><i class="fas fa-sign-out-alt me-2"></i>Logout</a></li>
+                        </ul>
+                    </div>
+                </div>
+            </div>
+            <main class="content-area">
+                <div class="page-content">
+                    <div class="page-header">
+                        <h2 class="page-title">Role Assignments Dashboard</h2>
+                        <p class="page-description">Manage user roles and permissions</p>
+                    </div>
+                    
+                    <div class="empty-state">
+                        <div class="empty-icon"><i class="fas fa-user-shield"></i></div>
+                        <h3 class="empty-title">No Role Assignments Yet</h3>
+                        <p class="empty-description">
+                            Role assignments will display here once users are added to the system. This will include:
+                        </p>
+                        
+                        <div class="empty-stats">
+                            <div class="empty-stat-card">
+                                <div class="empty-stat-icon"><i class="fas fa-user-shield"></i></div>
+                                <div class="empty-stat-value">0</div>
+                                <div class="empty-stat-label">Total Roles</div>
+                            </div>
+                            <div class="empty-stat-card">
+                                <div class="empty-stat-icon"><i class="fas fa-key"></i></div>
+                                <div class="empty-stat-value">0</div>
+                                <div class="empty-stat-label">Active Users</div>
+                            </div>
+                            <div class="empty-stat-card">
+                                <div class="empty-stat-icon"><i class="fas fa-users"></i></div>
+                                <div class="empty-stat-value">0</div>
+                                <div class="empty-stat-label">Pending Assignments</div>
+                            </div>
+                        </div>
+                        
+                        <h4 class="empty-title">Role Management Features</h4>
+                        <ul class="feature-list">
+                            <li class="feature-item">
+                                <div class="feature-icon users">
+                                    <i class="fas fa-users"></i>
+                                </div>
+                                <div class="feature-content">
+                                    <div class="feature-title">User Role Management</div>
+                                    <div class="feature-description">Assign and manage user roles</div>
+                                </div>
+                            </li>
+                            <li class="feature-item">
+                                <div class="feature-icon user-shield">
+                                    <i class="fas fa-user-shield"></i>
+                                </div>
+                                <div class="feature-content">
+                                    <div class="feature-title">Permission Management</div>
+                                    <div class="feature-description">Configure role permissions</div>
+                                </div>
+                            </li>
+                            <li class="feature-item">
+                                <div class="feature-icon key">
+                                    <i class="fas fa-key"></i>
+                                </div>
+                                <div class="feature-content">
+                                    <div class="feature-title">Role Templates</div>
+                                    <div class="feature-description">Predefined role templates</div>
+                                </div>
+                            </li>
+                            <li class="feature-item">
+                                <div class="feature-icon plus">
+                                    <i class="fas fa-plus"></i>
+                                </div>
+                                <div class="feature-content">
+                                    <div class="feature-title">Bulk Operations</div>
+                                    <div class="feature-description">Batch role assignments</div>
+                                </div>
+                            </li>
+                            <li class="feature-item">
+                                <div class="feature-icon history">
+                                    <i class="fas fa-history"></i>
+                                </div>
+                                <div class="feature-content">
+                                    <div class="feature-title">Role History</div>
+                                    <div class="feature-description">Track role changes</div>
+                                </div>
+                            </li>
+                            <li class="feature-item">
+                                <div class="feature-icon filter">
+                                    <i class="fas fa-filter"></i>
+                                </div>
+                                <div class="feature-content">
+                                    <div class="feature-title">Advanced Filtering</div>
+                                    <div class="feature-description">Filter by role, user, date</div>
+                                </div>
+                            </li>
+                            <li class="feature-item">
+                                <div class="feature-icon cog">
+                                    <i class="fas fa-cog"></i>
+                                </div>
+                                <div class="feature-content">
+                                    <div class="feature-title">Role Settings</div>
+                                    <div class="feature-description">Configure role policies</div>
+                                </div>
+                            </li>
+                        </ul>
+                        
+                        <div class="d-flex gap-2">
+                            <button class="btn btn-primary" onclick="createRole()">
+                                <i class="fas fa-plus me-2"></i>Create Role
+                            </button>
+                            <button class="btn btn-secondary" onclick="manageRoles()">
+                                <i class="fas fa-users me-2"></i>Manage Roles
+                            </button>
+                            <button class="btn btn-secondary" onclick="configureSettings()">
+                                <i class="fas fa-cog me-2"></i>Configure Settings
+                            </button>
+                        </div>
+                    </div>
+                </div>
+            </main>
+        </div>
+    </div>
+
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
+    <script>
+        document.addEventListener('DOMContentLoaded', function() {
+            // Initialize components
+            initializeTimeDisplay();
+            initializeRoleAssignments();
+            initializeTooltips();
+            
+            console.log('Role Assignments page loaded successfully');
+        });
+        
+        function initializeTimeDisplay() {
+            function updateTime() {
+                const now = new Date();
+                const timeString = now.toLocaleString('en-US', { 
+                    weekday: 'short', 
+                    year: 'numeric', 
+                    month: 'short', 
+                    day: 'numeric', 
+                    hour: '2-digit', 
+                    minute: '2-digit' 
+                });
+                const timeElement = document.getElementById('currentTime');
+                if (timeElement) timeElement.textContent = timeString;
+            }
+            updateTime();
+            setInterval(updateTime, 60000);
+        }
+        
+        function initializeRoleAssignments() {
+            // Initialize role assignment features (placeholder)
+        }
+        
+        function initializeTooltips() {
+            // Initialize Bootstrap tooltips
+            if (typeof bootstrap !== 'undefined' && bootstrap.Tooltip) {
+                const tooltipTriggerList = [].slice.call(document.querySelectorAll('[data-bs-toggle="tooltip"]'));
+                tooltipTriggerList.map(function (tooltipTriggerEl) {
+                    return new bootstrap.Tooltip(tooltipTriggerEl);
+                });
+            }
+            
+            // Initialize Bootstrap dropdowns
+            if (typeof bootstrap !== 'undefined' && bootstrap.Dropdown) {
+                const dropdownTriggerList = [].slice.call(document.querySelectorAll('[data-bs-toggle="dropdown"]'));
+                dropdownTriggerList.map(function (dropdownTriggerEl) {
+                    return new bootstrap.Dropdown(dropdownTriggerEl);
+                });
+            }
+        }
+        
+        function createRole() {
+            // Create role modal
+            const modalHtml = `
+                <div class="modal fade" id="createRoleModal" tabindex="-1" aria-labelledby="createRoleModalLabel" aria-hidden="true">
+                    <div class="modal-dialog modal-lg">
+                        <div class="modal-content">
+                            <div class="modal-header">
+                                <h5 class="modal-title" id="createRoleModalLabel">
+                                    <i class="fas fa-plus me-2"></i>Create New Role
+                                </h5>
+                                <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+                            </div>
+                            <div class="modal-body">
+                                <form id="createRoleForm">
+                                    <div class="row">
+                                        <div class="col-md-6 mb-3">
+                                            <label for="roleName" class="form-label">Role Name *</label>
+                                            <input type="text" class="form-control" id="roleName" placeholder="e.g., Department Manager" required>
+                                        </div>
+                                        <div class="col-md-6 mb-3">
+                                            <label for="roleType" class="form-label">Role Type *</label>
+                                            <select class="form-select" id="roleType" required>
+                                                <option value="">Select type...</option>
+                                                <option value="system">System Role</option>
+                                                <option value="institutional">Institutional Role</option>
+                                                <option value="departmental">Departmental Role</option>
+                                                <option value="custom">Custom Role</option>
+                                            </select>
+                                        </div>
+                                    </div>
+                                    <div class="mb-3">
+                                        <label for="roleDescription" class="form-label">Description *</label>
+                                        <textarea class="form-control" id="roleDescription" rows="3" placeholder="Describe the role's purpose and responsibilities..." required></textarea>
+                                    </div>
+                                    <div class="row">
+                                        <div class="col-md-6 mb-3">
+                                            <label for="roleScope" class="form-label">Role Scope</label>
+                                            <select class="form-select" id="roleScope">
+                                                <option value="global">Global (All Institutions)</option>
+                                                <option value="institution">Institution Specific</option>
+                                                <option value="department">Department Specific</option>
+                                            </select>
+                                        </div>
+                                        <div class="col-md-6 mb-3">
+                                            <label for="rolePriority" class="form-label">Priority Level</label>
+                                            <select class="form-select" id="rolePriority">
+                                                <option value="low">Low</option>
+                                                <option value="medium" selected>Medium</option>
+                                                <option value="high">High</option>
+                                                <option value="critical">Critical</option>
+                                            </select>
+                                        </div>
+                                    </div>
+                                    <div class="mb-3">
+                                        <label class="form-label">Permissions *</label>
+                                        <div class="row">
+                                            <div class="col-md-6 mb-2">
+                                                <div class="form-check">
+                                                    <input class="form-check-input" type="checkbox" id="permUsers" checked>
+                                                    <label class="form-check-label" for="permUsers">User Management</label>
+                                                </div>
+                                            </div>
+                                            <div class="col-md-6 mb-2">
+                                                <div class="form-check">
+                                                    <input class="form-check-input" type="checkbox" id="permReports">
+                                                    <label class="form-check-label" for="permReports">View Reports</label>
+                                                </div>
+                                            </div>
+                                            <div class="col-md-6 mb-2">
+                                                <div class="form-check">
+                                                    <input class="form-check-input" type="checkbox" id="permAttendance">
+                                                    <label class="form-check-label" for="permAttendance">Manage Attendance</label>
+                                                </div>
+                                            </div>
+                                            <div class="col-md-6 mb-2">
+                                                <div class="form-check">
+                                                    <input class="form-check-input" type="checkbox" id="permScheduling">
+                                                    <label class="form-check-label" for="permScheduling">Manage Scheduling</label>
+                                                </div>
+                                            </div>
+                                            <div class="col-md-6 mb-2">
+                                                <div class="form-check">
+                                                    <input class="form-check-input" type="checkbox" id="permSettings">
+                                                    <label class="form-check-label" for="permSettings">System Settings</label>
+                                                </div>
+                                            </div>
+                                            <div class="col-md-6 mb-2">
+                                                <div class="form-check">
+                                                    <input class="form-check-input" type="checkbox" id="permAudit">
+                                                    <label class="form-check-label" for="permAudit">View Audit Logs</label>
+                                                </div>
+                                            </div>
+                                            <div class="col-md-6 mb-2">
+                                                <div class="form-check">
+                                                    <input class="form-check-input" type="checkbox" id="permBackup">
+                                                    <label class="form-check-label" for="permBackup">Backup & Restore</label>
+                                                </div>
+                                            </div>
+                                            <div class="col-md-6 mb-2">
+                                                <div class="form-check">
+                                                    <input class="form-check-input" type="checkbox" id="permNotifications">
+                                                    <label class="form-check-label" for="permNotifications">Send Notifications</label>
+                                                </div>
+                                            </div>
+                                        </div>
+                                    </div>
+                                    <div class="row">
+                                        <div class="col-md-6 mb-3">
+                                            <label for="maxUsers" class="form-label">Maximum Users</label>
+                                            <input type="number" class="form-control" id="maxUsers" placeholder="Unlimited" min="1">
+                                            <small class="form-text text-muted">Leave empty for unlimited</small>
+                                        </div>
+                                        <div class="col-md-6 mb-3">
+                                            <label for="roleExpiration" class="form-label">Expiration (days)</label>
+                                            <input type="number" class="form-control" id="roleExpiration" placeholder="Never expires" min="1">
+                                            <small class="form-text text-muted">Leave empty for no expiration</small>
+                                        </div>
+                                    </div>
+                                    <div class="mb-3">
+                                        <div class="form-check">
+                                            <input class="form-check-input" type="checkbox" id="isActive" checked>
+                                            <label class="form-check-label" for="isActive">Active Role</label>
+                                        </div>
+                                    </div>
+                                </form>
+                            </div>
+                            <div class="modal-footer">
+                                <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancel</button>
+                                <button type="button" class="btn btn-primary" onclick="saveRole()">
+                                    <i class="fas fa-save me-2"></i>Create Role
+                                </button>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            `;
+            
+            // Remove existing modal if present
+            const existingModal = document.getElementById('createRoleModal');
+            if (existingModal) {
+                existingModal.remove();
+            }
+            
+            // Add modal to page
+            document.body.insertAdjacentHTML('beforeend', modalHtml);
+            
+            // Show modal
+            const modal = new bootstrap.Modal(document.getElementById('createRoleModal'));
+            modal.show();
+        }
+        
+        function saveRole() {
+            const role = {
+                name: document.getElementById('roleName').value,
+                type: document.getElementById('roleType').value,
+                description: document.getElementById('roleDescription').value,
+                scope: document.getElementById('roleScope').value,
+                priority: document.getElementById('rolePriority').value,
+                permissions: {
+                    users: document.getElementById('permUsers').checked,
+                    reports: document.getElementById('permReports').checked,
+                    attendance: document.getElementById('permAttendance').checked,
+                    scheduling: document.getElementById('permScheduling').checked,
+                    settings: document.getElementById('permSettings').checked,
+                    audit: document.getElementById('permAudit').checked,
+                    backup: document.getElementById('permBackup').checked,
+                    notifications: document.getElementById('permNotifications').checked
+                },
+                maxUsers: document.getElementById('maxUsers').value,
+                expiration: document.getElementById('roleExpiration').value,
+                isActive: document.getElementById('isActive').checked
+            };
+            
+            // Validate form
+            if (!role.name || !role.type || !role.description) {
+                showValidationError('Please fill in all required fields.');
+                return;
+            }
+            
+            // Check if at least one permission is selected
+            const hasPermissions = Object.values(role.permissions).some(perm => perm);
+            if (!hasPermissions) {
+                showValidationError('Please select at least one permission for this role.');
+                return;
+            }
+            
+            // Close modal
+            const modal = bootstrap.Modal.getInstance(document.getElementById('createRoleModal'));
+            modal.hide();
+            
+            // Show success message
+            showSuccessToast(`Role "${role.name}" created successfully!`);
+            
+            // Update role count
+            updateRoleCount();
+            
+            // Log action
+            console.log('Role created:', role);
+        }
+        
+        function manageRoles() {
+            // Create role management modal
+            const modalHtml = `
+                <div class="modal fade" id="manageRolesModal" tabindex="-1" aria-labelledby="manageRolesModalLabel" aria-hidden="true">
+                    <div class="modal-dialog modal-xl">
+                        <div class="modal-content">
+                            <div class="modal-header">
+                                <h5 class="modal-title" id="manageRolesModalLabel">
+                                    <i class="fas fa-users me-2"></i>Manage Roles
+                                </h5>
+                                <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+                            </div>
+                            <div class="modal-body">
+                                <div class="d-flex justify-content-between align-items-center mb-3">
+                                    <h6 class="mb-0">Existing Roles</h6>
+                                    <div class="btn-group" role="group">
+                                        <button class="btn btn-sm btn-outline-primary" onclick="refreshRoles()">
+                                            <i class="fas fa-sync me-1"></i>Refresh
+                                        </button>
+                                        <button class="btn btn-sm btn-outline-success" onclick="exportRoles()">
+                                            <i class="fas fa-download me-1"></i>Export
+                                        </button>
+                                    </div>
+                                </div>
+                                
+                                <div class="table-responsive">
+                                    <table class="table table-hover">
+                                        <thead>
+                                            <tr>
+                                                <th>Role Name</th>
+                                                <th>Type</th>
+                                                <th>Scope</th>
+                                                <th>Priority</th>
+                                                <th>Users</th>
+                                                <th>Status</th>
+                                                <th>Created</th>
+                                                <th>Actions</th>
+                                            </tr>
+                                        </thead>
+                                        <tbody>
+                                            <tr>
+                                                <td><strong>Super Admin</strong></td>
+                                                <td><span class="badge bg-danger">System</span></td>
+                                                <td>Global</td>
+                                                <td><span class="badge bg-danger">Critical</span></td>
+                                                <td>1</td>
+                                                <td><span class="badge bg-success">Active</span></td>
+                                                <td>2024-01-01</td>
+                                                <td>
+                                                    <button class="btn btn-sm btn-outline-primary" onclick="editRole('super_admin')">Edit</button>
+                                                    <button class="btn btn-sm btn-outline-info" onclick="viewRoleUsers('super_admin')">Users</button>
+                                                </td>
+                                            </tr>
+                                            <tr>
+                                                <td><strong>Institutional Admin</strong></td>
+                                                <td><span class="badge bg-warning">Institutional</span></td>
+                                                <td>Institution</td>
+                                                <td><span class="badge bg-warning">High</span></td>
+                                                <td>12</td>
+                                                <td><span class="badge bg-success">Active</span></td>
+                                                <td>2024-01-05</td>
+                                                <td>
+                                                    <button class="btn btn-sm btn-outline-primary" onclick="editRole('institutional_admin')">Edit</button>
+                                                    <button class="btn btn-sm btn-outline-info" onclick="viewRoleUsers('institutional_admin')">Users</button>
+                                                </td>
+                                            </tr>
+                                            <tr>
+                                                <td><strong>Lecturer</strong></td>
+                                                <td><span class="badge bg-info">Departmental</span></td>
+                                                <td>Department</td>
+                                                <td><span class="badge bg-primary">Medium</span></td>
+                                                <td>45</td>
+                                                <td><span class="badge bg-success">Active</span></td>
+                                                <td>2024-01-10</td>
+                                                <td>
+                                                    <button class="btn btn-sm btn-outline-primary" onclick="editRole('lecturer')">Edit</button>
+                                                    <button class="btn btn-sm btn-outline-info" onclick="viewRoleUsers('lecturer')">Users</button>
+                                                </td>
+                                            </tr>
+                                            <tr>
+                                                <td><strong>Student</strong></td>
+                                                <td><span class="badge bg-secondary">Custom</span></td>
+                                                <td>Department</td>
+                                                <td><span class="badge bg-secondary">Low</span></td>
+                                                <td>156</td>
+                                                <td><span class="badge bg-success">Active</span></td>
+                                                <td>2024-01-12</td>
+                                                <td>
+                                                    <button class="btn btn-sm btn-outline-primary" onclick="editRole('student')">Edit</button>
+                                                    <button class="btn btn-sm btn-outline-info" onclick="viewRoleUsers('student')">Users</button>
+                                                </td>
+                                            </tr>
+                                            <tr>
+                                                <td><strong>Employee</strong></td>
+                                                <td><span class="badge bg-secondary">Custom</span></td>
+                                                <td>Institution</td>
+                                                <td><span class="badge bg-primary">Medium</span></td>
+                                                <td>28</td>
+                                                <td><span class="badge bg-success">Active</span></td>
+                                                <td>2024-01-15</td>
+                                                <td>
+                                                    <button class="btn btn-sm btn-outline-primary" onclick="editRole('employee')">Edit</button>
+                                                    <button class="btn btn-sm btn-outline-info" onclick="viewRoleUsers('employee')">Users</button>
+                                                </td>
+                                            </tr>
+                                        </tbody>
+                                    </table>
+                                </div>
+                                
+                                <div class="mt-3">
+                                    <h6 class="mb-2">Role Statistics</h6>
+                                    <div class="row">
+                                        <div class="col-md-3">
+                                            <div class="card text-center">
+                                                <div class="card-body">
+                                                    <h5 class="card-title text-primary">5</h5>
+                                                    <p class="card-text">Total Roles</p>
+                                                </div>
+                                            </div>
+                                        </div>
+                                        <div class="col-md-3">
+                                            <div class="card text-center">
+                                                <div class="card-body">
+                                                    <h5 class="card-title text-success">5</h5>
+                                                    <p class="card-text">Active Roles</p>
+                                                </div>
+                                            </div>
+                                        </div>
+                                        <div class="col-md-3">
+                                            <div class="card text-center">
+                                                <div class="card-body">
+                                                    <h5 class="card-title text-info">242</h5>
+                                                    <p class="card-text">Total Users</p>
+                                                </div>
+                                            </div>
+                                        </div>
+                                        <div class="col-md-3">
+                                            <div class="card text-center">
+                                                <div class="card-body">
+                                                    <h5 class="card-title text-warning">3</h5>
+                                                    <p class="card-text">Custom Roles</p>
+                                                </div>
+                                            </div>
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+                            <div class="modal-footer">
+                                <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Close</button>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            `;
+            
+            // Remove existing modal if present
+            const existingModal = document.getElementById('manageRolesModal');
+            if (existingModal) {
+                existingModal.remove();
+            }
+            
+            // Add modal to page
+            document.body.insertAdjacentHTML('beforeend', modalHtml);
+            
+            // Show modal
+            const modal = new bootstrap.Modal(document.getElementById('manageRolesModal'));
+            modal.show();
+        }
+        
+        function editRole(roleId) {
+            showSuccessToast(`Editing role: ${roleId}`);
+            console.log('Edit role:', roleId);
+        }
+        
+        function viewRoleUsers(roleId) {
+            showSuccessToast(`Viewing users for role: ${roleId}`);
+            console.log('View role users:', roleId);
+        }
+        
+        function refreshRoles() {
+            showSuccessToast('Roles refreshed successfully!');
+            console.log('Roles refreshed');
+        }
+        
+        function exportRoles() {
+            // Create CSV content for roles
+            const csvContent = "Role Name,Type,Scope,Priority,Users,Status,Created Date\n" +
+                              "Super Admin,System,Global,Critical,1,Active,2024-01-01\n" +
+                              "Institutional Admin,Institutional,Institution,High,12,Active,2024-01-05\n" +
+                              "Lecturer,Departmental,Department,Medium,45,Active,2024-01-10\n" +
+                              "Student,Custom,Department,Low,156,Active,2024-01-12\n" +
+                              "Employee,Custom,Institution,Medium,28,Active,2024-01-15";
+            
+            // Create blob and download
+            const blob = new Blob([csvContent], { type: 'text/csv' });
+            const url = window.URL.createObjectURL(blob);
+            const a = document.createElement('a');
+            a.href = url;
+            a.download = `roles_export_${new Date().toISOString().split('T')[0]}.csv`;
+            document.body.appendChild(a);
+            a.click();
+            document.body.removeChild(a);
+            window.URL.revokeObjectURL(url);
+            
+            showSuccessToast('Roles exported successfully!');
+        }
+        
+        function configureSettings() {
+            // Create role configuration modal
+            const modalHtml = `
+                <div class="modal fade" id="configureSettingsModal" tabindex="-1" aria-labelledby="configureSettingsModalLabel" aria-hidden="true">
+                    <div class="modal-dialog modal-lg">
+                        <div class="modal-content">
+                            <div class="modal-header">
+                                <h5 class="modal-title" id="configureSettingsModalLabel">
+                                    <i class="fas fa-cog me-2"></i>Role Configuration Settings
+                                </h5>
+                                <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+                            </div>
+                            <div class="modal-body">
+                                <form id="roleConfigForm">
+                                    <div class="row">
+                                        <div class="col-md-6 mb-3">
+                                            <h6 class="text-primary mb-3">Role Hierarchy</h6>
+                                            <div class="mb-3">
+                                                <label for="enableInheritance" class="form-label">Enable Role Inheritance</label>
+                                                <div class="form-check">
+                                                    <input class="form-check-input" type="checkbox" id="enableInheritance" checked>
+                                                    <label class="form-check-label" for="enableInheritance">
+                                                        Allow roles to inherit permissions from parent roles
+                                                    </label>
+                                                </div>
+                                            </div>
+                                            <div class="mb-3">
+                                                <label for="defaultRole" class="form-label">Default Role for New Users</label>
+                                                <select class="form-select" id="defaultRole">
+                                                    <option value="student" selected>Student</option>
+                                                    <option value="employee">Employee</option>
+                                                    <option value="lecturer">Lecturer</option>
+                                                </select>
+                                            </div>
+                                            <div class="mb-3">
+                                                <label for="maxRolesPerUser" class="form-label">Maximum Roles Per User</label>
+                                                <input type="number" class="form-control" id="maxRolesPerUser" value="3" min="1" max="10">
+                                            </div>
+                                        </div>
+                                        <div class="col-md-6 mb-3">
+                                            <h6 class="text-primary mb-3">Role Assignment</h6>
+                                            <div class="mb-3">
+                                                <label for="autoAssignRole" class="form-label">Auto-assign Role Based On</label>
+                                                <select class="form-select" id="autoAssignRole">
+                                                    <option value="none">No Auto-assignment</option>
+                                                    <option value="department">Department</option>
+                                                    <option value="position">Position</option>
+                                                    <option value="both" selected>Both Department and Position</option>
+                                                </select>
+                                            </div>
+                                            <div class="mb-3">
+                                                <label for="roleApproval" class="form-label">Role Assignment Approval</label>
+                                                <select class="form-select" id="roleApproval">
+                                                    <option value="none">No Approval Required</option>
+                                                    <option value="admin" selected>Admin Approval</option>
+                                                    <option value="manager">Manager Approval</option>
+                                                    <option value="both">Both Admin and Manager</option>
+                                                </select>
+                                            </div>
+                                            <div class="mb-3">
+                                                <div class="form-check">
+                                                    <input class="form-check-input" type="checkbox" id="enableRoleNotifications" checked>
+                                                    <label class="form-check-label" for="enableRoleNotifications">
+                                                        Send notifications for role changes
+                                                    </label>
+                                                </div>
+                                            </div>
+                                        </div>
+                                    </div>
+                                    <div class="row">
+                                        <div class="col-md-6 mb-3">
+                                            <h6 class="text-primary mb-3">Security Settings</h6>
+                                            <div class="mb-3">
+                                                <label for="roleConflictDetection" class="form-label">Role Conflict Detection</label>
+                                                <select class="form-select" id="roleConflictDetection">
+                                                    <option value="strict" selected>Strict (Block Assignment)</option>
+                                                    <option value="warning">Warning (Allow with Warning)</option>
+                                                    <option value="none">No Detection</option>
+                                                </select>
+                                            </div>
+                                            <div class="mb-3">
+                                                <label for="sessionTimeout" class="form-label">Role Session Timeout (hours)</label>
+                                                <input type="number" class="form-control" id="sessionTimeout" value="8" min="1" max="24">
+                                            </div>
+                                            <div class="mb-3">
+                                                <div class="form-check">
+                                                    <input class="form-check-input" type="checkbox" id="enableRoleAudit" checked>
+                                                    <label class="form-check-label" for="enableRoleAudit">
+                                                        Enable role change audit logging
+                                                    </label>
+                                                </div>
+                                            </div>
+                                        </div>
+                                        <div class="col-md-6 mb-3">
+                                            <h6 class="text-primary mb-3">Compliance Settings</h6>
+                                            <div class="mb-3">
+                                                <label for="complianceReporting" class="form-label">Compliance Reporting</label>
+                                                <select class="form-select" id="complianceReporting">
+                                                    <option value="disabled">Disabled</option>
+                                                    <option value="weekly">Weekly</option>
+                                                    <option value="monthly" selected>Monthly</option>
+                                                    <option value="quarterly">Quarterly</option>
+                                                </select>
+                                            </div>
+                                            <div class="mb-3">
+                                                <label for="roleExpirationPolicy" class="form-label">Role Expiration Policy</label>
+                                                <select class="form-select" id="roleExpirationPolicy">
+                                                    <option value="none">No Expiration</option>
+                                                    <option value="auto" selected="Auto-expire Temporary Roles</option>
+                                                    <option value="manual">Manual Review Required</option>
+                                                </select>
+                                            </div>
+                                            <div class="mb-3">
+                                                <label for="dataRetention" class="form-label">Role Assignment Data Retention (days)</label>
+                                                <input type="number" class="form-control" id="dataRetention" value="365" min="30" max="2555">
+                                            </div>
+                                        </div>
+                                    </div>
+                                    <div class="row">
+                                        <div class="col-12 mb-3">
+                                            <h6 class="text-primary mb-3">API Access Control</h6>
+                                            <div class="row">
+                                                <div class="col-md-4 mb-2">
+                                                    <div class="form-check">
+                                                        <input class="form-check-input" type="checkbox" id="enableRoleAPI" checked>
+                                                        <label class="form-check-label" for="enableRoleAPI">Enable Role-based API Access</label>
+                                                    </div>
+                                                </div>
+                                                <div class="col-md-4 mb-2">
+                                                    <div class="form-check">
+                                                        <input class="form-check-input" type="checkbox" id="enableAPIAudit" checked>
+                                                        <label class="form-check-label" for="enableAPIAudit">Log API Role Access</label>
+                                                    </div>
+                                                </div>
+                                                <div class="col-md-4 mb-2">
+                                                    <div class="form-check">
+                                                        <input class="form-check-input" type="checkbox" id="enableAPIThrottling">
+                                                        <label class="form-check-label" for="enableAPIThrottling">Enable API Rate Limiting</label>
+                                                    </div>
+                                                </div>
+                                            </div>
+                                        </div>
+                                    </div>
+                                </form>
+                            </div>
+                            <div class="modal-footer">
+                                <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancel</button>
+                                <button type="button" class="btn btn-primary" onclick="saveRoleConfig()">
+                                    <i class="fas fa-save me-2"></i>Save Configuration
+                                </button>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            `;
+            
+            // Remove existing modal if present
+            const existingModal = document.getElementById('configureSettingsModal');
+            if (existingModal) {
+                existingModal.remove();
+            }
+            
+            // Add modal to page
+            document.body.insertAdjacentHTML('beforeend', modalHtml);
+            
+            // Show modal
+            const modal = new bootstrap.Modal(document.getElementById('configureSettingsModal'));
+            modal.show();
+        }
+        
+        function saveRoleConfig() {
+            const config = {
+                hierarchy: {
+                    inheritance: document.getElementById('enableInheritance').checked,
+                    defaultRole: document.getElementById('defaultRole').value,
+                    maxRolesPerUser: document.getElementById('maxRolesPerUser').value
+                },
+                assignment: {
+                    autoAssign: document.getElementById('autoAssignRole').value,
+                    approval: document.getElementById('roleApproval').value,
+                    notifications: document.getElementById('enableRoleNotifications').checked
+                },
+                security: {
+                    conflictDetection: document.getElementById('roleConflictDetection').value,
+                    sessionTimeout: document.getElementById('sessionTimeout').value,
+                    audit: document.getElementById('enableRoleAudit').checked
+                },
+                compliance: {
+                    reporting: document.getElementById('complianceReporting').value,
+                    expirationPolicy: document.getElementById('roleExpirationPolicy').value,
+                    dataRetention: document.getElementById('dataRetention').value
+                },
+                api: {
+                    enabled: document.getElementById('enableRoleAPI').checked,
+                    audit: document.getElementById('enableAPIAudit').checked,
+                    throttling: document.getElementById('enableAPIThrottling').checked
+                }
+            };
+            
+            // Close modal
+            const modal = bootstrap.Modal.getInstance(document.getElementById('configureSettingsModal'));
+            modal.hide();
+            
+            // Show success message
+            showSuccessToast('Role configuration saved successfully!');
+            
+            // Log action
+            console.log('Role configuration saved:', config);
+        }
+        
+        function updateRoleCount() {
+            // Simulate updating role count
+            const roleCountElement = document.querySelector('.empty-stat-value');
+            if (roleCountElement) {
+                const currentCount = parseInt(roleCountElement.textContent) || 0;
+                roleCountElement.textContent = currentCount + 1;
+            }
+        }
+        
+        function showSuccessToast(message) {
+            // Create toast HTML
+            const toastHtml = `
+                <div class="toast-container position-fixed top-0 end-0 p-3">
+                    <div class="toast show" role="alert" aria-live="assertive" aria-atomic="true">
+                        <div class="toast-header bg-success text-white">
+                            <i class="fas fa-user-shield me-2"></i>
+                            <strong class="me-auto">Roles</strong>
+                            <button type="button" class="btn-close btn-close-white" data-bs-dismiss="toast" aria-label="Close"></button>
+                        </div>
+                        <div class="toast-body">
+                            ${message}
+                        </div>
+                    </div>
+                </div>
+            `;
+            
+            // Add toast to page
+            document.body.insertAdjacentHTML('beforeend', toastHtml);
+            
+            // Auto remove after 5 seconds
+            setTimeout(() => {
+                const toastContainer = document.querySelector('.toast-container');
+                if (toastContainer) {
+                    toastContainer.remove();
+                }
+            }, 5000);
+        }
+        
+        function showValidationError(message) {
+            // Create validation error toast
+            const toastHtml = `
+                <div class="toast-container position-fixed top-0 end-0 p-3">
+                    <div class="toast show" role="alert" aria-live="assertive" aria-atomic="true">
+                        <div class="toast-header bg-danger text-white">
+                            <i class="fas fa-exclamation-triangle me-2"></i>
+                            <strong class="me-auto">Validation Error</strong>
+                            <button type="button" class="btn-close btn-close-white" data-bs-dismiss="toast" aria-label="Close"></button>
+                        </div>
+                        <div class="toast-body">
+                            ${message}
+                        </div>
+                    </div>
+                </div>
+            `;
+            
+            // Add toast to page
+            document.body.insertAdjacentHTML('beforeend', toastHtml);
+            
+            // Auto remove after 5 seconds
+            setTimeout(() => {
+                const toastContainer = document.querySelector('.toast-container');
+                if (toastContainer) {
+                    toastContainer.remove();
+                }
+            }, 5000);
+        }
+        
+        function showLogoutConfirm() {
+            if (confirm('Do you really want to log out?')) {
+                window.location.href = '/logout';
+            }
+        }
+        
+        function toggleSidebar() {
+            const sidebar = document.querySelector('.sidebar');
+            if (sidebar) {
+                sidebar.classList.toggle('open');
+            }
+        }
+    </script>
+</body>
+</html>

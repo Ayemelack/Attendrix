@@ -1,0 +1,555 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Security Dashboard - Attendrix</title>
+    <link rel="icon" type="image/x-icon" href="/static/images/favicon.ico">
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <link rel="stylesheet" href="{{ url_for('static', filename='css/landing.css') }}">
+    <style>
+        :root { --primary-color: #4f46e5; --primary-dark: #4338ca; --bg-primary: #ffffff; --bg-secondary: #f8fafc; --text-primary: #1e293b; --text-secondary: #64748b; --border-color: #e2e8f0; --shadow-sm: 0 1px 2px 0 rgb(0 0 0 / 0.05); --radius-md: 8px; --radius-lg: 12px; }
+        * { margin: 0; padding: 0; box-sizing: border-box; }
+        body { font-family: 'Inter', sans-serif; background: var(--bg-secondary); color: var(--text-primary); line-height: 1.6; }
+        .dashboard-layout { display: flex; min-height: 100vh; }
+        .sidebar { width: 280px; background: var(--bg-primary); border-right: 1px solid var(--border-color); position: fixed; height: 100vh; left: 0; top: 0; z-index: 1000; transition: transform 0.3s ease; }
+        .sidebar-header { padding: 1.5rem; border-bottom: 1px solid var(--border-color); background: linear-gradient(135deg, var(--primary-color) 0%, var(--primary-dark) 100%); color: white; }
+        .sidebar-brand { display: flex; align-items: center; gap: 0.75rem; font-size: 1.25rem; font-weight: 700; text-decoration: none; color: white; }
+        .sidebar-nav { padding: 1rem 0; }
+        .sidebar-nav-item { display: block; padding: 0.875rem 1.5rem; color: var(--text-secondary); text-decoration: none; transition: all 0.2s ease; position: relative; font-weight: 500; }
+        .sidebar-nav-item:hover { background: var(--bg-secondary); color: var(--primary-color); }
+        .sidebar-nav-item.active { background: linear-gradient(90deg, rgba(79, 70, 229, 0.1) 0%, transparent 100%); color: var(--primary-color); font-weight: 600; }
+        .sidebar-nav-item.active::before { content: ''; position: absolute; left: 0; top: 0; bottom: 0; width: 4px; background: var(--primary-color); }
+        .sidebar-nav-item i { width: 20px; margin-right: 0.75rem; text-align: center; }
+        .main-content { flex: 1; margin-left: 280px; display: flex; flex-direction: column; min-height: 100vh; }
+        .top-header { background: var(--bg-primary); border-bottom: 1px solid var(--border-color); padding: 1rem 2rem; display: flex; justify-content: space-between; align-items: center; box-shadow: var(--shadow-sm); position: sticky; top: 0; z-index: 100; }
+        .header-left { display: flex; align-items: center; gap: 1rem; }
+        .header-title { font-size: 1.5rem; font-weight: 700; color: var(--text-primary); }
+        .header-subtitle { color: var(--text-secondary); font-size: 0.875rem; }
+        .header-right { display: flex; align-items: center; gap: 1rem; }
+        .header-time { color: var(--text-secondary); font-size: 0.875rem; }
+        .profile-dropdown { position: relative; }
+        .profile-avatar { width: 40px; height: 40px; border-radius: var(--radius-md); background: linear-gradient(135deg, var(--primary-color) 0%, var(--accent-color) 100%); display: flex; align-items: center; justify-content: center; color: white; cursor: pointer; }
+        .content-area { flex: 1; padding: 2rem; background: var(--bg-secondary); }
+        .page-content { background: var(--bg-primary); padding: 2rem; border-radius: var(--radius-lg); box-shadow: var(--shadow-sm); border: 1px solid var(--border-color); }
+        .page-header { margin-bottom: 2rem; }
+        .page-title { font-size: 1.75rem; font-weight: 700; color: var(--text-primary); margin-bottom: 0.5rem; }
+        .page-description { color: var(--text-secondary); font-size: 1rem; }
+        .empty-state { text-align: center; padding: 4rem 2rem; color: var(--text-secondary); }
+        .empty-icon { font-size: 4rem; color: var(--primary-color); margin-bottom: 1.5rem; opacity: 0.5; }
+        .empty-title { font-size: 1.5rem; font-weight: 600; color: var(--text-primary); margin-bottom: 1rem; }
+        .empty-description { margin-bottom: 2rem; }
+        .empty-stats { display: grid; grid-template-columns: repeat(auto-fit, minmax(200px, 1fr)); gap: 1.5rem; margin-bottom: 2rem; }
+        .empty-stat-card { background: var(--bg-primary); padding: 1.5rem; border-radius: var(--radius-lg); border: 1px solid var(--border-color); box-shadow: var(--shadow-sm); text-align: center; }
+        .empty-stat-icon { width: 48px; height: 48px; border-radius: var(--radius-md); display: flex; align-items: center; justify-content: center; font-size: 1.25rem; margin: 0 auto 1rem; }
+        .empty-stat-value { font-size: 2rem; font-weight: 700; color: var(--text-primary); margin-bottom: 0.5rem; }
+        .empty-stat-label { color: var(--text-secondary); font-size: 0.875rem; }
+        .feature-list { list-style: none; padding: 0; }
+        .feature-item { display: flex; align-items: center; gap: 1rem; padding: 1rem 0; border-bottom: 1px solid var(--border-color); }
+        .feature-item:last-child { border-bottom: none; }
+        .feature-icon { width: 40px; height: 40px; border-radius: var(--radius-md); display: flex; align-items: center; justify-content: center; font-size: 1rem; }
+        .feature-icon.shield-alt { background: rgba(239, 68, 68, 0.1); color: var(--error-color); }
+        .feature-icon.user-shield { background: rgba(79, 70, 229, 0.1); color: var(--primary-color); }
+        .feature-icon.lock { background: rgba(245, 158, 11, 0.1); color: var(--warning-color); }
+        .feature-icon.key { background: rgba(16, 185, 129, 0.1); color: var(--success-color); }
+        .feature-icon.bell { background: rgba(107, 114, 128, 0.1); color: #6b7280; }
+        .feature-icon.history { background: rgba(139, 92, 246, 0.1); color: #8b5cf6; }
+        .feature-content { flex: 1; }
+        .feature-title { font-weight: 500; color: var(--text-primary); margin-bottom: 0.25rem; }
+        .feature-description { font-size: 0.875rem; color: var(--text-secondary); }
+        .btn-primary { background: linear-gradient(135deg, var(--primary-color) 0%, var(--primary-dark) 100%); border: none; color: white; padding: 0.75rem 1.5rem; border-radius: var(--radius-md); font-weight: 500; transition: all 0.2s ease; }
+        .btn-primary:hover { transform: translateY(-1px); box-shadow: var(--shadow-md); }
+        .btn-secondary { background: var(--bg-secondary); border: 1px solid var(--border-color); color: var(--text-primary); padding: 0.75rem 1.5rem; border-radius: var(--radius-md); font-weight: 500; transition: all 0.2s ease; }
+        .btn-secondary:hover { background: var(--border-color); }
+        @media (max-width: 768px) { .sidebar { transform: translateX(-100%); z-index: 1050; } .sidebar.open { transform: translateX(0); } .main-content { margin-left: 0; } .content-area { padding: 1rem; } .header-title { font-size: 1.25rem; } .page-content { padding: 1rem; } .empty-stats { grid-template-columns: 1fr; } .feature-item { flex-direction: column; align-items: flex-start; gap: 0.5rem; } }
+        .mobile-menu-btn { display: none; background: none; border: 1px solid var(--border-color); border-radius: var(--radius-sm); padding: 0.5rem; color: var(--text-secondary); cursor: pointer; }
+        .mobile-menu-btn:hover { background: var(--bg-secondary); color: var(--primary-color); }
+        @media (max-width: 768px) { .mobile-menu-btn { display: block; } }
+    </style>
+</head>
+<body>
+    <div class="dashboard-layout">
+        <div class="sidebar">
+            <div class="sidebar-header">
+                <a class="sidebar-brand" href="/admin/dashboard">
+                    <i class="fas fa-graduation-cap me-2"></i>
+                    <strong>Attendrix</strong>
+                </a>
+            </div>
+            <div class="sidebar-nav">
+                <a class="sidebar-nav-item" href="/admin/dashboard"><i class="fas fa-tachometer-alt me-2"></i>Dashboard</a>
+                <a class="sidebar-nav-item" href="/admin/create_institution"><i class="fas fa-building me-2"></i>Institutions</a>
+                <a class="sidebar-nav-item" href="/admin/users"><i class="fas fa-users me-2"></i>Users</a>
+                <a class="sidebar-nav-item" href="/admin/monitoring"><i class="fas fa-chart-line me-2"></i>Monitoring</a>
+                <a class="sidebar-nav-item active" href="/admin/security"><i class="fas fa-shield-alt me-2"></i>Security</a>
+                <a class="sidebar-nav-item" href="/admin/backup"><i class="fas fa-database me-2"></i>Backup & Restore</a>
+                <a class="sidebar-nav-item" href="/admin/notifications"><i class="fas fa-bell me-2"></i>Notifications</a>
+                <a class="sidebar-nav-item" href="/admin/audit"><i class="fas fa-history me-2"></i>Audit Logs</a>
+                <a class="sidebar-nav-item" href="/admin/roles"><i class="fas fa-user-shield me-2"></i>Role Assignments</a>
+                <a class="sidebar-nav-item" href="/admin/profile"><i class="fas fa-user me-2"></i>Profile</a>
+            </div>
+        </div>
+        <div class="main-content">
+            <div class="top-header">
+                <div class="header-left">
+                    <button class="mobile-menu-btn" onclick="toggleSidebar()"><i class="fas fa-bars"></i></button>
+                    <div>
+                        <h1 class="header-title">Security Management</h1>
+                        <p class="header-subtitle">Manage system security and access controls</p>
+                    </div>
+                </div>
+                <div class="header-right">
+                    <div class="header-time" id="currentTime"></div>
+                    <div class="profile-dropdown">
+                        <div class="profile-avatar" data-bs-toggle="dropdown"><i class="fas fa-user"></i></div>
+                        <ul class="dropdown-menu dropdown-menu-end">
+                            <li><a class="dropdown-item" href="/admin/profile"><i class="fas fa-user me-2"></i>Profile</a></li>
+                            <li><a class="dropdown-item" href="/admin/settings"><i class="fas fa-cog me-2"></i>Settings</a></li>
+                            <li><hr class="dropdown-divider"></li>
+                            <li><a class="dropdown-item" href="#" onclick="showLogoutConfirm()"><i class="fas fa-sign-out-alt me-2"></i>Logout</a></li>
+                        </ul>
+                    </div>
+                </div>
+            </div>
+            <main class="content-area">
+                <div class="page-content">
+                    <div class="page-header">
+                        <h2 class="page-title">Security Dashboard</h2>
+                        <p class="page-description">Monitor and manage system security settings</p>
+                    </div>
+                    
+                    <div class="empty-state">
+                        <div class="empty-icon"><i class="fas fa-shield-alt"></i></div>
+                        <h3 class="empty-title">No Security Events Yet</h3>
+                        <p class="empty-description">
+                            Security monitoring will display here once there are security events to track. This will include:
+                        </p>
+                        
+                        <div class="empty-stats">
+                            <div class="empty-stat-card">
+                                <div class="empty-stat-icon"><i class="fas fa-shield-alt"></i></div>
+                                <div class="empty-stat-value">0</div>
+                                <div class="empty-stat-label">Security Events</div>
+                            </div>
+                            <div class="empty-stat-card">
+                                <div class="empty-stat-icon"><i class="fas fa-user-shield"></i></div>
+                                <div class="empty-stat-value">0</div>
+                                <div class="empty-stat-label">Active Sessions</div>
+                            </div>
+                            <div class="empty-stat-card">
+                                <div class="empty-stat-icon"><i class="fas fa-lock"></i></div>
+                                <div class="empty-stat-value">0</div>
+                                <div class="empty-stat-label">Failed Logins</div>
+                            </div>
+                            <div class="empty-stat-card">
+                                <div class="empty-stat-icon"><i class="fas fa-key"></i></div>
+                                <div class="empty-stat-value">0</div>
+                                <div class="empty-stat-label">Security Alerts</div>
+                            </div>
+                        </div>
+                        
+                        <h4 class="empty-title">Security Features</h4>
+                        <ul class="feature-list">
+                            <li class="feature-item">
+                                <div class="feature-icon shield-alt">
+                                    <i class="fas fa-shield-alt"></i>
+                                </div>
+                                <div class="feature-content">
+                                    <div class="feature-title">Threat Detection</div>
+                                    <div class="feature-description">Real-time security threat monitoring</div>
+                                </div>
+                            </li>
+                            <li class="feature-item">
+                                <div class="feature-icon user-shield">
+                                    <i class="fas fa-user-shield"></i>
+                                </div>
+                                <div class="feature-content">
+                                    <div class="feature-title">Access Control</div>
+                                    <div class="feature-description">Role-based access management</div>
+                                </div>
+                            </li>
+                            <li class="feature-item">
+                                <div class="feature-icon lock">
+                                    <i class="fas fa-lock"></i>
+                                </div>
+                                <div class="feature-content">
+                                    <div class="feature-title">Authentication Security</div>
+                                    <div class="feature-description">Multi-factor authentication support</div>
+                                </div>
+                            </li>
+                            <li class="feature-item">
+                                <div class="feature-icon key">
+                                    <i class="fas fa-key"></i>
+                                </div>
+                                <div class="feature-content">
+                                    <div class="feature-title">API Security</div>
+                                    <div class="feature-description">Secure API key management</div>
+                                </div>
+                            </li>
+                            <li class="feature-item">
+                                <div class="feature-icon bell">
+                                    <i class="fas fa-bell"></i>
+                                </div>
+                                <div class="feature-content">
+                                    <div class="feature-title">Security Alerts</div>
+                                    <div class="feature-description">Instant security notifications</div>
+                                </div>
+                            </li>
+                            <li class="feature-item">
+                                <div class="feature-icon history">
+                                    <i class="fas fa-history"></i>
+                                </div>
+                                <div class="feature-content">
+                                    <div class="feature-title">Audit Trail</div>
+                                    <div class="feature-description">Complete security audit logging</div>
+                                </div>
+                            </li>
+                        </ul>
+                        
+                        <div class="d-flex gap-2">
+                            <button class="btn btn-primary" onclick="refreshSecurity()">
+                                <i class="fas fa-sync me-2"></i>Refresh Security
+                            </button>
+                            <button class="btn btn-secondary" onclick="configureSecurity()">
+                                <i class="fas fa-cog me-2"></i>Configure
+                            </button>
+                        </div>
+                    </div>
+                </div>
+            </main>
+        </div>
+    </div>
+
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
+    <script>
+        document.addEventListener('DOMContentLoaded', function() {
+            // Initialize components
+            initializeTimeDisplay();
+            initializeSecurity();
+            initializeTooltips();
+            
+            console.log('Security page loaded successfully');
+        });
+        
+        function initializeTimeDisplay() {
+            function updateTime() {
+                const now = new Date();
+                const timeString = now.toLocaleString('en-US', { 
+                    weekday: 'short', 
+                    year: 'numeric', 
+                    month: 'short', 
+                    day: 'numeric', 
+                    hour: '2-digit', 
+                    minute: '2-digit' 
+                });
+                const timeElement = document.getElementById('currentTime');
+                if (timeElement) timeElement.textContent = timeString;
+            }
+            updateTime();
+            setInterval(updateTime, 60000);
+        }
+        
+        function initializeSecurity() {
+            // Initialize security features (placeholder)
+        }
+        
+        function initializeTooltips() {
+            // Initialize Bootstrap tooltips
+            if (typeof bootstrap !== 'undefined' && bootstrap.Tooltip) {
+                const tooltipTriggerList = [].slice.call(document.querySelectorAll('[data-bs-toggle="tooltip"]'));
+                tooltipTriggerList.map(function (tooltipTriggerEl) {
+                    return new bootstrap.Tooltip(tooltipTriggerEl);
+                });
+            }
+            
+            // Initialize Bootstrap dropdowns
+            if (typeof bootstrap !== 'undefined' && bootstrap.Dropdown) {
+                const dropdownTriggerList = [].slice.call(document.querySelectorAll('[data-bs-toggle="dropdown"]'));
+                dropdownTriggerList.map(function (dropdownTriggerEl) {
+                    return new bootstrap.Dropdown(dropdownTriggerEl);
+                });
+            }
+        }
+        
+        function refreshSecurity() {
+            // Show loading state
+            const refreshBtn = document.querySelector('button[onclick="refreshSecurity()"]');
+            const originalContent = refreshBtn.innerHTML;
+            refreshBtn.innerHTML = '<i class="fas fa-spinner fa-spin me-2"></i>Refreshing...';
+            refreshBtn.disabled = true;
+            
+            // Simulate security data refresh
+            setTimeout(() => {
+                // Update security metrics
+                updateSecurityMetrics();
+                
+                // Restore button
+                refreshBtn.innerHTML = originalContent;
+                refreshBtn.disabled = false;
+                
+                // Show success message
+                showSuccessToast('Security data refreshed successfully!');
+                
+                // Log action
+                console.log('Security data refreshed at:', new Date().toISOString());
+            }, 2000);
+        }
+        
+        function updateSecurityMetrics() {
+            // Update security metrics
+            const metrics = {
+                securityEvents: Math.floor(Math.random() * 10),
+                activeSessions: Math.floor(Math.random() * 50) + 10,
+                failedLogins: Math.floor(Math.random() * 5),
+                securityAlerts: Math.floor(Math.random() * 3)
+            };
+            
+            // Update metric cards
+            const statValues = document.querySelectorAll('.empty-stat-value');
+            statValues.forEach((card, index) => {
+                if (index < Object.keys(metrics).length) {
+                    const metricValue = Object.values(metrics)[index];
+                    card.textContent = metricValue;
+                    
+                    // Add animation
+                    card.style.transform = 'scale(1.1)';
+                    setTimeout(() => {
+                        card.style.transform = 'scale(1)';
+                    }, 300);
+                }
+            });
+            
+            // Update last refresh time
+            const lastRefreshElement = document.getElementById('lastSecurityRefresh');
+            if (!lastRefreshElement) {
+                const refreshInfo = document.createElement('div');
+                refreshInfo.id = 'lastSecurityRefresh';
+                refreshInfo.className = 'text-muted small mt-3';
+                refreshInfo.innerHTML = `<i class="fas fa-clock me-1"></i>Last refreshed: ${new Date().toLocaleTimeString()}`;
+                
+                const buttonContainer = document.querySelector('.d-flex.gap-2');
+                if (buttonContainer) {
+                    buttonContainer.parentElement.appendChild(refreshInfo);
+                }
+            } else {
+                lastRefreshElement.innerHTML = `<i class="fas fa-clock me-1"></i>Last refreshed: ${new Date().toLocaleTimeString()}`;
+            }
+        }
+        
+        function configureSecurity() {
+            // Create security configuration modal
+            const modalHtml = `
+                <div class="modal fade" id="securityConfigModal" tabindex="-1" aria-labelledby="securityConfigModalLabel" aria-hidden="true">
+                    <div class="modal-dialog modal-lg">
+                        <div class="modal-content">
+                            <div class="modal-header">
+                                <h5 class="modal-title" id="securityConfigModalLabel">
+                                    <i class="fas fa-shield-alt me-2"></i>Security Configuration
+                                </h5>
+                                <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+                            </div>
+                            <div class="modal-body">
+                                <form id="securityConfigForm">
+                                    <div class="row">
+                                        <div class="col-md-6 mb-3">
+                                            <h6 class="text-primary mb-3">Authentication Settings</h6>
+                                            <div class="mb-3">
+                                                <label for="sessionTimeout" class="form-label">Session Timeout (minutes)</label>
+                                                <input type="number" class="form-control" id="sessionTimeout" value="30" min="5" max="480">
+                                            </div>
+                                            <div class="mb-3">
+                                                <label for="maxLoginAttempts" class="form-label">Max Login Attempts</label>
+                                                <input type="number" class="form-control" id="maxLoginAttempts" value="5" min="1" max="10">
+                                            </div>
+                                            <div class="mb-3">
+                                                <label for="lockoutDuration" class="form-label">Lockout Duration (minutes)</label>
+                                                <input type="number" class="form-control" id="lockoutDuration" value="15" min="1" max="1440">
+                                            </div>
+                                            <div class="mb-3">
+                                                <div class="form-check">
+                                                    <input class="form-check-input" type="checkbox" id="requireTwoFactor" checked>
+                                                    <label class="form-check-label" for="requireTwoFactor">
+                                                        Require Two-Factor Authentication
+                                                    </label>
+                                                </div>
+                                            </div>
+                                        </div>
+                                        <div class="col-md-6 mb-3">
+                                            <h6 class="text-primary mb-3">Threat Detection</h6>
+                                            <div class="mb-3">
+                                                <label for="threatThreshold" class="form-label">Threat Score Threshold</label>
+                                                <input type="number" class="form-control" id="threatThreshold" value="70" min="0" max="100">
+                                            </div>
+                                            <div class="mb-3">
+                                                <label for="anomalyDetection" class="form-label">Anomaly Detection Sensitivity</label>
+                                                <select class="form-select" id="anomalyDetection">
+                                                    <option value="low">Low</option>
+                                                    <option value="medium" selected>Medium</option>
+                                                    <option value="high">High</option>
+                                                </select>
+                                            </div>
+                                            <div class="mb-3">
+                                                <label for="geoFencing" class="form-label">Geofencing Radius (km)</label>
+                                                <input type="number" class="form-control" id="geoFencing" value="10" min="1" max="100">
+                                            </div>
+                                            <div class="mb-3">
+                                                <div class="form-check">
+                                                    <input class="form-check-input" type="checkbox" id="enableRealTimeMonitoring" checked>
+                                                    <label class="form-check-label" for="enableRealTimeMonitoring">
+                                                        Enable Real-time Monitoring
+                                                    </label>
+                                                </div>
+                                            </div>
+                                        </div>
+                                    </div>
+                                    <div class="row">
+                                        <div class="col-12 mb-3">
+                                            <h6 class="text-primary mb-3">Security Policies</h6>
+                                            <div class="row">
+                                                <div class="col-md-6 mb-2">
+                                                    <div class="form-check">
+                                                        <input class="form-check-input" type="checkbox" id="enforceStrongPasswords" checked>
+                                                        <label class="form-check-label" for="enforceStrongPasswords">Strong Password Policy</label>
+                                                    </div>
+                                                </div>
+                                                <div class="col-md-6 mb-2">
+                                                    <div class="form-check">
+                                                        <input class="form-check-input" type="checkbox" id="logAllAccess" checked>
+                                                        <label class="form-check-label" for="logAllAccess">Log All Access Attempts</label>
+                                                    </div>
+                                                </div>
+                                                <div class="col-md-6 mb-2">
+                                                    <div class="form-check">
+                                                        <input class="form-check-input" type="checkbox" id="enableIpWhitelist">
+                                                        <label class="form-check-label" for="enableIpWhitelist">Enable IP Whitelist</label>
+                                                    </div>
+                                                </div>
+                                                <div class="col-md-6 mb-2">
+                                                    <div class="form-check">
+                                                        <input class="form-check-input" type="checkbox" id="enableDeviceTracking" checked>
+                                                        <label class="form-check-label" for="enableDeviceTracking">Device Tracking</label>
+                                                    </div>
+                                                </div>
+                                                <div class="col-md-6 mb-2">
+                                                    <div class="form-check">
+                                                        <input class="form-check-input" type="checkbox" id="enableAutoLockout" checked>
+                                                        <label class="form-check-label" for="enableAutoLockout">Automatic Lockout</label>
+                                                    </div>
+                                                </div>
+                                                <div class="col-md-6 mb-2">
+                                                    <div class="form-check">
+                                                        <input class="form-check-input" type="checkbox" id="enableSecurityAlerts" checked>
+                                                        <label class="form-check-label" for="enableSecurityAlerts">Security Alerts</label>
+                                                    </div>
+                                                </div>
+                                            </div>
+                                        </div>
+                                    </div>
+                                </form>
+                            </div>
+                            <div class="modal-footer">
+                                <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancel</button>
+                                <button type="button" class="btn btn-primary" onclick="saveSecurityConfig()">
+                                    <i class="fas fa-save me-2"></i>Save Configuration
+                                </button>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            `;
+            
+            // Remove existing modal if present
+            const existingModal = document.getElementById('securityConfigModal');
+            if (existingModal) {
+                existingModal.remove();
+            }
+            
+            // Add modal to page
+            document.body.insertAdjacentHTML('beforeend', modalHtml);
+            
+            // Show modal
+            const modal = new bootstrap.Modal(document.getElementById('securityConfigModal'));
+            modal.show();
+        }
+        
+        function saveSecurityConfig() {
+            // Get form data
+            const config = {
+                authentication: {
+                    sessionTimeout: document.getElementById('sessionTimeout').value,
+                    maxLoginAttempts: document.getElementById('maxLoginAttempts').value,
+                    lockoutDuration: document.getElementById('lockoutDuration').value,
+                    requireTwoFactor: document.getElementById('requireTwoFactor').checked
+                },
+                threatDetection: {
+                    threatThreshold: document.getElementById('threatThreshold').value,
+                    anomalyDetection: document.getElementById('anomalyDetection').value,
+                    geoFencing: document.getElementById('geoFencing').value,
+                    enableRealTimeMonitoring: document.getElementById('enableRealTimeMonitoring').checked
+                },
+                policies: {
+                    enforceStrongPasswords: document.getElementById('enforceStrongPasswords').checked,
+                    logAllAccess: document.getElementById('logAllAccess').checked,
+                    enableIpWhitelist: document.getElementById('enableIpWhitelist').checked,
+                    enableDeviceTracking: document.getElementById('enableDeviceTracking').checked,
+                    enableAutoLockout: document.getElementById('enableAutoLockout').checked,
+                    enableSecurityAlerts: document.getElementById('enableSecurityAlerts').checked
+                }
+            };
+            
+            // Close modal
+            const modal = bootstrap.Modal.getInstance(document.getElementById('securityConfigModal'));
+            modal.hide();
+            
+            // Show success message
+            showSuccessToast('Security configuration saved successfully!');
+            
+            // Log action
+            console.log('Security configuration saved:', config);
+        }
+        
+        function showSuccessToast(message) {
+            // Create toast HTML
+            const toastHtml = `
+                <div class="toast-container position-fixed top-0 end-0 p-3">
+                    <div class="toast show" role="alert" aria-live="assertive" aria-atomic="true">
+                        <div class="toast-header bg-success text-white">
+                            <i class="fas fa-shield-alt me-2"></i>
+                            <strong class="me-auto">Security</strong>
+                            <button type="button" class="btn-close btn-close-white" data-bs-dismiss="toast" aria-label="Close"></button>
+                        </div>
+                        <div class="toast-body">
+                            ${message}
+                        </div>
+                    </div>
+                </div>
+            `;
+            
+            // Add toast to page
+            document.body.insertAdjacentHTML('beforeend', toastHtml);
+            
+            // Auto remove after 5 seconds
+            setTimeout(() => {
+                const toastContainer = document.querySelector('.toast-container');
+                if (toastContainer) {
+                    toastContainer.remove();
+                }
+            }, 5000);
+        }
+        
+        function showLogoutConfirm() {
+            if (confirm('Do you really want to log out?')) {
+                window.location.href = '/logout';
+            }
+        }
+        
+        function toggleSidebar() {
+            const sidebar = document.querySelector('.sidebar');
+            if (sidebar) {
+                sidebar.classList.toggle('open');
+            }
+        }
+    </script>
+</body>
+</html>

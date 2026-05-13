@@ -1,0 +1,697 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>System Settings - Attendrix</title>
+    <meta name="description" content="Manage system settings in Attendrix">
+    
+    <link rel="icon" type="image/x-icon" href="/static/images/favicon.ico">
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <link rel="stylesheet" href="{{ url_for('static', filename='css/landing.css') }}">
+    
+    <style>
+        :root {
+            --primary-color: #4f46e5;
+            --primary-dark: #4338ca;
+            --secondary-color: #64748b;
+            --accent-color: #6366f1;
+            --success-color: #10b981;
+            --warning-color: #f59e0b;
+            --error-color: #ef4444;
+            --bg-primary: #ffffff;
+            --bg-secondary: #f8fafc;
+            --text-primary: #1e293b;
+            --text-secondary: #64748b;
+            --border-color: #e2e8f0;
+            --shadow-sm: 0 1px 2px 0 rgb(0 0 0 / 0.05);
+            --shadow-md: 0 4px 6px -1px rgb(0 0 0 / 0.1);
+            --radius-sm: 6px;
+            --radius-md: 8px;
+            --radius-lg: 12px;
+        }
+
+        * { margin: 0; padding: 0; box-sizing: border-box; }
+        body { font-family: 'Inter', sans-serif; background: var(--bg-secondary); color: var(--text-primary); line-height: 1.6; }
+        .dashboard-layout { display: flex; min-height: 100vh; }
+        
+        .sidebar { width: 280px; background: var(--bg-primary); border-right: 1px solid var(--border-color); position: fixed; height: 100vh; left: 0; top: 0; z-index: 1000; transition: transform 0.3s ease; }
+        .sidebar-header { padding: 1.5rem; border-bottom: 1px solid var(--border-color); background: linear-gradient(135deg, var(--primary-color) 0%, var(--primary-dark) 100%); color: white; }
+        .sidebar-brand { display: flex; align-items: center; gap: 0.75rem; font-size: 1.25rem; font-weight: 700; text-decoration: none; color: white; }
+        .sidebar-nav { padding: 1rem 0; }
+        .sidebar-nav-item { display: block; padding: 0.875rem 1.5rem; color: var(--text-secondary); text-decoration: none; transition: all 0.2s ease; position: relative; font-weight: 500; }
+        .sidebar-nav-item:hover { background: var(--bg-secondary); color: var(--primary-color); }
+        .sidebar-nav-item.active { background: linear-gradient(90deg, rgba(79, 70, 229, 0.1) 0%, transparent 100%); color: var(--primary-color); font-weight: 600; }
+        .sidebar-nav-item.active::before { content: ''; position: absolute; left: 0; top: 0; bottom: 0; width: 4px; background: var(--primary-color); }
+        .sidebar-nav-item i { width: 20px; margin-right: 0.75rem; text-align: center; }
+        
+        .main-content { flex: 1; margin-left: 280px; display: flex; flex-direction: column; min-height: 100vh; }
+        .top-header { background: var(--bg-primary); border-bottom: 1px solid var(--border-color); padding: 1rem 2rem; display: flex; justify-content: space-between; align-items: center; box-shadow: var(--shadow-sm); position: sticky; top: 0; z-index: 100; }
+        .header-left { display: flex; align-items: center; gap: 1rem; }
+        .header-title { font-size: 1.5rem; font-weight: 700; color: var(--text-primary); }
+        .header-subtitle { color: var(--text-secondary); font-size: 0.875rem; }
+        .header-right { display: flex; align-items: center; gap: 1rem; }
+        .header-time { color: var(--text-secondary); font-size: 0.875rem; }
+        .profile-dropdown { position: relative; }
+        .profile-avatar { width: 40px; height: 40px; border-radius: var(--radius-md); background: linear-gradient(135deg, var(--primary-color) 0%, var(--accent-color) 100%); display: flex; align-items: center; justify-content: center; color: white; cursor: pointer; }
+        
+        .content-area { flex: 1; padding: 2rem; background: var(--bg-secondary); }
+        .page-content { background: var(--bg-primary); padding: 2rem; border-radius: var(--radius-lg); box-shadow: var(--shadow-sm); border: 1px solid var(--border-color); }
+        .page-header { margin-bottom: 2rem; }
+        .page-title { font-size: 1.75rem; font-weight: 700; color: var(--text-primary); margin-bottom: 0.5rem; }
+        .page-description { color: var(--text-secondary); font-size: 1rem; }
+        
+        .settings-tabs { display: flex; gap: 0.5rem; margin-bottom: 2rem; border-bottom: 1px solid var(--border-color); }
+        .settings-tab { padding: 1rem 1.5rem; background: none; border: none; color: var(--text-secondary); cursor: pointer; font-weight: 500; border-bottom: 2px solid transparent; transition: all 0.2s ease; }
+        .settings-tab:hover { color: var(--primary-color); }
+        .settings-tab.active { color: var(--primary-color); border-bottom-color: var(--primary-color); }
+        
+        .settings-section { display: none; }
+        .settings-section.active { display: block; }
+        
+        .setting-group { background: var(--bg-primary); padding: 1.5rem; border-radius: var(--radius-lg); border: 1px solid var(--border-color); box-shadow: var(--shadow-sm); margin-bottom: 1.5rem; }
+        .setting-group-title { font-size: 1.125rem; font-weight: 600; color: var(--text-primary); margin-bottom: 1rem; padding-bottom: 0.5rem; border-bottom: 1px solid var(--border-color); }
+        .setting-item { display: flex; justify-content: space-between; align-items: center; padding: 1rem 0; border-bottom: 1px solid var(--border-color); }
+        .setting-item:last-child { border-bottom: none; }
+        .setting-info { flex: 1; }
+        .setting-label { font-weight: 500; color: var(--text-primary); margin-bottom: 0.25rem; }
+        .setting-description { font-size: 0.875rem; color: var(--text-secondary); }
+        .setting-control { min-width: 200px; text-align: right; }
+        
+        .form-control, .form-select { border: 1px solid var(--border-color); border-radius: var(--radius-md); padding: 0.75rem; font-size: 0.875rem; transition: all 0.2s ease; }
+        .form-control:focus, .form-select:focus { border-color: var(--primary-color); box-shadow: 0 0 0 3px rgba(79, 70, 229, 0.1); outline: none; }
+        
+        .toggle-switch { position: relative; width: 50px; height: 24px; background: var(--border-color); border-radius: 12px; cursor: pointer; transition: background 0.2s ease; }
+        .toggle-switch.active { background: var(--primary-color); }
+        .toggle-switch::after { content: ''; position: absolute; top: 2px; left: 2px; width: 20px; height: 20px; background: white; border-radius: 50%; transition: transform 0.2s ease; }
+        .toggle-switch.active::after { transform: translateX(26px); }
+        
+        .btn-primary { background: linear-gradient(135deg, var(--primary-color) 0%, var(--primary-dark) 100%); border: none; color: white; padding: 0.75rem 1.5rem; border-radius: var(--radius-md); font-weight: 500; transition: all 0.2s ease; }
+        .btn-primary:hover { transform: translateY(-1px); box-shadow: var(--shadow-md); }
+        .btn-secondary { background: var(--bg-secondary); border: 1px solid var(--border-color); color: var(--text-primary); padding: 0.75rem 1.5rem; border-radius: var(--radius-md); font-weight: 500; transition: all 0.2s ease; }
+        .btn-secondary:hover { background: var(--border-color); }
+        .btn-danger { background: linear-gradient(135deg, var(--error-color) 0%, #dc2626 100%); border: none; color: white; padding: 0.75rem 1.5rem; border-radius: var(--radius-md); font-weight: 500; transition: all 0.2s ease; }
+        .btn-danger:hover { transform: translateY(-1px); box-shadow: var(--shadow-md); }
+        
+        .alert { border-radius: var(--radius-md); padding: 1rem; margin-bottom: 1rem; border: none; }
+        .alert-success { background: rgba(16, 185, 129, 0.1); color: var(--success-color); border-left: 4px solid var(--success-color); }
+        .alert-error { background: rgba(239, 68, 68, 0.1); color: var(--error-color); border-left: 4px solid var(--error-color); }
+        .alert-warning { background: rgba(245, 158, 11, 0.1); color: var(--warning-color); border-left: 4px solid var(--warning-color); }
+        
+        .empty-state { text-align: center; padding: 4rem 2rem; color: var(--text-secondary); }
+        .empty-icon { font-size: 4rem; color: var(--primary-color); margin-bottom: 1.5rem; opacity: 0.5; }
+        .empty-title { font-size: 1.5rem; font-weight: 600; color: var(--text-primary); margin-bottom: 1rem; }
+        .empty-description { margin-bottom: 2rem; }
+        
+        @media (max-width: 768px) {
+            .sidebar { transform: translateX(-100%); z-index: 1050; }
+            .sidebar.open { transform: translateX(0); }
+            .main-content { margin-left: 0; }
+            .content-area { padding: 1rem; }
+            .header-title { font-size: 1.25rem; }
+            .page-content { padding: 1rem; }
+            .settings-tabs { flex-wrap: wrap; }
+            .setting-item { flex-direction: column; align-items: flex-start; gap: 1rem; }
+            .setting-control { width: 100%; text-align: left; }
+        }
+        
+        .mobile-menu-btn { display: none; background: none; border: 1px solid var(--border-color); border-radius: var(--radius-sm); padding: 0.5rem; color: var(--text-secondary); cursor: pointer; }
+        .mobile-menu-btn:hover { background: var(--bg-secondary); color: var(--primary-color); }
+        @media (max-width: 768px) { .mobile-menu-btn { display: block; } }
+    </style>
+</head>
+<body>
+    <div class="dashboard-layout">
+        <div class="sidebar">
+            <div class="sidebar-header">
+                <a class="sidebar-brand" href="/admin/dashboard">
+                    <i class="fas fa-graduation-cap me-2"></i>
+                    <strong>Attendrix</strong>
+                </a>
+            </div>
+            <div class="sidebar-nav">
+                <a class="sidebar-nav-item" href="/admin/dashboard"><i class="fas fa-tachometer-alt me-2"></i>Dashboard</a>
+                <a class="sidebar-nav-item" href="/admin/create_institution"><i class="fas fa-building me-2"></i>Institutions</a>
+                <a class="sidebar-nav-item" href="/admin/users"><i class="fas fa-users me-2"></i>Users</a>
+                <a class="sidebar-nav-item" href="/admin/monitoring"><i class="fas fa-chart-line me-2"></i>Monitoring</a>
+                <a class="sidebar-nav-item" href="/admin/security"><i class="fas fa-shield-alt me-2"></i>Security</a>
+                <a class="sidebar-nav-item" href="/admin/backup"><i class="fas fa-database me-2"></i>Backup & Restore</a>
+                <a class="sidebar-nav-item" href="/admin/notifications"><i class="fas fa-bell me-2"></i>Notifications</a>
+                <a class="sidebar-nav-item" href="/admin/audit"><i class="fas fa-history me-2"></i>Audit Logs</a>
+                <a class="sidebar-nav-item" href="/admin/roles"><i class="fas fa-user-shield me-2"></i>Role Assignments</a>
+                <a class="sidebar-nav-item" href="/admin/profile"><i class="fas fa-user me-2"></i>Profile</a>
+            </div>
+        </div>
+        <div class="main-content">
+            <div class="top-header">
+                <div class="header-left">
+                    <button class="mobile-menu-btn" onclick="toggleSidebar()"><i class="fas fa-bars"></i></button>
+                    <div>
+                        <h1 class="header-title">System Settings</h1>
+                        <p class="header-subtitle">Manage system configuration, security, and operational settings</p>
+                    </div>
+                </div>
+                <div class="header-right">
+                    <div class="header-time" id="currentTime"></div>
+                    <div class="profile-dropdown">
+                        <div class="profile-avatar" data-bs-toggle="dropdown"><i class="fas fa-user"></i></div>
+                        <ul class="dropdown-menu dropdown-menu-end">
+                            <li><a class="dropdown-item" href="/admin/profile"><i class="fas fa-user me-2"></i>Profile</a></li>
+                            <li><a class="dropdown-item" href="/admin/settings"><i class="fas fa-cog me-2"></i>Settings</a></li>
+                            <li><hr class="dropdown-divider"></li>
+                            <li><a class="dropdown-item" href="#" onclick="showLogoutConfirm()"><i class="fas fa-sign-out-alt me-2"></i>Logout</a></li>
+                        </ul>
+                    </div>
+                </div>
+            </div>
+            <main class="content-area">
+                <div class="page-content">
+                    <div class="page-header">
+                        <h2 class="page-title">System Settings</h2>
+                        <p class="page-description">Manage system configuration, security, and operational settings</p>
+                    </div>
+                    
+                    <div id="alertContainer"></div>
+                    
+                    <!-- Settings Tabs -->
+                    <div class="settings-tabs">
+                        <button class="settings-tab active" onclick="switchTab('general')">General</button>
+                        <button class="settings-tab" onclick="switchTab('security')">Security</button>
+                        <button class="settings-tab" onclick="switchTab('notifications')">Notifications</button>
+                        <button class="settings-tab" onclick="switchTab('backup')">Backup</button>
+                        <button class="settings-tab" onclick="switchTab('integrations')">Integrations</button>
+                        <button class="settings-tab" onclick="switchTab('advanced')">Advanced</button>
+                    </div>
+                    
+                    <!-- General Settings -->
+                    <div id="general" class="settings-section active">
+                        <div class="setting-group">
+                            <h3 class="setting-group-title">System Information</h3>
+                            <div class="setting-item">
+                                <div class="setting-info">
+                                    <div class="setting-label">System Name</div>
+                                    <div class="setting-description">The name displayed throughout the system</div>
+                                </div>
+                                <div class="setting-control">
+                                    <input type="text" class="form-control" id="systemName" value="Attendrix">
+                                </div>
+                            </div>
+                            <div class="setting-item">
+                                <div class="setting-info">
+                                    <div class="setting-label">Default Timezone</div>
+                                    <div class="setting-description">Timezone used for system-wide timestamps</div>
+                                </div>
+                                <div class="setting-control">
+                                    <select class="form-select" id="defaultTimezone">
+                                        <option value="UTC">UTC</option>
+                                        <option value="Africa/Douala">Africa/Douala (GMT+1)</option>
+                                        <option value="Europe/London">Europe/London (GMT+0)</option>
+                                        <option value="America/New_York">America/New_York (GMT-5)</option>
+                                    </select>
+                                </div>
+                            </div>
+                            <div class="setting-item">
+                                <div class="setting-info">
+                                    <div class="setting-label">System Language</div>
+                                    <div class="setting-description">Default language for the system interface</div>
+                                </div>
+                                <div class="setting-control">
+                                    <select class="form-select" id="systemLanguage">
+                                        <option value="en">English</option>
+                                        <option value="fr">Français</option>
+                                        <option value="es">Español</option>
+                                    </select>
+                                </div>
+                            </div>
+                        </div>
+                        
+                        <div class="setting-group">
+                            <h3 class="setting-group-title">User Settings</h3>
+                            <div class="setting-item">
+                                <div class="setting-info">
+                                    <div class="setting-label">User Registration</div>
+                                    <div class="setting-description">Allow new users to register themselves</div>
+                                </div>
+                                <div class="setting-control">
+                                    <div class="toggle-switch" id="userRegistration" onclick="toggleSwitch(this)"></div>
+                                </div>
+                            </div>
+                            <div class="setting-item">
+                                <div class="setting-info">
+                                    <div class="setting-label">Email Verification</div>
+                                    <div class="setting-description">Require email verification for new accounts</div>
+                                </div>
+                                <div class="setting-control">
+                                    <div class="toggle-switch active" id="emailVerification" onclick="toggleSwitch(this)"></div>
+                                </div>
+                            </div>
+                            <div class="setting-item">
+                                <div class="setting-info">
+                                    <div class="setting-label">Password Minimum Length</div>
+                                    <div class="setting-description">Minimum characters required for passwords</div>
+                                </div>
+                                <div class="setting-control">
+                                    <input type="number" class="form-control" id="passwordMinLength" value="8" min="6" max="20">
+                                </div>
+                            </div>
+                        </div>
+                        
+                        <div class="setting-group">
+                            <h3 class="setting-group-title">Academic Settings</h3>
+                            <div class="setting-item">
+                                <div class="setting-info">
+                                    <div class="setting-label">Default Academic Year</div>
+                                    <div class="setting-description">Default academic year for new institutions</div>
+                                </div>
+                                <div class="setting-control">
+                                    <input type="text" class="form-control" id="defaultAcademicYear" placeholder="e.g., 2024-2025">
+                                </div>
+                            </div>
+                            <div class="setting-item">
+                                <div class="setting-info">
+                                    <div class="setting-label">Attendance Grace Period</div>
+                                    <div class="setting-description">Minutes after class start when attendance is still marked on time</div>
+                                </div>
+                                <div class="setting-control">
+                                    <input type="number" class="form-control" id="attendanceGracePeriod" value="15" min="0" max="60">
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                    
+                    <!-- Security Settings -->
+                    <div id="security" class="settings-section">
+                        <div class="setting-group">
+                            <h3 class="setting-group-title">Authentication</h3>
+                            <div class="setting-item">
+                                <div class="setting-info">
+                                    <div class="setting-label">Two-Factor Authentication</div>
+                                    <div class="setting-description">Require 2FA for all admin users</div>
+                                </div>
+                                <div class="setting-control">
+                                    <div class="toggle-switch" id="twoFactorAuth" onclick="toggleSwitch(this)"></div>
+                                </div>
+                            </div>
+                            <div class="setting-item">
+                                <div class="setting-info">
+                                    <div class="setting-label">Session Timeout</div>
+                                    <div class="setting-description">Minutes of inactivity before automatic logout</div>
+                                </div>
+                                <div class="setting-control">
+                                    <input type="number" class="form-control" id="sessionTimeout" value="120" min="15" max="480">
+                                </div>
+                            </div>
+                            <div class="setting-item">
+                                <div class="setting-info">
+                                    <div class="setting-label">Max Login Attempts</div>
+                                    <div class="setting-description">Failed login attempts before account lockout</div>
+                                </div>
+                                <div class="setting-control">
+                                    <input type="number" class="form-control" id="maxLoginAttempts" value="5" min="3" max="10">
+                                </div>
+                            </div>
+                        </div>
+                        
+                        <div class="setting-group">
+                            <h3 class="setting-group-title">Data Protection</h3>
+                            <div class="setting-item">
+                                <div class="setting-info">
+                                    <div class="setting-label">Data Encryption</div>
+                                    <div class="setting-description">Encrypt sensitive data at rest</div>
+                                </div>
+                                <div class="setting-control">
+                                    <div class="toggle-switch active" id="dataEncryption" onclick="toggleSwitch(this)"></div>
+                                </div>
+                            </div>
+                            <div class="setting-item">
+                                <div class="setting-info">
+                                    <div class="setting-label">Audit Logging</div>
+                                    <div class="setting-description">Log all administrative actions</div>
+                                </div>
+                                <div class="setting-control">
+                                    <div class="toggle-switch active" id="auditLogging" onclick="toggleSwitch(this)"></div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                    
+                    <!-- Notification Settings -->
+                    <div id="notifications" class="settings-section">
+                        <div class="setting-group">
+                            <h3 class="setting-group-title">Email Notifications</h3>
+                            <div class="setting-item">
+                                <div class="setting-info">
+                                    <div class="setting-label">SMTP Server</div>
+                                    <div class="setting-description">Outgoing mail server for system emails</div>
+                                </div>
+                                <div class="setting-control">
+                                    <input type="text" class="form-control" id="smtpServer" placeholder="smtp.example.com">
+                                </div>
+                            </div>
+                            <div class="setting-item">
+                                <div class="setting-info">
+                                    <div class="setting-label">Email From Address</div>
+                                    <div class="setting-description">Default sender address for system emails</div>
+                                </div>
+                                <div class="setting-control">
+                                    <input type="email" class="form-control" id="emailFromAddress" placeholder="noreply@attendrix.com">
+                                </div>
+                            </div>
+                            <div class="setting-item">
+                                <div class="setting-info">
+                                    <div class="setting-label">Send Attendance Reminders</div>
+                                    <div class="setting-description">Automatically send attendance reminder emails</div>
+                                </div>
+                                <div class="setting-control">
+                                    <div class="toggle-switch active" id="attendanceReminders" onclick="toggleSwitch(this)"></div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                    
+                    <!-- Backup Settings -->
+                    <div id="backup" class="settings-section">
+                        <div class="setting-group">
+                            <h3 class="setting-group-title">Automatic Backups</h3>
+                            <div class="setting-item">
+                                <div class="setting-info">
+                                    <div class="setting-label">Enable Automatic Backups</div>
+                                    <div class="setting-description">Schedule regular system backups</div>
+                                </div>
+                                <div class="setting-control">
+                                    <div class="toggle-switch" id="autoBackups" onclick="toggleSwitch(this)"></div>
+                                </div>
+                            </div>
+                            <div class="setting-item">
+                                <div class="setting-info">
+                                    <div class="setting-label">Backup Frequency</div>
+                                    <div class="setting-description">How often to create automatic backups</div>
+                                </div>
+                                <div class="setting-control">
+                                    <select class="form-select" id="backupFrequency">
+                                        <option value="daily">Daily</option>
+                                        <option value="weekly">Weekly</option>
+                                        <option value="monthly">Monthly</option>
+                                    </select>
+                                </div>
+                            </div>
+                            <div class="setting-item">
+                                <div class="setting-info">
+                                    <div class="setting-label">Retention Period</div>
+                                    <div class="setting-description">Days to keep backup files</div>
+                                </div>
+                                <div class="setting-control">
+                                    <input type="number" class="form-control" id="backupRetention" value="30" min="7" max="365">
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                    
+                    <!-- Integration Settings -->
+                    <div id="integrations" class="settings-section">
+                        <div class="setting-group">
+                            <h3 class="setting-group-title">External Services</h3>
+                            <div class="setting-item">
+                                <div class="setting-info">
+                                    <div class="setting-label">Firebase Integration</div>
+                                    <div class="setting-description">Connect to Firebase for authentication and database</div>
+                                </div>
+                                <div class="setting-control">
+                                    <div class="toggle-switch active" id="firebaseIntegration" onclick="toggleSwitch(this)"></div>
+                                </div>
+                            </div>
+                            <div class="setting-item">
+                                <div class="setting-info">
+                                    <div class="setting-label">Google Calendar Sync</div>
+                                    <div class="setting-description">Sync schedules with Google Calendar</div>
+                                </div>
+                                <div class="setting-control">
+                                    <div class="toggle-switch" id="googleCalendarSync" onclick="toggleSwitch(this)"></div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                    
+                    <!-- Advanced Settings -->
+                    <div id="advanced" class="settings-section">
+                        <div class="setting-group">
+                            <h3 class="setting-group-title">System Maintenance</h3>
+                            <div class="setting-item">
+                                <div class="setting-info">
+                                    <div class="setting-label">Maintenance Mode</div>
+                                    <div class="setting-description">Temporarily disable user access for maintenance</div>
+                                </div>
+                                <div class="setting-control">
+                                    <div class="toggle-switch" id="maintenanceMode" onclick="toggleSwitch(this)"></div>
+                                </div>
+                            </div>
+                            <div class="setting-item">
+                                <div class="setting-info">
+                                    <div class="setting-label">Debug Mode</div>
+                                    <div class="setting-description">Enable detailed error logging and debugging</div>
+                                </div>
+                                <div class="setting-control">
+                                    <div class="toggle-switch" id="debugMode" onclick="toggleSwitch(this)"></div>
+                                </div>
+                            </div>
+                        </div>
+                        
+                        <div class="setting-group">
+                            <h3 class="setting-group-title">Danger Zone</h3>
+                            <div class="setting-item">
+                                <div class="setting-info">
+                                    <div class="setting-label">Reset System Settings</div>
+                                    <div class="setting-description">Reset all settings to default values</div>
+                                </div>
+                                <div class="setting-control">
+                                    <button class="btn btn-danger btn-sm" onclick="resetSettings()">Reset All Settings</button>
+                                </div>
+                            </div>
+                            <div class="setting-item">
+                                <div class="setting-info">
+                                    <div class="setting-label">Clear System Cache</div>
+                                    <div class="setting-description">Clear all system cache and temporary files</div>
+                                </div>
+                                <div class="setting-control">
+                                    <button class="btn btn-secondary btn-sm" onclick="clearCache()">Clear Cache</button>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                    
+                    <!-- Save Button -->
+                    <div class="d-flex gap-2">
+                        <button class="btn btn-primary" onclick="saveSettings()">
+                            <i class="fas fa-save me-2"></i>Save Settings
+                        </button>
+                        <button class="btn btn-secondary" onclick="resetForm()">
+                            <i class="fas fa-undo me-2"></i>Reset Changes
+                        </button>
+                    </div>
+                </div>
+            </main>
+        </div>
+    </div>
+
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
+    <script>
+        document.addEventListener('DOMContentLoaded', function() {
+            // Initialize components
+            initializeTimeDisplay();
+            initializeSettings();
+            initializeTooltips();
+            
+            console.log('System Settings page loaded successfully');
+        });
+        
+        function initializeTimeDisplay() {
+            function updateTime() {
+                const now = new Date();
+                const timeString = now.toLocaleString('en-US', { 
+                    weekday: 'short', 
+                    year: 'numeric', 
+                    month: 'short', 
+                    day: 'numeric', 
+                    hour: '2-digit', 
+                    minute: '2-digit' 
+                });
+                const timeElement = document.getElementById('currentTime');
+                if (timeElement) timeElement.textContent = timeString;
+            }
+            updateTime();
+            setInterval(updateTime, 60000);
+        }
+        
+        function initializeSettings() {
+            // Load saved settings (placeholder)
+            loadSavedSettings();
+        }
+        
+        function initializeTooltips() {
+            // Initialize Bootstrap tooltips
+            if (typeof bootstrap !== 'undefined' && bootstrap.Tooltip) {
+                const tooltipTriggerList = [].slice.call(document.querySelectorAll('[data-bs-toggle="tooltip"]'));
+                tooltipTriggerList.map(function (tooltipTriggerEl) {
+                    return new bootstrap.Tooltip(tooltipTriggerEl);
+                });
+            }
+            
+            // Initialize Bootstrap dropdowns
+            if (typeof bootstrap !== 'undefined' && bootstrap.Dropdown) {
+                const dropdownTriggerList = [].slice.call(document.querySelectorAll('[data-bs-toggle="dropdown"]'));
+                dropdownTriggerList.map(function (dropdownTriggerEl) {
+                    return new bootstrap.Dropdown(dropdownTriggerEl);
+                });
+            }
+        }
+        
+        function switchTab(tabName) {
+            // Hide all sections
+            const sections = document.querySelectorAll('.settings-section');
+            sections.forEach(section => section.classList.remove('active'));
+            
+            // Remove active class from all tabs
+            const tabs = document.querySelectorAll('.settings-tab');
+            tabs.forEach(tab => tab.classList.remove('active'));
+            
+            // Show selected section
+            const selectedSection = document.getElementById(tabName);
+            if (selectedSection) {
+                selectedSection.classList.add('active');
+            }
+            
+            // Add active class to clicked tab
+            event.target.classList.add('active');
+        }
+        
+        function toggleSwitch(element) {
+            element.classList.toggle('active');
+        }
+        
+        function saveSettings() {
+            // Collect all settings
+            const settings = {
+                general: {
+                    systemName: document.getElementById('systemName').value,
+                    defaultTimezone: document.getElementById('defaultTimezone').value,
+                    systemLanguage: document.getElementById('systemLanguage').value,
+                    userRegistration: document.getElementById('userRegistration').classList.contains('active'),
+                    emailVerification: document.getElementById('emailVerification').classList.contains('active'),
+                    passwordMinLength: document.getElementById('passwordMinLength').value,
+                    defaultAcademicYear: document.getElementById('defaultAcademicYear').value,
+                    attendanceGracePeriod: document.getElementById('attendanceGracePeriod').value
+                },
+                security: {
+                    twoFactorAuth: document.getElementById('twoFactorAuth').classList.contains('active'),
+                    sessionTimeout: document.getElementById('sessionTimeout').value,
+                    maxLoginAttempts: document.getElementById('maxLoginAttempts').value,
+                    dataEncryption: document.getElementById('dataEncryption').classList.contains('active'),
+                    auditLogging: document.getElementById('auditLogging').classList.contains('active')
+                },
+                notifications: {
+                    smtpServer: document.getElementById('smtpServer').value,
+                    emailFromAddress: document.getElementById('emailFromAddress').value,
+                    attendanceReminders: document.getElementById('attendanceReminders').classList.contains('active')
+                },
+                backup: {
+                    autoBackups: document.getElementById('autoBackups').classList.contains('active'),
+                    backupFrequency: document.getElementById('backupFrequency').value,
+                    backupRetention: document.getElementById('backupRetention').value
+                },
+                integrations: {
+                    firebaseIntegration: document.getElementById('firebaseIntegration').classList.contains('active'),
+                    googleCalendarSync: document.getElementById('googleCalendarSync').classList.contains('active')
+                },
+                advanced: {
+                    maintenanceMode: document.getElementById('maintenanceMode').classList.contains('active'),
+                    debugMode: document.getElementById('debugMode').classList.contains('active')
+                }
+            };
+            
+            // Simulate saving settings
+            console.log('Saving settings:', settings);
+            
+            // Show success message
+            showAlert('success', 'System settings have been saved successfully!');
+            
+            // Store in localStorage (placeholder)
+            localStorage.setItem('systemSettings', JSON.stringify(settings));
+        }
+        
+        function loadSavedSettings() {
+            const savedSettings = localStorage.getItem('systemSettings');
+            if (savedSettings) {
+                const settings = JSON.parse(savedSettings);
+                console.log('Loading saved settings:', settings);
+                // Apply saved settings (placeholder)
+            }
+        }
+        
+        function resetForm() {
+            if (confirm('Are you sure you want to reset all unsaved changes?')) {
+                // Reset all form fields to their original values
+                location.reload();
+            }
+        }
+        
+        function resetSettings() {
+            if (confirm('Are you sure you want to reset all settings to default values? This action cannot be undone.')) {
+                alert('All settings have been reset to default values. This would:\n\n' +
+                      '- Reset all configuration options\n' +
+                      '- Clear custom preferences\n' +
+                      '- Restart system services\n' +
+                      '- Log the reset action\n\n' +
+                      'This is a placeholder for the full settings reset process.');
+            }
+        }
+        
+        function clearCache() {
+            if (confirm('Are you sure you want to clear the system cache?')) {
+                alert('System cache cleared successfully. This would:\n\n' +
+                      '- Clear all cached data\n' +
+                      '- Reset compiled templates\n' +
+                      '- Clear session data\n' +
+                      '- Optimize database queries\n\n' +
+                      'This is a placeholder for the full cache clearing process.');
+            }
+        }
+        
+        function showAlert(type, message) {
+            const alertContainer = document.getElementById('alertContainer');
+            const alertDiv = document.createElement('div');
+            alertDiv.className = `alert alert-${type} alert-dismissible fade show`;
+            alertDiv.innerHTML = `
+                <i class="fas fa-${type === 'success' ? 'check-circle' : type === 'error' ? 'exclamation-circle' : 'info-circle'} me-2"></i>
+                ${message}
+                <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
+            `;
+            
+            alertContainer.appendChild(alertDiv);
+            
+            // Auto-dismiss after 5 seconds
+            setTimeout(() => {
+                if (alertDiv.parentNode) {
+                    alertDiv.remove();
+                }
+            }, 5000);
+            
+            // Scroll to top to show the alert
+            window.scrollTo({ top: 0, behavior: 'smooth' });
+        }
+        
+        function showLogoutConfirm() {
+            if (confirm('Do you really want to log out?')) {
+                window.location.href = '/logout';
+            }
+        }
+        
+        function toggleSidebar() {
+            const sidebar = document.querySelector('.sidebar');
+            if (sidebar) {
+                sidebar.classList.toggle('open');
+            }
+        }
+    </script>
+</body>
+</html>

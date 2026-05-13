@@ -1,0 +1,593 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Reports - Attendrix</title>
+    <meta name="description" content="View and generate reports in Attendrix system">
+    
+    <link rel="icon" type="image/x-icon" href="/static/images/favicon.ico">
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <link rel="stylesheet" href="{{ url_for('static', filename='css/landing.css') }}">
+    
+    <style>
+        :root {
+            --primary-color: #4f46e5;
+            --primary-dark: #4338ca;
+            --secondary-color: #64748b;
+            --accent-color: #6366f1;
+            --success-color: #10b981;
+            --warning-color: #f59e0b;
+            --error-color: #ef4444;
+            --bg-primary: #ffffff;
+            --bg-secondary: #f8fafc;
+            --text-primary: #1e293b;
+            --text-secondary: #64748b;
+            --border-color: #e2e8f0;
+            --shadow-sm: 0 1px 2px 0 rgb(0 0 0 / 0.05);
+            --shadow-md: 0 4px 6px -1px rgb(0 0 0 / 0.1);
+            --radius-sm: 6px;
+            --radius-md: 8px;
+            --radius-lg: 12px;
+        }
+
+        * { margin: 0; padding: 0; box-sizing: border-box; }
+        body { font-family: 'Inter', sans-serif; background: var(--bg-secondary); color: var(--text-primary); line-height: 1.6; }
+        .dashboard-layout { display: flex; min-height: 100vh; }
+        
+        .sidebar { width: 280px; background: var(--bg-primary); border-right: 1px solid var(--border-color); position: fixed; height: 100vh; left: 0; top: 0; z-index: 1000; transition: transform 0.3s ease; }
+        .sidebar-header { padding: 1.5rem; border-bottom: 1px solid var(--border-color); background: linear-gradient(135deg, var(--primary-color) 0%, var(--primary-dark) 100%); color: white; }
+        .sidebar-brand { display: flex; align-items: center; gap: 0.75rem; font-size: 1.25rem; font-weight: 700; text-decoration: none; color: white; }
+        .sidebar-nav { padding: 1rem 0; }
+        .sidebar-nav-item { display: block; padding: 0.875rem 1.5rem; color: var(--text-secondary); text-decoration: none; transition: all 0.2s ease; position: relative; font-weight: 500; }
+        .sidebar-nav-item:hover { background: var(--bg-secondary); color: var(--primary-color); }
+        .sidebar-nav-item.active { background: linear-gradient(90deg, rgba(79, 70, 229, 0.1) 0%, transparent 100%); color: var(--primary-color); font-weight: 600; }
+        .sidebar-nav-item.active::before { content: ''; position: absolute; left: 0; top: 0; bottom: 0; width: 4px; background: var(--primary-color); }
+        .sidebar-nav-item i { width: 20px; margin-right: 0.75rem; text-align: center; }
+        
+        .main-content { flex: 1; margin-left: 280px; display: flex; flex-direction: column; min-height: 100vh; }
+        .top-header { background: var(--bg-primary); border-bottom: 1px solid var(--border-color); padding: 1rem 2rem; display: flex; justify-content: space-between; align-items: center; box-shadow: var(--shadow-sm); position: sticky; top: 0; z-index: 100; }
+        .header-left { display: flex; align-items: center; gap: 1rem; }
+        .header-title { font-size: 1.5rem; font-weight: 700; color: var(--text-primary); }
+        .header-subtitle { color: var(--text-secondary); font-size: 0.875rem; }
+        .header-right { display: flex; align-items: center; gap: 1rem; }
+        .header-time { color: var(--text-secondary); font-size: 0.875rem; }
+        .profile-dropdown { position: relative; }
+        .profile-avatar { width: 40px; height: 40px; border-radius: var(--radius-md); background: linear-gradient(135deg, var(--primary-color) 0%, var(--accent-color) 100%); display: flex; align-items: center; justify-content: center; color: white; cursor: pointer; }
+        
+        .content-area { flex: 1; padding: 2rem; background: var(--bg-secondary); }
+        .page-content { background: var(--bg-primary); padding: 2rem; border-radius: var(--radius-lg); box-shadow: var(--shadow-sm); border: 1px solid var(--border-color); }
+        .page-header { margin-bottom: 2rem; }
+        .page-title { font-size: 1.75rem; font-weight: 700; color: var(--text-primary); margin-bottom: 0.5rem; }
+        .page-description { color: var(--text-secondary); font-size: 1rem; }
+        
+        .reports-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(300px, 1fr)); gap: 1.5rem; margin-bottom: 2rem; }
+        .report-card { background: var(--bg-primary); padding: 1.5rem; border-radius: var(--radius-lg); border: 1px solid var(--border-color); box-shadow: var(--shadow-sm); transition: all 0.2s ease; cursor: pointer; }
+        .report-card:hover { transform: translateY(-2px); box-shadow: var(--shadow-md); border-color: var(--primary-color); }
+        .report-icon { width: 60px; height: 60px; border-radius: var(--radius-md); display: flex; align-items: center; justify-content: center; font-size: 1.5rem; margin-bottom: 1rem; }
+        .report-title { font-size: 1.125rem; font-weight: 600; color: var(--text-primary); margin-bottom: 0.5rem; }
+        .report-description { color: var(--text-secondary); font-size: 0.875rem; margin-bottom: 1rem; }
+        .report-stats { display: flex; justify-content: space-between; align-items: center; margin-bottom: 1rem; }
+        .report-stat { text-align: center; }
+        .report-stat-value { font-size: 1.25rem; font-weight: 700; color: var(--text-primary); }
+        .report-stat-label { font-size: 0.75rem; color: var(--text-secondary); }
+        
+        .btn-primary { background: linear-gradient(135deg, var(--primary-color) 0%, var(--primary-dark) 100%); border: none; color: white; padding: 0.75rem 1.5rem; border-radius: var(--radius-md); font-weight: 500; transition: all 0.2s ease; }
+        .btn-primary:hover { transform: translateY(-1px); box-shadow: var(--shadow-md); }
+        .btn-secondary { background: var(--bg-secondary); border: 1px solid var(--border-color); color: var(--text-primary); padding: 0.75rem 1.5rem; border-radius: var(--radius-md); font-weight: 500; transition: all 0.2s ease; }
+        .btn-secondary:hover { background: var(--border-color); }
+        .btn-sm { padding: 0.5rem 1rem; font-size: 0.875rem; }
+        
+        .report-filters { background: var(--bg-primary); padding: 1.5rem; border-radius: var(--radius-lg); border: 1px solid var(--border-color); box-shadow: var(--shadow-sm); margin-bottom: 2rem; }
+        .filter-row { display: flex; gap: 1rem; align-items: end; }
+        .filter-group { flex: 1; }
+        .filter-label { display: block; margin-bottom: 0.5rem; font-weight: 500; color: var(--text-primary); font-size: 0.875rem; }
+        .filter-input, .filter-select { width: 100%; padding: 0.75rem; border: 1px solid var(--border-color); border-radius: var(--radius-md); font-size: 0.875rem; }
+        .filter-input:focus, .filter-select:focus { border-color: var(--primary-color); box-shadow: 0 0 0 3px rgba(79, 70, 229, 0.1); outline: none; }
+        
+        .recent-reports { background: var(--bg-primary); padding: 1.5rem; border-radius: var(--radius-lg); border: 1px solid var(--border-color); box-shadow: var(--shadow-sm); }
+        .section-title { font-size: 1.25rem; font-weight: 600; color: var(--text-primary); margin-bottom: 1rem; }
+        .report-list { list-style: none; padding: 0; }
+        .report-item { display: flex; justify-content: between; align-items: center; padding: 1rem 0; border-bottom: 1px solid var(--border-color); }
+        .report-item:last-child { border-bottom: none; }
+        .report-info { flex: 1; }
+        .report-name { font-weight: 500; color: var(--text-primary); margin-bottom: 0.25rem; }
+        .report-meta { font-size: 0.875rem; color: var(--text-secondary); }
+        .report-actions { display: flex; gap: 0.5rem; }
+        .action-btn { padding: 0.5rem; border: 1px solid var(--border-color); border-radius: var(--radius-sm); background: var(--bg-primary); color: var(--text-secondary); cursor: pointer; transition: all 0.2s ease; }
+        .action-btn:hover { background: var(--bg-secondary); color: var(--primary-color); border-color: var(--primary-color); }
+        
+        .empty-state { text-align: center; padding: 4rem 2rem; color: var(--text-secondary); }
+        .empty-icon { font-size: 4rem; color: var(--primary-color); margin-bottom: 1.5rem; opacity: 0.5; }
+        .empty-title { font-size: 1.5rem; font-weight: 600; color: var(--text-primary); margin-bottom: 1rem; }
+        .empty-description { margin-bottom: 2rem; }
+        
+        @media (max-width: 768px) {
+            .sidebar { transform: translateX(-100%); z-index: 1050; }
+            .sidebar.open { transform: translateX(0); }
+            .main-content { margin-left: 0; }
+            .content-area { padding: 1rem; }
+            .header-title { font-size: 1.25rem; }
+            .page-content { padding: 1rem; }
+            .reports-grid { grid-template-columns: 1fr; }
+            .filter-row { flex-direction: column; gap: 1rem; }
+            .report-stats { flex-direction: column; gap: 1rem; }
+        }
+        
+        .mobile-menu-btn { display: none; background: none; border: 1px solid var(--border-color); border-radius: var(--radius-sm); padding: 0.5rem; color: var(--text-secondary); cursor: pointer; }
+        .mobile-menu-btn:hover { background: var(--bg-secondary); color: var(--primary-color); }
+        @media (max-width: 768px) { .mobile-menu-btn { display: block; } }
+    </style>
+</head>
+<body>
+    <div class="dashboard-layout">
+        <div class="sidebar">
+            <div class="sidebar-header">
+                <a class="sidebar-brand" href="/admin/dashboard">
+                    <i class="fas fa-graduation-cap me-2"></i>
+                    <strong>Attendrix</strong>
+                </a>
+            </div>
+            <div class="sidebar-nav">
+                <a class="sidebar-nav-item" href="/admin/dashboard"><i class="fas fa-tachometer-alt me-2"></i>Dashboard</a>
+                <a class="sidebar-nav-item" href="/admin/create_institution"><i class="fas fa-building me-2"></i>Institutions</a>
+                <a class="sidebar-nav-item" href="/admin/users"><i class="fas fa-users me-2"></i>Users</a>
+                <a class="sidebar-nav-item" href="/admin/monitoring"><i class="fas fa-chart-line me-2"></i>Monitoring</a>
+                <a class="sidebar-nav-item" href="/admin/security"><i class="fas fa-shield-alt me-2"></i>Security</a>
+                <a class="sidebar-nav-item" href="/admin/backup"><i class="fas fa-database me-2"></i>Backup & Restore</a>
+                <a class="sidebar-nav-item" href="/admin/notifications"><i class="fas fa-bell me-2"></i>Notifications</a>
+                <a class="sidebar-nav-item" href="/admin/audit"><i class="fas fa-history me-2"></i>Audit Logs</a>
+                <a class="sidebar-nav-item" href="/admin/roles"><i class="fas fa-user-shield me-2"></i>Role Assignments</a>
+                <a class="sidebar-nav-item" href="/admin/profile"><i class="fas fa-user me-2"></i>Profile</a>
+            </div>
+        </div>
+        <div class="main-content">
+            <div class="top-header">
+                <div class="header-left">
+                    <button class="mobile-menu-btn" onclick="toggleSidebar()"><i class="fas fa-bars"></i></button>
+                    <div>
+                        <h1 class="header-title">Reports</h1>
+                        <p class="header-subtitle">Generate and view system reports</p>
+                    </div>
+                </div>
+                <div class="header-right">
+                    <div class="header-time" id="currentTime"></div>
+                    <div class="profile-dropdown">
+                        <div class="profile-avatar" data-bs-toggle="dropdown"><i class="fas fa-user"></i></div>
+                        <ul class="dropdown-menu dropdown-menu-end">
+                            <li><a class="dropdown-item" href="/admin/profile"><i class="fas fa-user me-2"></i>Profile</a></li>
+                            <li><a class="dropdown-item" href="/admin/settings"><i class="fas fa-cog me-2"></i>Settings</a></li>
+                            <li><hr class="dropdown-divider"></li>
+                            <li><a class="dropdown-item" href="#" onclick="showLogoutConfirm()"><i class="fas fa-sign-out-alt me-2"></i>Logout</a></li>
+                        </ul>
+                    </div>
+                </div>
+            </div>
+            <main class="content-area">
+                <div class="page-content">
+                    <div class="page-header">
+                        <h2 class="page-title">Reports Dashboard</h2>
+                        <p class="page-description">Generate comprehensive reports for system analytics and compliance</p>
+                    </div>
+                    
+                    <!-- Report Filters -->
+                    <div class="report-filters">
+                        <div class="filter-row">
+                            <div class="filter-group">
+                                <label class="filter-label">Date Range</label>
+                                <select class="filter-select" id="dateRange">
+                                    <option value="">Select date range</option>
+                                    <option value="today">Today</option>
+                                    <option value="week">This Week</option>
+                                    <option value="month">This Month</option>
+                                    <option value="quarter">This Quarter</option>
+                                    <option value="year">This Year</option>
+                                    <option value="custom">Custom Range</option>
+                                </select>
+                            </div>
+                            <div class="filter-group">
+                                <label class="filter-label">Report Type</label>
+                                <select class="filter-select" id="reportType">
+                                    <option value="">All Reports</option>
+                                    <option value="attendance">Attendance Reports</option>
+                                    <option value="users">User Reports</option>
+                                    <option value="institutions">Institution Reports</option>
+                                    <option value="system">System Reports</option>
+                                    <option value="compliance">Compliance Reports</option>
+                                </select>
+                            </div>
+                            <div class="filter-group">
+                                <label class="filter-label">Institution</label>
+                                <select class="filter-select" id="institution">
+                                    <option value="">All Institutions</option>
+                                </select>
+                            </div>
+                            <div class="filter-group">
+                                <button class="btn btn-primary" onclick="generateReport()">
+                                    <i class="fas fa-chart-bar me-2"></i>Generate Report
+                                </button>
+                            </div>
+                        </div>
+                    </div>
+                    
+                    <!-- Available Reports -->
+                    <div class="reports-grid">
+                        <div class="report-card" onclick="openReport('attendance')">
+                            <div class="report-icon" style="background: rgba(16, 185, 129, 0.1); color: var(--success-color);">
+                                <i class="fas fa-calendar-check"></i>
+                            </div>
+                            <h3 class="report-title">Attendance Reports</h3>
+                            <p class="report-description">Comprehensive attendance analytics and trends across all institutions</p>
+                            <div class="report-stats">
+                                <div class="report-stat">
+                                    <div class="report-stat-value">0</div>
+                                    <div class="report-stat-label">Total Records</div>
+                                </div>
+                                <div class="report-stat">
+                                    <div class="report-stat-value">0%</div>
+                                    <div class="report-stat-label">Avg. Attendance</div>
+                                </div>
+                                <div class="report-stat">
+                                    <div class="report-stat-value">0</div>
+                                    <div class="report-stat-label">Active Users</div>
+                                </div>
+                            </div>
+                            <button class="btn btn-primary btn-sm w-100">
+                                <i class="fas fa-download me-2"></i>Generate Report
+                            </button>
+                        </div>
+                        
+                        <div class="report-card" onclick="openReport('users')">
+                            <div class="report-icon" style="background: rgba(59, 130, 246, 0.1); color: #3b82f6;">
+                                <i class="fas fa-users"></i>
+                            </div>
+                            <h3 class="report-title">User Analytics</h3>
+                            <p class="report-description">User activity, engagement, and performance metrics</p>
+                            <div class="report-stats">
+                                <div class="report-stat">
+                                    <div class="report-stat-value">0</div>
+                                    <div class="report-stat-label">Total Users</div>
+                                </div>
+                                <div class="report-stat">
+                                    <div class="report-stat-value">0</div>
+                                    <div class="report-stat-label">Active Today</div>
+                                </div>
+                                <div class="report-stat">
+                                    <div class="report-stat-value">0%</div>
+                                    <div class="report-stat-label">Engagement Rate</div>
+                                </div>
+                            </div>
+                            <button class="btn btn-primary btn-sm w-100">
+                                <i class="fas fa-download me-2"></i>Generate Report
+                            </button>
+                        </div>
+                        
+                        <div class="report-card" onclick="openReport('institutions')">
+                            <div class="report-icon" style="background: rgba(245, 158, 11, 0.1); color: var(--warning-color);">
+                                <i class="fas fa-building"></i>
+                            </div>
+                            <h3 class="report-title">Institution Reports</h3>
+                            <p class="report-description">Performance metrics and analytics for each institution</p>
+                            <div class="report-stats">
+                                <div class="report-stat">
+                                    <div class="report-stat-value">0</div>
+                                    <div class="report-stat-label">Institutions</div>
+                                </div>
+                                <div class="report-stat">
+                                    <div class="report-stat-value">0</div>
+                                    <div class="report-stat-label">Departments</div>
+                                </div>
+                                <div class="report-stat">
+                                    <div class="report-stat-value">0</div>
+                                    <div class="report-stat-label">Courses</div>
+                                </div>
+                            </div>
+                            <button class="btn btn-primary btn-sm w-100">
+                                <i class="fas fa-download me-2"></i>Generate Report
+                            </button>
+                        </div>
+                        
+                        <div class="report-card" onclick="openReport('system')">
+                            <div class="report-icon" style="background: rgba(139, 92, 246, 0.1); color: #8b5cf6;">
+                                <i class="fas fa-server"></i>
+                            </div>
+                            <h3 class="report-title">System Performance</h3>
+                            <p class="report-description">System health, performance metrics, and resource utilization</p>
+                            <div class="report-stats">
+                                <div class="report-stat">
+                                    <div class="report-stat-value">0%</div>
+                                    <div class="report-stat-label">Uptime</div>
+                                </div>
+                                <div class="report-stat">
+                                    <div class="report-stat-value">0ms</div>
+                                    <div class="report-stat-label">Avg Response</div>
+                                </div>
+                                <div class="report-stat">
+                                    <div class="report-stat-value">0</div>
+                                    <div class="report-stat-label">API Calls</div>
+                                </div>
+                            </div>
+                            <button class="btn btn-primary btn-sm w-100">
+                                <i class="fas fa-download me-2"></i>Generate Report
+                            </button>
+                        </div>
+                        
+                        <div class="report-card" onclick="openReport('compliance')">
+                            <div class="report-icon" style="background: rgba(239, 68, 68, 0.1); color: var(--error-color);">
+                                <i class="fas fa-shield-alt"></i>
+                            </div>
+                            <h3 class="report-title">Compliance Reports</h3>
+                            <p class="report-description">Regulatory compliance and audit trail reports</p>
+                            <div class="report-stats">
+                                <div class="report-stat">
+                                    <div class="report-stat-value">0</div>
+                                    <div class="report-stat-label">Audit Events</div>
+                                </div>
+                                <div class="report-stat">
+                                    <div class="report-stat-value">0</div>
+                                    <div class="report-stat-label">Security Alerts</div>
+                                </div>
+                                <div class="report-stat">
+                                    <div class="report-stat-value">100%</div>
+                                    <div class="report-stat-label">Compliance Rate</div>
+                                </div>
+                            </div>
+                            <button class="btn btn-primary btn-sm w-100">
+                                <i class="fas fa-download me-2"></i>Generate Report
+                            </button>
+                        </div>
+                        
+                        <div class="report-card" onclick="openReport('financial')">
+                            <div class="report-icon" style="background: rgba(34, 197, 94, 0.1); color: #22c55e;">
+                                <i class="fas fa-dollar-sign"></i>
+                            </div>
+                            <h3 class="report-title">Financial Reports</h3>
+                            <p class="report-description">Revenue, expenses, and financial analytics</p>
+                            <div class="report-stats">
+                                <div class="report-stat">
+                                    <div class="report-stat-value">$0</div>
+                                    <div class="report-stat-label">Total Revenue</div>
+                                </div>
+                                <div class="report-stat">
+                                    <div class="report-stat-value">$0</div>
+                                    <div class="report-stat-label">Monthly Revenue</div>
+                                </div>
+                                <div class="report-stat">
+                                    <div class="report-stat-value">0</div>
+                                    <div class="report-stat-label">Transactions</div>
+                                </div>
+                            </div>
+                            <button class="btn btn-primary btn-sm w-100">
+                                <i class="fas fa-download me-2"></i>Generate Report
+                            </button>
+                        </div>
+                    </div>
+                    
+                    <!-- Recent Reports -->
+                    <div class="recent-reports">
+                        <h3 class="section-title">Recent Generated Reports</h3>
+                        <div id="reportsList">
+                            <div class="empty-state">
+                                <div class="empty-icon"><i class="fas fa-file-alt"></i></div>
+                                <h4 class="empty-title">No Reports Generated Yet</h4>
+                                <p class="empty-description">
+                                    Reports will appear here once you generate them. Select a report type above and click "Generate Report" to get started.
+                                </p>
+                                <button class="btn btn-primary" onclick="generateReport()">
+                                    <i class="fas fa-chart-bar me-2"></i>Generate Your First Report
+                                </button>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </main>
+        </div>
+    </div>
+
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
+    <script>
+        document.addEventListener('DOMContentLoaded', function() {
+            // Initialize components
+            initializeTimeDisplay();
+            initializeReports();
+            initializeTooltips();
+            
+            console.log('Reports page loaded successfully');
+        });
+        
+        function initializeTimeDisplay() {
+            function updateTime() {
+                const now = new Date();
+                const timeString = now.toLocaleString('en-US', { 
+                    weekday: 'short', 
+                    year: 'numeric', 
+                    month: 'short', 
+                    day: 'numeric', 
+                    hour: '2-digit', 
+                    minute: '2-digit' 
+                });
+                const timeElement = document.getElementById('currentTime');
+                if (timeElement) timeElement.textContent = timeString;
+            }
+            updateTime();
+            setInterval(updateTime, 60000);
+        }
+        
+        function initializeReports() {
+            // Initialize report filters
+            const dateRange = document.getElementById('dateRange');
+            const reportType = document.getElementById('reportType');
+            const institution = document.getElementById('institution');
+            
+            // Add event listeners
+            dateRange.addEventListener('change', function() {
+                updateFilters();
+            });
+            
+            reportType.addEventListener('change', function() {
+                updateFilters();
+            });
+            
+            institution.addEventListener('change', function() {
+                updateFilters();
+            });
+        }
+        
+        function initializeTooltips() {
+            // Initialize Bootstrap tooltips
+            if (typeof bootstrap !== 'undefined' && bootstrap.Tooltip) {
+                const tooltipTriggerList = [].slice.call(document.querySelectorAll('[data-bs-toggle="tooltip"]'));
+                tooltipTriggerList.map(function (tooltipTriggerEl) {
+                    return new bootstrap.Tooltip(tooltipTriggerEl);
+                });
+            }
+            
+            // Initialize Bootstrap dropdowns
+            if (typeof bootstrap !== 'undefined' && bootstrap.Dropdown) {
+                const dropdownTriggerList = [].slice.call(document.querySelectorAll('[data-bs-toggle="dropdown"]'));
+                dropdownTriggerList.map(function (dropdownTriggerEl) {
+                    return new bootstrap.Dropdown(dropdownTriggerEl);
+                });
+            }
+        }
+        
+        function generateReport() {
+            const dateRange = document.getElementById('dateRange').value;
+            const reportType = document.getElementById('reportType').value;
+            const institution = document.getElementById('institution').value;
+            
+            if (!dateRange || !reportType) {
+                alert('Please select both a date range and report type to generate a report.');
+                return;
+            }
+            
+            // Simulate report generation
+            const reportName = getReportTypeName(reportType) + ' Report';
+            const reportDate = new Date().toLocaleDateString();
+            
+            // Add to recent reports
+            addRecentReport(reportName, reportDate, reportType);
+            
+            // Show success message
+            alert('Report generation started! The ' + reportName + ' will be available for download shortly.\n\n' +
+                  'This would normally:\n' +
+                  '- Collect data from the specified date range\n' +
+                  '- Apply selected filters\n' +
+                  '- Generate PDF/Excel format\n' +
+                  '- Send notification when ready\n\n' +
+                  'This is a placeholder for the full report generation process.');
+        }
+        
+        function openReport(reportType) {
+            const reportName = getReportTypeName(reportType) + ' Report';
+            alert('Opening ' + reportName + ' configuration:\n\n' +
+                  '- Select date range and filters\n' +
+                  '- Choose report format (PDF/Excel)\n' +
+                  '- Configure additional options\n' +
+                  '- Preview data before generation\n\n' +
+                  'This is a placeholder for the full report configuration interface.');
+        }
+        
+        function addRecentReport(name, date, type) {
+            const reportsList = document.getElementById('reportsList');
+            
+            // Remove empty state if it exists
+            const emptyState = reportsList.querySelector('.empty-state');
+            if (emptyState) {
+                emptyState.remove();
+            }
+            
+            // Create report item
+            const reportItem = document.createElement('div');
+            reportItem.className = 'report-item';
+            reportItem.innerHTML = `
+                <div class="report-info">
+                    <div class="report-name">${name}</div>
+                    <div class="report-meta">Generated on ${date} - Status: Processing</div>
+                </div>
+                <div class="report-actions">
+                    <button class="action-btn" onclick="viewReport('${name}')" title="View Report">
+                        <i class="fas fa-eye"></i>
+                    </button>
+                    <button class="action-btn" onclick="downloadReport('${name}')" title="Download Report">
+                        <i class="fas fa-download"></i>
+                    </button>
+                    <button class="action-btn" onclick="deleteReport('${name}')" title="Delete Report">
+                        <i class="fas fa-trash"></i>
+                    </button>
+                </div>
+            `;
+            
+            // Add to the top of the list
+            if (reportsList.querySelector('.report-list')) {
+                reportsList.querySelector('.report-list').prepend(reportItem);
+            } else {
+                const reportList = document.createElement('ul');
+                reportList.className = 'report-list';
+                reportList.appendChild(reportItem);
+                reportsList.appendChild(reportList);
+            }
+        }
+        
+        function getReportTypeName(type) {
+            const types = {
+                'attendance': 'Attendance',
+                'users': 'User Analytics',
+                'institutions': 'Institution',
+                'system': 'System Performance',
+                'compliance': 'Compliance',
+                'financial': 'Financial'
+            };
+            return types[type] || 'General';
+        }
+        
+        function updateFilters() {
+            // This would update the available options based on selections
+            console.log('Updating filters based on selections...');
+        }
+        
+        function viewReport(reportName) {
+            alert('Viewing ' + reportName + ':\n\n' +
+                  '- Display report in viewer\n' +
+                  '- Show charts and graphs\n' +
+                  '- Allow filtering and sorting\n' +
+                  '- Export options available\n\n' +
+                  'This is a placeholder for the full report viewing interface.');
+        }
+        
+        function downloadReport(reportName) {
+            alert('Downloading ' + reportName + ':\n\n' +
+                  '- Generate download link\n' +
+                  '- Support multiple formats (PDF, Excel, CSV)\n' +
+                  '- Include password protection if needed\n' +
+                  '- Log download activity\n\n' +
+                  'This is a placeholder for the full report download process.');
+        }
+        
+        function deleteReport(reportName) {
+            if (confirm('Are you sure you want to delete ' + reportName + '? This action cannot be undone.')) {
+                alert('Report deleted successfully. This would:\n\n' +
+                      '- Remove report from storage\n' +
+                      '- Update recent reports list\n' +
+                      '- Log deletion action\n' +
+                      '- Clean up temporary files\n\n' +
+                      'This is a placeholder for the full report deletion process.');
+            }
+        }
+        
+        function showLogoutConfirm() {
+            if (confirm('Do you really want to log out?')) {
+                window.location.href = '/logout';
+            }
+        }
+        
+        function toggleSidebar() {
+            const sidebar = document.querySelector('.sidebar');
+            if (sidebar) {
+                sidebar.classList.toggle('open');
+            }
+        }
+    </script>
+</body>
+</html>

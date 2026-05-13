@@ -1,0 +1,591 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Sign In - Attendrix</title>
+    <link rel="icon" type="image/svg+xml" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 32 32'%3E%3Crect width='32' height='32' rx='6' fill='%234F46E5'/%3E%3Ctext x='16' y='22' text-anchor='middle' fill='white' font-size='20' font-family='Arial' font-weight='bold'%3EA%3C/text%3E%3C/svg%3E">
+
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet" crossorigin="anonymous">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css" crossorigin="anonymous">
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800&display=swap" rel="stylesheet" crossorigin="anonymous">
+
+    <style>
+        :root {
+            --primary: #4F46E5;
+            --primary-dark: #3730A3;
+            --primary-light: #818CF8;
+            --accent: #06B6D4;
+            --dark: #0F172A;
+            --text: #1E293B;
+            --text-muted: #64748B;
+            --border: #E2E8F0;
+            --gradient-primary: linear-gradient(135deg, #4F46E5 0%, #7C3AED 100%);
+            --shadow-sm: 0 1px 3px rgba(0,0,0,0.08);
+            --shadow-md: 0 4px 12px rgba(0,0,0,0.08);
+            --shadow-lg: 0 10px 30px rgba(0,0,0,0.1);
+            --shadow-xl: 0 20px 60px rgba(0,0,0,0.12);
+        }
+
+        * { margin: 0; padding: 0; box-sizing: border-box; }
+
+        body {
+            font-family: 'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+            min-height: 100vh;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            background: linear-gradient(135deg, #0F172A 0%, #1E293B 100%);
+            padding: 2rem 1rem;
+            position: relative;
+            overflow-x: hidden;
+        }
+
+        body::before {
+            content: '';
+            position: fixed;
+            top: -50%;
+            right: -30%;
+            width: 700px;
+            height: 700px;
+            background: radial-gradient(circle, rgba(79,70,229,0.12) 0%, transparent 70%);
+            pointer-events: none;
+        }
+
+        body::after {
+            content: '';
+            position: fixed;
+            bottom: -30%;
+            left: -20%;
+            width: 500px;
+            height: 500px;
+            background: radial-gradient(circle, rgba(6,182,212,0.08) 0%, transparent 70%);
+            pointer-events: none;
+        }
+
+        .login-card {
+            background: rgba(255,255,255,0.04);
+            backdrop-filter: blur(24px);
+            -webkit-backdrop-filter: blur(24px);
+            border-radius: 24px;
+            border: 1px solid rgba(255,255,255,0.08);
+            box-shadow: 0 24px 80px rgba(0,0,0,0.4);
+            padding: 2.5rem;
+            max-width: 420px;
+            width: 100%;
+            position: relative;
+            z-index: 1;
+        }
+
+        .login-card .brand {
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            gap: 0.6rem;
+            margin-bottom: 0.25rem;
+            text-decoration: none;
+        }
+
+        .login-card .brand .brand-icon {
+            width: 38px;
+            height: 38px;
+            background: var(--gradient-primary);
+            border-radius: 10px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 1.1rem;
+            color: #fff;
+            box-shadow: 0 4px 14px rgba(79,70,229,0.4);
+        }
+
+        .login-card .brand .brand-text {
+            font-size: 1.5rem;
+            font-weight: 800;
+            background: linear-gradient(135deg, #fff 60%, rgba(255,255,255,0.6));
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+            background-clip: text;
+            letter-spacing: -0.5px;
+        }
+
+        .login-card .brand-subtitle {
+            text-align: center;
+            color: rgba(255,255,255,0.45);
+            font-size: 0.85rem;
+            margin-bottom: 2rem;
+            font-weight: 400;
+        }
+
+        .input-group-custom {
+            position: relative;
+            margin-bottom: 1.25rem;
+        }
+
+        .input-group-custom .form-control {
+            background: rgba(255,255,255,0.05);
+            border: 1.5px solid rgba(255,255,255,0.1);
+            border-radius: 12px;
+            padding: 0.85rem 1rem 0.85rem 2.8rem;
+            color: #fff;
+            font-size: 0.95rem;
+            transition: all 0.3s ease;
+            height: auto;
+        }
+
+        .input-group-custom .form-control:focus {
+            border-color: var(--primary-light);
+            box-shadow: 0 0 0 3px rgba(79,70,229,0.15);
+            background: rgba(255,255,255,0.07);
+        }
+
+        .input-group-custom .form-control::placeholder { color: rgba(255,255,255,0.25); }
+        .input-group-custom .form-control:-webkit-autofill {
+            -webkit-text-fill-color: #fff;
+            -webkit-box-shadow: 0 0 0 30px rgba(15,23,42,0.95) inset !important;
+        }
+
+        .input-group-custom .input-icon {
+            position: absolute;
+            left: 1rem;
+            top: 50%;
+            transform: translateY(-50%);
+            color: rgba(255,255,255,0.3);
+            font-size: 0.95rem;
+            pointer-events: none;
+        }
+
+        .input-group-custom .toggle-pw {
+            position: absolute;
+            right: 0.75rem;
+            top: 50%;
+            transform: translateY(-50%);
+            background: none;
+            border: none;
+            color: rgba(255,255,255,0.3);
+            cursor: pointer;
+            padding: 0.25rem;
+            font-size: 1rem;
+            transition: color 0.3s;
+        }
+
+        .input-group-custom .toggle-pw:hover { color: rgba(255,255,255,0.6); }
+
+        .input-group-custom label {
+            color: rgba(255,255,255,0.6);
+            font-size: 0.8rem;
+            font-weight: 600;
+            margin-bottom: 0.4rem;
+            display: block;
+        }
+
+        .btn-primary-custom {
+            background: var(--gradient-primary);
+            color: #fff;
+            border: none;
+            border-radius: 12px;
+            padding: 0.85rem 1.5rem;
+            font-weight: 600;
+            font-size: 0.95rem;
+            width: 100%;
+            transition: all 0.3s cubic-bezier(0.4,0,0.2,1);
+            cursor: pointer;
+            position: relative;
+            overflow: hidden;
+        }
+
+        .btn-primary-custom:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 8px 24px rgba(79,70,229,0.4);
+        }
+
+        .btn-primary-custom:disabled {
+            opacity: 0.5;
+            transform: none;
+            cursor: not-allowed;
+        }
+
+        .btn-primary-custom .spinner {
+            display: none;
+            width: 18px;
+            height: 18px;
+            border: 2px solid rgba(255,255,255,0.3);
+            border-top-color: #fff;
+            border-radius: 50%;
+            animation: spin 0.6s linear infinite;
+            margin-right: 0.5rem;
+            vertical-align: middle;
+        }
+
+        @keyframes spin { to { transform: rotate(360deg); } }
+
+        .form-check-custom {
+            display: flex;
+            align-items: center;
+            gap: 0.5rem;
+            margin-bottom: 1.25rem;
+        }
+
+        .form-check-custom input[type="checkbox"] {
+            width: 18px;
+            height: 18px;
+            accent-color: var(--primary);
+            cursor: pointer;
+            flex-shrink: 0;
+        }
+
+        .form-check-custom label {
+            color: rgba(255,255,255,0.55);
+            font-size: 0.85rem;
+            cursor: pointer;
+            user-select: none;
+        }
+
+        .device-section {
+            background: rgba(255,255,255,0.03);
+            border: 1px solid rgba(255,255,255,0.06);
+            border-radius: 12px;
+            padding: 0.85rem 1rem;
+            margin-bottom: 1.25rem;
+            display: none;
+            align-items: center;
+            justify-content: space-between;
+        }
+
+        .device-section.active { display: flex; }
+
+        .device-info {
+            display: flex;
+            align-items: center;
+            gap: 0.5rem;
+            color: rgba(255,255,255,0.45);
+            font-size: 0.8rem;
+        }
+
+        .device-info i { font-size: 0.9rem; }
+
+        .trust-badge {
+            font-size: 0.7rem;
+            font-weight: 700;
+            padding: 0.25rem 0.6rem;
+            border-radius: 20px;
+            text-transform: uppercase;
+            letter-spacing: 0.5px;
+        }
+
+        .trust-trusted {
+            background: rgba(16,185,129,0.12);
+            color: #10B981;
+            border: 1px solid rgba(16,185,129,0.2);
+        }
+
+        .trust-new {
+            background: rgba(245,158,11,0.12);
+            color: #F59E0B;
+            border: 1px solid rgba(245,158,11,0.2);
+        }
+
+        .alert-custom {
+            border-radius: 12px;
+            border: none;
+            padding: 0.85rem 1rem;
+            font-size: 0.9rem;
+            margin-bottom: 1.25rem;
+            display: none;
+        }
+
+        .alert-error {
+            background: rgba(239,68,68,0.1);
+            border: 1px solid rgba(239,68,68,0.2);
+            color: #FCA5A5;
+        }
+
+        .alert-success {
+            background: rgba(16,185,129,0.1);
+            border: 1px solid rgba(16,185,129,0.2);
+            color: #6EE7B7;
+        }
+
+        .alert-info {
+            background: rgba(59,130,246,0.1);
+            border: 1px solid rgba(59,130,246,0.2);
+            color: #93C5FD;
+        }
+
+        .footer-links {
+            text-align: center;
+            margin-top: 1.5rem;
+            padding-top: 1.25rem;
+            border-top: 1px solid rgba(255,255,255,0.06);
+        }
+
+        .footer-links a {
+            color: rgba(255,255,255,0.5);
+            text-decoration: none;
+            font-size: 0.85rem;
+            transition: color 0.3s;
+            display: inline-block;
+            margin: 0.25rem 0;
+        }
+
+        .footer-links a:hover { color: rgba(255,255,255,0.8); }
+
+        .footer-links .separator {
+            color: rgba(255,255,255,0.15);
+            margin: 0 0.5rem;
+        }
+
+        @media (max-width: 576px) {
+            .login-card { padding: 1.5rem; border-radius: 16px; }
+        }
+    </style>
+</head>
+<body>
+
+<div class="login-card">
+    <a href="/" class="brand">
+        <div class="brand-icon"><i class="fas fa-graduation-cap"></i></div>
+        <span class="brand-text">Attendrix</span>
+    </a>
+    <p class="brand-subtitle">Enterprise Attendance Platform</p>
+
+    <div class="alert-custom" id="alertContainer"></div>
+
+    <!-- Dev Mode Hint -->
+    <div class="alert-custom alert-info" id="devHint"
+         style="display:none;font-size:0.8rem;text-align:center;margin-bottom:1.25rem;">
+        <i class="fas fa-flask me-2"></i>
+        Demo: <strong>admin@attendrix.demo</strong> / <strong>password123</strong>
+    </div>
+
+    <!-- Device Verification -->
+    <div class="device-section" id="deviceSection">
+        <div class="device-info">
+            <i class="fas fa-fingerprint"></i>
+            <span id="deviceInfo">Verifying device...</span>
+        </div>
+        <span class="trust-badge" id="trustBadge">Checking</span>
+    </div>
+
+    <form id="loginForm">
+        <div class="input-group-custom">
+            <label for="email">Email Address</label>
+            <i class="fas fa-envelope input-icon"></i>
+            <input type="email" class="form-control" id="email" name="email"
+                   placeholder="you@institution.edu" required autocomplete="email">
+        </div>
+
+        <div class="input-group-custom">
+            <label for="password">Password</label>
+            <i class="fas fa-lock input-icon"></i>
+            <input type="password" class="form-control" id="password" name="password"
+                   placeholder="Enter your password" required autocomplete="current-password">
+            <button type="button" class="toggle-pw" id="togglePassword" tabindex="-1">
+                <i class="fas fa-eye"></i>
+            </button>
+        </div>
+
+        <div class="form-check-custom">
+            <input type="checkbox" id="rememberMe" name="rememberMe">
+            <label for="rememberMe">Remember this device</label>
+        </div>
+
+        <button type="submit" class="btn-primary-custom" id="loginBtn">
+            <span class="spinner" id="loginSpinner"></span>
+            <span id="loginBtnText">Sign In</span>
+        </button>
+    </form>
+
+    <div class="footer-links">
+        <div>
+            <a href="/signup">Create Account</a>
+            <span class="separator">|</span>
+            <a href="#" id="forgotPwLink">Forgot Password?</a>
+        </div>
+        <div style="margin-top:0.5rem;">
+            <a href="/">Back to Home</a>
+        </div>
+    </div>
+</div>
+
+<script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js" crossorigin="anonymous"></script>
+
+<script>
+    let deviceFingerprint = null;
+
+    // ── Device Fingerprint ──
+    document.addEventListener('DOMContentLoaded', function () {
+        generateFingerprint();
+        // Show dev hint on localhost
+        if (location.hostname === '127.0.0.1' || location.hostname === 'localhost') {
+            document.getElementById('devHint').style.display = 'block';
+        }
+    });
+
+    async function generateFingerprint() {
+        try {
+            const data = {
+                ua: navigator.userAgent,
+                lang: navigator.language,
+                plat: navigator.platform,
+                screen: screen.width + 'x' + screen.height,
+                depth: screen.colorDepth,
+                tz: Intl.DateTimeFormat().resolvedOptions().timeZone,
+                cores: navigator.hardwareConcurrency || 1,
+                mem: navigator.deviceMemory || 0
+            };
+            const hash = await sha256(JSON.stringify(data));
+            deviceFingerprint = hash.substring(0, 32);
+
+            document.getElementById('deviceSection').classList.add('active');
+            document.getElementById('deviceInfo').textContent =
+                'Device: ' + deviceFingerprint.substring(0, 8) + '...';
+
+            const trusted = JSON.parse(localStorage.getItem('trustedDevices') || '[]');
+            const known = trusted.some(d => d.fingerprint === deviceFingerprint);
+            const badge = document.getElementById('trustBadge');
+            badge.textContent = known ? 'Trusted' : 'New Device';
+            badge.className = 'trust-badge ' + (known ? 'trust-trusted' : 'trust-new');
+        } catch (e) {
+            document.getElementById('deviceInfo').textContent = 'Device verification unavailable';
+        }
+    }
+
+    function sha256(str) {
+        return crypto.subtle.digest('SHA-256', new TextEncoder().encode(str))
+            .then(buf => Array.from(new Uint8Array(buf)).map(b => b.toString(16).padStart(2, '0')).join(''));
+    }
+
+    // ── Password Toggle ──
+    document.getElementById('togglePassword').addEventListener('click', function () {
+        const pw = document.getElementById('password');
+        const icon = this.querySelector('i');
+        if (pw.type === 'password') {
+            pw.type = 'text';
+            icon.className = 'fas fa-eye-slash';
+        } else {
+            pw.type = 'password';
+            icon.className = 'fas fa-eye';
+        }
+    });
+
+    // ── Form Submit ──
+    document.getElementById('loginForm').addEventListener('submit', async function (e) {
+        e.preventDefault();
+        const email = document.getElementById('email').value.trim();
+        const password = document.getElementById('password').value;
+
+        if (!email || !/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email)) {
+            showAlert('Please enter a valid email address', 'error'); return;
+        }
+        if (!password) {
+            showAlert('Please enter your password', 'error'); return;
+        }
+
+        setLoading(true);
+        try {
+            const res = await fetch('/api/auth/login', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({
+                    email: email,
+                    password: password,
+                    remember_me: document.getElementById('rememberMe').checked,
+                    device_fingerprint: deviceFingerprint
+                })
+            });
+            const result = await res.json();
+
+            if (result.success === false || result.error) {
+                showAlert(result.message || result.error || 'Invalid credentials', 'error');
+            } else {
+                if (result.access_token) localStorage.setItem('accessToken', result.access_token);
+                if (result.refresh_token) localStorage.setItem('refreshToken', result.refresh_token);
+                if (result.user) localStorage.setItem('user', JSON.stringify(result.user));
+
+                if (document.getElementById('rememberMe').checked && deviceFingerprint) {
+                    const list = JSON.parse(localStorage.getItem('trustedDevices') || '[]');
+                    const idx = list.findIndex(d => d.fingerprint === deviceFingerprint);
+                    const entry = { fingerprint: deviceFingerprint, ua: navigator.userAgent, lastUsed: new Date().toISOString() };
+                    if (idx >= 0) list[idx] = entry; else list.push(entry);
+                    localStorage.setItem('trustedDevices', JSON.stringify(list));
+                }
+
+                showAlert('Welcome back! Redirecting...', 'success');
+                setTimeout(() => {
+                    if (result.user && result.user.role) {
+                        const routes = {
+                            super_admin: '/admin/dashboard',
+                            institutional_admin: '/institutional-admin/dashboard',
+                            lecturer: '/lecturer/dashboard',
+                            student: '/student/dashboard'
+                        };
+                        window.location.href = routes[result.user.role] || '/dashboard';
+                    } else {
+                        window.location.href = '/dashboard';
+                    }
+                }, 1000);
+            }
+        } catch (err) {
+            showAlert('Connection error. Please try again.', 'error');
+        } finally {
+            setLoading(false);
+        }
+    });
+
+    // ── Forgot Password ──
+    document.getElementById('forgotPwLink').addEventListener('click', function (e) {
+        e.preventDefault();
+        showAlert('Password reset will be available soon.', 'info');
+    });
+
+    // ── Pre-fill on return ──
+    (async function () {
+        const token = localStorage.getItem('accessToken');
+        const user = localStorage.getItem('user');
+        if (token && user) {
+            try {
+                const u = JSON.parse(user);
+                // Verify token is still valid by calling dashboard API
+                const verify = await fetch('/api/dashboard', {
+                    headers: { 'Authorization': 'Bearer ' + token }
+                });
+                if (verify.ok) {
+                    const routes = {
+                        super_admin: '/admin/dashboard',
+                        institutional_admin: '/institutional-admin/dashboard',
+                        lecturer: '/lecturer/dashboard',
+                        student: '/student/dashboard'
+                    };
+                    window.location.href = routes[u.role] || '/dashboard';
+                    return;
+                }
+            } catch (_) {}
+            // Token invalid or expired - clear storage
+            localStorage.removeItem('accessToken');
+            localStorage.removeItem('refreshToken');
+            localStorage.removeItem('user');
+        }
+    })();
+
+    // ── Helpers ──
+    function showAlert(msg, type) {
+        const c = document.getElementById('alertContainer');
+        c.className = 'alert-custom alert-' + type;
+        c.innerHTML = '<i class="fas fa-' + (type === 'error' ? 'exclamation-circle' : 'check-circle') + ' me-2"></i>' + msg;
+        c.style.display = 'block';
+        setTimeout(() => { c.style.display = 'none'; }, 5000);
+    }
+
+    function setLoading(loading) {
+        const s = document.getElementById('loginSpinner');
+        const t = document.getElementById('loginBtnText');
+        const b = document.getElementById('loginBtn');
+        s.style.display = loading ? 'inline-block' : 'none';
+        t.textContent = loading ? 'Signing In...' : 'Sign In';
+        b.disabled = loading;
+    }
+</script>
+
+</body>
+</html>

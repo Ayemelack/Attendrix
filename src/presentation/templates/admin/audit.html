@@ -1,0 +1,899 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Audit Logs - Attendrix</title>
+    <meta name="description" content="Audit logs management dashboard in Attendrix">
+    
+    <link rel="icon" type="image/x-icon" href="/static/images/favicon.ico">
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <link rel="stylesheet" href="{{ url_for('static', filename='css/landing.css') }}">
+    
+    <style>
+        :root {
+            --primary-color: #4f46e5;
+            --primary-dark: #4338ca;
+            --secondary-color: #64748b;
+            --accent-color: #6366f1;
+            --success-color: #10b981;
+            --warning-color: #f59e0b;
+            --error-color: #ef4444;
+            --bg-primary: #ffffff;
+            --bg-secondary: #f8fafc;
+            --text-primary: #1e293b;
+            --text-secondary: #64748b;
+            --border-color: #e2e8f0;
+            --shadow-sm: 0 1px 2px 0 rgb(0 0 0 / 0.05);
+            --shadow-md: 0 4px 6px -1px rgb(0 0 0 / 0.1);
+            --radius-sm: 6px;
+            --radius-md: 8px;
+            --radius-lg: 12px;
+        }
+
+        * { margin: 0; padding: 0; box-sizing: border-box; }
+        body { font-family: 'Inter', sans-serif; background: var(--bg-secondary); color: var(--text-primary); line-height: 1.6; }
+        .dashboard-layout { display: flex; min-height: 100vh; }
+        
+        .sidebar { width: 280px; background: var(--bg-primary); border-right: 1px solid var(--border-color); position: fixed; height: 100vh; left: 0; top: 0; z-index: 1000; transition: transform 0.3s ease; }
+        .sidebar-header { padding: 1.5rem; border-bottom: 1px solid var(--border-color); background: linear-gradient(135deg, var(--primary-color) 0%, var(--primary-dark) 100%); color: white; }
+        .sidebar-brand { display: flex; align-items: center; gap: 0.75rem; font-size: 1.25rem; font-weight: 700; text-decoration: none; color: white; }
+        .sidebar-nav { padding: 1rem 0; }
+        .sidebar-nav-item { display: block; padding: 0.875rem 1.5rem; color: var(--text-secondary); text-decoration: none; transition: all 0.2s ease; position: relative; font-weight: 500; }
+        .sidebar-nav-item:hover { background: var(--bg-secondary); color: var(--primary-color); }
+        .sidebar-nav-item.active { background: linear-gradient(90deg, rgba(79, 70, 229, 0.1) 0%, transparent 100%); color: var(--primary-color); font-weight: 600; }
+        .sidebar-nav-item.active::before { content: ''; position: absolute; left: 0; top: 0; bottom: 0; width: 4px; background: var(--primary-color); }
+        .sidebar-nav-item i { width: 20px; margin-right: 0.75rem; text-align: center; }
+        
+        .main-content { flex: 1; margin-left: 280px; display: flex; flex-direction: column; min-height: 100vh; }
+        .top-header { background: var(--bg-primary); border-bottom: 1px solid var(--border-color); padding: 1rem 2rem; display: flex; justify-content: space-between; align-items: center; box-shadow: var(--shadow-sm); position: sticky; top: 0; z-index: 100; }
+        .header-left { display: flex; align-items: center; gap: 1rem; }
+        .header-title { font-size: 1.5rem; font-weight: 700; color: var(--text-primary); }
+        .header-subtitle { color: var(--text-secondary); font-size: 0.875rem; }
+        .header-right { display: flex; align-items: center; gap: 1rem; }
+        .header-time { color: var(--text-secondary); font-size: 0.875rem; }
+        .profile-dropdown { position: relative; }
+        .profile-avatar { width: 40px; height: 40px; border-radius: var(--radius-md); background: linear-gradient(135deg, var(--primary-color) 0%, var(--accent-color) 100%); display: flex; align-items: center; justify-content: center; color: white; cursor: pointer; }
+        
+        .content-area { flex: 1; padding: 2rem; background: var(--bg-secondary); }
+        .page-content { background: var(--bg-primary); padding: 2rem; border-radius: var(--radius-lg); box-shadow: var(--shadow-sm); border: 1px solid var(--border-color); }
+        .page-header { margin-bottom: 2rem; }
+        .page-title { font-size: 1.75rem; font-weight: 700; color: var(--text-primary); margin-bottom: 0.5rem; }
+        .page-description { color: var(--text-secondary); font-size: 1rem; }
+        
+        .empty-state { text-align: center; padding: 4rem 2rem; color: var(--text-secondary); }
+        .empty-icon { font-size: 4rem; color: var(--primary-color); margin-bottom: 1.5rem; opacity: 0.5; }
+        .empty-title { font-size: 1.5rem; font-weight: 600; color: var(--text-primary); margin-bottom: 1rem; }
+        .empty-description { margin-bottom: 2rem; }
+        .empty-stats { display: grid; grid-template-columns: repeat(auto-fit, minmax(200px, 1fr)); gap: 1.5rem; margin-bottom: 2rem; }
+        .empty-stat-card { background: var(--bg-primary); padding: 1.5rem; border-radius: var(--radius-lg); border: 1px solid var(--border-color); box-shadow: var(--shadow-sm); text-align: center; }
+        .empty-stat-icon { width: 48px; height: 48px; border-radius: var(--radius-md); display: flex; align-items: center; justify-content: center; font-size: 1.25rem; margin: 0 auto 1rem; }
+        .empty-stat-value { font-size: 2rem; font-weight: 700; color: var(--text-primary); margin-bottom: 0.5rem; }
+        .empty-stat-label { color: var(--text-secondary); font-size: 0.875rem; }
+        
+        .feature-list { list-style: none; padding: 0; }
+        .feature-item { display: flex; align-items: center; gap: 1rem; padding: 1rem 0; border-bottom: 1px solid var(--border-color); }
+        .feature-item:last-child { border-bottom: none; }
+        .feature-icon { width: 40px; height: 40px; border-radius: var(--radius-md); display: flex; align-items: center; justify-content: center; font-size: 1rem; }
+        .feature-icon.history { background: rgba(139, 92, 246, 0.1); color: #8b5cf6; }
+        .feature-icon.search { background: rgba(59, 130, 246, 0.1); color: #3b82f6; }
+        .feature-icon.download { background: rgba(16, 185, 129, 0.1); color: var(--success-color); }
+        .feature-icon.filter { background: rgba(245, 158, 11, 0.1); color: var(--warning-color); }
+        .feature-icon.shield-alt { background: rgba(239, 68, 68, 0.1); color: var(--error-color); }
+        .feature-icon.clock { background: rgba(107, 114, 128, 0.1); color: #6b7280; }
+        .feature-content { flex: 1; }
+        .feature-title { font-weight: 500; color: var(--text-primary); margin-bottom: 0.25rem; }
+        .feature-description { font-size: 0.875rem; color: var(--text-secondary); }
+        
+        .btn-primary { background: linear-gradient(135deg, var(--primary-color) 0%, var(--primary-dark) 100%); border: none; color: white; padding: 0.75rem 1.5rem; border-radius: var(--radius-md); font-weight: 500; transition: all 0.2s ease; }
+        .btn-primary:hover { transform: translateY(-1px); box-shadow: var(--shadow-md); }
+        .btn-secondary { background: var(--bg-secondary); border: 1px solid var(--border-color); color: var(--text-primary); padding: 0.75rem 1.5rem; border-radius: var(--radius-md); font-weight: 500; transition: all 0.2s ease; }
+        .btn-secondary:hover { background: var(--border-color); }
+        
+        @media (max-width: 768px) {
+            .sidebar { transform: translateX(-100%); z-index: 1050; }
+            .sidebar.open { transform: translateX(0); }
+            .main-content { margin-left: 0; }
+            .content-area { padding: 1rem; }
+            .header-title { font-size: 1.25rem; }
+            .page-content { padding: 1rem; }
+            .empty-stats { grid-template-columns: 1fr; }
+            .feature-item { flex-direction: column; align-items: flex-start; gap: 0.5rem; }
+        }
+        
+        .mobile-menu-btn { display: none; background: none; border: 1px solid var(--border-color); border-radius: var(--radius-sm); padding: 0.5rem; color: var(--text-secondary); cursor: pointer; }
+        .mobile-menu-btn:hover { background: var(--bg-secondary); color: var(--primary-color); }
+        @media (max-width: 768px) { .mobile-menu-btn { display: block; } }
+    </style>
+</head>
+<body>
+    <div class="dashboard-layout">
+        <div class="sidebar">
+            <div class="sidebar-header">
+                <a class="sidebar-brand" href="/admin/dashboard">
+                    <i class="fas fa-graduation-cap me-2"></i>
+                    <strong>Attendrix</strong>
+                </a>
+            </div>
+            <div class="sidebar-nav">
+                <a class="sidebar-nav-item" href="/admin/dashboard"><i class="fas fa-tachometer-alt me-2"></i>Dashboard</a>
+                <a class="sidebar-nav-item" href="/admin/create_institution"><i class="fas fa-building me-2"></i>Institutions</a>
+                <a class="sidebar-nav-item" href="/admin/users"><i class="fas fa-users me-2"></i>Users</a>
+                <a class="sidebar-nav-item" href="/admin/monitoring"><i class="fas fa-chart-line me-2"></i>Monitoring</a>
+                <a class="sidebar-nav-item" href="/admin/security"><i class="fas fa-shield-alt me-2"></i>Security</a>
+                <a class="sidebar-nav-item" href="/admin/backup"><i class="fas fa-database me-2"></i>Backup & Restore</a>
+                <a class="sidebar-nav-item" href="/admin/notifications"><i class="fas fa-bell me-2"></i>Notifications</a>
+                <a class="sidebar-nav-item active" href="/admin/audit"><i class="fas fa-history me-2"></i>Audit Logs</a>
+                <a class="sidebar-nav-item" href="/admin/roles"><i class="fas fa-user-shield me-2"></i>Role Assignments</a>
+                <a class="sidebar-nav-item" href="/admin/profile"><i class="fas fa-user me-2"></i>Profile</a>
+            </div>
+        </div>
+        <div class="main-content">
+            <div class="top-header">
+                <div class="header-left">
+                    <button class="mobile-menu-btn" onclick="toggleSidebar()"><i class="fas fa-bars"></i></button>
+                    <div>
+                        <h1 class="header-title">Audit Logs</h1>
+                        <p class="header-subtitle">System audit trail and activity monitoring</p>
+                    </div>
+                </div>
+                <div class="header-right">
+                    <div class="header-time" id="currentTime"></div>
+                    <div class="profile-dropdown">
+                        <div class="profile-avatar" data-bs-toggle="dropdown"><i class="fas fa-user"></i></div>
+                        <ul class="dropdown-menu dropdown-menu-end">
+                            <li><a class="dropdown-item" href="/admin/profile"><i class="fas fa-user me-2"></i>Profile</a></li>
+                            <li><a class="dropdown-item" href="/admin/settings"><i class="fas fa-cog me-2"></i>Settings</a></li>
+                            <li><hr class="dropdown-divider"></li>
+                            <li><a class="dropdown-item" href="#" onclick="showLogoutConfirm()"><i class="fas fa-sign-out-alt me-2"></i>Logout</a></li>
+                        </ul>
+                    </div>
+                </div>
+            </div>
+            <main class="content-area">
+                <div class="page-content">
+                    <div class="page-header">
+                        <h2 class="page-title">Audit Logs Dashboard</h2>
+                        <p class="page-description">Monitor system activities and maintain compliance</p>
+                    </div>
+                    
+                    <div class="empty-state">
+                        <div class="empty-icon"><i class="fas fa-history"></i></div>
+                        <h3 class="empty-title">No Audit Logs Yet</h3>
+                        <p class="empty-description">
+                            System audit logs will display here once activities are recorded. This will include:
+                        </p>
+                        
+                        <div class="empty-stats">
+                            <div class="empty-stat-card">
+                                <div class="empty-stat-icon"><i class="fas fa-history"></i></div>
+                                <div class="empty-stat-value">0</div>
+                                <div class="empty-stat-label">Total Logs</div>
+                            </div>
+                            <div class="empty-stat-card">
+                                <div class="empty-stat-icon"><i class="fas fa-shield-alt"></i></div>
+                                <div class="empty-stat-value">0</div>
+                                <div class="empty-stat-label">Security Events</div>
+                            </div>
+                            <div class="empty-stat-card">
+                                <div class="empty-stat-icon"><i class="fas fa-user"></i></div>
+                                <div class="empty-stat-value">0</div>
+                                <div class="empty-stat-label">User Activities</div>
+                            </div>
+                            <div class="empty-stat-card">
+                                <div class="empty-stat-icon"><i class="fas fa-database"></i></div>
+                                <div class="empty-stat-value">0</div>
+                                <div class="empty-stat-label">System Changes</div>
+                            </div>
+                        </div>
+                        
+                        <h4 class="empty-title">Audit Features</h4>
+                        <ul class="feature-list">
+                            <li class="feature-item">
+                                <div class="feature-icon history">
+                                    <i class="fas fa-history"></i>
+                                </div>
+                                <div class="feature-content">
+                                    <div class="feature-title">Complete Audit Trail</div>
+                                    <div class="feature-description">Track all system activities</div>
+                                </div>
+                            </li>
+                            <li class="feature-item">
+                                <div class="feature-icon search">
+                                    <i class="fas fa-search"></i>
+                                </div>
+                                <div class="feature-content">
+                                    <div class="feature-title">Advanced Search</div>
+                                    <div class="feature-description">Filter logs by user, date, event type</div>
+                                </div>
+                            </li>
+                            <li class="feature-item">
+                                <div class="feature-icon download">
+                                    <i class="fas fa-download"></i>
+                                </div>
+                                <div class="feature-content">
+                                    <div class="feature-title">Export Logs</div>
+                                    <div class="feature-description">Download audit data in multiple formats</div>
+                                </div>
+                            </li>
+                            <li class="feature-item">
+                                <div class="feature-icon filter">
+                                    <i class="fas fa-filter"></i>
+                                </div>
+                                <div class="feature-content">
+                                    <div class="feature-title">Log Filtering</div>
+                                    <div class="feature-description">Filter by severity, user, or event</div>
+                                </div>
+                            </li>
+                            <li class="feature-item">
+                                <div class="feature-icon shield-alt">
+                                    <i class="fas fa-shield-alt"></i>
+                                </div>
+                                <div class="feature-content">
+                                    <div class="feature-title">Security Monitoring</div>
+                                    <div class="feature-description">Track security events and threats</div>
+                                </div>
+                            </li>
+                            <li class="feature-item">
+                                <div class="feature-icon clock">
+                                    <i class="fas fa-clock"></i>
+                                </div>
+                                <div class="feature-content">
+                                    <div class="feature-title">Real-time Monitoring</div>
+                                    <div class="feature-description">Live activity tracking and alerts</div>
+                                </div>
+                            </li>
+                        </ul>
+                        
+                        <div class="d-flex gap-2">
+                            <button class="btn btn-primary" onclick="refreshLogs()">
+                                <i class="fas fa-sync me-2"></i>Refresh Logs
+                            </button>
+                            <button class="btn btn-secondary" onclick="exportLogs()">
+                                <i class="fas fa-download me-2"></i>Export Logs
+                            </button>
+                            <button class="btn btn-secondary" onclick="configureAudit()">
+                                <i class="fas fa-cog me-2"></i>Configure Audit
+                            </button>
+                        </div>
+                    </div>
+                </div>
+            </main>
+        </div>
+    </div>
+
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
+    <script>
+        document.addEventListener('DOMContentLoaded', function() {
+            // Initialize components
+            initializeTimeDisplay();
+            initializeAuditLogs();
+            initializeTooltips();
+            
+            console.log('Audit Logs page loaded successfully');
+        });
+        
+        function initializeTimeDisplay() {
+            function updateTime() {
+                const now = new Date();
+                const timeString = now.toLocaleString('en-US', { 
+                    weekday: 'short', 
+                    year: 'numeric', 
+                    month: 'short', 
+                    day: 'numeric', 
+                    hour: '2-digit', 
+                    minute: '2-digit' 
+                });
+                const timeElement = document.getElementById('currentTime');
+                if (timeElement) timeElement.textContent = timeString;
+            }
+            updateTime();
+            setInterval(updateTime, 60000);
+        }
+        
+        function initializeAuditLogs() {
+            // Initialize audit log features (placeholder)
+        }
+        
+        function initializeTooltips() {
+            // Initialize Bootstrap tooltips
+            if (typeof bootstrap !== 'undefined' && bootstrap.Tooltip) {
+                const tooltipTriggerList = [].slice.call(document.querySelectorAll('[data-bs-toggle="tooltip"]'));
+                tooltipTriggerList.map(function (tooltipTriggerEl) {
+                    return new bootstrap.Tooltip(tooltipTriggerEl);
+                });
+            }
+            
+            // Initialize Bootstrap dropdowns
+            if (typeof bootstrap !== 'undefined' && bootstrap.Dropdown) {
+                const dropdownTriggerList = [].slice.call(document.querySelectorAll('[data-bs-toggle="dropdown"]'));
+                dropdownTriggerList.map(function (dropdownTriggerEl) {
+                    return new bootstrap.Dropdown(dropdownTriggerEl);
+                });
+            }
+        }
+        
+        function refreshLogs() {
+            // Show loading state
+            const refreshBtn = document.querySelector('button[onclick="refreshLogs()"]');
+            const originalContent = refreshBtn.innerHTML;
+            refreshBtn.innerHTML = '<i class="fas fa-spinner fa-spin me-2"></i>Refreshing...';
+            refreshBtn.disabled = true;
+            
+            // Simulate log refresh
+            setTimeout(() => {
+                // Update audit metrics
+                updateAuditMetrics();
+                
+                // Restore button
+                refreshBtn.innerHTML = originalContent;
+                refreshBtn.disabled = false;
+                
+                // Show success message
+                showSuccessToast('Audit logs refreshed successfully!');
+                
+                // Log action
+                console.log('Audit logs refreshed at:', new Date().toISOString());
+            }, 1500);
+        }
+        
+        function updateAuditMetrics() {
+            // Update audit metrics
+            const metrics = {
+                totalLogs: Math.floor(Math.random() * 1000) + 500,
+                securityEvents: Math.floor(Math.random() * 50) + 10,
+                userActivities: Math.floor(Math.random() * 200) + 100,
+                systemChanges: Math.floor(Math.random() * 30) + 5
+            };
+            
+            // Update metric cards
+            const statValues = document.querySelectorAll('.empty-stat-value');
+            statValues.forEach((card, index) => {
+                if (index < Object.keys(metrics).length) {
+                    const metricValue = Object.values(metrics)[index];
+                    card.textContent = metricValue.toLocaleString();
+                    
+                    // Add animation
+                    card.style.transform = 'scale(1.1)';
+                    setTimeout(() => {
+                        card.style.transform = 'scale(1)';
+                    }, 300);
+                }
+            });
+            
+            // Update last refresh time
+            const lastRefreshElement = document.getElementById('lastAuditRefresh');
+            if (!lastRefreshElement) {
+                const refreshInfo = document.createElement('div');
+                refreshInfo.id = 'lastAuditRefresh';
+                refreshInfo.className = 'text-muted small mt-3';
+                refreshInfo.innerHTML = `<i class="fas fa-clock me-1"></i>Last refreshed: ${new Date().toLocaleTimeString()}`;
+                
+                const buttonContainer = document.querySelector('.d-flex.gap-2');
+                if (buttonContainer) {
+                    buttonContainer.parentElement.appendChild(refreshInfo);
+                }
+            } else {
+                lastRefreshElement.innerHTML = `<i class="fas fa-clock me-1"></i>Last refreshed: ${new Date().toLocaleTimeString()}`;
+            }
+        }
+        
+        function exportLogs() {
+            // Create export modal
+            const modalHtml = `
+                <div class="modal fade" id="exportLogsModal" tabindex="-1" aria-labelledby="exportLogsModalLabel" aria-hidden="true">
+                    <div class="modal-dialog">
+                        <div class="modal-content">
+                            <div class="modal-header">
+                                <h5 class="modal-title" id="exportLogsModalLabel">
+                                    <i class="fas fa-download me-2"></i>Export Audit Logs
+                                </h5>
+                                <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+                            </div>
+                            <div class="modal-body">
+                                <form id="exportLogsForm">
+                                    <div class="mb-3">
+                                        <label for="exportFormat" class="form-label">Export Format *</label>
+                                        <select class="form-select" id="exportFormat" required>
+                                            <option value="">Select format...</option>
+                                            <option value="csv">CSV</option>
+                                            <option value="json">JSON</option>
+                                            <option value="pdf">PDF Report</option>
+                                            <option value="xml">XML</option>
+                                            <option value="excel">Excel (XLSX)</option>
+                                        </select>
+                                    </div>
+                                    <div class="mb-3">
+                                        <label for="dateRange" class="form-label">Date Range</label>
+                                        <select class="form-select" id="dateRange">
+                                            <option value="today">Today</option>
+                                            <option value="yesterday">Yesterday</option>
+                                            <option value="last7days">Last 7 Days</option>
+                                            <option value="last30days" selected>Last 30 Days</option>
+                                            <option value="last90days">Last 90 Days</option>
+                                            <option value="custom">Custom Range</option>
+                                        </select>
+                                    </div>
+                                    <div class="mb-3" id="customDateRange" style="display: none;">
+                                        <div class="row">
+                                            <div class="col-md-6 mb-2">
+                                                <label for="startDate" class="form-label">Start Date</label>
+                                                <input type="date" class="form-control" id="startDate">
+                                            </div>
+                                            <div class="col-md-6 mb-2">
+                                                <label for="endDate" class="form-label">End Date</label>
+                                                <input type="date" class="form-control" id="endDate">
+                                            </div>
+                                        </div>
+                                    </div>
+                                    <div class="mb-3">
+                                        <label class="form-label">Log Categories</label>
+                                        <div class="form-check">
+                                            <input class="form-check-input" type="checkbox" id="exportSecurity" checked>
+                                            <label class="form-check-label" for="exportSecurity">Security Events</label>
+                                        </div>
+                                        <div class="form-check">
+                                            <input class="form-check-input" type="checkbox" id="exportUserActivity" checked>
+                                            <label class="form-check-label" for="exportUserActivity">User Activity</label>
+                                        </div>
+                                        <div class="form-check">
+                                            <input class="form-check-input" type="checkbox" id="exportSystemChanges" checked>
+                                            <label class="form-check-label" for="exportSystemChanges">System Changes</label>
+                                        </div>
+                                        <div class="form-check">
+                                            <input class="form-check-input" type="checkbox" id="exportLoginEvents">
+                                            <label class="form-check-label" for="exportLoginEvents">Login Events</label>
+                                        </div>
+                                    </div>
+                                    <div class="mb-3">
+                                        <label class="form-label">Export Options</label>
+                                        <div class="form-check">
+                                            <input class="form-check-input" type="checkbox" id="includeMetadata" checked>
+                                            <label class="form-check-label" for="includeMetadata">Include Metadata</label>
+                                        </div>
+                                        <div class="form-check">
+                                            <input class="form-check-input" type="checkbox" id="includeTimestamps" checked>
+                                            <label class="form-check-label" for="includeTimestamps">Include Timestamps</label>
+                                        </div>
+                                        <div class="form-check">
+                                            <input class="form-check-input" type="checkbox" id="anonymizeData">
+                                            <label class="form-check-label" for="anonymizeData">Anonymize Sensitive Data</label>
+                                        </div>
+                                    </div>
+                                </form>
+                            </div>
+                            <div class="modal-footer">
+                                <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancel</button>
+                                <button type="button" class="btn btn-primary" onclick="startExport()">
+                                    <i class="fas fa-download me-2"></i>Export Logs
+                                </button>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            `;
+            
+            // Remove existing modal if present
+            const existingModal = document.getElementById('exportLogsModal');
+            if (existingModal) {
+                existingModal.remove();
+            }
+            
+            // Add modal to page
+            document.body.insertAdjacentHTML('beforeend', modalHtml);
+            
+            // Show modal
+            const modal = new bootstrap.Modal(document.getElementById('exportLogsModal'));
+            modal.show();
+            
+            // Setup date range change handler
+            document.getElementById('dateRange').addEventListener('change', function() {
+                const customDateRange = document.getElementById('customDateRange');
+                customDateRange.style.display = this.value === 'custom' ? 'block' : 'none';
+            });
+        }
+        
+        function startExport() {
+            const exportConfig = {
+                format: document.getElementById('exportFormat').value,
+                dateRange: document.getElementById('dateRange').value,
+                startDate: document.getElementById('startDate').value,
+                endDate: document.getElementById('endDate').value,
+                categories: {
+                    security: document.getElementById('exportSecurity').checked,
+                    userActivity: document.getElementById('exportUserActivity').checked,
+                    systemChanges: document.getElementById('exportSystemChanges').checked,
+                    loginEvents: document.getElementById('exportLoginEvents').checked
+                },
+                options: {
+                    includeMetadata: document.getElementById('includeMetadata').checked,
+                    includeTimestamps: document.getElementById('includeTimestamps').checked,
+                    anonymizeData: document.getElementById('anonymizeData').checked
+                }
+            };
+            
+            // Validate form
+            if (!exportConfig.format) {
+                showValidationError('Please select an export format.');
+                return;
+            }
+            
+            // Close modal
+            const modal = bootstrap.Modal.getInstance(document.getElementById('exportLogsModal'));
+            modal.hide();
+            
+            // Show export progress
+            showExportProgress(exportConfig);
+        }
+        
+        function showExportProgress(config) {
+            const progressHtml = `
+                <div class="modal fade" id="exportProgressModal" tabindex="-1" data-bs-backdrop="static" data-bs-keyboard="false">
+                    <div class="modal-dialog">
+                        <div class="modal-content">
+                            <div class="modal-header">
+                                <h5 class="modal-title">
+                                    <i class="fas fa-download me-2"></i>Exporting Audit Logs...
+                                </h5>
+                            </div>
+                            <div class="modal-body">
+                                <div class="mb-3">
+                                    <div class="d-flex justify-content-between mb-2">
+                                        <span>Progress</span>
+                                        <span id="exportProgressPercent">0%</span>
+                                    </div>
+                                    <div class="progress">
+                                        <div class="progress-bar" id="exportProgressBar" role="progressbar" style="width: 0%"></div>
+                                    </div>
+                                </div>
+                                <div class="mb-3">
+                                    <strong>Export Details:</strong>
+                                    <ul class="list-unstyled mt-2">
+                                        <li><i class="fas fa-file me-2"></i>Format: ${config.format.toUpperCase()}</li>
+                                        <li><i class="fas fa-calendar me-2"></i>Range: ${config.dateRange}</li>
+                                        <li><i class="fas fa-list me-2"></i>Categories: ${Object.keys(config.categories).filter(key => config.categories[key]).join(', ')}</li>
+                                    </ul>
+                                </div>
+                                <div id="exportStatus" class="text-muted">
+                                    <i class="fas fa-info-circle me-2"></i>Preparing export data...
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            `;
+            
+            // Add progress modal to page
+            document.body.insertAdjacentHTML('beforeend', progressHtml);
+            
+            // Show progress modal
+            const progressModal = new bootstrap.Modal(document.getElementById('exportProgressModal'));
+            progressModal.show();
+            
+            // Simulate export progress
+            let progress = 0;
+            const progressBar = document.getElementById('exportProgressBar');
+            const progressPercent = document.getElementById('exportProgressPercent');
+            const exportStatus = document.getElementById('exportStatus');
+            
+            const progressInterval = setInterval(() => {
+                progress += Math.random() * 18;
+                if (progress >= 100) {
+                    progress = 100;
+                    clearInterval(progressInterval);
+                    
+                    // Show completion
+                    progressBar.style.width = '100%';
+                    progressPercent.textContent = '100%';
+                    exportStatus.innerHTML = '<i class="fas fa-check-circle text-success me-2"></i>Export completed successfully!';
+                    
+                    // Close modal after delay and download file
+                    setTimeout(() => {
+                        progressModal.hide();
+                        downloadAuditLogs(config);
+                        showSuccessToast('Audit logs exported successfully!');
+                        console.log('Audit logs exported:', config);
+                    }, 2000);
+                } else {
+                    progressBar.style.width = progress + '%';
+                    progressPercent.textContent = Math.floor(progress) + '%';
+                    
+                    // Update status messages
+                    if (progress < 25) {
+                        exportStatus.innerHTML = '<i class="fas fa-info-circle me-2"></i>Preparing export data...';
+                    } else if (progress < 50) {
+                        exportStatus.innerHTML = '<i class="fas fa-filter me-2"></i>Filtering audit logs...';
+                    } else if (progress < 75) {
+                        exportStatus.innerHTML = '<i class="fas fa-file-export me-2"></i>Generating export file...';
+                    } else {
+                        exportStatus.innerHTML = '<i class="fas fa-check me-2"></i>Finalizing export...';
+                    }
+                }
+            }, 500);
+        }
+        
+        function downloadAuditLogs(config) {
+            // Create sample audit log data
+            const auditData = [
+                { timestamp: new Date().toISOString(), user: 'admin@attendrix.com', action: 'LOGIN', category: 'Security', ip: '192.168.1.100' },
+                { timestamp: new Date(Date.now() - 3600000).toISOString(), user: 'john.doe@example.com', action: 'USER_CREATED', category: 'User Activity', ip: '192.168.1.101' },
+                { timestamp: new Date(Date.now() - 7200000).toISOString(), user: 'system', action: 'BACKUP_COMPLETED', category: 'System Changes', ip: '127.0.0.1' },
+                { timestamp: new Date(Date.now() - 10800000).toISOString(), user: 'jane.smith@example.com', action: 'ROLE_ASSIGNED', category: 'User Activity', ip: '192.168.1.102' },
+                { timestamp: new Date(Date.now() - 14400000).toISOString(), user: 'admin@attendrix.com', action: 'SETTINGS_UPDATED', category: 'System Changes', ip: '192.168.1.100' }
+            ];
+            
+            let content = '';
+            let filename = '';
+            let mimeType = '';
+            
+            switch (config.format) {
+                case 'csv':
+                    content = 'Timestamp,User,Action,Category,IP Address\n' + 
+                             auditData.map(log => `${log.timestamp},${log.user},${log.action},${log.category},${log.ip}`).join('\n');
+                    filename = `audit_logs_${new Date().toISOString().split('T')[0]}.csv`;
+                    mimeType = 'text/csv';
+                    break;
+                case 'json':
+                    content = JSON.stringify(auditData, null, 2);
+                    filename = `audit_logs_${new Date().toISOString().split('T')[0]}.json`;
+                    mimeType = 'application/json';
+                    break;
+                default:
+                    content = auditData.map(log => `${log.timestamp} - ${log.user} - ${log.action} - ${log.category} - ${log.ip}`).join('\n');
+                    filename = `audit_logs_${new Date().toISOString().split('T')[0]}.txt`;
+                    mimeType = 'text/plain';
+            }
+            
+            // Create blob and download
+            const blob = new Blob([content], { type: mimeType });
+            const url = window.URL.createObjectURL(blob);
+            const a = document.createElement('a');
+            a.href = url;
+            a.download = filename;
+            document.body.appendChild(a);
+            a.click();
+            document.body.removeChild(a);
+            window.URL.revokeObjectURL(url);
+        }
+        
+        function configureAudit() {
+            // Create audit configuration modal
+            const modalHtml = `
+                <div class="modal fade" id="configureAuditModal" tabindex="-1" aria-labelledby="configureAuditModalLabel" aria-hidden="true">
+                    <div class="modal-dialog modal-lg">
+                        <div class="modal-content">
+                            <div class="modal-header">
+                                <h5 class="modal-title" id="configureAuditModalLabel">
+                                    <i class="fas fa-cog me-2"></i>Audit Configuration
+                                </h5>
+                                <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+                            </div>
+                            <div class="modal-body">
+                                <form id="auditConfigForm">
+                                    <div class="row">
+                                        <div class="col-md-6 mb-3">
+                                            <h6 class="text-primary mb-3">Log Retention</h6>
+                                            <div class="mb-3">
+                                                <label for="retentionDays" class="form-label">Retention Period (days)</label>
+                                                <input type="number" class="form-control" id="retentionDays" value="90" min="1" max="365">
+                                            </div>
+                                            <div class="mb-3">
+                                                <label for="archiveAfter" class="form-label">Archive After (days)</label>
+                                                <input type="number" class="form-control" id="archiveAfter" value="30" min="1" max="365">
+                                            </div>
+                                            <div class="mb-3">
+                                                <div class="form-check">
+                                                    <input class="form-check-input" type="checkbox" id="enableAutoCleanup" checked>
+                                                    <label class="form-check-label" for="enableAutoCleanup">
+                                                        Enable Automatic Cleanup
+                                                    </label>
+                                                </div>
+                                            </div>
+                                        </div>
+                                        <div class="col-md-6 mb-3">
+                                            <h6 class="text-primary mb-3">Event Monitoring</h6>
+                                            <div class="mb-3">
+                                                <label for="logLevel" class="form-label">Minimum Log Level</label>
+                                                <select class="form-select" id="logLevel">
+                                                    <option value="debug">Debug</option>
+                                                    <option value="info" selected>Info</option>
+                                                    <option value="warning">Warning</option>
+                                                    <option value="error">Error</option>
+                                                    <option value="critical">Critical</option>
+                                                </select>
+                                            </div>
+                                            <div class="mb-3">
+                                                <label for="alertThreshold" class="form-label">Alert Threshold (events/hour)</label>
+                                                <input type="number" class="form-control" id="alertThreshold" value="100" min="1" max="1000">
+                                            </div>
+                                            <div class="mb-3">
+                                                <div class="form-check">
+                                                    <input class="form-check-input" type="checkbox" id="enableRealTimeMonitoring" checked>
+                                                    <label class="form-check-label" for="enableRealTimeMonitoring">
+                                                        Enable Real-time Monitoring
+                                                    </label>
+                                                </div>
+                                            </div>
+                                        </div>
+                                    </div>
+                                    <div class="row">
+                                        <div class="col-md-6 mb-3">
+                                            <h6 class="text-primary mb-3">Log Categories</h6>
+                                            <div class="form-check">
+                                                <input class="form-check-input" type="checkbox" id="logSecurity" checked>
+                                                <label class="form-check-label" for="logSecurity">Security Events</label>
+                                            </div>
+                                            <div class="form-check">
+                                                <input class="form-check-input" type="checkbox" id="logUserActivity" checked>
+                                                <label class="form-check-label" for="logUserActivity">User Activity</label>
+                                            </div>
+                                            <div class="form-check">
+                                                <input class="form-check-input" type="checkbox" id="logSystemChanges" checked>
+                                                <label class="form-check-label" for="logSystemChanges">System Changes</label>
+                                            </div>
+                                            <div class="form-check">
+                                                <input class="form-check-input" type="checkbox" id="logApiCalls">
+                                                <label class="form-check-label" for="logApiCalls">API Calls</label>
+                                            </div>
+                                        </div>
+                                        <div class="col-md-6 mb-3">
+                                            <h6 class="text-primary mb-3">Notifications</h6>
+                                            <div class="mb-3">
+                                                <div class="form-check">
+                                                    <input class="form-check-input" type="checkbox" id="enableEmailAlerts" checked>
+                                                    <label class="form-check-label" for="enableEmailAlerts">
+                                                        Email Alerts for Critical Events
+                                                    </label>
+                                                </div>
+                                            </div>
+                                            <div class="mb-3">
+                                                <div class="form-check">
+                                                    <input class="form-check-input" type="checkbox" id="enableSmsAlerts">
+                                                    <label class="form-check-label" for="enableSmsAlerts">
+                                                        SMS Alerts for Security Events
+                                                    </label>
+                                                </div>
+                                            </div>
+                                            <div class="mb-3">
+                                                <label for="alertEmail" class="form-label">Alert Email</label>
+                                                <input type="email" class="form-control" id="alertEmail" value="admin@attendrix.com">
+                                            </div>
+                                        </div>
+                                    </div>
+                                </form>
+                            </div>
+                            <div class="modal-footer">
+                                <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancel</button>
+                                <button type="button" class="btn btn-primary" onclick="saveAuditConfig()">
+                                    <i class="fas fa-save me-2"></i>Save Configuration
+                                </button>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            `;
+            
+            // Remove existing modal if present
+            const existingModal = document.getElementById('configureAuditModal');
+            if (existingModal) {
+                existingModal.remove();
+            }
+            
+            // Add modal to page
+            document.body.insertAdjacentHTML('beforeend', modalHtml);
+            
+            // Show modal
+            const modal = new bootstrap.Modal(document.getElementById('configureAuditModal'));
+            modal.show();
+        }
+        
+        function saveAuditConfig() {
+            const config = {
+                retention: {
+                    days: document.getElementById('retentionDays').value,
+                    archiveAfter: document.getElementById('archiveAfter').value,
+                    autoCleanup: document.getElementById('enableAutoCleanup').checked
+                },
+                monitoring: {
+                    logLevel: document.getElementById('logLevel').value,
+                    alertThreshold: document.getElementById('alertThreshold').value,
+                    realTimeMonitoring: document.getElementById('enableRealTimeMonitoring').checked
+                },
+                categories: {
+                    security: document.getElementById('logSecurity').checked,
+                    userActivity: document.getElementById('logUserActivity').checked,
+                    systemChanges: document.getElementById('logSystemChanges').checked,
+                    apiCalls: document.getElementById('logApiCalls').checked
+                },
+                notifications: {
+                    emailAlerts: document.getElementById('enableEmailAlerts').checked,
+                    smsAlerts: document.getElementById('enableSmsAlerts').checked,
+                    alertEmail: document.getElementById('alertEmail').value
+                }
+            };
+            
+            // Close modal
+            const modal = bootstrap.Modal.getInstance(document.getElementById('configureAuditModal'));
+            modal.hide();
+            
+            // Show success message
+            showSuccessToast('Audit configuration saved successfully!');
+            
+            // Log action
+            console.log('Audit configuration saved:', config);
+        }
+        
+        function showSuccessToast(message) {
+            // Create toast HTML
+            const toastHtml = `
+                <div class="toast-container position-fixed top-0 end-0 p-3">
+                    <div class="toast show" role="alert" aria-live="assertive" aria-atomic="true">
+                        <div class="toast-header bg-success text-white">
+                            <i class="fas fa-history me-2"></i>
+                            <strong class="me-auto">Audit</strong>
+                            <button type="button" class="btn-close btn-close-white" data-bs-dismiss="toast" aria-label="Close"></button>
+                        </div>
+                        <div class="toast-body">
+                            ${message}
+                        </div>
+                    </div>
+                </div>
+            `;
+            
+            // Add toast to page
+            document.body.insertAdjacentHTML('beforeend', toastHtml);
+            
+            // Auto remove after 5 seconds
+            setTimeout(() => {
+                const toastContainer = document.querySelector('.toast-container');
+                if (toastContainer) {
+                    toastContainer.remove();
+                }
+            }, 5000);
+        }
+        
+        function showValidationError(message) {
+            // Create validation error toast
+            const toastHtml = `
+                <div class="toast-container position-fixed top-0 end-0 p-3">
+                    <div class="toast show" role="alert" aria-live="assertive" aria-atomic="true">
+                        <div class="toast-header bg-danger text-white">
+                            <i class="fas fa-exclamation-triangle me-2"></i>
+                            <strong class="me-auto">Validation Error</strong>
+                            <button type="button" class="btn-close btn-close-white" data-bs-dismiss="toast" aria-label="Close"></button>
+                        </div>
+                        <div class="toast-body">
+                            ${message}
+                        </div>
+                    </div>
+                </div>
+            `;
+            
+            // Add toast to page
+            document.body.insertAdjacentHTML('beforeend', toastHtml);
+            
+            // Auto remove after 5 seconds
+            setTimeout(() => {
+                const toastContainer = document.querySelector('.toast-container');
+                if (toastContainer) {
+                    toastContainer.remove();
+                }
+            }, 5000);
+        }
+        
+        function showLogoutConfirm() {
+            if (confirm('Do you really want to log out?')) {
+                window.location.href = '/logout';
+            }
+        }
+        
+        function toggleSidebar() {
+            const sidebar = document.querySelector('.sidebar');
+            if (sidebar) {
+                sidebar.classList.toggle('open');
+            }
+        }
+    </script>
+</body>
+</html>

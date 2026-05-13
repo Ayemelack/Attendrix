@@ -1,0 +1,922 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Backup & Restore - Attendrix</title>
+    <meta name="description" content="Backup and restore system in Attendrix">
+    
+    <link rel="icon" type="image/x-icon" href="/static/images/favicon.ico">
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <link rel="stylesheet" href="{{ url_for('static', filename='css/landing.css') }}">
+    
+    <style>
+        :root {
+            --primary-color: #4f46e5;
+            --primary-dark: #4338ca;
+            --secondary-color: #64748b;
+            --accent-color: #6366f1;
+            --success-color: #10b981;
+            --warning-color: #f59e0b;
+            --error-color: #ef4444;
+            --bg-primary: #ffffff;
+            --bg-secondary: #f8fafc;
+            --text-primary: #1e293b;
+            --text-secondary: #64748b;
+            --border-color: #e2e8f0;
+            --shadow-sm: 0 1px 2px 0 rgb(0 0 0 / 0.05);
+            --shadow-md: 0 4px 6px -1px rgb(0 0 0 / 0.1);
+            --radius-sm: 6px;
+            --radius-md: 8px;
+            --radius-lg: 12px;
+        }
+
+        * { margin: 0; padding: 0; box-sizing: border-box; }
+        body { font-family: 'Inter', sans-serif; background: var(--bg-secondary); color: var(--text-primary); line-height: 1.6; }
+        .dashboard-layout { display: flex; min-height: 100vh; }
+        
+        .sidebar { width: 280px; background: var(--bg-primary); border-right: 1px solid var(--border-color); position: fixed; height: 100vh; left: 0; top: 0; z-index: 1000; transition: transform 0.3s ease; }
+        .sidebar-header { padding: 1.5rem; border-bottom: 1px solid var(--border-color); background: linear-gradient(135deg, var(--primary-color) 0%, var(--primary-dark) 100%); color: white; }
+        .sidebar-brand { display: flex; align-items: center; gap: 0.75rem; font-size: 1.25rem; font-weight: 700; text-decoration: none; color: white; }
+        .sidebar-nav { padding: 1rem 0; }
+        .sidebar-nav-item { display: block; padding: 0.875rem 1.5rem; color: var(--text-secondary); text-decoration: none; transition: all 0.2s ease; position: relative; font-weight: 500; }
+        .sidebar-nav-item:hover { background: var(--bg-secondary); color: var(--primary-color); }
+        .sidebar-nav-item.active { background: linear-gradient(90deg, rgba(79, 70, 229, 0.1) 0%, transparent 100%); color: var(--primary-color); font-weight: 600; }
+        .sidebar-nav-item.active::before { content: ''; position: absolute; left: 0; top: 0; bottom: 0; width: 4px; background: var(--primary-color); }
+        .sidebar-nav-item i { width: 20px; margin-right: 0.75rem; text-align: center; }
+        
+        .main-content { flex: 1; margin-left: 280px; display: flex; flex-direction: column; min-height: 100vh; }
+        .top-header { background: var(--bg-primary); border-bottom: 1px solid var(--border-color); padding: 1rem 2rem; display: flex; justify-content: space-between; align-items: center; box-shadow: var(--shadow-sm); position: sticky; top: 0; z-index: 100; }
+        .header-left { display: flex; align-items: center; gap: 1rem; }
+        .header-title { font-size: 1.5rem; font-weight: 700; color: var(--text-primary); }
+        .header-subtitle { color: var(--text-secondary); font-size: 0.875rem; }
+        .header-right { display: flex; align-items: center; gap: 1rem; }
+        .header-time { color: var(--text-secondary); font-size: 0.875rem; }
+        .profile-dropdown { position: relative; }
+        .profile-avatar { width: 40px; height: 40px; border-radius: var(--radius-md); background: linear-gradient(135deg, var(--primary-color) 0%, var(--accent-color) 100%); display: flex; align-items: center; justify-content: center; color: white; cursor: pointer; }
+        
+        .content-area { flex: 1; padding: 2rem; background: var(--bg-secondary); }
+        .page-content { background: var(--bg-primary); padding: 2rem; border-radius: var(--radius-lg); box-shadow: var(--shadow-sm); border: 1px solid var(--border-color); }
+        .page-header { margin-bottom: 2rem; }
+        .page-title { font-size: 1.75rem; font-weight: 700; color: var(--text-primary); margin-bottom: 0.5rem; }
+        .page-description { color: var(--text-secondary); font-size: 1rem; }
+        
+        .empty-state { text-align: center; padding: 4rem 2rem; color: var(--text-secondary); }
+        .empty-icon { font-size: 4rem; color: var(--primary-color); margin-bottom: 1.5rem; opacity: 0.5; }
+        .empty-title { font-size: 1.5rem; font-weight: 600; color: var(--text-primary); margin-bottom: 1rem; }
+        .empty-description { margin-bottom: 2rem; }
+        .empty-stats { display: grid; grid-template-columns: repeat(auto-fit, minmax(200px, 1fr)); gap: 1.5rem; margin-bottom: 2rem; }
+        .empty-stat-card { background: var(--bg-primary); padding: 1.5rem; border-radius: var(--radius-lg); border: 1px solid var(--border-color); box-shadow: var(--shadow-sm); text-align: center; }
+        .empty-stat-icon { width: 48px; height: 48px; border-radius: var(--radius-md); display: flex; align-items: center; justify-content: center; font-size: 1.25rem; margin: 0 auto 1rem; }
+        .empty-stat-value { font-size: 2rem; font-weight: 700; color: var(--text-primary); margin-bottom: 0.5rem; }
+        .empty-stat-label { color: var(--text-secondary); font-size: 0.875rem; }
+        
+        .feature-list { list-style: none; padding: 0; }
+        .feature-item { display: flex; align-items: center; gap: 1rem; padding: 1rem 0; border-bottom: 1px solid var(--border-color); }
+        .feature-item:last-child { border-bottom: none; }
+        .feature-icon { width: 40px; height: 40px; border-radius: var(--radius-md); display: flex; align-items: center; justify-content: center; font-size: 1rem; }
+        .feature-icon.database { background: rgba(59, 130, 246, 0.1); color: #3b82f6; }
+        .feature-icon.upload { background: rgba(16, 185, 129, 0.1); color: var(--success-color); }
+        .feature-icon.download { background: rgba(139, 92, 246, 0.1); color: #8b5cf6; }
+        .feature-icon.history { background: rgba(107, 114, 128, 0.1); color: #6b7280; }
+        .feature-icon.clock { background: rgba(245, 158, 11, 0.1); color: var(--warning-color); }
+        .feature-icon.shield-alt { background: rgba(239, 68, 68, 0.1); color: var(--error-color); }
+        .feature-content { flex: 1; }
+        .feature-title { font-weight: 500; color: var(--text-primary); margin-bottom: 0.25rem; }
+        .feature-description { font-size: 0.875rem; color: var(--text-secondary); }
+        
+        .btn-primary { background: linear-gradient(135deg, var(--primary-color) 0%, var(--primary-dark) 100%); border: none; color: white; padding: 0.75rem 1.5rem; border-radius: var(--radius-md); font-weight: 500; transition: all 0.2s ease; }
+        .btn-primary:hover { transform: translateY(-1px); box-shadow: var(--shadow-md); }
+        .btn-secondary { background: var(--bg-secondary); border: 1px solid var(--border-color); color: var(--text-primary); padding: 0.75rem 1.5rem; border-radius: var(--radius-md); font-weight: 500; transition: all 0.2s ease; }
+        .btn-secondary:hover { background: var(--border-color); }
+        .btn-success { background: linear-gradient(135deg, var(--success-color) 0%, #059669 100%); border: none; color: white; padding: 0.75rem 1.5rem; border-radius: var(--radius-md); font-weight: 500; transition: all 0.2s ease; }
+        .btn-success:hover { transform: translateY(-1px); box-shadow: var(--shadow-md); }
+        
+        @media (max-width: 768px) {
+            .sidebar { transform: translateX(-100%); z-index: 1050; }
+            .sidebar.open { transform: translateX(0); }
+            .main-content { margin-left: 0; }
+            .content-area { padding: 1rem; }
+            .header-title { font-size: 1.25rem; }
+            .page-content { padding: 1rem; }
+            .empty-stats { grid-template-columns: 1fr; }
+            .feature-item { flex-direction: column; align-items: flex-start; gap: 0.5rem; }
+        }
+        
+        .mobile-menu-btn { display: none; background: none; border: 1px solid var(--border-color); border-radius: var(--radius-sm); padding: 0.5rem; color: var(--text-secondary); cursor: pointer; }
+        .mobile-menu-btn:hover { background: var(--bg-secondary); color: var(--primary-color); }
+        @media (max-width: 768px) { .mobile-menu-btn { display: block; } }
+    </style>
+</head>
+<body>
+    <div class="dashboard-layout">
+        <div class="sidebar">
+            <div class="sidebar-header">
+                <a class="sidebar-brand" href="/admin/dashboard">
+                    <i class="fas fa-graduation-cap me-2"></i>
+                    <strong>Attendrix</strong>
+                </a>
+            </div>
+            <div class="sidebar-nav">
+                <a class="sidebar-nav-item" href="/admin/dashboard"><i class="fas fa-tachometer-alt me-2"></i>Dashboard</a>
+                <a class="sidebar-nav-item" href="/admin/create_institution"><i class="fas fa-building me-2"></i>Institutions</a>
+                <a class="sidebar-nav-item" href="/admin/users"><i class="fas fa-users me-2"></i>Users</a>
+                <a class="sidebar-nav-item" href="/admin/monitoring"><i class="fas fa-chart-line me-2"></i>Monitoring</a>
+                <a class="sidebar-nav-item" href="/admin/security"><i class="fas fa-shield-alt me-2"></i>Security</a>
+                <a class="sidebar-nav-item active" href="/admin/backup"><i class="fas fa-database me-2"></i>Backup & Restore</a>
+                <a class="sidebar-nav-item" href="/admin/notifications"><i class="fas fa-bell me-2"></i>Notifications</a>
+                <a class="sidebar-nav-item" href="/admin/audit"><i class="fas fa-history me-2"></i>Audit Logs</a>
+                <a class="sidebar-nav-item" href="/admin/roles"><i class="fas fa-user-shield me-2"></i>Role Assignments</a>
+                <a class="sidebar-nav-item" href="/admin/profile"><i class="fas fa-user me-2"></i>Profile</a>
+            </div>
+        </div>
+        <div class="main-content">
+            <div class="top-header">
+                <div class="header-left">
+                    <button class="mobile-menu-btn" onclick="toggleSidebar()"><i class="fas fa-bars"></i></button>
+                    <div>
+                        <h1 class="header-title">Backup & Restore</h1>
+                        <p class="header-subtitle">System backup and data recovery management</p>
+                    </div>
+                </div>
+                <div class="header-right">
+                    <div class="header-time" id="currentTime"></div>
+                    <div class="profile-dropdown">
+                        <div class="profile-avatar" data-bs-toggle="dropdown"><i class="fas fa-user"></i></div>
+                        <ul class="dropdown-menu dropdown-menu-end">
+                            <li><a class="dropdown-item" href="/admin/profile"><i class="fas fa-user me-2"></i>Profile</a></li>
+                            <li><a class="dropdown-item" href="/admin/settings"><i class="fas fa-cog me-2"></i>Settings</a></li>
+                            <li><hr class="dropdown-divider"></li>
+                            <li><a class="dropdown-item" href="#" onclick="showLogoutConfirm()"><i class="fas fa-sign-out-alt me-2"></i>Logout</a></li>
+                        </ul>
+                    </div>
+                </div>
+            </div>
+            <main class="content-area">
+                <div class="page-content">
+                    <div class="page-header">
+                        <h2 class="page-title">Backup & Restore Dashboard</h2>
+                        <p class="page-description">Manage system backups and data recovery</p>
+                    </div>
+                    
+                    <div class="empty-state">
+                        <div class="empty-icon"><i class="fas fa-database"></i></div>
+                        <h3 class="empty-title">No Backup History Yet</h3>
+                        <p class="empty-description">
+                            System backups will display here once backup operations are performed. This will include:
+                        </p>
+                        
+                        <div class="empty-stats">
+                            <div class="empty-stat-card">
+                                <div class="empty-stat-icon"><i class="fas fa-database"></i></div>
+                                <div class="empty-stat-value">0</div>
+                                <div class="empty-stat-label">Total Backups</div>
+                            </div>
+                            <div class="empty-stat-card">
+                                <div class="empty-stat-icon"><i class="fas fa-hdd"></i></div>
+                                <div class="empty-stat-value">0 GB</div>
+                                <div class="empty-stat-label">Storage Used</div>
+                            </div>
+                            <div class="empty-stat-card">
+                                <div class="empty-stat-icon"><i class="fas fa-clock"></i></div>
+                                <div class="empty-stat-value">--</div>
+                                <div class="empty-stat-label">Last Backup</div>
+                            </div>
+                            <div class="empty-stat-card">
+                                <div class="empty-stat-icon"><i class="fas fa-shield-alt"></i></div>
+                                <div class="empty-stat-value">0</div>
+                                <div class="empty-stat-label">Failed Backups</div>
+                            </div>
+                        </div>
+                        
+                        <h4 class="empty-title">Backup Features</h4>
+                        <ul class="feature-list">
+                            <li class="feature-item">
+                                <div class="feature-icon database">
+                                    <i class="fas fa-database"></i>
+                                </div>
+                                <div class="feature-content">
+                                    <div class="feature-title">Automated Backups</div>
+                                    <div class="feature-description">Schedule regular system backups</div>
+                                </div>
+                            </li>
+                            <li class="feature-item">
+                                <div class="feature-icon upload">
+                                    <i class="fas fa-upload"></i>
+                                </div>
+                                <div class="feature-content">
+                                    <div class="feature-title">Manual Backups</div>
+                                    <div class="feature-description">On-demand backup creation</div>
+                                </div>
+                            </li>
+                            <li class="feature-item">
+                                <div class="feature-icon download">
+                                    <i class="fas fa-download"></i>
+                                </div>
+                                <div class="feature-content">
+                                    <div class="feature-title">Data Restore</div>
+                                    <div class="feature-description">Restore from previous backups</div>
+                                </div>
+                            </li>
+                            <li class="feature-item">
+                                <div class="feature-icon history">
+                                    <i class="fas fa-history"></i>
+                                </div>
+                                <div class="feature-content">
+                                    <div class="feature-title">Backup History</div>
+                                    <div class="feature-description">Complete backup log tracking</div>
+                                </div>
+                            </li>
+                            <li class="feature-item">
+                                <div class="feature-icon clock">
+                                    <i class="fas fa-clock"></i>
+                                </div>
+                                <div class="feature-content">
+                                    <div class="feature-title">Scheduled Backups</div>
+                                    <div class="feature-description">Time-based backup scheduling</div>
+                                </div>
+                            </li>
+                            <li class="feature-item">
+                                <div class="feature-icon shield-alt">
+                                    <i class="fas fa-shield-alt"></i>
+                                </div>
+                                <div class="feature-content">
+                                    <div class="feature-title">Encrypted Storage</div>
+                                    <div class="feature-description">Secure backup encryption</div>
+                                </div>
+                            </li>
+                        </ul>
+                        
+                        <div class="d-flex gap-2">
+                            <button class="btn btn-primary" onclick="createBackup()">
+                                <i class="fas fa-plus me-2"></i>Create Backup
+                            </button>
+                            <button class="btn btn-secondary" onclick="restoreBackup()">
+                                <i class="fas fa-undo me-2"></i>Restore Data
+                            </button>
+                            <button class="btn btn-success" onclick="scheduleBackup()">
+                                <i class="fas fa-clock me-2"></i>Schedule Backup
+                            </button>
+                        </div>
+                    </div>
+                </div>
+            </main>
+        </div>
+    </div>
+
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
+    <script>
+        document.addEventListener('DOMContentLoaded', function() {
+            // Initialize components
+            initializeTimeDisplay();
+            initializeBackup();
+            initializeTooltips();
+            
+            console.log('Backup & Restore page loaded successfully');
+        });
+        
+        function initializeTimeDisplay() {
+            function updateTime() {
+                const now = new Date();
+                const timeString = now.toLocaleString('en-US', { 
+                    weekday: 'short', 
+                    year: 'numeric', 
+                    month: 'short', 
+                    day: 'numeric', 
+                    hour: '2-digit', 
+                    minute: '2-digit' 
+                });
+                const timeElement = document.getElementById('currentTime');
+                if (timeElement) timeElement.textContent = timeString;
+            }
+            updateTime();
+            setInterval(updateTime, 60000);
+        }
+        
+        function initializeBackup() {
+            // Initialize backup features (placeholder)
+        }
+        
+        function initializeTooltips() {
+            // Initialize Bootstrap tooltips
+            if (typeof bootstrap !== 'undefined' && bootstrap.Tooltip) {
+                const tooltipTriggerList = [].slice.call(document.querySelectorAll('[data-bs-toggle="tooltip"]'));
+                tooltipTriggerList.map(function (tooltipTriggerEl) {
+                    return new bootstrap.Tooltip(tooltipTriggerEl);
+                });
+            }
+            
+            // Initialize Bootstrap dropdowns
+            if (typeof bootstrap !== 'undefined' && bootstrap.Dropdown) {
+                const dropdownTriggerList = [].slice.call(document.querySelectorAll('[data-bs-toggle="dropdown"]'));
+                dropdownTriggerList.map(function (dropdownTriggerEl) {
+                    return new bootstrap.Dropdown(dropdownTriggerEl);
+                });
+            }
+        }
+        
+        function createBackup() {
+            // Create backup modal
+            const modalHtml = `
+                <div class="modal fade" id="createBackupModal" tabindex="-1" aria-labelledby="createBackupModalLabel" aria-hidden="true">
+                    <div class="modal-dialog">
+                        <div class="modal-content">
+                            <div class="modal-header">
+                                <h5 class="modal-title" id="createBackupModalLabel">
+                                    <i class="fas fa-database me-2"></i>Create Backup
+                                </h5>
+                                <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+                            </div>
+                            <div class="modal-body">
+                                <form id="createBackupForm">
+                                    <div class="mb-3">
+                                        <label for="backupType" class="form-label">Backup Type *</label>
+                                        <select class="form-select" id="backupType" required>
+                                            <option value="">Select backup type...</option>
+                                            <option value="full">Full Backup</option>
+                                            <option value="incremental">Incremental Backup</option>
+                                            <option value="differential">Differential Backup</option>
+                                        </select>
+                                    </div>
+                                    <div class="mb-3">
+                                        <label for="backupData" class="form-label">Data to Backup *</label>
+                                        <div class="form-check">
+                                            <input class="form-check-input" type="checkbox" id="backupInstitutions" checked>
+                                            <label class="form-check-label" for="backupInstitutions">Institutions Data</label>
+                                        </div>
+                                        <div class="form-check">
+                                            <input class="form-check-input" type="checkbox" id="backupUsers" checked>
+                                            <label class="form-check-label" for="backupUsers">Users & Authentication</label>
+                                        </div>
+                                        <div class="form-check">
+                                            <input class="form-check-input" type="checkbox" id="backupAttendance" checked>
+                                            <label class="form-check-label" for="backupAttendance">Attendance Records</label>
+                                        </div>
+                                        <div class="form-check">
+                                            <input class="form-check-input" type="checkbox" id="backupSettings" checked>
+                                            <label class="form-check-label" for="backupSettings">System Settings</label>
+                                        </div>
+                                        <div class="form-check">
+                                            <input class="form-check-input" type="checkbox" id="backupAudit" checked>
+                                            <label class="form-check-label" for="backupAudit">Audit Logs</label>
+                                        </div>
+                                    </div>
+                                    <div class="mb-3">
+                                        <label for="backupLocation" class="form-label">Backup Location</label>
+                                        <select class="form-select" id="backupLocation">
+                                            <option value="local">Local Storage</option>
+                                            <option value="cloud">Cloud Storage</option>
+                                            <option value="both">Both Local & Cloud</option>
+                                        </select>
+                                    </div>
+                                    <div class="mb-3">
+                                        <label for="backupCompression" class="form-label">Compression</label>
+                                        <select class="form-select" id="backupCompression">
+                                            <option value="none">No Compression</option>
+                                            <option value="zip" selected>ZIP Compression</option>
+                                            <option value="gzip">GZIP Compression</option>
+                                        </select>
+                                    </div>
+                                    <div class="mb-3">
+                                        <label for="backupDescription" class="form-label">Description (Optional)</label>
+                                        <textarea class="form-control" id="backupDescription" rows="2" placeholder="Add notes about this backup..."></textarea>
+                                    </div>
+                                </form>
+                            </div>
+                            <div class="modal-footer">
+                                <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancel</button>
+                                <button type="button" class="btn btn-primary" onclick="startBackup()">
+                                    <i class="fas fa-play me-2"></i>Start Backup
+                                </button>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            `;
+            
+            // Remove existing modal if present
+            const existingModal = document.getElementById('createBackupModal');
+            if (existingModal) {
+                existingModal.remove();
+            }
+            
+            // Add modal to page
+            document.body.insertAdjacentHTML('beforeend', modalHtml);
+            
+            // Show modal
+            const modal = new bootstrap.Modal(document.getElementById('createBackupModal'));
+            modal.show();
+        }
+        
+        function startBackup() {
+            // Get form data
+            const backupConfig = {
+                type: document.getElementById('backupType').value,
+                data: {
+                    institutions: document.getElementById('backupInstitutions').checked,
+                    users: document.getElementById('backupUsers').checked,
+                    attendance: document.getElementById('backupAttendance').checked,
+                    settings: document.getElementById('backupSettings').checked,
+                    audit: document.getElementById('backupAudit').checked
+                },
+                location: document.getElementById('backupLocation').value,
+                compression: document.getElementById('backupCompression').value,
+                description: document.getElementById('backupDescription').value
+            };
+            
+            // Validate form
+            if (!backupConfig.type) {
+                showValidationError('Please select a backup type.');
+                return;
+            }
+            
+            // Close modal
+            const modal = bootstrap.Modal.getInstance(document.getElementById('createBackupModal'));
+            modal.hide();
+            
+            // Show progress modal
+            showBackupProgress(backupConfig);
+        }
+        
+        function showBackupProgress(config) {
+            const progressHtml = `
+                <div class="modal fade" id="backupProgressModal" tabindex="-1" data-bs-backdrop="static" data-bs-keyboard="false">
+                    <div class="modal-dialog">
+                        <div class="modal-content">
+                            <div class="modal-header">
+                                <h5 class="modal-title">
+                                    <i class="fas fa-spinner fa-spin me-2"></i>Creating Backup...
+                                </h5>
+                            </div>
+                            <div class="modal-body">
+                                <div class="mb-3">
+                                    <div class="d-flex justify-content-between mb-2">
+                                        <span>Progress</span>
+                                        <span id="backupProgressPercent">0%</span>
+                                    </div>
+                                    <div class="progress">
+                                        <div class="progress-bar" id="backupProgressBar" role="progressbar" style="width: 0%"></div>
+                                    </div>
+                                </div>
+                                <div class="mb-3">
+                                    <strong>Backup Details:</strong>
+                                    <ul class="list-unstyled mt-2">
+                                        <li><i class="fas fa-database me-2"></i>Type: ${config.type}</li>
+                                        <li><i class="fas fa-hdd me-2"></i>Location: ${config.location}</li>
+                                        <li><i class="fas fa-compress me-2"></i>Compression: ${config.compression}</li>
+                                    </ul>
+                                </div>
+                                <div id="backupStatus" class="text-muted">
+                                    <i class="fas fa-info-circle me-2"></i>Initializing backup process...
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            `;
+            
+            // Add progress modal to page
+            document.body.insertAdjacentHTML('beforeend', progressHtml);
+            
+            // Show progress modal
+            const progressModal = new bootstrap.Modal(document.getElementById('backupProgressModal'));
+            progressModal.show();
+            
+            // Simulate backup progress
+            let progress = 0;
+            const progressBar = document.getElementById('backupProgressBar');
+            const progressPercent = document.getElementById('backupProgressPercent');
+            const backupStatus = document.getElementById('backupStatus');
+            
+            const progressInterval = setInterval(() => {
+                progress += Math.random() * 15;
+                if (progress >= 100) {
+                    progress = 100;
+                    clearInterval(progressInterval);
+                    
+                    // Show completion
+                    progressBar.style.width = '100%';
+                    progressPercent.textContent = '100%';
+                    backupStatus.innerHTML = '<i class="fas fa-check-circle text-success me-2"></i>Backup completed successfully!';
+                    
+                    // Close modal after delay
+                    setTimeout(() => {
+                        progressModal.hide();
+                        showSuccessToast('Backup created successfully!');
+                        updateBackupCount();
+                        console.log('Backup completed:', config);
+                    }, 2000);
+                } else {
+                    progressBar.style.width = progress + '%';
+                    progressPercent.textContent = Math.floor(progress) + '%';
+                    
+                    // Update status messages
+                    if (progress < 25) {
+                        backupStatus.innerHTML = '<i class="fas fa-info-circle me-2"></i>Collecting data...';
+                    } else if (progress < 50) {
+                        backupStatus.innerHTML = '<i class="fas fa-compress me-2"></i>Compressing files...';
+                    } else if (progress < 75) {
+                        backupStatus.innerHTML = '<i class="fas fa-upload me-2"></i>Uploading to storage...';
+                    } else {
+                        backupStatus.innerHTML = '<i class="fas fa-check me-2"></i>Finalizing backup...';
+                    }
+                }
+            }, 500);
+        }
+        
+        function restoreBackup() {
+            // Create restore modal
+            const modalHtml = `
+                <div class="modal fade" id="restoreBackupModal" tabindex="-1" aria-labelledby="restoreBackupModalLabel" aria-hidden="true">
+                    <div class="modal-dialog">
+                        <div class="modal-content">
+                            <div class="modal-header">
+                                <h5 class="modal-title" id="restoreBackupModalLabel">
+                                    <i class="fas fa-undo me-2"></i>Restore Data
+                                </h5>
+                                <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+                            </div>
+                            <div class="modal-body">
+                                <div class="alert alert-warning">
+                                    <i class="fas fa-exclamation-triangle me-2"></i>
+                                    <strong>Warning:</strong> Restoring data will overwrite current data. This action cannot be undone.
+                                </div>
+                                
+                                <div class="mb-3">
+                                    <label for="backupFile" class="form-label">Select Backup File</label>
+                                    <select class="form-select" id="backupFile">
+                                        <option value="">Choose a backup file...</option>
+                                        <option value="backup_2024_01_15_full.zip">backup_2024_01_15_full.zip (Full Backup - 15 Jan 2024)</option>
+                                        <option value="backup_2024_01_10_incremental.zip">backup_2024_01_10_incremental.zip (Incremental - 10 Jan 2024)</option>
+                                        <option value="backup_2024_01_05_full.zip">backup_2024_01_05_full.zip (Full Backup - 5 Jan 2024)</option>
+                                    </select>
+                                </div>
+                                
+                                <div class="mb-3">
+                                    <label for="restoreOptions" class="form-label">Restore Options</label>
+                                    <div class="form-check">
+                                        <input class="form-check-input" type="checkbox" id="restoreInstitutions" checked>
+                                        <label class="form-check-label" for="restoreInstitutions">Restore Institutions Data</label>
+                                    </div>
+                                    <div class="form-check">
+                                        <input class="form-check-input" type="checkbox" id="restoreUsers" checked>
+                                        <label class="form-check-label" for="restoreUsers">Restore Users & Authentication</label>
+                                    </div>
+                                    <div class="form-check">
+                                        <input class="form-check-input" type="checkbox" id="restoreAttendance" checked>
+                                        <label class="form-check-label" for="restoreAttendance">Restore Attendance Records</label>
+                                    </div>
+                                    <div class="form-check">
+                                        <input class="form-check-input" type="checkbox" id="restoreSettings">
+                                        <label class="form-check-label" for="restoreSettings">Restore System Settings</label>
+                                    </div>
+                                </div>
+                                
+                                <div class="mb-3">
+                                    <div class="form-check">
+                                        <input class="form-check-input" type="checkbox" id="confirmRestore">
+                                        <label class="form-check-label" for="confirmRestore">
+                                            I understand that this will overwrite current data
+                                        </label>
+                                    </div>
+                                </div>
+                            </div>
+                            <div class="modal-footer">
+                                <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancel</button>
+                                <button type="button" class="btn btn-danger" onclick="executeRestore()">
+                                    <i class="fas fa-undo me-2"></i>Restore Data
+                                </button>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            `;
+            
+            // Remove existing modal if present
+            const existingModal = document.getElementById('restoreBackupModal');
+            if (existingModal) {
+                existingModal.remove();
+            }
+            
+            // Add modal to page
+            document.body.insertAdjacentHTML('beforeend', modalHtml);
+            
+            // Show modal
+            const modal = new bootstrap.Modal(document.getElementById('restoreBackupModal'));
+            modal.show();
+        }
+        
+        function executeRestore() {
+            const backupFile = document.getElementById('backupFile').value;
+            const confirmRestore = document.getElementById('confirmRestore').checked;
+            
+            if (!backupFile) {
+                showValidationError('Please select a backup file.');
+                return;
+            }
+            
+            if (!confirmRestore) {
+                showValidationError('Please confirm that you understand the consequences of restoring data.');
+                return;
+            }
+            
+            // Close modal
+            const modal = bootstrap.Modal.getInstance(document.getElementById('restoreBackupModal'));
+            modal.hide();
+            
+            // Show restore progress
+            showRestoreProgress(backupFile);
+        }
+        
+        function showRestoreProgress(backupFile) {
+            const progressHtml = `
+                <div class="modal fade" id="restoreProgressModal" tabindex="-1" data-bs-backdrop="static" data-bs-keyboard="false">
+                    <div class="modal-dialog">
+                        <div class="modal-content">
+                            <div class="modal-header">
+                                <h5 class="modal-title">
+                                    <i class="fas fa-spinner fa-spin me-2"></i>Restoring Data...
+                                </h5>
+                            </div>
+                            <div class="modal-body">
+                                <div class="mb-3">
+                                    <div class="d-flex justify-content-between mb-2">
+                                        <span>Progress</span>
+                                        <span id="restoreProgressPercent">0%</span>
+                                    </div>
+                                    <div class="progress">
+                                        <div class="progress-bar bg-warning" id="restoreProgressBar" role="progressbar" style="width: 0%"></div>
+                                    </div>
+                                </div>
+                                <div class="mb-3">
+                                    <strong>Restoring from:</strong><br>
+                                    <code>${backupFile}</code>
+                                </div>
+                                <div id="restoreStatus" class="text-muted">
+                                    <i class="fas fa-info-circle me-2"></i>Validating backup file...
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            `;
+            
+            // Add progress modal to page
+            document.body.insertAdjacentHTML('beforeend', progressHtml);
+            
+            // Show progress modal
+            const progressModal = new bootstrap.Modal(document.getElementById('restoreProgressModal'));
+            progressModal.show();
+            
+            // Simulate restore progress
+            let progress = 0;
+            const progressBar = document.getElementById('restoreProgressBar');
+            const progressPercent = document.getElementById('restoreProgressPercent');
+            const restoreStatus = document.getElementById('restoreStatus');
+            
+            const progressInterval = setInterval(() => {
+                progress += Math.random() * 12;
+                if (progress >= 100) {
+                    progress = 100;
+                    clearInterval(progressInterval);
+                    
+                    // Show completion
+                    progressBar.style.width = '100%';
+                    progressBar.className = 'progress-bar bg-success';
+                    progressPercent.textContent = '100%';
+                    restoreStatus.innerHTML = '<i class="fas fa-check-circle text-success me-2"></i>Data restored successfully!';
+                    
+                    // Close modal after delay
+                    setTimeout(() => {
+                        progressModal.hide();
+                        showSuccessToast('Data restored successfully! System will restart to apply changes.');
+                        console.log('Restore completed:', backupFile);
+                    }, 2000);
+                } else {
+                    progressBar.style.width = progress + '%';
+                    progressPercent.textContent = Math.floor(progress) + '%';
+                    
+                    // Update status messages
+                    if (progress < 20) {
+                        restoreStatus.innerHTML = '<i class="fas fa-info-circle me-2"></i>Validating backup file...';
+                    } else if (progress < 40) {
+                        restoreStatus.innerHTML = '<i class="fas fa-download me-2"></i>Extracting backup data...';
+                    } else if (progress < 60) {
+                        restoreStatus.innerHTML = '<i class="fas fa-database me-2"></i>Restoring database...';
+                    } else if (progress < 80) {
+                        restoreStatus.innerHTML = '<i class="fas fa-cog me-2"></i>Updating system settings...';
+                    } else {
+                        restoreStatus.innerHTML = '<i class="fas fa-check me-2"></i>Finalizing restore...';
+                    }
+                }
+            }, 600);
+        }
+        
+        function scheduleBackup() {
+            // Create scheduling modal
+            const modalHtml = `
+                <div class="modal fade" id="scheduleBackupModal" tabindex="-1" aria-labelledby="scheduleBackupModalLabel" aria-hidden="true">
+                    <div class="modal-dialog">
+                        <div class="modal-content">
+                            <div class="modal-header">
+                                <h5 class="modal-title" id="scheduleBackupModalLabel">
+                                    <i class="fas fa-clock me-2"></i>Schedule Backup
+                                </h5>
+                                <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+                            </div>
+                            <div class="modal-body">
+                                <form id="scheduleBackupForm">
+                                    <div class="mb-3">
+                                        <label for="scheduleName" class="form-label">Schedule Name *</label>
+                                        <input type="text" class="form-control" id="scheduleName" placeholder="e.g., Daily Full Backup" required>
+                                    </div>
+                                    <div class="mb-3">
+                                        <label for="backupFrequency" class="form-label">Frequency *</label>
+                                        <select class="form-select" id="backupFrequency" required>
+                                            <option value="">Select frequency...</option>
+                                            <option value="daily">Daily</option>
+                                            <option value="weekly">Weekly</option>
+                                            <option value="monthly">Monthly</option>
+                                        </select>
+                                    </div>
+                                    <div class="mb-3">
+                                        <label for="backupTime" class="form-label">Time *</label>
+                                        <input type="time" class="form-control" id="backupTime" value="02:00" required>
+                                    </div>
+                                    <div class="mb-3" id="weeklyOptions" style="display: none;">
+                                        <label class="form-label">Day of Week</label>
+                                        <select class="form-select" id="dayOfWeek">
+                                            <option value="1">Monday</option>
+                                            <option value="2">Tuesday</option>
+                                            <option value="3">Wednesday</option>
+                                            <option value="4">Thursday</option>
+                                            <option value="5">Friday</option>
+                                            <option value="6">Saturday</option>
+                                            <option value="0">Sunday</option>
+                                        </select>
+                                    </div>
+                                    <div class="mb-3" id="monthlyOptions" style="display: none;">
+                                        <label class="form-label">Day of Month</label>
+                                        <select class="form-select" id="dayOfMonth">
+                                            <option value="1">1st</option>
+                                            <option value="15">15th</option>
+                                            <option value="30">30th</option>
+                                        </select>
+                                    </div>
+                                    <div class="mb-3">
+                                        <label for="retentionDays" class="form-label">Retention Period (days)</label>
+                                        <input type="number" class="form-control" id="retentionDays" value="30" min="1" max="365">
+                                    </div>
+                                    <div class="mb-3">
+                                        <div class="form-check">
+                                            <input class="form-check-input" type="checkbox" id="enableNotifications" checked>
+                                            <label class="form-check-label" for="enableNotifications">
+                                                Send email notifications
+                                            </label>
+                                        </div>
+                                    </div>
+                                </form>
+                            </div>
+                            <div class="modal-footer">
+                                <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancel</button>
+                                <button type="button" class="btn btn-primary" onclick="saveBackupSchedule()">
+                                    <i class="fas fa-save me-2"></i>Create Schedule
+                                </button>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            `;
+            
+            // Remove existing modal if present
+            const existingModal = document.getElementById('scheduleBackupModal');
+            if (existingModal) {
+                existingModal.remove();
+            }
+            
+            // Add modal to page
+            document.body.insertAdjacentHTML('beforeend', modalHtml);
+            
+            // Show modal
+            const modal = new bootstrap.Modal(document.getElementById('scheduleBackupModal'));
+            modal.show();
+            
+            // Setup frequency change handler
+            document.getElementById('backupFrequency').addEventListener('change', function() {
+                const frequency = this.value;
+                document.getElementById('weeklyOptions').style.display = frequency === 'weekly' ? 'block' : 'none';
+                document.getElementById('monthlyOptions').style.display = frequency === 'monthly' ? 'block' : 'none';
+            });
+        }
+        
+        function saveBackupSchedule() {
+            const schedule = {
+                name: document.getElementById('scheduleName').value,
+                frequency: document.getElementById('backupFrequency').value,
+                time: document.getElementById('backupTime').value,
+                dayOfWeek: document.getElementById('dayOfWeek').value,
+                dayOfMonth: document.getElementById('dayOfMonth').value,
+                retentionDays: document.getElementById('retentionDays').value,
+                enableNotifications: document.getElementById('enableNotifications').checked
+            };
+            
+            // Validate form
+            if (!schedule.name || !schedule.frequency || !schedule.time) {
+                showValidationError('Please fill in all required fields.');
+                return;
+            }
+            
+            // Close modal
+            const modal = bootstrap.Modal.getInstance(document.getElementById('scheduleBackupModal'));
+            modal.hide();
+            
+            // Show success message
+            showSuccessToast(`Backup schedule "${schedule.name}" created successfully!`);
+            
+            // Log action
+            console.log('Backup schedule created:', schedule);
+        }
+        
+        function updateBackupCount() {
+            // Simulate updating backup count
+            const backupCountElement = document.querySelector('.empty-stat-value');
+            if (backupCountElement) {
+                const currentCount = parseInt(backupCountElement.textContent) || 0;
+                backupCountElement.textContent = currentCount + 1;
+            }
+        }
+        
+        function showSuccessToast(message) {
+            // Create toast HTML
+            const toastHtml = `
+                <div class="toast-container position-fixed top-0 end-0 p-3">
+                    <div class="toast show" role="alert" aria-live="assertive" aria-atomic="true">
+                        <div class="toast-header bg-success text-white">
+                            <i class="fas fa-database me-2"></i>
+                            <strong class="me-auto">Backup</strong>
+                            <button type="button" class="btn-close btn-close-white" data-bs-dismiss="toast" aria-label="Close"></button>
+                        </div>
+                        <div class="toast-body">
+                            ${message}
+                        </div>
+                    </div>
+                </div>
+            `;
+            
+            // Add toast to page
+            document.body.insertAdjacentHTML('beforeend', toastHtml);
+            
+            // Auto remove after 5 seconds
+            setTimeout(() => {
+                const toastContainer = document.querySelector('.toast-container');
+                if (toastContainer) {
+                    toastContainer.remove();
+                }
+            }, 5000);
+        }
+        
+        function showValidationError(message) {
+            // Create validation error toast
+            const toastHtml = `
+                <div class="toast-container position-fixed top-0 end-0 p-3">
+                    <div class="toast show" role="alert" aria-live="assertive" aria-atomic="true">
+                        <div class="toast-header bg-danger text-white">
+                            <i class="fas fa-exclamation-triangle me-2"></i>
+                            <strong class="me-auto">Validation Error</strong>
+                            <button type="button" class="btn-close btn-close-white" data-bs-dismiss="toast" aria-label="Close"></button>
+                        </div>
+                        <div class="toast-body">
+                            ${message}
+                        </div>
+                    </div>
+                </div>
+            `;
+            
+            // Add toast to page
+            document.body.insertAdjacentHTML('beforeend', toastHtml);
+            
+            // Auto remove after 5 seconds
+            setTimeout(() => {
+                const toastContainer = document.querySelector('.toast-container');
+                if (toastContainer) {
+                    toastContainer.remove();
+                }
+            }, 5000);
+        }
+        
+        function showLogoutConfirm() {
+            if (confirm('Do you really want to log out?')) {
+                window.location.href = '/logout';
+            }
+        }
+        
+        function toggleSidebar() {
+            const sidebar = document.querySelector('.sidebar');
+            if (sidebar) {
+                sidebar.classList.toggle('open');
+            }
+        }
+    </script>
+</body>
+</html>

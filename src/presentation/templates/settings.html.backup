@@ -1,0 +1,641 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Settings - Attendrix | Institutional Paperless Attendance System</title>
+    <meta name="description" content="Manage your account settings and preferences">
+    
+    <!-- Favicon -->
+    <link rel="icon" type="image/x-icon" href="/static/images/favicon.ico">
+    
+    <!-- Bootstrap CSS -->
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
+    <!-- Font Awesome -->
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <!-- Custom CSS -->
+    <link rel="stylesheet" href="{{ url_for('static', filename='css/landing.css') }}">
+    
+    <style>
+        .settings-container {
+            background: linear-gradient(135deg, #f5f7fa 0%, #c3cfe2 100%);
+            min-height: 100vh;
+            padding-top: 100px;
+            padding-bottom: 2rem;
+        }
+        
+        .settings-header {
+            background: rgba(255, 255, 255, 0.95);
+            backdrop-filter: blur(10px);
+            border-radius: 15px;
+            padding: 2rem;
+            margin-bottom: 2rem;
+            box-shadow: 0 10px 30px rgba(0, 0, 0, 0.1);
+            border: 1px solid rgba(102, 126, 234, 0.1);
+        }
+        
+        .settings-section {
+            background: rgba(255, 255, 255, 0.95);
+            backdrop-filter: blur(10px);
+            border-radius: 15px;
+            padding: 2rem;
+            margin-bottom: 2rem;
+            box-shadow: 0 10px 30px rgba(0, 0, 0, 0.1);
+            border: 1px solid rgba(102, 126, 234, 0.1);
+        }
+        
+        .section-title {
+            color: #2c3e50;
+            font-size: 1.5rem;
+            font-weight: 600;
+            margin-bottom: 1.5rem;
+            display: flex;
+            align-items: center;
+        }
+        
+        .section-title i {
+            color: #667eea;
+            margin-right: 0.5rem;
+        }
+        
+        .setting-item {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            padding: 1rem;
+            border-bottom: 1px solid #e9ecef;
+            transition: all 0.3s ease;
+        }
+        
+        .setting-item:hover {
+            background: rgba(102, 126, 234, 0.05);
+        }
+        
+        .setting-item:last-child {
+            border-bottom: none;
+        }
+        
+        .setting-info h5 {
+            color: #2c3e50;
+            margin-bottom: 0.25rem;
+        }
+        
+        .setting-info p {
+            color: #6c757d;
+            margin-bottom: 0;
+        }
+        
+        .toggle-switch {
+            position: relative;
+            width: 60px;
+            height: 30px;
+            background: #e9ecef;
+            border-radius: 15px;
+            cursor: pointer;
+            transition: all 0.3s ease;
+        }
+        
+        .toggle-switch.active {
+            background: #667eea;
+        }
+        
+        .toggle-switch::after {
+            content: '';
+            position: absolute;
+            width: 26px;
+            height: 26px;
+            background: white;
+            border-radius: 50%;
+            top: 2px;
+            left: 2px;
+            transition: all 0.3s ease;
+        }
+        
+        .toggle-switch.active::after {
+            left: 32px;
+        }
+        
+        .btn-settings {
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: white;
+            border: none;
+            border-radius: 12px;
+            padding: 0.75rem 2rem;
+            font-weight: 600;
+            transition: all 0.3s ease;
+            box-shadow: 0 5px 15px rgba(102, 126, 234, 0.3);
+        }
+        
+        .btn-settings:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 10px 20px rgba(102, 126, 234, 0.3);
+        }
+        
+        .btn-danger {
+            background: #dc3545;
+            color: white;
+            border: none;
+            border-radius: 12px;
+            padding: 0.75rem 2rem;
+            font-weight: 600;
+            transition: all 0.3s ease;
+        }
+        
+        .btn-danger:hover {
+            background: #c82333;
+            transform: translateY(-2px);
+        }
+        
+        .alert {
+            border-radius: 12px;
+            border: none;
+            padding: 1rem;
+        }
+        
+        .alert-success {
+            background: rgba(40, 167, 69, 0.1);
+            color: #28a745;
+        }
+        
+        .alert-danger {
+            background: rgba(220, 53, 69, 0.1);
+            color: #dc3545;
+        }
+        
+        .profile-avatar-small {
+            width: 32px;
+            height: 32px;
+            border-radius: 50%;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            color: white;
+            font-size: 0.875rem;
+            transition: transform 0.3s ease;
+        }
+        
+        .profile-avatar-small:hover {
+            transform: scale(1.1);
+        }
+        
+        .dropdown-menu {
+            border: 1px solid rgba(102, 126, 234, 0.1);
+            box-shadow: 0 10px 30px rgba(0, 0, 0, 0.1);
+            border-radius: 12px;
+            padding: 0.5rem;
+        }
+        
+        .dropdown-item {
+            border-radius: 8px;
+            padding: 0.75rem 1rem;
+            transition: all 0.3s ease;
+            color: #2c3e50;
+        }
+        
+        .dropdown-item:hover {
+            background: rgba(102, 126, 234, 0.1);
+            color: #667eea;
+        }
+        
+        .dropdown-divider {
+            margin: 0.5rem 0;
+            border-color: rgba(102, 126, 234, 0.1);
+        }
+    </style>
+</head>
+<body>
+    <div class="settings-container">
+        <!-- Navigation -->
+        <nav class="navbar navbar-expand-lg navbar-dark fixed-top">
+            <div class="container">
+                <a class="navbar-brand" href="/">
+                    <i class="fas fa-graduation-cap me-2"></i>
+                    <strong>Attendrix</strong>
+                </a>
+                <div class="navbar-nav ms-auto">
+                    <a class="nav-link" href="/dashboard">
+                        <i class="fas fa-tachometer-alt me-1"></i>Dashboard
+                    </a>
+                    <a class="nav-link" href="/attendance">
+                        <i class="fas fa-user-check me-1"></i>Attendance
+                    </a>
+                    <a class="nav-link" href="/scheduling">
+                        <i class="fas fa-calendar-alt me-1"></i>Scheduling
+                    </a>
+                    <a class="nav-link" href="/analytics">
+                        <i class="fas fa-chart-line me-1"></i>Analytics
+                    </a>
+                    <!-- Profile Dropdown -->
+                    <div class="nav-item dropdown">
+                        <a class="nav-link dropdown-toggle d-flex align-items-center" href="#" id="profileDropdown" role="button" data-bs-toggle="dropdown" aria-expanded="false">
+                            <div class="profile-avatar-small">
+                                <i class="fas fa-user"></i>
+                            </div>
+                            <span class="ms-2 d-none d-md-inline">Profile</span>
+                        </a>
+                        <ul class="dropdown-menu dropdown-menu-end" aria-labelledby="profileDropdown">
+                            <li><a class="dropdown-item" href="/profile">
+                                <i class="fas fa-user me-2"></i>Profile
+                            </a></li>
+                            <li><a class="dropdown-item" href="/settings">
+                                <i class="fas fa-cog me-2"></i>Settings
+                            </a></li>
+                            <li><hr class="dropdown-divider"></li>
+                            <li><a class="dropdown-item" href="#" onclick="showLogoutConfirm()">
+                                <i class="fas fa-sign-out-alt me-2"></i>Logout
+                            </a></li>
+                        </ul>
+                    </div>
+                </div>
+            </div>
+        </nav>
+        
+        <!-- Settings Header -->
+        <div class="container">
+            <div class="settings-header">
+                <h1>Account Settings</h1>
+                <p class="text-muted">Manage your account preferences and security settings</p>
+            </div>
+            
+            <!-- Notification Settings -->
+            <div class="settings-section">
+                <h3 class="section-title">
+                    <i class="fas fa-bell"></i>
+                    Notification Preferences
+                </h3>
+                <div id="notificationAlert"></div>
+                
+                <div class="setting-item">
+                    <div class="setting-info">
+                        <h5>Email Notifications</h5>
+                        <p>Receive email updates about your account activity</p>
+                    </div>
+                    <div class="toggle-switch active" id="emailNotifications" onclick="toggleSetting('emailNotifications')"></div>
+                </div>
+                
+                <div class="setting-item">
+                    <div class="setting-info">
+                        <h5>Security Alerts</h5>
+                        <p>Get notified about suspicious login attempts</p>
+                    </div>
+                    <div class="toggle-switch active" id="securityAlerts" onclick="toggleSetting('securityAlerts')"></div>
+                </div>
+                
+                <div class="setting-item">
+                    <div class="setting-info">
+                        <h5>System Updates</h5>
+                        <p>Receive notifications about system maintenance and updates</p>
+                    </div>
+                    <div class="toggle-switch" id="systemUpdates" onclick="toggleSetting('systemUpdates')"></div>
+                </div>
+                
+                <div class="setting-item">
+                    <div class="setting-info">
+                        <h5>Marketing Communications</h5>
+                        <p>Receive updates about new features and promotions</p>
+                    </div>
+                    <div class="toggle-switch" id="marketingEmails" onclick="toggleSetting('marketingEmails')"></div>
+                </div>
+            </div>
+            
+            <!-- Privacy Settings -->
+            <div class="settings-section">
+                <h3 class="section-title">
+                    <i class="fas fa-lock"></i>
+                    Privacy Settings
+                </h3>
+                <div id="privacyAlert"></div>
+                
+                <div class="setting-item">
+                    <div class="setting-info">
+                        <h5>Profile Visibility</h5>
+                        <p>Control who can see your profile information</p>
+                    </div>
+                    <select class="form-select" style="width: 200px;">
+                        <option value="public">Public</option>
+                        <option value="institution">Institution Only</option>
+                        <option value="private">Private</option>
+                    </select>
+                </div>
+                
+                <div class="setting-item">
+                    <div class="setting-info">
+                        <h5>Activity Status</h5>
+                        <p>Show when you're active in the system</p>
+                    </div>
+                    <div class="toggle-switch active" id="activityStatus" onclick="toggleSetting('activityStatus')"></div>
+                </div>
+                
+                <div class="setting-item">
+                    <div class="setting-info">
+                        <h5>Data Analytics</h5>
+                        <p>Allow usage of your data for system analytics</p>
+                    </div>
+                    <div class="toggle-switch" id="dataAnalytics" onclick="toggleSetting('dataAnalytics')"></div>
+                </div>
+            </div>
+            
+            <!-- Security Settings -->
+            <div class="settings-section">
+                <h3 class="section-title">
+                    <i class="fas fa-shield-alt"></i>
+                    Security Settings
+                </h3>
+                <div id="securitySettingsAlert"></div>
+                
+                <div class="setting-item">
+                    <div class="setting-info">
+                        <h5>Login Alerts</h5>
+                        <p>Get notified when someone logs into your account</p>
+                    </div>
+                    <div class="toggle-switch active" id="loginAlerts" onclick="toggleSetting('loginAlerts')"></div>
+                </div>
+                
+                <div class="setting-item">
+                    <div class="setting-info">
+                        <h5>Session Timeout</h5>
+                        <p>Automatically log out after period of inactivity</p>
+                    </div>
+                    <select class="form-select" style="width: 200px;">
+                        <option value="30">30 minutes</option>
+                        <option value="60" selected>1 hour</option>
+                        <option value="120">2 hours</option>
+                        <option value="240">4 hours</option>
+                        <option value="480">8 hours</option>
+                    </select>
+                </div>
+                
+                <div class="setting-item">
+                    <div class="setting-info">
+                        <h5>Require Re-authentication</h5>
+                        <p>Ask for password when performing sensitive actions</p>
+                    </div>
+                    <div class="toggle-switch active" id="reauthRequired" onclick="toggleSetting('reauthRequired')"></div>
+                </div>
+                
+                <div class="mt-3">
+                    <button class="btn btn-settings" onclick="saveSecuritySettings()">
+                        <i class="fas fa-save me-2"></i>Save Security Settings
+                    </button>
+                </div>
+            </div>
+            
+            <!-- Account Actions -->
+            <div class="settings-section">
+                <h3 class="section-title">
+                    <i class="fas fa-user-cog"></i>
+                    Account Actions
+                </h3>
+                <div id="accountActionsAlert"></div>
+                
+                <div class="setting-item">
+                    <div class="setting-info">
+                        <h5>Download Account Data</h5>
+                        <p>Download a copy of your personal data</p>
+                    </div>
+                    <button class="btn btn-settings" onclick="downloadAccountData()">
+                        <i class="fas fa-download me-2"></i>Download
+                    </button>
+                </div>
+                
+                <div class="setting-item">
+                    <div class="setting-info">
+                        <h5>Export Attendance Records</h5>
+                        <p>Export your attendance history</p>
+                    </div>
+                    <button class="btn btn-settings" onclick="exportAttendanceRecords()">
+                        <i class="fas fa-file-export me-2"></i>Export
+                    </button>
+                </div>
+                
+                <div class="setting-item">
+                    <div class="setting-info">
+                        <h5>Clear Cache</h5>
+                        <p>Clear stored data and reset preferences</p>
+                    </div>
+                    <button class="btn btn-secondary" onclick="clearCache()">
+                        <i class="fas fa-trash me-2"></i>Clear Cache
+                    </button>
+                </div>
+                
+                <div class="setting-item">
+                    <div class="setting-info">
+                        <h5>Delete Account</h5>
+                        <p class="text-danger">Permanently delete your account and all data</p>
+                    </div>
+                    <button class="btn btn-danger" onclick="deleteAccount()">
+                        <i class="fas fa-trash-alt me-2"></i>Delete Account
+                    </button>
+                </div>
+            </div>
+        </div>
+    </div>
+    
+    <!-- Bootstrap JS -->
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
+    
+    <script>
+        // Get user info from localStorage
+        const userInfo = JSON.parse(localStorage.getItem('user_info') || '{}');
+        const accessToken = localStorage.getItem('access_token');
+        
+        // Load settings
+        document.addEventListener('DOMContentLoaded', function() {
+            loadUserSettings();
+            
+            // Check authentication
+            if (!accessToken) {
+                window.location.href = '/login';
+            }
+        });
+        
+        function loadUserSettings() {
+            // Load user settings from backend
+            fetch('/api/user/settings', {
+                headers: {
+                    'Authorization': `Bearer ${accessToken}`
+                }
+            })
+            .then(response => response.json())
+            .then(data => {
+                if (data.settings) {
+                    // Apply settings to UI
+                    Object.keys(data.settings).forEach(key => {
+                        const element = document.getElementById(key);
+                        if (element && data.settings[key]) {
+                            element.classList.add('active');
+                        }
+                    });
+                }
+            })
+            .catch(error => {
+                console.log('Could not load settings, using defaults');
+            });
+        }
+        
+        function toggleSetting(settingId) {
+            const toggle = document.getElementById(settingId);
+            toggle.classList.toggle('active');
+            
+            // Save setting
+            const enabled = toggle.classList.contains('active');
+            saveSetting(settingId, enabled);
+        }
+        
+        function saveSetting(settingId, enabled) {
+            fetch('/api/user/settings', {
+                method: 'PUT',
+                headers: {
+                    'Authorization': `Bearer ${accessToken}`,
+                    'Content-Type': 'application/json'
+                },
+                body: JSON.stringify({
+                    [settingId]: enabled
+                })
+            })
+            .then(response => response.json())
+            .then(data => {
+                if (data.success) {
+                    console.log(`Setting ${settingId} updated to ${enabled}`);
+                }
+            })
+            .catch(error => {
+                console.error('Failed to save setting:', error);
+            });
+        }
+        
+        function saveSecuritySettings() {
+            showAlert('securitySettingsAlert', 'Security settings saved successfully!', 'success');
+        }
+        
+        function downloadAccountData() {
+            fetch('/api/user/download-data', {
+                headers: {
+                    'Authorization': `Bearer ${accessToken}`
+                }
+            })
+            .then(response => response.blob())
+            .then(blob => {
+                const url = window.URL.createObjectURL(blob);
+                const a = document.createElement('a');
+                a.href = url;
+                a.download = 'account-data.json';
+                a.click();
+                window.URL.revokeObjectURL(url);
+                showAlert('accountActionsAlert', 'Account data downloaded successfully!', 'success');
+            })
+            .catch(error => {
+                showAlert('accountActionsAlert', 'Failed to download account data', 'danger');
+            });
+        }
+        
+        function exportAttendanceRecords() {
+            fetch('/api/user/export-attendance', {
+                headers: {
+                    'Authorization': `Bearer ${accessToken}`
+                }
+            })
+            .then(response => response.blob())
+            .then(blob => {
+                const url = window.URL.createObjectURL(blob);
+                const a = document.createElement('a');
+                a.href = url;
+                a.download = 'attendance-records.csv';
+                a.click();
+                window.URL.revokeObjectURL(url);
+                showAlert('accountActionsAlert', 'Attendance records exported successfully!', 'success');
+            })
+            .catch(error => {
+                showAlert('accountActionsAlert', 'Failed to export attendance records', 'danger');
+            });
+        }
+        
+        function clearCache() {
+            if (confirm('Are you sure you want to clear all cached data?')) {
+                localStorage.clear();
+                sessionStorage.clear();
+                showAlert('accountActionsAlert', 'Cache cleared successfully!', 'success');
+                setTimeout(() => {
+                    window.location.reload();
+                }, 2000);
+            }
+        }
+        
+        function deleteAccount() {
+            const confirmation = prompt('Type "DELETE" to confirm account deletion:');
+            if (confirmation === 'DELETE') {
+                fetch('/api/user/delete-account', {
+                    method: 'DELETE',
+                    headers: {
+                        'Authorization': `Bearer ${accessToken}`
+                    }
+                })
+                .then(response => response.json())
+                .then(data => {
+                    if (data.success) {
+                        alert('Account deleted successfully');
+                        logout();
+                    } else {
+                        showAlert('accountActionsAlert', 'Failed to delete account', 'danger');
+                    }
+                })
+                .catch(error => {
+                    showAlert('accountActionsAlert', 'Failed to delete account', 'danger');
+                });
+            } else {
+                alert('Account deletion cancelled');
+            }
+        }
+        
+        function showAlert(containerId, message, type) {
+            const alertContainer = document.getElementById(containerId);
+            alertContainer.innerHTML = `
+                <div class="alert alert-${type} alert-dismissible fade show" role="alert">
+                    ${message}
+                    <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
+                </div>
+            `;
+            
+            // Auto-hide after 5 seconds
+            setTimeout(() => {
+                const alert = alertContainer.querySelector('.alert');
+                if (alert) {
+                    alert.remove();
+                }
+            }, 5000);
+        }
+        
+        function showLogoutConfirm() {
+            const modal = new bootstrap.Modal(document.getElementById('logoutModal'));
+            modal.show();
+        }
+        
+        function logout() {
+            localStorage.removeItem('access_token');
+            localStorage.removeItem('refresh_token');
+            localStorage.removeItem('user_info');
+            window.location.href = '/login';
+        }
+    </script>
+    
+    <!-- Logout Confirmation Modal -->
+    <div class="modal fade" id="logoutModal" tabindex="-1">
+        <div class="modal-dialog">
+            <div class="modal-content">
+                <div class="modal-header">
+                    <h5 class="modal-title">Confirm Logout</h5>
+                    <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+                </div>
+                <div class="modal-body">
+                    <p>Do you really want to leave?</p>
+                </div>
+                <div class="modal-footer">
+                    <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancel</button>
+                    <button type="button" class="btn btn-danger" onclick="logout()">OK</button>
+                </div>
+            </div>
+        </div>
+    </div>
+</body>
+</html>

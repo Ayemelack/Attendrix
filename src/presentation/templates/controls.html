@@ -1,0 +1,839 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Controls - Attendrix | Institutional Paperless Attendance System</title>
+    <meta name="description" content="Global controls and system settings for Attendrix">
+    
+    <!-- Favicon -->
+    <link rel="icon" type="image/x-icon" href="/static/images/favicon.ico">
+    
+    <!-- Bootstrap CSS -->
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
+    <!-- Font Awesome -->
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <!-- Custom CSS -->
+    <link rel="stylesheet" href="{{ url_for('static', filename='css/landing.css') }}">
+    
+    <style>
+        .controls-container {
+            background: linear-gradient(135deg, #f5f7fa 0%, #c3cfe2 100%);
+            min-height: 100vh;
+            padding-top: 100px;
+            padding-bottom: 2rem;
+        }
+        
+        .controls-header {
+            background: rgba(255, 255, 255, 0.95);
+            backdrop-filter: blur(10px);
+            border-radius: 15px;
+            padding: 2rem;
+            margin-bottom: 2rem;
+            box-shadow: 0 10px 30px rgba(0, 0, 0, 0.1);
+            border: 1px solid rgba(102, 126, 234, 0.1);
+        }
+        
+        .controls-section {
+            background: rgba(255, 255, 255, 0.95);
+            backdrop-filter: blur(10px);
+            border-radius: 15px;
+            padding: 2rem;
+            margin-bottom: 2rem;
+            box-shadow: 0 10px 30px rgba(0, 0, 0, 0.1);
+            border: 1px solid rgba(102, 126, 234, 0.1);
+        }
+        
+        .section-title {
+            color: #2c3e50;
+            font-size: 1.5rem;
+            font-weight: 600;
+            margin-bottom: 1.5rem;
+            display: flex;
+            align-items: center;
+        }
+        
+        .section-title i {
+            color: #667eea;
+            margin-right: 0.5rem;
+        }
+        
+        .control-card {
+            background: white;
+            border: 2px solid #e9ecef;
+            border-radius: 12px;
+            padding: 1.5rem;
+            margin-bottom: 1rem;
+            transition: all 0.3s ease;
+            box-shadow: 0 3px 10px rgba(0, 0, 0, 0.1);
+        }
+        
+        .control-card:hover {
+            border-color: #667eea;
+            transform: translateY(-2px);
+            box-shadow: 0 10px 25px rgba(102, 126, 234, 0.2);
+        }
+        
+        .control-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 1rem;
+        }
+        
+        .control-title {
+            font-size: 1.2rem;
+            font-weight: 600;
+            color: #2c3e50;
+        }
+        
+        .control-status {
+            padding: 0.25rem 0.75rem;
+            border-radius: 20px;
+            font-size: 0.875rem;
+            font-weight: 500;
+        }
+        
+        .status-enabled {
+            background: rgba(40, 167, 69, 0.1);
+            color: #28a745;
+        }
+        
+        .status-disabled {
+            background: rgba(220, 53, 69, 0.1);
+            color: #dc3545;
+        }
+        
+        .control-details {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+            gap: 1rem;
+            margin-bottom: 1rem;
+        }
+        
+        .detail-item {
+            display: flex;
+            flex-direction: column;
+        }
+        
+        .detail-label {
+            font-weight: 500;
+            color: #6c757d;
+            margin-bottom: 0.25rem;
+        }
+        
+        .detail-value {
+            color: #2c3e50;
+        }
+        
+        .announcement-list {
+            max-height: 400px;
+            overflow-y: auto;
+        }
+        
+        .announcement-item {
+            background: rgba(102, 126, 234, 0.05);
+            border: 1px solid #e9ecef;
+            border-radius: 8px;
+            padding: 1rem;
+            margin-bottom: 0.5rem;
+            transition: all 0.3s ease;
+        }
+        
+        .announcement-item:hover {
+            background: rgba(102, 126, 234, 0.1);
+            border-color: #667eea;
+        }
+        
+        .announcement-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 0.5rem;
+        }
+        
+        .announcement-title {
+            font-weight: 600;
+            color: #2c3e50;
+        }
+        
+        .announcement-status {
+            padding: 0.25rem 0.5rem;
+            border-radius: 12px;
+            font-size: 0.75rem;
+            font-weight: 500;
+        }
+        
+        .setting-item {
+            background: white;
+            border: 2px solid #e9ecef;
+            border-radius: 12px;
+            padding: 1.5rem;
+            margin-bottom: 1rem;
+            transition: all 0.3s ease;
+            box-shadow: 0 3px 10px rgba(0, 0, 0, 0.1);
+        }
+        
+        .setting-item:hover {
+            border-color: #667eea;
+            transform: translateY(-2px);
+            box-shadow: 0 10px 25px rgba(102, 126, 234, 0.2);
+        }
+        
+        .setting-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 1rem;
+        }
+        
+        .setting-title {
+            font-size: 1.2rem;
+            font-weight: 600;
+            color: #2c3e50;
+        }
+        
+        .setting-description {
+            color: #6c757d;
+            font-size: 0.875rem;
+            margin-bottom: 1rem;
+        }
+        
+        .profile-avatar-small {
+            width: 32px;
+            height: 32px;
+            border-radius: 50%;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            color: white;
+            font-size: 0.875rem;
+            transition: transform 0.3s ease;
+        }
+        
+        .profile-avatar-small:hover {
+            transform: scale(1.1);
+        }
+        
+        .dropdown-menu {
+            border: 1px solid rgba(102, 126, 234, 0.1);
+            box-shadow: 0 10px 30px rgba(0, 0, 0, 0.1);
+            border-radius: 12px;
+            padding: 0.5rem;
+        }
+        
+        .dropdown-item {
+            border-radius: 8px;
+            padding: 0.75rem 1rem;
+            transition: all 0.3s ease;
+            color: #2c3e50;
+        }
+        
+        .dropdown-item:hover {
+            background: rgba(102, 126, 234, 0.1);
+            color: #667eea;
+        }
+        
+        .dropdown-divider {
+            margin: 0.5rem 0;
+            border-color: rgba(102, 126, 234, 0.1);
+        }
+        
+        .alert {
+            border-radius: 12px;
+            border: none;
+            padding: 1rem;
+        }
+        
+        .alert-success {
+            background: rgba(40, 167, 69, 0.1);
+            color: #28a745;
+        }
+        
+        .alert-danger {
+            background: rgba(220, 53, 69, 0.1);
+            color: #dc3545;
+        }
+        
+        .form-control {
+            border: 2px solid #e9ecef;
+            border-radius: 12px;
+            padding: 1rem;
+            transition: all 0.3s ease;
+        }
+        
+        .form-control:focus {
+            border-color: #667eea;
+            box-shadow: 0 0 0 0.2rem rgba(102, 126, 234, 0.25);
+        }
+        
+        .btn-controls {
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: white;
+            border: none;
+            border-radius: 8px;
+            padding: 0.5rem 1rem;
+            font-size: 0.875rem;
+            font-weight: 500;
+            transition: all 0.3s ease;
+            box-shadow: 0 3px 10px rgba(102, 126, 234, 0.3);
+        }
+        
+        .btn-controls:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 5px 15px rgba(102, 126, 234, 0.4);
+        }
+        
+        .btn-outline {
+            background: transparent;
+            color: #667eea;
+            border: 2px solid #667eea;
+        }
+        
+        .btn-outline:hover {
+            background: #667eea;
+            color: white;
+        }
+    </style>
+</head>
+<body>
+    <div class="controls-container">
+        <!-- Navigation -->
+        <nav class="navbar navbar-expand-lg navbar-dark fixed-top">
+            <div class="container">
+                <a class="navbar-brand" href="/">
+                    <i class="fas fa-graduation-cap me-2"></i>
+                    <strong>Attendrix</strong>
+                </a>
+                <div class="navbar-nav ms-auto">
+                    <a class="nav-link" href="/dashboard">
+                        <i class="fas fa-tachometer-alt me-1"></i>Dashboard
+                    </a>
+                    <a class="nav-link" href="/institutions">
+                        <i class="fas fa-building me-1"></i>Institutions
+                    </a>
+                    <a class="nav-link" href="/users">
+                        <i class="fas fa-users me-1"></i>Users
+                    </a>
+                    <a class="nav-link" href="/monitoring">
+                        <i class="fas fa-chart-line me-1"></i>Monitoring
+                    </a>
+                    <a class="nav-link" href="/security">
+                        <i class="fas fa-shield-alt me-1"></i>Security
+                    </a>
+                    <!-- Profile Dropdown -->
+                    <div class="nav-item dropdown">
+                        <a class="nav-link dropdown-toggle d-flex align-items-center" href="#" id="profileDropdown" role="button" data-bs-toggle="dropdown" aria-expanded="false">
+                            <div class="profile-avatar-small">
+                                <i class="fas fa-user"></i>
+                            </div>
+                            <span class="ms-2 d-none d-md-inline">Profile</span>
+                        </a>
+                        <ul class="dropdown-menu dropdown-menu-end" aria-labelledby="profileDropdown">
+                            <li><a class="dropdown-item" href="/profile">
+                                <i class="fas fa-user me-2"></i>Profile
+                            </a></li>
+                            <li><a class="dropdown-item" href="/settings">
+                                <i class="fas fa-cog me-2"></i>Settings
+                            </a></li>
+                            <li><hr class="dropdown-divider"></li>
+                            <li><a class="dropdown-item" href="#" onclick="showLogoutConfirm()">
+                                <i class="fas fa-sign-out-alt me-2"></i>Logout
+                            </a></li>
+                        </ul>
+                    </div>
+                </div>
+            </div>
+        </nav>
+        
+        <!-- Controls Header -->
+        <div class="container">
+            <div class="controls-header">
+                <h1>Global Controls</h1>
+                <div class="d-flex gap-2">
+                    <button class="btn btn-controls" onclick="refreshControls()">
+                        <i class="fas fa-sync me-2"></i>Refresh
+                    </button>
+                    <button class="btn btn-controls btn-outline" onclick="exportSystemData()">
+                        <i class="fas fa-download me-2"></i>Export Data
+                    </button>
+                </div>
+            </div>
+            
+            <!-- System Announcements -->
+            <div class="controls-section">
+                <h3 class="section-title">
+                    <i class="fas fa-bullhorn me-2"></i>
+                    System Announcements
+                </h3>
+                <div class="control-card">
+                    <div class="control-header">
+                        <div class="control-title">Create Announcement</div>
+                    </div>
+                    <div class="setting-description">
+                        Send system-wide announcements to all users or specific institutions
+                    </div>
+                    <div class="form-floating mb-3">
+                        <input type="text" class="form-control" id="announcementTitle" placeholder="Announcement Title">
+                        <label for="announcementTitle">Announcement Title</label>
+                    </div>
+                    <div class="form-floating mb-3">
+                        <select class="form-control" id="announcementType">
+                            <option value="info">Information</option>
+                            <option value="warning">Warning</option>
+                            <option value="urgent">Urgent</option>
+                            <option value="maintenance">Maintenance</option>
+                        </select>
+                        <label for="announcementType">Type</label>
+                    </div>
+                    <div class="form-floating mb-3">
+                        <textarea class="form-control" id="announcementMessage" placeholder="Message" style="height: 100px;"></textarea>
+                        <label for="announcementMessage">Message</label>
+                    </div>
+                    <div class="form-floating mb-3">
+                        <select class="form-control" id="announcementTarget">
+                            <option value="all">All Users</option>
+                            <option value="institutions">All Institutions</option>
+                            <option value="students">All Students</option>
+                            <option value="staff">All Staff</option>
+                        </select>
+                        <label for="announcementTarget">Target Audience</label>
+                    </div>
+                    <div class="d-flex gap-2">
+                        <button class="btn btn-controls" onclick="createAnnouncement()">
+                            <i class="fas fa-paper-plane me-2"></i>Send Announcement
+                        </button>
+                        <button class="btn btn-controls btn-outline" onclick="showAnnouncements()">
+                            <i class="fas fa-list me-2"></i>View All Announcements
+                        </button>
+                    </div>
+                </div>
+            </div>
+            
+            <!-- Announcements List -->
+            <div class="controls-section">
+                <h3 class="section-title">
+                    <i class="fas fa-list me-2"></i>
+                    Recent Announcements
+                </h3>
+                <div class="announcement-list" id="announcementsList">
+                    <!-- Announcements will be loaded here -->
+                </div>
+            </div>
+            
+            <!-- System Settings -->
+            <div class="controls-section">
+                <h3 class="section-title">
+                    <i class="fas fa-cogs me-2"></i>
+                    System Settings
+                </h3>
+                <div class="setting-item">
+                    <div class="setting-header">
+                        <div class="setting-title">System Maintenance Mode</div>
+                        <div class="control-status status-disabled" id="maintenanceStatus">Disabled</div>
+                    </div>
+                    <div class="setting-description">
+                        Enable maintenance mode to temporarily disable user access
+                    </div>
+                    <div class="d-flex gap-2">
+                        <button class="btn btn-controls" onclick="toggleMaintenance()">
+                            <i class="fas fa-tools me-2"></i>Enable Maintenance
+                        </button>
+                    </div>
+                </div>
+                
+                <div class="setting-item">
+                    <div class="setting-header">
+                        <div class="setting-title">Registration Status</div>
+                        <div class="control-status status-enabled" id="registrationStatus">Enabled</div>
+                    </div>
+                    <div class="setting-description">
+                        Allow new user registrations in the system
+                    </div>
+                    <div class="d-flex gap-2">
+                        <button class="btn btn-controls" onclick="toggleRegistration()">
+                            <i class="fas fa-user-plus me-2"></i>Disable Registration
+                        </button>
+                    </div>
+                </div>
+                
+                <div class="setting-item">
+                    <div class="setting-header">
+                        <div class="setting-title">Email Notifications</div>
+                        <div class="control-status status-enabled" id="emailNotificationsStatus">Enabled</div>
+                    </div>
+                    <div class="setting-description">
+                        Send email notifications for system events
+                    </div>
+                    <div class="d-flex gap-2">
+                        <button class="btn btn-controls" onclick="toggleEmailNotifications()">
+                            <i class="fas fa-envelope me-2"></i>Disable Email
+                        </button>
+                    </div>
+                </div>
+                
+                <div class="setting-item">
+                    <div class="setting-header">
+                        <div class="setting-title">API Rate Limiting</div>
+                        <div class="control-status status-enabled" id="rateLimitingStatus">Enabled</div>
+                    </div>
+                    <div class="setting-description">
+                        Limit API requests to prevent abuse
+                    </div>
+                    <div class="d-flex gap-2">
+                        <button class="btn btn-controls" onclick="configureRateLimiting()">
+                            <i class="fas fa-sliders-h me-2"></i>Configure Limits
+                        </button>
+                    </div>
+                </div>
+                
+                <div class="setting-item">
+                    <div class="setting-header">
+                        <div class="setting-title">Backup Schedule</div>
+                        <div class="control-status status-enabled" id="backupStatus">Enabled</div>
+                    </div>
+                    <div class="setting-description">
+                        Automated daily backups of system data
+                    </div>
+                    <div class="d-flex gap-2">
+                        <button class="btn btn-controls" onclick="runBackup()">
+                            <i class="fas fa-save me-2"></i>Run Backup Now
+                        </button>
+                        <button class="btn btn-controls btn-outline" onclick="viewBackups()">
+                            <i class="fas fa-database me-2"></i>View Backups
+                        </button>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+    
+    <!-- Bootstrap JS -->
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
+    
+    <script>
+        // Get user info from localStorage
+        const userInfo = JSON.parse(localStorage.getItem('user_info') || '{}');
+        const accessToken = localStorage.getItem('access_token');
+        
+        // Load controls data
+        document.addEventListener('DOMContentLoaded', function() {
+            loadAnnouncements();
+            loadSystemSettings();
+            
+            // Check authentication
+            if (!accessToken) {
+                window.location.href = '/login';
+            }
+        });
+        
+        function loadAnnouncements() {
+            // Fetch announcements from backend
+            fetch('/api/admin/announcements', {
+                headers: {
+                    'Authorization': `Bearer ${accessToken}`,
+                    'Content-Type': 'application/json'
+                }
+            })
+            .then(response => response.json())
+            .then(data => {
+                if (data.success) {
+                    displayAnnouncements(data.announcements);
+                }
+            })
+            .catch(error => {
+                console.error('Error loading announcements:', error);
+                displayAnnouncements([]);
+            });
+        }
+        
+        function loadSystemSettings() {
+            // Fetch system settings from backend
+            fetch('/api/admin/system-settings', {
+                headers: {
+                    'Authorization': `Bearer ${accessToken}`,
+                    'Content-Type': 'application/json'
+                }
+            })
+            .then(response => response.json())
+            .then(data => {
+                if (data.success) {
+                    updateSystemSettings(data.settings);
+                }
+            })
+            .catch(error => {
+                console.error('Error loading system settings:', error);
+            });
+        }
+        
+        function displayAnnouncements(announcements) {
+            const container = document.getElementById('announcementsList');
+            
+            if (announcements.length === 0) {
+                container.innerHTML = `
+                    <div class="text-center py-3">
+                        <i class="fas fa-bullhorn fa-2x text-muted mb-2"></i>
+                        <p class="text-muted">No announcements found</p>
+                    </div>
+                `;
+                return;
+            }
+            
+            container.innerHTML = announcements.map(announcement => `
+                <div class="announcement-item">
+                    <div class="announcement-header">
+                        <div class="announcement-title">${announcement.title}</div>
+                        <div class="announcement-status status-${announcement.type}">${announcement.type.toUpperCase()}</div>
+                    </div>
+                    <div class="control-details">
+                        <div class="detail-item">
+                            <span class="detail-label">Target:</span>
+                            <span class="detail-value">${announcement.target}</span>
+                        </div>
+                        <div class="detail-item">
+                            <span class="detail-label">Created:</span>
+                            <span class="detail-value">${new Date(announcement.created_at).toLocaleDateString()}</span>
+                        </div>
+                        <div class="detail-item">
+                            <span class="detail-label">Created By:</span>
+                            <span class="detail-value">${announcement.created_by}</span>
+                        </div>
+                    </div>
+                </div>
+            `).join('');
+        }
+        
+        function updateSystemSettings(settings) {
+            // Update system settings UI
+            document.getElementById('maintenanceStatus').className = `control-status status-${settings.maintenance_mode ? 'enabled' : 'disabled'}`;
+            document.getElementById('maintenanceStatus').textContent = settings.maintenance_mode ? 'Enabled' : 'Disabled';
+            
+            document.getElementById('registrationStatus').className = `control-status status-${settings.registration_enabled ? 'enabled' : 'disabled'}`;
+            document.getElementById('registrationStatus').textContent = settings.registration_enabled ? 'Enabled' : 'Disabled';
+            
+            document.getElementById('emailNotificationsStatus').className = `control-status status-${settings.email_notifications ? 'enabled' : 'disabled'}`;
+            document.getElementById('emailNotificationsStatus').textContent = settings.email_notifications ? 'Enabled' : 'Disabled';
+            
+            document.getElementById('rateLimitingStatus').className = `control-status status-${settings.rate_limiting ? 'enabled' : 'disabled'}`;
+            document.getElementById('rateLimitingStatus').textContent = settings.rate_limiting ? 'Enabled' : 'Disabled';
+            
+            document.getElementById('backupStatus').className = `control-status status-${settings.backup_enabled ? 'enabled' : 'disabled'}`;
+            document.getElementById('backupStatus').textContent = settings.backup_enabled ? 'Enabled' : 'Disabled';
+        }
+        
+        function createAnnouncement() {
+            const title = document.getElementById('announcementTitle').value;
+            const type = document.getElementById('announcementType').value;
+            const message = document.getElementById('announcementMessage').value;
+            const target = document.getElementById('announcementTarget').value;
+            
+            // Validate form
+            if (!title || !message) {
+                alert('Please fill in all required fields');
+                return;
+            }
+            
+            // Create announcement
+            fetch('/api/admin/announcements', {
+                method: 'POST',
+                headers: {
+                    'Authorization': `Bearer ${accessToken}`,
+                    'Content-Type': 'application/json'
+                },
+                body: JSON.stringify({
+                    title: title,
+                    type: type,
+                    message: message,
+                    target: target
+                })
+            })
+            .then(response => response.json())
+            .then(data => {
+                if (data.success) {
+                    alert('Announcement created successfully!');
+                    // Clear form
+                    document.getElementById('announcementTitle').value = '';
+                    document.getElementById('announcementMessage').value = '';
+                    document.getElementById('announcementType').value = 'info';
+                    document.getElementById('announcementTarget').value = 'all';
+                    // Reload announcements
+                    loadAnnouncements();
+                } else {
+                    alert(data.error || 'Failed to create announcement');
+                }
+            })
+            .catch(error => {
+                alert('An error occurred. Please try again.');
+            });
+        }
+        
+        function showAnnouncements() {
+            // Navigate to announcements page or show modal
+            alert('View all announcements - Feature coming soon!');
+        }
+        
+        function toggleMaintenance() {
+            const currentStatus = document.getElementById('maintenanceStatus').textContent === 'Enabled';
+            const newStatus = !currentStatus;
+            
+            fetch('/api/admin/system-settings/maintenance', {
+                method: 'PUT',
+                headers: {
+                    'Authorization': `Bearer ${accessToken}`,
+                    'Content-Type': 'application/json'
+                },
+                body: JSON.stringify({ maintenance_mode: newStatus })
+            })
+            .then(response => response.json())
+            .then(data => {
+                if (data.success) {
+                    updateSystemSettings({ maintenance_mode: newStatus });
+                } else {
+                    alert(data.error || 'Failed to update maintenance mode');
+                }
+            })
+            .catch(error => {
+                alert('An error occurred while trying to update maintenance mode');
+            });
+        }
+        
+        function toggleRegistration() {
+            const currentStatus = document.getElementById('registrationStatus').textContent === 'Enabled';
+            const newStatus = !currentStatus;
+            
+            fetch('/api/admin/system-settings/registration', {
+                method: 'PUT',
+                headers: {
+                    'Authorization': `Bearer ${accessToken}`,
+                    'Content-Type': 'application/json'
+                },
+                body: JSON.stringify({ registration_enabled: newStatus })
+            })
+            .then(response => response.json())
+            .then(data => {
+                if (data.success) {
+                    updateSystemSettings({ registration_enabled: newStatus });
+                } else {
+                    alert(data.error || 'Failed to update registration status');
+                }
+            })
+            .catch(error => {
+                alert('An error occurred while trying to update registration status');
+            });
+        }
+        
+        function toggleEmailNotifications() {
+            const currentStatus = document.getElementById('emailNotificationsStatus').textContent === 'Enabled';
+            const newStatus = !currentStatus;
+            
+            fetch('/api/admin/system-settings/email-notifications', {
+                method: 'PUT',
+                headers: {
+                    'Authorization': `Bearer ${accessToken}`,
+                    'Content-Type': 'application/json'
+                },
+                body: JSON.stringify({ email_notifications: newStatus })
+            })
+            .then(response => response.json())
+            .then(data => {
+                if (data.success) {
+                    updateSystemSettings({ email_notifications: newStatus });
+                } else {
+                    alert(data.error || 'Failed to update email notifications');
+                }
+            })
+            .catch(error => {
+                alert('An error occurred while trying to update email notifications');
+            });
+        }
+        
+        function configureRateLimiting() {
+            alert('Configure rate limiting - Feature coming soon!');
+        }
+        
+        function runBackup() {
+            if (confirm('Are you sure you want to run a system backup now?')) {
+                fetch('/api/admin/system-backup', {
+                    method: 'POST',
+                    headers: {
+                        'Authorization': `Bearer ${accessToken}`
+                    }
+                })
+                .then(response => response.json())
+                .then(data => {
+                    if (data.success) {
+                        alert('System backup started successfully!');
+                    } else {
+                        alert(data.error || 'Failed to start system backup');
+                    }
+                })
+                .catch(error => {
+                    alert('An error occurred while trying to start system backup');
+                });
+            }
+        }
+        
+        function viewBackups() {
+            alert('View backup history - Feature coming soon!');
+        }
+        
+        function refreshControls() {
+            loadAnnouncements();
+            loadSystemSettings();
+        }
+        
+        function exportSystemData() {
+            // Export system data
+            fetch('/api/admin/export-system-data', {
+                headers: {
+                    'Authorization': `Bearer ${accessToken}`
+                }
+            })
+            .then(response => response.blob())
+            .then(blob => {
+                const url = window.URL.createObjectURL(blob);
+                const a = document.createElement('a');
+                a.href = url;
+                a.download = 'system-data.json';
+                a.click();
+                window.URL.revokeObjectURL(url);
+            })
+            .catch(error => {
+                alert('Failed to export system data');
+            });
+        }
+        
+        function showLogoutConfirm() {
+            const modal = new bootstrap.Modal(document.getElementById('logoutModal'));
+            modal.show();
+        }
+        
+        function logout() {
+            localStorage.removeItem('access_token');
+            localStorage.removeItem('refresh_token');
+            localStorage.removeItem('user_info');
+            window.location.href = '/login';
+        }
+    </script>
+    
+    <!-- Logout Confirmation Modal -->
+    <div class="modal fade" id="logoutModal" tabindex="-1">
+        <div class="modal-dialog">
+            <div class="modal-content">
+                <div class="modal-header">
+                    <h5 class="modal-title">Confirm Logout</h5>
+                    <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+                </div>
+                <div class="modal-body">
+                    <p>Do you really want to leave?</p>
+                </div>
+                <div class="modal-footer">
+                    <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancel</button>
+                    <button type="button" class="btn btn-danger" onclick="logout()">OK</button>
+                </div>
+            </div>
+        </div>
+    </div>
+</body>
+</html>

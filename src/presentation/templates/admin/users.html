@@ -1,0 +1,1076 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>User Management - Attendrix</title>
+    <meta name="description" content="Manage users in Attendrix system">
+    
+    <link rel="icon" type="image/x-icon" href="/static/images/favicon.ico">
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <link rel="stylesheet" href="{{ url_for('static', filename='css/landing.css') }}">
+    
+    <style>
+        :root {
+            --primary-color: #4f46e5;
+            --primary-dark: #4338ca;
+            --secondary-color: #64748b;
+            --accent-color: #6366f1;
+            --success-color: #10b981;
+            --warning-color: #f59e0b;
+            --error-color: #ef4444;
+            --bg-primary: #ffffff;
+            --bg-secondary: #f8fafc;
+            --text-primary: #1e293b;
+            --text-secondary: #64748b;
+            --border-color: #e2e8f0;
+            --shadow-sm: 0 1px 2px 0 rgb(0 0 0 / 0.05);
+            --shadow-md: 0 4px 6px -1px rgb(0 0 0 / 0.1);
+            --radius-sm: 6px;
+            --radius-md: 8px;
+            --radius-lg: 12px;
+        }
+
+        * { margin: 0; padding: 0; box-sizing: border-box; }
+        body { font-family: 'Inter', sans-serif; background: var(--bg-secondary); color: var(--text-primary); line-height: 1.6; }
+        .dashboard-layout { display: flex; min-height: 100vh; }
+        
+        .sidebar { width: 280px; background: var(--bg-primary); border-right: 1px solid var(--border-color); position: fixed; height: 100vh; left: 0; top: 0; z-index: 1000; transition: transform 0.3s ease; }
+        .sidebar-header { padding: 1.5rem; border-bottom: 1px solid var(--border-color); background: linear-gradient(135deg, var(--primary-color) 0%, var(--primary-dark) 100%); color: white; }
+        .sidebar-brand { display: flex; align-items: center; gap: 0.75rem; font-size: 1.25rem; font-weight: 700; text-decoration: none; color: white; }
+        .sidebar-nav { padding: 1rem 0; }
+        .sidebar-nav-item { display: block; padding: 0.875rem 1.5rem; color: var(--text-secondary); text-decoration: none; transition: all 0.2s ease; position: relative; font-weight: 500; }
+        .sidebar-nav-item:hover { background: var(--bg-secondary); color: var(--primary-color); }
+        .sidebar-nav-item.active { background: linear-gradient(90deg, rgba(79, 70, 229, 0.1) 0%, transparent 100%); color: var(--primary-color); font-weight: 600; }
+        .sidebar-nav-item.active::before { content: ''; position: absolute; left: 0; top: 0; bottom: 0; width: 4px; background: var(--primary-color); }
+        .sidebar-nav-item i { width: 20px; margin-right: 0.75rem; text-align: center; }
+        
+        .main-content { flex: 1; margin-left: 280px; display: flex; flex-direction: column; min-height: 100vh; }
+        .top-header { background: var(--bg-primary); border-bottom: 1px solid var(--border-color); padding: 1rem 2rem; display: flex; justify-content: space-between; align-items: center; box-shadow: var(--shadow-sm); position: sticky; top: 0; z-index: 100; }
+        .header-left { display: flex; align-items: center; gap: 1rem; }
+        .header-title { font-size: 1.5rem; font-weight: 700; color: var(--text-primary); }
+        .header-subtitle { color: var(--text-secondary); font-size: 0.875rem; }
+        .header-right { display: flex; align-items: center; gap: 1rem; }
+        .header-time { color: var(--text-secondary); font-size: 0.875rem; }
+        .profile-dropdown { position: relative; }
+        .profile-avatar { width: 40px; height: 40px; border-radius: var(--radius-md); background: linear-gradient(135deg, var(--primary-color) 0%, var(--accent-color) 100%); display: flex; align-items: center; justify-content: center; color: white; cursor: pointer; }
+        
+        .content-area { flex: 1; padding: 2rem; background: var(--bg-secondary); }
+        .page-content { background: var(--bg-primary); padding: 2rem; border-radius: var(--radius-lg); box-shadow: var(--shadow-sm); border: 1px solid var(--border-color); }
+        .page-header { margin-bottom: 2rem; }
+        .page-title { font-size: 1.75rem; font-weight: 700; color: var(--text-primary); margin-bottom: 0.5rem; }
+        .page-description { color: var(--text-secondary); font-size: 1rem; }
+        
+        .stats-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(250px, 1fr)); gap: 1.5rem; margin-bottom: 2rem; }
+        .stat-card { background: var(--bg-primary); padding: 1.5rem; border-radius: var(--radius-lg); border: 1px solid var(--border-color); box-shadow: var(--shadow-sm); }
+        .stat-icon { width: 48px; height: 48px; border-radius: var(--radius-md); display: flex; align-items: center; justify-content: center; font-size: 1.25rem; margin-bottom: 1rem; }
+        .stat-value { font-size: 2rem; font-weight: 700; color: var(--text-primary); margin-bottom: 0.5rem; }
+        .stat-label { color: var(--text-secondary); font-size: 0.875rem; }
+        .stat-change { font-size: 0.75rem; margin-top: 0.5rem; }
+        .stat-change.positive { color: var(--success-color); }
+        .stat-change.negative { color: var(--error-color); }
+        
+        .user-section { margin-bottom: 2rem; }
+        .section-header { display: flex; justify-content: between; align-items: center; margin-bottom: 1.5rem; }
+        .section-title { font-size: 1.25rem; font-weight: 600; color: var(--text-primary); }
+        .section-actions { display: flex; gap: 0.5rem; }
+        
+        .btn-primary { background: linear-gradient(135deg, var(--primary-color) 0%, var(--primary-dark) 100%); border: none; color: white; padding: 0.75rem 1.5rem; border-radius: var(--radius-md); font-weight: 500; transition: all 0.2s ease; }
+        .btn-primary:hover { transform: translateY(-1px); box-shadow: var(--shadow-md); }
+        .btn-secondary { background: var(--bg-secondary); border: 1px solid var(--border-color); color: var(--text-primary); padding: 0.75rem 1.5rem; border-radius: var(--radius-md); font-weight: 500; transition: all 0.2s ease; }
+        .btn-secondary:hover { background: var(--border-color); }
+        .btn-sm { padding: 0.5rem 1rem; font-size: 0.875rem; }
+        
+        .user-table { background: var(--bg-primary); border-radius: var(--radius-lg); border: 1px solid var(--border-color); overflow: hidden; }
+        .table { margin: 0; }
+        .table th { background: var(--bg-secondary); border-bottom: 1px solid var(--border-color); padding: 1rem; font-weight: 600; color: var(--text-primary); }
+        .table td { padding: 1rem; border-bottom: 1px solid var(--border-color); vertical-align: middle; }
+        .table tbody tr:hover { background: var(--bg-secondary); }
+        
+        .user-avatar { width: 40px; height: 40px; border-radius: var(--radius-md); background: linear-gradient(135deg, var(--primary-color) 0%, var(--accent-color) 100%); display: flex; align-items: center; justify-content: center; color: white; font-weight: 600; }
+        .user-info { display: flex; align-items: center; gap: 0.75rem; }
+        .user-details { flex: 1; }
+        .user-name { font-weight: 600; color: var(--text-primary); }
+        .user-email { font-size: 0.875rem; color: var(--text-secondary); }
+        
+        .role-badge { padding: 0.25rem 0.75rem; border-radius: var(--radius-sm); font-size: 0.75rem; font-weight: 500; }
+        .role-super-admin { background: rgba(239, 68, 68, 0.1); color: var(--error-color); }
+        .role-institutional-admin { background: rgba(59, 130, 246, 0.1); color: #3b82f6; }
+        .role-lecturer { background: rgba(16, 185, 129, 0.1); color: var(--success-color); }
+        .role-student { background: rgba(245, 158, 11, 0.1); color: var(--warning-color); }
+        .role-employee { background: rgba(139, 92, 246, 0.1); color: #8b5cf6; }
+        
+        .status-badge { padding: 0.25rem 0.75rem; border-radius: var(--radius-sm); font-size: 0.75rem; font-weight: 500; }
+        .status-active { background: rgba(16, 185, 129, 0.1); color: var(--success-color); }
+        .status-inactive { background: rgba(107, 114, 128, 0.1); color: #6b7280; }
+        .status-suspended { background: rgba(239, 68, 68, 0.1); color: var(--error-color); }
+        
+        .action-buttons { display: flex; gap: 0.5rem; }
+        .action-btn { padding: 0.5rem; border: 1px solid var(--border-color); border-radius: var(--radius-sm); background: var(--bg-primary); color: var(--text-secondary); cursor: pointer; transition: all 0.2s ease; }
+        .action-btn:hover { background: var(--bg-secondary); color: var(--primary-color); border-color: var(--primary-color); }
+        
+        .empty-state { text-align: center; padding: 4rem 2rem; color: var(--text-secondary); }
+        .empty-icon { font-size: 4rem; color: var(--primary-color); margin-bottom: 1.5rem; opacity: 0.5; }
+        .empty-title { font-size: 1.5rem; font-weight: 600; color: var(--text-primary); margin-bottom: 1rem; }
+        .empty-description { margin-bottom: 2rem; }
+        
+        .search-filter { display: flex; gap: 1rem; margin-bottom: 1.5rem; }
+        .search-box { flex: 1; position: relative; }
+        .search-input { width: 100%; padding: 0.75rem 1rem 0.75rem 2.5rem; border: 1px solid var(--border-color); border-radius: var(--radius-md); font-size: 0.875rem; }
+        .search-icon { position: absolute; left: 0.75rem; top: 50%; transform: translateY(-50%); color: var(--text-secondary); }
+        .filter-select { padding: 0.75rem 1rem; border: 1px solid var(--border-color); border-radius: var(--radius-md); font-size: 0.875rem; min-width: 150px; }
+        
+        @media (max-width: 768px) {
+            .sidebar { transform: translateX(-100%); z-index: 1050; }
+            .sidebar.open { transform: translateX(0); }
+            .main-content { margin-left: 0; }
+            .content-area { padding: 1rem; }
+            .header-title { font-size: 1.25rem; }
+            .page-content { padding: 1rem; }
+            .stats-grid { grid-template-columns: 1fr; }
+            .search-filter { flex-direction: column; }
+            .user-info { flex-direction: column; align-items: flex-start; gap: 0.5rem; }
+            .table { font-size: 0.875rem; }
+            .table th, .table td { padding: 0.75rem 0.5rem; }
+        }
+        
+        .mobile-menu-btn { display: none; background: none; border: 1px solid var(--border-color); border-radius: var(--radius-sm); padding: 0.5rem; color: var(--text-secondary); cursor: pointer; }
+        .mobile-menu-btn:hover { background: var(--bg-secondary); color: var(--primary-color); }
+        @media (max-width: 768px) { .mobile-menu-btn { display: block; } }
+    </style>
+</head>
+<body>
+    <div class="dashboard-layout">
+        <div class="sidebar">
+            <div class="sidebar-header">
+                <a class="sidebar-brand" href="/admin/dashboard">
+                    <i class="fas fa-graduation-cap me-2"></i>
+                    <strong>Attendrix</strong>
+                </a>
+            </div>
+            <div class="sidebar-nav">
+                <a class="sidebar-nav-item" href="/admin/dashboard"><i class="fas fa-tachometer-alt me-2"></i>Dashboard</a>
+                <a class="sidebar-nav-item" href="/admin/create_institution"><i class="fas fa-building me-2"></i>Institutions</a>
+                <a class="sidebar-nav-item active" href="/admin/users"><i class="fas fa-users me-2"></i>Users</a>
+                <a class="sidebar-nav-item" href="/admin/monitoring"><i class="fas fa-chart-line me-2"></i>Monitoring</a>
+                <a class="sidebar-nav-item" href="/admin/security"><i class="fas fa-shield-alt me-2"></i>Security</a>
+                <a class="sidebar-nav-item" href="/admin/backup"><i class="fas fa-database me-2"></i>Backup & Restore</a>
+                <a class="sidebar-nav-item" href="/admin/notifications"><i class="fas fa-bell me-2"></i>Notifications</a>
+                <a class="sidebar-nav-item" href="/admin/audit"><i class="fas fa-history me-2"></i>Audit Logs</a>
+                <a class="sidebar-nav-item" href="/admin/roles"><i class="fas fa-user-shield me-2"></i>Role Assignments</a>
+                <a class="sidebar-nav-item" href="/admin/profile"><i class="fas fa-user me-2"></i>Profile</a>
+            </div>
+        </div>
+        <div class="main-content">
+            <div class="top-header">
+                <div class="header-left">
+                    <button class="mobile-menu-btn" onclick="toggleSidebar()"><i class="fas fa-bars"></i></button>
+                    <div>
+                        <h1 class="header-title">User Management</h1>
+                        <p class="header-subtitle">Manage all users in the Attendrix system</p>
+                    </div>
+                </div>
+                <div class="header-right">
+                    <div class="header-time" id="currentTime"></div>
+                    <div class="profile-dropdown">
+                        <div class="profile-avatar" data-bs-toggle="dropdown"><i class="fas fa-user"></i></div>
+                        <ul class="dropdown-menu dropdown-menu-end">
+                            <li><a class="dropdown-item" href="/admin/profile"><i class="fas fa-user me-2"></i>Profile</a></li>
+                            <li><a class="dropdown-item" href="/admin/settings"><i class="fas fa-cog me-2"></i>Settings</a></li>
+                            <li><hr class="dropdown-divider"></li>
+                            <li><a class="dropdown-item" href="#" onclick="showLogoutConfirm()"><i class="fas fa-sign-out-alt me-2"></i>Logout</a></li>
+                        </ul>
+                    </div>
+                </div>
+            </div>
+            <main class="content-area">
+                <div class="page-content">
+                    <div class="page-header">
+                        <h2 class="page-title">User Management</h2>
+                        <p class="page-description">View, manage, and administer all user accounts in the Attendrix system</p>
+                    </div>
+                    
+                    <!-- User Statistics -->
+                    <div class="stats-grid">
+                        <div class="stat-card">
+                            <div class="stat-icon" style="background: rgba(79, 70, 229, 0.1); color: var(--primary-color);">
+                                <i class="fas fa-users"></i>
+                            </div>
+                            <div class="stat-value">0</div>
+                            <div class="stat-label">Total Users</div>
+                            <div class="stat-change positive">
+                                <i class="fas fa-arrow-up me-1"></i>No active users yet
+                            </div>
+                        </div>
+                        <div class="stat-card">
+                            <div class="stat-icon" style="background: rgba(16, 185, 129, 0.1); color: var(--success-color);">
+                                <i class="fas fa-user-check"></i>
+                            </div>
+                            <div class="stat-value">0</div>
+                            <div class="stat-label">Active Users</div>
+                            <div class="stat-change positive">
+                                <i class="fas fa-arrow-up me-1"></i>No active users yet
+                            </div>
+                        </div>
+                        <div class="stat-card">
+                            <div class="stat-icon" style="background: rgba(245, 158, 11, 0.1); color: var(--warning-color);">
+                                <i class="fas fa-user-clock"></i>
+                            </div>
+                            <div class="stat-value">0</div>
+                            <div class="stat-label">Inactive Users</div>
+                            <div class="stat-change negative">
+                                <i class="fas fa-arrow-down me-1"></i>No inactive users yet
+                            </div>
+                        </div>
+                        <div class="stat-card">
+                            <div class="stat-icon" style="background: rgba(139, 92, 246, 0.1); color: #8b5cf6;">
+                                <i class="fas fa-user-plus"></i>
+                            </div>
+                            <div class="stat-value">0</div>
+                            <div class="stat-label">New This Month</div>
+                            <div class="stat-change positive">
+                                <i class="fas fa-arrow-up me-1"></i>No new users yet
+                            </div>
+                        </div>
+                    </div>
+                    
+                    <!-- User Management Section -->
+                    <div class="user-section">
+                        <div class="section-header">
+                            <h3 class="section-title">All Users</h3>
+                            <div class="section-actions">
+                                <button class="btn btn-primary btn-sm" onclick="showAddUserModal()">
+                                    <i class="fas fa-plus me-2"></i>Add User
+                                </button>
+                                <button class="btn btn-secondary btn-sm" onclick="exportUsers()">
+                                    <i class="fas fa-download me-2"></i>Export
+                                </button>
+                            </div>
+                        </div>
+                        
+                        <!-- Search and Filter -->
+                        <div class="search-filter">
+                            <div class="search-box">
+                                <i class="fas fa-search search-icon"></i>
+                                <input type="text" class="search-input" placeholder="Search users by name, email, or ID..." id="userSearch">
+                            </div>
+                            <select class="filter-select" id="roleFilter">
+                                <option value="">All Roles</option>
+                                <option value="super_admin">Super Admin</option>
+                                <option value="institutional_admin">Institutional Admin</option>
+                                <option value="lecturer">Lecturer</option>
+                                <option value="student">Student</option>
+                                <option value="employee">Employee</option>
+                            </select>
+                            <select class="filter-select" id="statusFilter">
+                                <option value="">All Status</option>
+                                <option value="active">Active</option>
+                                <option value="inactive">Inactive</option>
+                                <option value="suspended">Suspended</option>
+                            </select>
+                        </div>
+                        
+                        <!-- Users Table -->
+                        <div class="user-table">
+                            <table class="table">
+                                <thead>
+                                    <tr>
+                                        <th>User</th>
+                                        <th>Role</th>
+                                        <th>Status</th>
+                                        <th>Last Active</th>
+                                        <th>Actions</th>
+                                    </tr>
+                                </thead>
+                                <tbody id="usersTableBody">
+                                    <!-- Empty state will be shown here -->
+                                </tbody>
+                            </table>
+                        </div>
+                        
+                        <!-- Empty State -->
+                        <div id="emptyState" class="empty-state">
+                            <div class="empty-icon"><i class="fas fa-users"></i></div>
+                            <h3 class="empty-title">No Users Found</h3>
+                            <p class="empty-description">
+                                There are no users in the system yet. Start by adding the first user to get started.
+                            </p>
+                            <button class="btn btn-primary" onclick="showAddUserModal()">
+                                <i class="fas fa-plus me-2"></i>Add First User
+                            </button>
+                        </div>
+                    </div>
+                </div>
+            </main>
+        </div>
+    </div>
+
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
+    <script>
+        document.addEventListener('DOMContentLoaded', function() {
+            // Initialize components
+            initializeTimeDisplay();
+            initializeUserManagement();
+            initializeTooltips();
+            
+            // Show empty state initially
+            showEmptyState();
+            
+            console.log('User Management page loaded successfully');
+        });
+        
+        function initializeTimeDisplay() {
+            function updateTime() {
+                const now = new Date();
+                const timeString = now.toLocaleString('en-US', { 
+                    weekday: 'short', 
+                    year: 'numeric', 
+                    month: 'short', 
+                    day: 'numeric', 
+                    hour: '2-digit', 
+                    minute: '2-digit' 
+                });
+                const timeElement = document.getElementById('currentTime');
+                if (timeElement) timeElement.textContent = timeString;
+            }
+            updateTime();
+            setInterval(updateTime, 60000);
+        }
+        
+        function initializeUserManagement() {
+            const userSearch = document.getElementById('userSearch');
+            const roleFilter = document.getElementById('roleFilter');
+            const statusFilter = document.getElementById('statusFilter');
+            
+            // Search functionality
+            userSearch.addEventListener('input', function() {
+                filterUsers();
+            });
+            
+            // Filter functionality
+            roleFilter.addEventListener('change', function() {
+                filterUsers();
+            });
+            
+            statusFilter.addEventListener('change', function() {
+                filterUsers();
+            });
+        }
+        
+        function initializeTooltips() {
+            // Initialize Bootstrap tooltips
+            if (typeof bootstrap !== 'undefined' && bootstrap.Tooltip) {
+                const tooltipTriggerList = [].slice.call(document.querySelectorAll('[data-bs-toggle="tooltip"]'));
+                tooltipTriggerList.map(function (tooltipTriggerEl) {
+                    return new bootstrap.Tooltip(tooltipTriggerEl);
+                });
+            }
+            
+            // Initialize Bootstrap dropdowns
+            if (typeof bootstrap !== 'undefined' && bootstrap.Dropdown) {
+                const dropdownTriggerList = [].slice.call(document.querySelectorAll('[data-bs-toggle="dropdown"]'));
+                dropdownTriggerList.map(function (dropdownTriggerEl) {
+                    return new bootstrap.Dropdown(dropdownTriggerEl);
+                });
+            }
+        }
+        
+        function showEmptyState() {
+            const emptyState = document.getElementById('emptyState');
+            const usersTableBody = document.getElementById('usersTableBody');
+            
+            if (emptyState) emptyState.style.display = 'block';
+            if (usersTableBody) usersTableBody.innerHTML = '';
+        }
+        
+        function showAddUserModal() {
+            // Create modal HTML
+            const modalHtml = `
+                <div class="modal fade" id="addUserModal" tabindex="-1" aria-labelledby="addUserModalLabel" aria-hidden="true">
+                    <div class="modal-dialog modal-lg">
+                        <div class="modal-content">
+                            <div class="modal-header">
+                                <h5 class="modal-title" id="addUserModalLabel">
+                                    <i class="fas fa-user-plus me-2"></i>Add New User
+                                </h5>
+                                <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+                            </div>
+                            <div class="modal-body">
+                                <form id="addUserForm">
+                                    <div class="row">
+                                        <div class="col-md-6 mb-3">
+                                            <label for="firstName" class="form-label">First Name *</label>
+                                            <input type="text" class="form-control" id="firstName" required>
+                                            <div class="invalid-feedback">Please provide a first name.</div>
+                                        </div>
+                                        <div class="col-md-6 mb-3">
+                                            <label for="lastName" class="form-label">Last Name *</label>
+                                            <input type="text" class="form-control" id="lastName" required>
+                                            <div class="invalid-feedback">Please provide a last name.</div>
+                                        </div>
+                                    </div>
+                                    <div class="row">
+                                        <div class="col-md-6 mb-3">
+                                            <label for="email" class="form-label">Email Address *</label>
+                                            <input type="email" class="form-control" id="email" required>
+                                            <div class="invalid-feedback">Please provide a valid email.</div>
+                                        </div>
+                                        <div class="col-md-6 mb-3">
+                                            <label for="phone" class="form-label">Phone Number</label>
+                                            <input type="tel" class="form-control" id="phone">
+                                        </div>
+                                    </div>
+                                    <div class="row">
+                                        <div class="col-md-6 mb-3">
+                                            <label for="role" class="form-label">Role *</label>
+                                            <select class="form-select" id="role" required>
+                                                <option value="">Select a role...</option>
+                                                <option value="super_admin">Super Admin</option>
+                                                <option value="institutional_admin">Institutional Admin</option>
+                                                <option value="lecturer">Lecturer</option>
+                                                <option value="student">Student</option>
+                                                <option value="employee">Employee</option>
+                                            </select>
+                                            <div class="invalid-feedback">Please select a role.</div>
+                                        </div>
+                                        <div class="col-md-6 mb-3">
+                                            <label for="institution" class="form-label">Institution *</label>
+                                            <select class="form-select" id="institution" required>
+                                                <option value="">Select an institution...</option>
+                                                <option value="demo_institution">Demo Institution</option>
+                                            </select>
+                                            <div class="invalid-feedback">Please select an institution.</div>
+                                        </div>
+                                    </div>
+                                    <div class="mb-3">
+                                        <label for="department" class="form-label">Department</label>
+                                        <input type="text" class="form-control" id="department" placeholder="e.g., Computer Science">
+                                    </div>
+                                    <div class="row">
+                                        <div class="col-md-6 mb-3">
+                                            <label for="password" class="form-label">Password *</label>
+                                            <input type="password" class="form-control" id="password" required>
+                                            <div class="invalid-feedback">Password must be at least 8 characters.</div>
+                                        </div>
+                                        <div class="col-md-6 mb-3">
+                                            <label for="confirmPassword" class="form-label">Confirm Password *</label>
+                                            <input type="password" class="form-control" id="confirmPassword" required>
+                                            <div class="invalid-feedback">Passwords do not match.</div>
+                                        </div>
+                                    </div>
+                                    <div class="mb-3">
+                                        <div class="form-check">
+                                            <input class="form-check-input" type="checkbox" id="sendWelcomeEmail" checked>
+                                            <label class="form-check-label" for="sendWelcomeEmail">
+                                                Send welcome email with login credentials
+                                            </label>
+                                        </div>
+                                    </div>
+                                </form>
+                            </div>
+                            <div class="modal-footer">
+                                <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancel</button>
+                                <button type="button" class="btn btn-primary" onclick="saveUser()">
+                                    <i class="fas fa-save me-2"></i>Create User
+                                </button>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            `;
+            
+            // Remove existing modal if present
+            const existingModal = document.getElementById('addUserModal');
+            if (existingModal) {
+                existingModal.remove();
+            }
+            
+            // Add modal to page
+            document.body.insertAdjacentHTML('beforeend', modalHtml);
+            
+            // Show modal
+            const modal = new bootstrap.Modal(document.getElementById('addUserModal'));
+            modal.show();
+            
+            // Setup form validation
+            setupUserFormValidation();
+        }
+        
+        function setupUserFormValidation() {
+            const form = document.getElementById('addUserForm');
+            const password = document.getElementById('password');
+            const confirmPassword = document.getElementById('confirmPassword');
+            
+            // Real-time validation
+            confirmPassword.addEventListener('input', function() {
+                if (password.value !== confirmPassword.value) {
+                    confirmPassword.setCustomValidity('Passwords do not match');
+                } else {
+                    confirmPassword.setCustomValidity('');
+                }
+            });
+            
+            password.addEventListener('input', function() {
+                if (password.value.length < 8) {
+                    password.setCustomValidity('Password must be at least 8 characters');
+                } else {
+                    password.setCustomValidity('');
+                }
+                // Trigger confirm password validation
+                confirmPassword.dispatchEvent(new Event('input'));
+            });
+        }
+        
+        function saveUser() {
+            const form = document.getElementById('addUserForm');
+            
+            // Form validation
+            if (!form.checkValidity()) {
+                form.classList.add('was-validated');
+                return;
+            }
+            
+            // Get form data
+            const formData = {
+                firstName: document.getElementById('firstName').value,
+                lastName: document.getElementById('lastName').value,
+                email: document.getElementById('email').value,
+                phone: document.getElementById('phone').value,
+                role: document.getElementById('role').value,
+                institution: document.getElementById('institution').value,
+                department: document.getElementById('department').value,
+                password: document.getElementById('password').value,
+                sendWelcomeEmail: document.getElementById('sendWelcomeEmail').checked
+            };
+            
+            // Simulate saving user
+            const modal = bootstrap.Modal.getInstance(document.getElementById('addUserModal'));
+            modal.hide();
+            
+            // Show success message
+            showSuccessToast(`User ${formData.firstName} ${formData.lastName} has been successfully created!`);
+            
+            // Update user count (simulate)
+            updateUserCount();
+            
+            // Log action
+            console.log('User created:', formData);
+        }
+        
+        function showSuccessToast(message) {
+            // Create toast HTML
+            const toastHtml = `
+                <div class="toast-container position-fixed top-0 end-0 p-3">
+                    <div class="toast show" role="alert" aria-live="assertive" aria-atomic="true">
+                        <div class="toast-header bg-success text-white">
+                            <i class="fas fa-check-circle me-2"></i>
+                            <strong class="me-auto">Success</strong>
+                            <button type="button" class="btn-close btn-close-white" data-bs-dismiss="toast" aria-label="Close"></button>
+                        </div>
+                        <div class="toast-body">
+                            ${message}
+                        </div>
+                    </div>
+                </div>
+            `;
+            
+            // Add toast to page
+            document.body.insertAdjacentHTML('beforeend', toastHtml);
+            
+            // Auto remove after 5 seconds
+            setTimeout(() => {
+                const toastContainer = document.querySelector('.toast-container');
+                if (toastContainer) {
+                    toastContainer.remove();
+                }
+            }, 5000);
+        }
+        
+        function updateUserCount() {
+            // Simulate updating user count
+            const userCountElement = document.querySelector('.stat-value');
+            if (userCountElement) {
+                const currentCount = parseInt(userCountElement.textContent) || 0;
+                userCountElement.textContent = currentCount + 1;
+            }
+        }
+        
+        function editUser(userId) {
+            // Create edit user modal
+            const modalHtml = `
+                <div class="modal fade" id="editUserModal" tabindex="-1" aria-labelledby="editUserModalLabel" aria-hidden="true">
+                    <div class="modal-dialog modal-lg">
+                        <div class="modal-content">
+                            <div class="modal-header">
+                                <h5 class="modal-title" id="editUserModalLabel">
+                                    <i class="fas fa-user-edit me-2"></i>Edit User
+                                </h5>
+                                <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+                            </div>
+                            <div class="modal-body">
+                                <form id="editUserForm">
+                                    <input type="hidden" id="editUserId" value="${userId}">
+                                    <div class="row">
+                                        <div class="col-md-6 mb-3">
+                                            <label for="editFirstName" class="form-label">First Name *</label>
+                                            <input type="text" class="form-control" id="editFirstName" required>
+                                        </div>
+                                        <div class="col-md-6 mb-3">
+                                            <label for="editLastName" class="form-label">Last Name *</label>
+                                            <input type="text" class="form-control" id="editLastName" required>
+                                        </div>
+                                    </div>
+                                    <div class="row">
+                                        <div class="col-md-6 mb-3">
+                                            <label for="editEmail" class="form-label">Email Address *</label>
+                                            <input type="email" class="form-control" id="editEmail" required>
+                                        </div>
+                                        <div class="col-md-6 mb-3">
+                                            <label for="editPhone" class="form-label">Phone Number</label>
+                                            <input type="tel" class="form-control" id="editPhone">
+                                        </div>
+                                    </div>
+                                    <div class="row">
+                                        <div class="col-md-6 mb-3">
+                                            <label for="editRole" class="form-label">Role *</label>
+                                            <select class="form-select" id="editRole" required>
+                                                <option value="">Select a role...</option>
+                                                <option value="super_admin">Super Admin</option>
+                                                <option value="institutional_admin">Institutional Admin</option>
+                                                <option value="lecturer">Lecturer</option>
+                                                <option value="student">Student</option>
+                                                <option value="employee">Employee</option>
+                                            </select>
+                                        </div>
+                                        <div class="col-md-6 mb-3">
+                                            <label for="editStatus" class="form-label">Status</label>
+                                            <select class="form-select" id="editStatus">
+                                                <option value="active">Active</option>
+                                                <option value="suspended">Suspended</option>
+                                                <option value="inactive">Inactive</option>
+                                            </select>
+                                        </div>
+                                    </div>
+                                </form>
+                            </div>
+                            <div class="modal-footer">
+                                <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancel</button>
+                                <button type="button" class="btn btn-primary" onclick="saveUserEdit()">
+                                    <i class="fas fa-save me-2"></i>Save Changes
+                                </button>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            `;
+            
+            // Remove existing modal if present
+            const existingModal = document.getElementById('editUserModal');
+            if (existingModal) {
+                existingModal.remove();
+            }
+            
+            // Add modal to page
+            document.body.insertAdjacentHTML('beforeend', modalHtml);
+            
+            // Show modal
+            const modal = new bootstrap.Modal(document.getElementById('editUserModal'));
+            modal.show();
+            
+            // Load user data (simulated)
+            loadUserDataForEdit(userId);
+        }
+        
+        function loadUserDataForEdit(userId) {
+            // Simulate loading user data
+            const userData = {
+                firstName: 'John',
+                lastName: 'Doe',
+                email: 'john.doe@example.com',
+                phone: '+1234567890',
+                role: 'lecturer',
+                status: 'active'
+            };
+            
+            // Populate form fields
+            document.getElementById('editFirstName').value = userData.firstName;
+            document.getElementById('editLastName').value = userData.lastName;
+            document.getElementById('editEmail').value = userData.email;
+            document.getElementById('editPhone').value = userData.phone;
+            document.getElementById('editRole').value = userData.role;
+            document.getElementById('editStatus').value = userData.status;
+        }
+        
+        function saveUserEdit() {
+            const userData = {
+                userId: document.getElementById('editUserId').value,
+                firstName: document.getElementById('editFirstName').value,
+                lastName: document.getElementById('editLastName').value,
+                email: document.getElementById('editEmail').value,
+                phone: document.getElementById('editPhone').value,
+                role: document.getElementById('editRole').value,
+                status: document.getElementById('editStatus').value
+            };
+            
+            // Validate form
+            if (!userData.firstName || !userData.lastName || !userData.email || !userData.role) {
+                showValidationError('Please fill in all required fields.');
+                return;
+            }
+            
+            // Close modal
+            const modal = bootstrap.Modal.getInstance(document.getElementById('editUserModal'));
+            modal.hide();
+            
+            // Show success message
+            showSuccessToast(`User ${userData.firstName} ${userData.lastName} updated successfully!`);
+            
+            // Log action
+            console.log('User updated:', userData);
+        }
+        
+        function deleteUser(userId) {
+            if (confirm('Are you sure you want to delete this user? This action cannot be undone.')) {
+                // Show deletion progress
+                showDeleteProgress(userId);
+            }
+        }
+        
+        function showDeleteProgress(userId) {
+            const progressHtml = `
+                <div class="modal fade" id="deleteProgressModal" tabindex="-1" data-bs-backdrop="static" data-bs-keyboard="false">
+                    <div class="modal-dialog">
+                        <div class="modal-content">
+                            <div class="modal-header">
+                                <h5 class="modal-title">
+                                    <i class="fas fa-trash me-2"></i>Deleting User...
+                                </h5>
+                            </div>
+                            <div class="modal-body">
+                                <div class="mb-3">
+                                    <div class="d-flex justify-content-between mb-2">
+                                        <span>Progress</span>
+                                        <span id="deleteProgressPercent">0%</span>
+                                    </div>
+                                    <div class="progress">
+                                        <div class="progress-bar bg-danger" id="deleteProgressBar" role="progressbar" style="width: 0%"></div>
+                                    </div>
+                                </div>
+                                <div id="deleteStatus" class="text-muted">
+                                    <i class="fas fa-info-circle me-2"></i>Preparing to delete user...
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            `;
+            
+            // Add progress modal to page
+            document.body.insertAdjacentHTML('beforeend', progressHtml);
+            
+            // Show progress modal
+            const progressModal = new bootstrap.Modal(document.getElementById('deleteProgressModal'));
+            progressModal.show();
+            
+            // Simulate deletion progress
+            let progress = 0;
+            const progressBar = document.getElementById('deleteProgressBar');
+            const progressPercent = document.getElementById('deleteProgressPercent');
+            const deleteStatus = document.getElementById('deleteStatus');
+            
+            const progressInterval = setInterval(() => {
+                progress += Math.random() * 25;
+                if (progress >= 100) {
+                    progress = 100;
+                    clearInterval(progressInterval);
+                    
+                    // Show completion
+                    progressBar.style.width = '100%';
+                    progressPercent.textContent = '100%';
+                    deleteStatus.innerHTML = '<i class="fas fa-check-circle text-success me-2"></i>User deleted successfully!';
+                    
+                    // Close modal after delay
+                    setTimeout(() => {
+                        progressModal.hide();
+                        showSuccessToast(`User ${userId} deleted successfully!`);
+                        console.log('User deleted:', userId);
+                    }, 2000);
+                } else {
+                    progressBar.style.width = progress + '%';
+                    progressPercent.textContent = Math.floor(progress) + '%';
+                    
+                    // Update status messages
+                    if (progress < 33) {
+                        deleteStatus.innerHTML = '<i class="fas fa-info-circle me-2"></i>Preparing to delete user...';
+                    } else if (progress < 66) {
+                        deleteStatus.innerHTML = '<i class="fas fa-database me-2"></i>Removing user data...';
+                    } else {
+                        deleteStatus.innerHTML = '<i class="fas fa-check me-2"></i>Finalizing deletion...';
+                    }
+                }
+            }, 500);
+        }
+        
+        function suspendUser(userId) {
+            if (confirm('Are you sure you want to suspend this user?')) {
+                // Show suspension progress
+                showSuspendProgress(userId);
+            }
+        }
+        
+        function showSuspendProgress(userId) {
+            const progressHtml = `
+                <div class="modal fade" id="suspendProgressModal" tabindex="-1" data-bs-backdrop="static" data-bs-keyboard="false">
+                    <div class="modal-dialog">
+                        <div class="modal-content">
+                            <div class="modal-header">
+                                <h5 class="modal-title">
+                                    <i class="fas fa-pause me-2"></i>Suspending User...
+                                </h5>
+                            </div>
+                            <div class="modal-body">
+                                <div class="mb-3">
+                                    <div class="d-flex justify-content-between mb-2">
+                                        <span>Progress</span>
+                                        <span id="suspendProgressPercent">0%</span>
+                                    </div>
+                                    <div class="progress">
+                                        <div class="progress-bar bg-warning" id="suspendProgressBar" role="progressbar" style="width: 0%"></div>
+                                    </div>
+                                </div>
+                                <div id="suspendStatus" class="text-muted">
+                                    <i class="fas fa-info-circle me-2"></i>Preparing to suspend user...
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            `;
+            
+            // Add progress modal to page
+            document.body.insertAdjacentHTML('beforeend', progressHtml);
+            
+            // Show progress modal
+            const progressModal = new bootstrap.Modal(document.getElementById('suspendProgressModal'));
+            progressModal.show();
+            
+            // Simulate suspension progress
+            let progress = 0;
+            const progressBar = document.getElementById('suspendProgressBar');
+            const progressPercent = document.getElementById('suspendProgressPercent');
+            const suspendStatus = document.getElementById('suspendStatus');
+            
+            const progressInterval = setInterval(() => {
+                progress += Math.random() * 30;
+                if (progress >= 100) {
+                    progress = 100;
+                    clearInterval(progressInterval);
+                    
+                    // Show completion
+                    progressBar.style.width = '100%';
+                    progressPercent.textContent = '100%';
+                    suspendStatus.innerHTML = '<i class="fas fa-check-circle text-success me-2"></i>User suspended successfully!';
+                    
+                    // Close modal after delay
+                    setTimeout(() => {
+                        progressModal.hide();
+                        showSuccessToast(`User ${userId} suspended successfully!`);
+                        console.log('User suspended:', userId);
+                    }, 2000);
+                } else {
+                    progressBar.style.width = progress + '%';
+                    progressPercent.textContent = Math.floor(progress) + '%';
+                    
+                    // Update status messages
+                    if (progress < 50) {
+                        suspendStatus.innerHTML = '<i class="fas fa-info-circle me-2"></i>Preparing to suspend user...';
+                    } else {
+                        suspendStatus.innerHTML = '<i class="fas fa-pause me-2"></i>Deactivating user account...';
+                    }
+                }
+            }, 400);
+        }
+        
+        function activateUser(userId) {
+            // Show activation progress
+            showActivateProgress(userId);
+        }
+        
+        function showActivateProgress(userId) {
+            const progressHtml = `
+                <div class="modal fade" id="activateProgressModal" tabindex="-1" data-bs-backdrop="static" data-bs-keyboard="false">
+                    <div class="modal-dialog">
+                        <div class="modal-content">
+                            <div class="modal-header">
+                                <h5 class="modal-title">
+                                    <i class="fas fa-play me-2"></i>Activating User...
+                                </h5>
+                            </div>
+                            <div class="modal-body">
+                                <div class="mb-3">
+                                    <div class="d-flex justify-content-between mb-2">
+                                        <span>Progress</span>
+                                        <span id="activateProgressPercent">0%</span>
+                                    </div>
+                                    <div class="progress">
+                                        <div class="progress-bar bg-success" id="activateProgressBar" role="progressbar" style="width: 0%"></div>
+                                    </div>
+                                </div>
+                                <div id="activateStatus" class="text-muted">
+                                    <i class="fas fa-info-circle me-2"></i>Preparing to activate user...
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            `;
+            
+            // Add progress modal to page
+            document.body.insertAdjacentHTML('beforeend', progressHtml);
+            
+            // Show progress modal
+            const progressModal = new bootstrap.Modal(document.getElementById('activateProgressModal'));
+            progressModal.show();
+            
+            // Simulate activation progress
+            let progress = 0;
+            const progressBar = document.getElementById('activateProgressBar');
+            const progressPercent = document.getElementById('activateProgressPercent');
+            const activateStatus = document.getElementById('activateStatus');
+            
+            const progressInterval = setInterval(() => {
+                progress += Math.random() * 35;
+                if (progress >= 100) {
+                    progress = 100;
+                    clearInterval(progressInterval);
+                    
+                    // Show completion
+                    progressBar.style.width = '100%';
+                    progressPercent.textContent = '100%';
+                    activateStatus.innerHTML = '<i class="fas fa-check-circle text-success me-2"></i>User activated successfully!';
+                    
+                    // Close modal after delay
+                    setTimeout(() => {
+                        progressModal.hide();
+                        showSuccessToast(`User ${userId} activated successfully!`);
+                        console.log('User activated:', userId);
+                    }, 2000);
+                } else {
+                    progressBar.style.width = progress + '%';
+                    progressPercent.textContent = Math.floor(progress) + '%';
+                    
+                    // Update status messages
+                    if (progress < 50) {
+                        activateStatus.innerHTML = '<i class="fas fa-info-circle me-2"></i>Preparing to activate user...';
+                    } else {
+                        activateStatus.innerHTML = '<i class="fas fa-play me-2"></i>Reactivating user account...';
+                    }
+                }
+            }, 300);
+        }
+        
+        function showValidationError(message) {
+            // Create validation error toast
+            const toastHtml = `
+                <div class="toast-container position-fixed top-0 end-0 p-3">
+                    <div class="toast show" role="alert" aria-live="assertive" aria-atomic="true">
+                        <div class="toast-header bg-danger text-white">
+                            <i class="fas fa-exclamation-triangle me-2"></i>
+                            <strong class="me-auto">Validation Error</strong>
+                            <button type="button" class="btn-close btn-close-white" data-bs-dismiss="toast" aria-label="Close"></button>
+                        </div>
+                        <div class="toast-body">
+                            ${message}
+                        </div>
+                    </div>
+                </div>
+            `;
+            
+            // Add toast to page
+            document.body.insertAdjacentHTML('beforeend', toastHtml);
+            
+            // Auto remove after 5 seconds
+            setTimeout(() => {
+                const toastContainer = document.querySelector('.toast-container');
+                if (toastContainer) {
+                    toastContainer.remove();
+                }
+            }, 5000);
+        }
+        
+        function showSuccessToast(message) {
+            // Create toast HTML
+            const toastHtml = `
+                <div class="toast-container position-fixed top-0 end-0 p-3">
+                    <div class="toast show" role="alert" aria-live="assertive" aria-atomic="true">
+                        <div class="toast-header bg-success text-white">
+                            <i class="fas fa-check-circle me-2"></i>
+                            <strong class="me-auto">Success</strong>
+                            <button type="button" class="btn-close btn-close-white" data-bs-dismiss="toast" aria-label="Close"></button>
+                        </div>
+                        <div class="toast-body">
+                            ${message}
+                        </div>
+                    </div>
+                </div>
+            `;
+            
+            // Add toast to page
+            document.body.insertAdjacentHTML('beforeend', toastHtml);
+            
+            // Auto remove after 5 seconds
+            setTimeout(() => {
+                const toastContainer = document.querySelector('.toast-container');
+                if (toastContainer) {
+                    toastContainer.remove();
+                }
+            }, 5000);
+        }
+        
+        function filterUsers() {
+            // This would implement actual filtering logic
+            console.log('Filtering users based on search and filters...');
+            showEmptyState();
+        }
+        
+        function exportUsers() {
+            // Create CSV content
+            const csvContent = "First Name,Last Name,Email,Phone,Role,Institution,Department,Status,Created Date\n" +
+                              "John,Doe,john.doe@example.com,+1234567890,Lecturer,Demo Institution,Computer Science,Active,2024-01-15\n" +
+                              "Jane,Smith,jane.smith@example.com,+0987654321,Student,Demo Institution,Mathematics,Active,2024-01-20\n" +
+                              "Admin,System,admin@attendrix.com,+1122334455,Super Admin,System,Administration,Active,2024-01-01";
+            
+            // Create blob and download
+            const blob = new Blob([csvContent], { type: 'text/csv' });
+            const url = window.URL.createObjectURL(blob);
+            const a = document.createElement('a');
+            a.href = url;
+            a.download = `users_export_${new Date().toISOString().split('T')[0]}.csv`;
+            document.body.appendChild(a);
+            a.click();
+            document.body.removeChild(a);
+            window.URL.revokeObjectURL(url);
+            
+            // Show success message
+            showSuccessToast('User data exported successfully!');
+            
+            // Log action
+            console.log('Users exported:', csvContent);
+        }
+        
+        function showLogoutConfirm() {
+            if (confirm('Do you really want to log out?')) {
+                window.location.href = '/';
+            }
+        }
+        
+        function toggleSidebar() {
+            const sidebar = document.querySelector('.sidebar');
+            if (sidebar) {
+                sidebar.classList.toggle('open');
+            }
+        }
+    </script>
+</body>
+</html>

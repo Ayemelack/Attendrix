@@ -1,0 +1,816 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Institution Settings - Attendrix</title>
+    <meta name="description" content="Institution settings for Attendrix">
+    
+    <!-- Favicon -->
+    <link rel="icon" type="image/x-icon" href="/static/images/favicon.ico">
+    
+    <!-- Bootstrap CSS -->
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
+    <!-- Font Awesome -->
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <!-- Custom CSS -->
+    <link rel="stylesheet" href="{{ url_for('static', filename='css/landing.css') }}">
+    
+    <style>
+        .settings-container {
+            background: linear-gradient(135deg, #f5f7fa 0%, #c3cfe2 100%);
+            min-height: 100vh;
+            padding-top: 100px;
+            padding-bottom: 2rem;
+        }
+        
+        .settings-header {
+            background: rgba(255, 255, 255, 0.95);
+            backdrop-filter: blur(10px);
+            border-radius: 15px;
+            padding: 2rem;
+            margin-bottom: 2rem;
+            box-shadow: 0 10px 30px rgba(0, 0, 0, 0.1);
+            border: 1px solid rgba(102, 126, 234, 0.1);
+        }
+        
+        .settings-section {
+            background: rgba(255, 255, 255, 0.95);
+            backdrop-filter: blur(10px);
+            border-radius: 15px;
+            padding: 2rem;
+            margin-bottom: 2rem;
+            box-shadow: 0 10px 30px rgba(0, 0, 0, 0.1);
+            border: 1px solid rgba(102, 126, 234, 0.1);
+        }
+        
+        .section-title {
+            color: #2c3e50;
+            font-size: 1.5rem;
+            font-weight: 600;
+            margin-bottom: 1.5rem;
+            display: flex;
+            align-items: center;
+        }
+        
+        .section-title i {
+            color: #667eea;
+            margin-right: 0.5rem;
+        }
+        
+        .profile-avatar-small {
+            width: 32px;
+            height: 32px;
+            border-radius: 50%;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            color: white;
+            font-size: 0.875rem;
+            transition: transform 0.3s ease;
+        }
+        
+        .profile-avatar-small:hover {
+            transform: scale(1.1);
+        }
+        
+        .dropdown-menu {
+            border: 1px solid rgba(102, 126, 234, 0.1);
+            box-shadow: 0 10px 30px rgba(0, 0, 0, 0.1);
+            border-radius: 12px;
+            padding: 0.5rem;
+        }
+        
+        .dropdown-item {
+            border-radius: 8px;
+            padding: 0.75rem 1rem;
+            transition: all 0.3s ease;
+            color: #2c3e50;
+        }
+        
+        .dropdown-item:hover {
+            background: rgba(102, 126, 234, 0.1);
+            color: #667eea;
+        }
+        
+        .dropdown-divider {
+            margin: 0.5rem 0;
+            border-color: rgba(102, 126, 234, 0.1);
+        }
+        
+        .form-control {
+            border: 2px solid #e9ecef;
+            border-radius: 12px;
+            padding: 1rem;
+            transition: all 0.3s ease;
+        }
+        
+        .form-control:focus {
+            border-color: #667eea;
+            box-shadow: 0 0 0 0.2rem rgba(102, 126, 234, 0.25);
+        }
+        
+        .btn-institution {
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: white;
+            border: none;
+            border-radius: 8px;
+            padding: 0.75rem 1.5rem;
+            font-weight: 500;
+            transition: all 0.3s ease;
+            box-shadow: 0 3px 10px rgba(102, 126, 234, 0.3);
+        }
+        
+        .btn-institution:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 5px 15px rgba(102, 126, 234, 0.4);
+        }
+        
+        .btn-outline {
+            background: transparent;
+            color: #667eea;
+            border: 2px solid #667eea;
+        }
+        
+        .btn-outline:hover {
+            background: #667eea;
+            color: white;
+        }
+        
+        .setting-item {
+            background: white;
+            border: 2px solid #e9ecef;
+            border-radius: 12px;
+            padding: 1.5rem;
+            margin-bottom: 1rem;
+            transition: all 0.3s ease;
+            box-shadow: 0 3px 10px rgba(0, 0, 0, 0.1);
+        }
+        
+        .setting-item:hover {
+            border-color: #667eea;
+            transform: translateY(-2px);
+            box-shadow: 0 10px 25px rgba(102, 126, 234, 0.2);
+        }
+        
+        .setting-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 1rem;
+        }
+        
+        .setting-title {
+            font-size: 1.2rem;
+            font-weight: 600;
+            color: #2c3e50;
+        }
+        
+        .setting-description {
+            color: #6c757d;
+            font-size: 0.875rem;
+            margin-bottom: 1rem;
+        }
+        
+        .setting-status {
+            padding: 0.25rem 0.75rem;
+            border-radius: 20px;
+            font-size: 0.875rem;
+            font-weight: 500;
+        }
+        
+        .status-enabled {
+            background: rgba(40, 167, 69, 0.1);
+            color: #28a745;
+        }
+        
+        .status-disabled {
+            background: rgba(220, 53, 69, 0.1);
+            color: #dc3545;
+        }
+    </style>
+</head>
+<body>
+    <div class="settings-container">
+        <!-- Navigation -->
+        <nav class="navbar navbar-expand-lg navbar-dark fixed-top">
+            <div class="container">
+                <a class="navbar-brand" href="/">
+                    <i class="fas fa-graduation-cap me-2"></i>
+                    <strong>Attendrix</strong>
+                </a>
+                <div class="navbar-nav ms-auto">
+                    <a class="nav-link active" href="/institutional-dashboard">
+                        <i class="fas fa-tachometer-alt me-1"></i>Dashboard
+                    </a>
+                    <!-- Profile Dropdown -->
+                    <div class="nav-item dropdown">
+                        <a class="nav-link dropdown-toggle d-flex align-items-center" href="#" id="profileDropdown" role="button" data-bs-toggle="dropdown" aria-expanded="false">
+                            <div class="profile-avatar-small">
+                                <i class="fas fa-user"></i>
+                            </div>
+                            <span class="ms-2 d-none d-md-inline">Profile</span>
+                        </a>
+                        <ul class="dropdown-menu dropdown-menu-end" aria-labelledby="profileDropdown">
+                            <li><a class="dropdown-item" href="/profile">
+                                <i class="fas fa-user me-2"></i>Profile
+                            </a></li>
+                            <li><a class="dropdown-item" href="/institutional-settings">
+                                <i class="fas fa-cog me-2"></i>Institution Settings
+                            </a></li>
+                            <li><a class="dropdown-item" href="/dashboard-preferences">
+                                <i class="fas fa-sliders-h me-2"></i>Dashboard Preferences
+                            </a></li>
+                            <li><hr class="dropdown-divider"></li>
+                            <li><a class="dropdown-item" href="#" onclick="showLogoutConfirm()">
+                                <i class="fas fa-sign-out-alt me-2"></i>Logout
+                            </a></li>
+                        </ul>
+                    </div>
+                </div>
+            </div>
+        </nav>
+        
+        <div class="container">
+            <!-- Settings Header -->
+            <div class="settings-header">
+                <h1>Institution Settings</h1>
+                <p class="text-muted">Configure your institution's preferences and policies</p>
+            </div>
+            
+            <!-- Basic Information -->
+            <div class="settings-section">
+                <h3 class="section-title">
+                    <i class="fas fa-info-circle me-2"></i>
+                    Basic Information
+                </h3>
+                <div class="setting-item">
+                    <div class="setting-header">
+                        <div class="setting-title">Institution Details</div>
+                    </div>
+                    <div class="setting-description">
+                        Update your institution's basic information and contact details
+                    </div>
+                    <div class="row">
+                        <div class="col-md-6 mb-3">
+                            <label class="form-label">Institution Name</label>
+                            <input type="text" class="form-control" id="institutionName" placeholder="Enter institution name">
+                        </div>
+                        <div class="col-md-6 mb-3">
+                            <label class="form-label">Institution Code</label>
+                            <input type="text" class="form-control" id="institutionCode" placeholder="Enter institution code">
+                        </div>
+                        <div class="col-md-6 mb-3">
+                            <label class="form-label">Email Address</label>
+                            <input type="email" class="form-control" id="institutionEmail" placeholder="Enter email address">
+                        </div>
+                        <div class="col-md-6 mb-3">
+                            <label class="form-label">Phone Number</label>
+                            <input type="tel" class="form-control" id="institutionPhone" placeholder="Enter phone number">
+                        </div>
+                        <div class="col-12 mb-3">
+                            <label class="form-label">Address</label>
+                            <textarea class="form-control" id="institutionAddress" rows="3" placeholder="Enter institution address"></textarea>
+                        </div>
+                    </div>
+                    <div class="d-flex gap-2">
+                        <button class="btn btn-institution" onclick="saveBasicInfo()">
+                            <i class="fas fa-save me-2"></i>Save Changes
+                        </button>
+                        <button class="btn btn-institution btn-outline" onclick="resetBasicInfo()">
+                            <i class="fas fa-undo me-2"></i>Reset
+                        </button>
+                    </div>
+                </div>
+            </div>
+            
+            <!-- Academic Settings -->
+            <div class="settings-section">
+                <h3 class="section-title">
+                    <i class="fas fa-graduation-cap me-2"></i>
+                    Academic Settings
+                </h3>
+                <div class="setting-item">
+                    <div class="setting-header">
+                        <div class="setting-title">Academic Calendar</div>
+                    </div>
+                    <div class="setting-description">
+                        Configure academic year, semesters, and holiday periods
+                    </div>
+                    <div class="row">
+                        <div class="col-md-6 mb-3">
+                            <label class="form-label">Academic Year</label>
+                            <input type="text" class="form-control" id="academicYear" placeholder="e.g., 2023-2024">
+                        </div>
+                        <div class="col-md-6 mb-3">
+                            <label class="form-label">Semester System</label>
+                            <select class="form-control" id="semesterSystem">
+                                <option value="semester">Semester</option>
+                                <option value="trimester">Trimester</option>
+                                <option value="quarter">Quarter</option>
+                            </select>
+                        </div>
+                        <div class="col-md-6 mb-3">
+                            <label class="form-label">Class Duration (minutes)</label>
+                            <input type="number" class="form-control" id="classDuration" placeholder="60">
+                        </div>
+                        <div class="col-md-6 mb-3">
+                            <label class="form-label">Break Duration (minutes)</label>
+                            <input type="number" class="form-control" id="breakDuration" placeholder="15">
+                        </div>
+                    </div>
+                    <div class="d-flex gap-2">
+                        <button class="btn btn-institution" onclick="saveAcademicSettings()">
+                            <i class="fas fa-save me-2"></i>Save Settings
+                        </button>
+                        <button class="btn btn-institution btn-outline" onclick="resetAcademicSettings()">
+                            <i class="fas fa-undo me-2"></i>Reset
+                        </button>
+                    </div>
+                </div>
+            </div>
+            
+            <!-- Attendance Settings -->
+            <div class="settings-section">
+                <h3 class="section-title">
+                    <i class="fas fa-calendar-check me-2"></i>
+                    Attendance Settings
+                </h3>
+                <div class="setting-item">
+                    <div class="setting-header">
+                        <div class="setting-title">Attendance Policies</div>
+                    </div>
+                    <div class="setting-description">
+                        Configure attendance requirements and alert thresholds
+                    </div>
+                    <div class="row">
+                        <div class="col-md-6 mb-3">
+                            <label class="form-label">Minimum Attendance Percentage</label>
+                            <input type="number" class="form-control" id="minAttendance" placeholder="75" min="0" max="100">
+                        </div>
+                        <div class="col-md-6 mb-3">
+                            <label class="form-label">Late Grace Period (minutes)</label>
+                            <input type="number" class="form-control" id="lateGracePeriod" placeholder="10">
+                        </div>
+                        <div class="col-md-6 mb-3">
+                            <label class="form-label">Auto-mark Absent After (minutes)</label>
+                            <input type="number" class="form-control" id="autoAbsentAfter" placeholder="30">
+                        </div>
+                        <div class="col-md-6 mb-3">
+                            <label class="form-label">Alert Threshold (%)</label>
+                            <input type="number" class="form-control" id="alertThreshold" placeholder="80" min="0" max="100">
+                        </div>
+                    </div>
+                    <div class="d-flex gap-2">
+                        <button class="btn btn-institution" onclick="saveAttendanceSettings()">
+                            <i class="fas fa-save me-2"></i>Save Settings
+                        </button>
+                        <button class="btn btn-institution btn-outline" onclick="resetAttendanceSettings()">
+                            <i class="fas fa-undo me-2"></i>Reset
+                        </button>
+                    </div>
+                </div>
+            </div>
+            
+            <!-- Notification Settings -->
+            <div class="settings-section">
+                <h3 class="section-title">
+                    <i class="fas fa-bell me-2"></i>
+                    Notification Settings
+                </h3>
+                <div class="setting-item">
+                    <div class="setting-header">
+                        <div class="setting-title">Email Notifications</div>
+                        <div class="setting-status status-disabled" id="emailStatus">Disabled</div>
+                    </div>
+                    <div class="setting-description">
+                        Configure email notifications for various system events
+                    </div>
+                    <div class="row">
+                        <div class="col-md-6 mb-3">
+                            <div class="form-check">
+                                <input class="form-check-input" type="checkbox" id="attendanceAlerts">
+                                <label class="form-check-label" for="attendanceAlerts">
+                                    Attendance Alerts
+                                </label>
+                            </div>
+                        </div>
+                        <div class="col-md-6 mb-3">
+                            <div class="form-check">
+                                <input class="form-check-input" type="checkbox" id="scheduleChanges">
+                                <label class="form-check-label" for="scheduleChanges">
+                                    Schedule Changes
+                                </label>
+                            </div>
+                        </div>
+                        <div class="col-md-6 mb-3">
+                            <div class="form-check">
+                                <input class="form-check-input" type="checkbox" id="systemUpdates">
+                                <label class="form-check-label" for="systemUpdates">
+                                    System Updates
+                                </label>
+                            </div>
+                        </div>
+                        <div class="col-md-6 mb-3">
+                            <div class="form-check">
+                                <input class="form-check-input" type="checkbox" id="securityAlerts">
+                                <label class="form-check-label" for="securityAlerts">
+                                    Security Alerts
+                                </label>
+                            </div>
+                        </div>
+                    </div>
+                    <div class="d-flex gap-2">
+                        <button class="btn btn-institution" onclick="toggleEmailNotifications()">
+                            <i class="fas fa-toggle-on me-2"></i>Enable Email Notifications
+                        </button>
+                        <button class="btn btn-institution btn-outline" onclick="saveNotificationSettings()">
+                            <i class="fas fa-save me-2"></i>Save Settings
+                        </button>
+                    </div>
+                </div>
+            </div>
+            
+            <!-- Security Settings -->
+            <div class="settings-section">
+                <h3 class="section-title">
+                    <i class="fas fa-shield-alt me-2"></i>
+                    Security Settings
+                </h3>
+                <div class="setting-item">
+                    <div class="setting-header">
+                        <div class="setting-title">Access Control</div>
+                    </div>
+                    <div class="setting-description">
+                        Configure security policies and access restrictions
+                    </div>
+                    <div class="row">
+                        <div class="col-md-6 mb-3">
+                            <label class="form-label">Session Timeout (minutes)</label>
+                            <input type="number" class="form-control" id="sessionTimeout" placeholder="30">
+                        </div>
+                        <div class="col-md-6 mb-3">
+                            <label class="form-label">Password Expiry (days)</label>
+                            <input type="number" class="form-control" id="passwordExpiry" placeholder="90">
+                        </div>
+                        <div class="col-md-6 mb-3">
+                            <div class="form-check">
+                                <input class="form-check-input" type="checkbox" id="twoFactorAuth">
+                                <label class="form-check-label" for="twoFactorAuth">
+                                    Two-Factor Authentication
+                                </label>
+                            </div>
+                        </div>
+                        <div class="col-md-6 mb-3">
+                            <div class="form-check">
+                                <input class="form-check-input" type="checkbox" id="ipRestriction">
+                                <label class="form-check-label" for="ipRestriction">
+                                    IP Address Restriction
+                                </label>
+                            </div>
+                        </div>
+                    </div>
+                    <div class="d-flex gap-2">
+                        <button class="btn btn-institution" onclick="saveSecuritySettings()">
+                            <i class="fas fa-save me-2"></i>Save Settings
+                        </button>
+                        <button class="btn btn-institution btn-outline" onclick="resetSecuritySettings()">
+                            <i class="fas fa-undo me-2"></i>Reset
+                        </button>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+    
+    <!-- Bootstrap JS -->
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
+    
+    <script>
+        // Get user info from localStorage
+        const userInfo = JSON.parse(localStorage.getItem('user_info') || '{}');
+        const accessToken = localStorage.getItem('access_token');
+        
+        // Load settings data
+        document.addEventListener('DOMContentLoaded', function() {
+            loadInstitutionSettings();
+            
+            // Check authentication
+            if (!accessToken) {
+                window.location.href = '/login';
+            }
+        });
+        
+        function loadInstitutionSettings() {
+            // Fetch institution settings from backend
+            fetch('/api/institutional/settings', {
+                headers: {
+                    'Authorization': `Bearer ${accessToken}`,
+                    'Content-Type': 'application/json'
+                }
+            })
+            .then(response => response.json())
+            .then(data => {
+                if (data.success) {
+                    populateSettingsForm(data.settings);
+                }
+            })
+            .catch(error => {
+                console.error('Error loading institution settings:', error);
+            });
+        }
+        
+        function populateSettingsForm(settings) {
+            // Populate basic information
+            document.getElementById('institutionName').value = settings.institutionName || '';
+            document.getElementById('institutionCode').value = settings.institutionCode || '';
+            document.getElementById('institutionEmail').value = settings.institutionEmail || '';
+            document.getElementById('institutionPhone').value = settings.institutionPhone || '';
+            document.getElementById('institutionAddress').value = settings.institutionAddress || '';
+            
+            // Populate academic settings
+            document.getElementById('academicYear').value = settings.academicYear || '';
+            document.getElementById('semesterSystem').value = settings.semesterSystem || 'semester';
+            document.getElementById('classDuration').value = settings.classDuration || '60';
+            document.getElementById('breakDuration').value = settings.breakDuration || '15';
+            
+            // Populate attendance settings
+            document.getElementById('minAttendance').value = settings.minAttendance || '75';
+            document.getElementById('lateGracePeriod').value = settings.lateGracePeriod || '10';
+            document.getElementById('autoAbsentAfter').value = settings.autoAbsentAfter || '30';
+            document.getElementById('alertThreshold').value = settings.alertThreshold || '80';
+            
+            // Populate notification settings
+            document.getElementById('attendanceAlerts').checked = settings.attendanceAlerts || false;
+            document.getElementById('scheduleChanges').checked = settings.scheduleChanges || false;
+            document.getElementById('systemUpdates').checked = settings.systemUpdates || false;
+            document.getElementById('securityAlerts').checked = settings.securityAlerts || false;
+            
+            // Update email notification status
+            const emailStatus = document.getElementById('emailStatus');
+            if (settings.emailNotifications) {
+                emailStatus.className = 'setting-status status-enabled';
+                emailStatus.textContent = 'Enabled';
+            }
+            
+            // Populate security settings
+            document.getElementById('sessionTimeout').value = settings.sessionTimeout || '30';
+            document.getElementById('passwordExpiry').value = settings.passwordExpiry || '90';
+            document.getElementById('twoFactorAuth').checked = settings.twoFactorAuth || false;
+            document.getElementById('ipRestriction').checked = settings.ipRestriction || false;
+        }
+        
+        function saveBasicInfo() {
+            const basicInfo = {
+                institutionName: document.getElementById('institutionName').value,
+                institutionCode: document.getElementById('institutionCode').value,
+                institutionEmail: document.getElementById('institutionEmail').value,
+                institutionPhone: document.getElementById('institutionPhone').value,
+                institutionAddress: document.getElementById('institutionAddress').value
+            };
+            
+            // Save basic information
+            fetch('/api/institutional/settings/basic-info', {
+                method: 'PUT',
+                headers: {
+                    'Authorization': `Bearer ${accessToken}`,
+                    'Content-Type': 'application/json'
+                },
+                body: JSON.stringify(basicInfo)
+            })
+            .then(response => response.json())
+            .then(data => {
+                if (data.success) {
+                    alert('Basic information saved successfully!');
+                } else {
+                    alert(data.error || 'Failed to save basic information');
+                }
+            })
+            .catch(error => {
+                alert('An error occurred. Please try again.');
+            });
+        }
+        
+        function saveAcademicSettings() {
+            const academicSettings = {
+                academicYear: document.getElementById('academicYear').value,
+                semesterSystem: document.getElementById('semesterSystem').value,
+                classDuration: document.getElementById('classDuration').value,
+                breakDuration: document.getElementById('breakDuration').value
+            };
+            
+            // Save academic settings
+            fetch('/api/institutional/settings/academic', {
+                method: 'PUT',
+                headers: {
+                    'Authorization': `Bearer ${accessToken}`,
+                    'Content-Type': 'application/json'
+                },
+                body: JSON.stringify(academicSettings)
+            })
+            .then(response => response.json())
+            .then(data => {
+                if (data.success) {
+                    alert('Academic settings saved successfully!');
+                } else {
+                    alert(data.error || 'Failed to save academic settings');
+                }
+            })
+            .catch(error => {
+                alert('An error occurred. Please try again.');
+            });
+        }
+        
+        function saveAttendanceSettings() {
+            const attendanceSettings = {
+                minAttendance: document.getElementById('minAttendance').value,
+                lateGracePeriod: document.getElementById('lateGracePeriod').value,
+                autoAbsentAfter: document.getElementById('autoAbsentAfter').value,
+                alertThreshold: document.getElementById('alertThreshold').value
+            };
+            
+            // Save attendance settings
+            fetch('/api/institutional/settings/attendance', {
+                method: 'PUT',
+                headers: {
+                    'Authorization': `Bearer ${accessToken}`,
+                    'Content-Type': 'application/json'
+                },
+                body: JSON.stringify(attendanceSettings)
+            })
+            .then(response => response.json())
+            .then(data => {
+                if (data.success) {
+                    alert('Attendance settings saved successfully!');
+                } else {
+                    alert(data.error || 'Failed to save attendance settings');
+                }
+            })
+            .catch(error => {
+                alert('An error occurred. Please try again.');
+            });
+        }
+        
+        function saveNotificationSettings() {
+            const notificationSettings = {
+                attendanceAlerts: document.getElementById('attendanceAlerts').checked,
+                scheduleChanges: document.getElementById('scheduleChanges').checked,
+                systemUpdates: document.getElementById('systemUpdates').checked,
+                securityAlerts: document.getElementById('securityAlerts').checked
+            };
+            
+            // Save notification settings
+            fetch('/api/institutional/settings/notifications', {
+                method: 'PUT',
+                headers: {
+                    'Authorization': `Bearer ${accessToken}`,
+                    'Content-Type': 'application/json'
+                },
+                body: JSON.stringify(notificationSettings)
+            })
+            .then(response => response.json())
+            .then(data => {
+                if (data.success) {
+                    alert('Notification settings saved successfully!');
+                } else {
+                    alert(data.error || 'Failed to save notification settings');
+                }
+            })
+            .catch(error => {
+                alert('An error occurred. Please try again.');
+            });
+        }
+        
+        function saveSecuritySettings() {
+            const securitySettings = {
+                sessionTimeout: document.getElementById('sessionTimeout').value,
+                passwordExpiry: document.getElementById('passwordExpiry').value,
+                twoFactorAuth: document.getElementById('twoFactorAuth').checked,
+                ipRestriction: document.getElementById('ipRestriction').checked
+            };
+            
+            // Save security settings
+            fetch('/api/institutional/settings/security', {
+                method: 'PUT',
+                headers: {
+                    'Authorization': `Bearer ${accessToken}`,
+                    'Content-Type': 'application/json'
+                },
+                body: JSON.stringify(securitySettings)
+            })
+            .then(response => response.json())
+            .then(data => {
+                if (data.success) {
+                    alert('Security settings saved successfully!');
+                } else {
+                    alert(data.error || 'Failed to save security settings');
+                }
+            })
+            .catch(error => {
+                alert('An error occurred. Please try again.');
+            });
+        }
+        
+        function toggleEmailNotifications() {
+            const currentStatus = document.getElementById('emailStatus').textContent === 'Enabled';
+            const newStatus = !currentStatus;
+            
+            fetch('/api/institutional/settings/email-notifications', {
+                method: 'PUT',
+                headers: {
+                    'Authorization': `Bearer ${accessToken}`,
+                    'Content-Type': 'application/json'
+                },
+                body: JSON.stringify({ emailNotifications: newStatus })
+            })
+            .then(response => response.json())
+            .then(data => {
+                if (data.success) {
+                    const emailStatus = document.getElementById('emailStatus');
+                    if (newStatus) {
+                        emailStatus.className = 'setting-status status-enabled';
+                        emailStatus.textContent = 'Enabled';
+                    } else {
+                        emailStatus.className = 'setting-status status-disabled';
+                        emailStatus.textContent = 'Disabled';
+                    }
+                } else {
+                    alert(data.error || 'Failed to update email notifications');
+                }
+            })
+            .catch(error => {
+                alert('An error occurred while trying to update email notifications');
+            });
+        }
+        
+        function resetBasicInfo() {
+            if (confirm('Are you sure you want to reset basic information?')) {
+                document.getElementById('institutionName').value = '';
+                document.getElementById('institutionCode').value = '';
+                document.getElementById('institutionEmail').value = '';
+                document.getElementById('institutionPhone').value = '';
+                document.getElementById('institutionAddress').value = '';
+            }
+        }
+        
+        function resetAcademicSettings() {
+            if (confirm('Are you sure you want to reset academic settings?')) {
+                document.getElementById('academicYear').value = '';
+                document.getElementById('semesterSystem').value = 'semester';
+                document.getElementById('classDuration').value = '60';
+                document.getElementById('breakDuration').value = '15';
+            }
+        }
+        
+        function resetAttendanceSettings() {
+            if (confirm('Are you sure you want to reset attendance settings?')) {
+                document.getElementById('minAttendance').value = '75';
+                document.getElementById('lateGracePeriod').value = '10';
+                document.getElementById('autoAbsentAfter').value = '30';
+                document.getElementById('alertThreshold').value = '80';
+            }
+        }
+        
+        function resetSecuritySettings() {
+            if (confirm('Are you sure you want to reset security settings?')) {
+                document.getElementById('sessionTimeout').value = '30';
+                document.getElementById('passwordExpiry').value = '90';
+                document.getElementById('twoFactorAuth').checked = false;
+                document.getElementById('ipRestriction').checked = false;
+            }
+        }
+        
+        function showLogoutConfirm() {
+            const modal = new bootstrap.Modal(document.getElementById('logoutModal'));
+            modal.show();
+        }
+        
+        function logout() {
+            localStorage.removeItem('access_token');
+            localStorage.removeItem('refresh_token');
+            localStorage.removeItem('user_info');
+            window.location.href = '/login';
+        }
+    </script>
+    
+    <!-- Logout Confirmation Modal -->
+    <div class="modal fade" id="logoutModal" tabindex="-1">
+        <div class="modal-dialog">
+            <div class="modal-content">
+                <div class="modal-header">
+                    <h5 class="modal-title">Confirm Logout</h5>
+                    <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+                </div>
+                <div class="modal-body">
+                    <p>Do you really want to leave?</p>
+                </div>
+                <div class="modal-footer">
+                    <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancel</button>
+                    <button type="button" class="btn btn-danger" onclick="logout()">OK</button>
+                </div>
+            </div>
+        </div>
+    </div>
+</body>
+</html>

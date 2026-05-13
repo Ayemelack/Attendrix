@@ -1,0 +1,265 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>System Administration - Attendrix</title>
+    <meta name="description" content="Attendrix system administration dashboard">
+    
+    <!-- Favicon -->
+    <link rel="icon" type="image/x-icon" href="/static/images/favicon.ico">
+    
+    <!-- Bootstrap CSS -->
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
+    <!-- Font Awesome -->
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <!-- Custom CSS -->
+    <link rel="stylesheet" href="{{ url_for('static', filename='css/landing.css') }}">
+    
+    <style>
+        :root {
+            --primary-color: #4f46e5;
+            --primary-dark: #4338ca;
+            --secondary-color: #64748b;
+            --accent-color: #6366f1;
+            --bg-primary: #ffffff;
+            --bg-secondary: #f8fafc;
+            --bg-tertiary: #f1f5f9;
+            --text-primary: #1e293b;
+            --text-secondary: #64748b;
+            --text-tertiary: #94a3b8;
+        }
+        
+        .dashboard-container {
+            padding: 20px;
+            max-width: 1400px;
+            margin: 0 auto;
+        }
+        
+        .stats-card {
+            background: white;
+            border-radius: 12px;
+            padding: 24px;
+            box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
+            margin-bottom: 24px;
+            border-left: 4px solid var(--primary-color);
+        }
+        
+        .stats-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
+            gap: 24px;
+            margin-bottom: 32px;
+        }
+        
+        .quick-actions {
+            background: white;
+            border-radius: 12px;
+            padding: 24px;
+            box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
+        }
+        
+        .action-btn {
+            display: block;
+            width: 100%;
+            padding: 12px 20px;
+            margin-bottom: 12px;
+            border: none;
+            border-radius: 8px;
+            font-weight: 600;
+            text-align: center;
+            text-decoration: none;
+            transition: all 0.3s ease;
+        }
+        
+        .btn-primary {
+            background: var(--primary-color);
+            color: white;
+        }
+        
+        .btn-secondary {
+            background: var(--secondary-color);
+            color: white;
+        }
+        
+        .btn-danger {
+            background: #dc3545;
+            color: white;
+        }
+        
+        .action-btn:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 6px 12px rgba(0, 0, 0, 0.15);
+        }
+        
+        .system-status {
+            background: #f8f9fa;
+            border: 1px solid #e9ecef;
+            border-radius: 8px;
+            padding: 16px;
+            margin-bottom: 24px;
+        }
+        
+        .status-indicator {
+            display: inline-block;
+            width: 12px;
+            height: 12px;
+            border-radius: 50%;
+            margin-right: 8px;
+        }
+        
+        .status-online {
+            background: #28a745;
+        }
+        
+        .status-warning {
+            background: #ffc107;
+        }
+        
+        .status-offline {
+            background: #dc3545;
+        }
+    </style>
+</head>
+<body class="bg-tertiary">
+    <!-- Navigation -->
+    <nav class="navbar navbar-expand-lg navbar-dark">
+        <div class="container">
+            <a class="navbar-brand" href="/dashboard">
+                <i class="fas fa-graduation-cap me-2"></i>
+                Attendrix Admin
+            </a>
+            <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbarNav">
+                <span class="navbar-toggler-icon"></span>
+            </button>
+            <div class="collapse navbar-collapse" id="navbarNav">
+                <ul class="navbar-nav ms-auto">
+                    <li class="nav-item">
+                        <a class="nav-link" href="/admin/dashboard">
+                            <i class="fas fa-tachometer-alt me-2"></i>
+                            Dashboard
+                        </a>
+                    </li>
+                    <li class="nav-item dropdown">
+                        <a class="nav-link dropdown-toggle" href="#" id="institutionsDropdown" role="button" data-bs-toggle="dropdown">
+                            <i class="fas fa-university me-2"></i>
+                            Institutions
+                        </a>
+                        <ul class="dropdown-menu">
+                            <li><a class="dropdown-item" href="/admin/institutions">Manage Institutions</a></li>
+                            <li><a class="dropdown-item" href="/admin/institution-stats">Statistics</a></li>
+                        </ul>
+                    </li>
+                    <li class="nav-item dropdown">
+                        <a class="nav-link dropdown-toggle" href="#" id="systemDropdown" role="button" data-bs-toggle="dropdown">
+                            <i class="fas fa-cogs me-2"></i>
+                            System
+                        </a>
+                        <ul class="dropdown-menu">
+                            <li><a class="dropdown-item" href="/admin/monitoring">System Monitoring</a></li>
+                            <li><a class="dropdown-item" href="/admin/security">Security</a></li>
+                            <li><a class="dropdown-item" href="/admin/backup">Backup & Recovery</a></li>
+                            <li><a class="dropdown-item" href="/admin/logs">System Logs</a></li>
+                        </ul>
+                    </li>
+                    <li class="nav-item dropdown">
+                        <a class="nav-link dropdown-toggle" href="#" id="usersDropdown" role="button" data-bs-toggle="dropdown">
+                            <i class="fas fa-users me-2"></i>
+                            Users
+                        </a>
+                        <ul class="dropdown-menu">
+                            <li><a class="dropdown-item" href="/admin/users">All Users</a></li>
+                            <li><a class="dropdown-item" href="/admin/admin-users">System Admins</a></li>
+                        </ul>
+                    </li>
+                    <li class="nav-item ms-2">
+                        <a class="nav-link" href="/logout">
+                            <i class="fas fa-sign-out-alt me-2"></i>
+                            Logout
+                        </a>
+                    </li>
+                </ul>
+            </div>
+        </div>
+    </nav>
+
+    <!-- Main Content -->
+    <div class="container dashboard-container">
+        <div class="row">
+            <div class="col-12">
+                <h1 class="mb-4">System Administration</h1>
+                
+                <!-- System Status -->
+                <div class="system-status">
+                    <h5 class="mb-3">
+                        <span class="status-indicator status-online"></span>
+                        System Status
+                    </h5>
+                    <div class="row">
+                        <div class="col-md-3">
+                            <strong>Database:</strong> Online
+                        </div>
+                        <div class="col-md-3">
+                            <strong>API:</strong> Operational
+                        </div>
+                        <div class="col-md-3">
+                            <strong>Storage:</strong> 78% Used
+                        </div>
+                        <div class="col-md-3">
+                            <strong>Last Backup:</strong> 2 hours ago
+                        </div>
+                    </div>
+                </div>
+                
+                <!-- Quick Stats -->
+                <div class="stats-grid">
+                    <div class="stats-card">
+                        <h5><i class="fas fa-university text-primary me-2"></i>Total Institutions</h5>
+                        <h2 class="mb-0">24</h2>
+                        <p class="text-muted">Registered institutions</p>
+                    </div>
+                    <div class="stats-card">
+                        <h5><i class="fas fa-users text-primary me-2"></i>Total Users</h5>
+                        <h2 class="mb-0">8,456</h2>
+                        <p class="text-muted">Active users across all institutions</p>
+                    </div>
+                    <div class="stats-card">
+                        <h5><i class="fas fa-chart-line text-primary me-2"></i>Today's Attendance</h5>
+                        <h2 class="mb-0">12,843</h2>
+                        <p class="text-muted">Attendance records today</p>
+                    </div>
+                    <div class="stats-card">
+                        <h5><i class="fas fa-server text-primary me-2"></i>System Load</h5>
+                        <h2 class="mb-0">42%</h2>
+                        <p class="text-muted">Current server load</p>
+                    </div>
+                </div>
+                
+                <!-- Quick Actions -->
+                <div class="quick-actions">
+                    <h5 class="mb-3">System Actions</h5>
+                    <a href="/admin/institutions" class="action-btn btn-primary">
+                        <i class="fas fa-plus me-2"></i>
+                        Add Institution
+                    </a>
+                    <a href="/admin/users" class="action-btn btn-secondary">
+                        <i class="fas fa-user-plus me-2"></i>
+                        Manage Users
+                    </a>
+                    <a href="/admin/monitoring" class="action-btn btn-secondary">
+                        <i class="fas fa-chart-line me-2"></i>
+                        View Analytics
+                    </a>
+                    <a href="/admin/backup" class="action-btn btn-danger">
+                        <i class="fas fa-download me-2"></i>
+                        System Backup
+                    </a>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Bootstrap JS -->
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
+</body>
+</html>

@@ -1,0 +1,1000 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Notifications Management - Attendrix</title>
+    <link rel="icon" type="image/x-icon" href="/static/images/favicon.ico">
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <link rel="stylesheet" href="{{ url_for('static', filename='css/landing.css') }}">
+    <style>
+        :root { --primary-color: #4f46e5; --primary-dark: #4338ca; --bg-primary: #ffffff; --bg-secondary: #f8fafc; --text-primary: #1e293b; --text-secondary: #64748b; --border-color: #e2e8f0; --shadow-sm: 0 1px 2px 0 rgb(0 0 0 / 0.05); --radius-md: 8px; --radius-lg: 12px; }
+        * { margin: 0; padding: 0; box-sizing: border-box; }
+        body { font-family: 'Inter', sans-serif; background: var(--bg-secondary); color: var(--text-primary); line-height: 1.6; }
+        .dashboard-layout { display: flex; min-height: 100vh; }
+        .sidebar { width: 280px; background: var(--bg-primary); border-right: 1px solid var(--border-color); position: fixed; height: 100vh; left: 0; top: 0; z-index: 1000; transition: transform 0.3s ease; }
+        .sidebar-header { padding: 1.5rem; border-bottom: 1px solid var(--border-color); background: linear-gradient(135deg, var(--primary-color) 0%, var(--primary-dark) 100%); color: white; }
+        .sidebar-brand { display: flex; align-items: center; gap: 0.75rem; font-size: 1.25rem; font-weight: 700; text-decoration: none; color: white; }
+        .sidebar-nav { padding: 1rem 0; }
+        .sidebar-nav-item { display: block; padding: 0.875rem 1.5rem; color: var(--text-secondary); text-decoration: none; transition: all 0.2s ease; position: relative; font-weight: 500; }
+        .sidebar-nav-item:hover { background: var(--bg-secondary); color: var(--primary-color); }
+        .sidebar-nav-item.active { background: linear-gradient(90deg, rgba(79, 70, 229, 0.1) 0%, transparent 100%); color: var(--primary-color); font-weight: 600; }
+        .sidebar-nav-item.active::before { content: ''; position: absolute; left: 0; top: 0; bottom: 0; width: 4px; background: var(--primary-color); }
+        .sidebar-nav-item i { width: 20px; margin-right: 0.75rem; text-align: center; }
+        .main-content { flex: 1; margin-left: 280px; display: flex; flex-direction: column; min-height: 100vh; }
+        .top-header { background: var(--bg-primary); border-bottom: 1px solid var(--border-color); padding: 1rem 2rem; display: flex; justify-content: space-between; align-items: center; box-shadow: var(--shadow-sm); position: sticky; top: 0; z-index: 100; }
+        .header-left { display: flex; align-items: center; gap: 1rem; }
+        .header-title { font-size: 1.5rem; font-weight: 700; color: var(--text-primary); }
+        .header-subtitle { color: var(--text-secondary); font-size: 0.875rem; }
+        .header-right { display: flex; align-items: center; gap: 1rem; }
+        .header-time { color: var(--text-secondary); font-size: 0.875rem; }
+        .profile-dropdown { position: relative; }
+        .profile-avatar { width: 40px; height: 40px; border-radius: var(--radius-md); background: linear-gradient(135deg, var(--primary-color) 0%, var(--accent-color) 100%); display: flex; align-items: center; justify-content: center; color: white; cursor: pointer; }
+        .content-area { flex: 1; padding: 2rem; background: var(--bg-secondary); }
+        .page-content { background: var(--bg-primary); padding: 2rem; border-radius: var(--radius-lg); box-shadow: var(--shadow-sm); border: 1px solid var(--border-color); }
+        .page-header { margin-bottom: 2rem; }
+        .page-title { font-size: 1.75rem; font-weight: 700; color: var(--text-primary); margin-bottom: 0.5rem; }
+        .page-description { color: var(--text-secondary); font-size: 1rem; }
+        .placeholder-content { text-align: center; padding: 4rem 2rem; color: var(--text-secondary); }
+        .placeholder-icon { font-size: 4rem; color: var(--primary-color); margin-bottom: 1.5rem; }
+        .placeholder-title { font-size: 1.5rem; font-weight: 600; color: var(--text-primary); margin-bottom: 1rem; }
+        @media (max-width: 768px) { .sidebar { transform: translateX(-100%); z-index: 1050; } .sidebar.open { transform: translateX(0); } .main-content { margin-left: 0; } .content-area { padding: 1rem; } .header-title { font-size: 1.25rem; } .page-content { padding: 1rem; } }
+        .mobile-menu-btn { display: none; background: none; border: 1px solid var(--border-color); border-radius: var(--radius-sm); padding: 0.5rem; color: var(--text-secondary); cursor: pointer; }
+        .mobile-menu-btn:hover { background: var(--bg-secondary); color: var(--primary-color); }
+        @media (max-width: 768px) { .mobile-menu-btn { display: block; } }
+    </style>
+</head>
+<body>
+    <div class="dashboard-layout">
+        <div class="sidebar">
+            <div class="sidebar-header">
+                <a class="sidebar-brand" href="/admin/dashboard">
+                    <i class="fas fa-graduation-cap me-2"></i>
+                    <strong>Attendrix</strong>
+                </a>
+            </div>
+            <div class="sidebar-nav">
+                <a class="sidebar-nav-item" href="/admin/dashboard"><i class="fas fa-tachometer-alt me-2"></i>Dashboard</a>
+                <a class="sidebar-nav-item" href="/admin/create_institution"><i class="fas fa-building me-2"></i>Institutions</a>
+                <a class="sidebar-nav-item" href="/admin/users"><i class="fas fa-users me-2"></i>Users</a>
+                <a class="sidebar-nav-item" href="/admin/monitoring"><i class="fas fa-chart-line me-2"></i>Monitoring</a>
+                <a class="sidebar-nav-item" href="/admin/security"><i class="fas fa-shield-alt me-2"></i>Security</a>
+                <a class="sidebar-nav-item" href="/admin/backup"><i class="fas fa-database me-2"></i>Backup & Restore</a>
+                <a class="sidebar-nav-item active" href="/admin/notifications"><i class="fas fa-bell me-2"></i>Notifications</a>
+                <a class="sidebar-nav-item" href="/admin/audit"><i class="fas fa-history me-2"></i>Audit Logs</a>
+                <a class="sidebar-nav-item" href="/admin/roles"><i class="fas fa-user-shield me-2"></i>Role Assignments</a>
+                <a class="sidebar-nav-item" href="/admin/profile"><i class="fas fa-user me-2"></i>Profile</a>
+            </div>
+        </div>
+        <div class="main-content">
+            <div class="top-header">
+                <div class="header-left">
+                    <button class="mobile-menu-btn" onclick="toggleSidebar()"><i class="fas fa-bars"></i></button>
+                    <div>
+                        <h1 class="header-title">Notifications</h1>
+                        <p class="header-subtitle">Manage system notifications and alerts</p>
+                    </div>
+                </div>
+                <div class="header-right">
+                    <div class="header-time" id="currentTime"></div>
+                    <div class="profile-dropdown">
+                        <div class="profile-avatar" data-bs-toggle="dropdown"><i class="fas fa-user"></i></div>
+                        <ul class="dropdown-menu dropdown-menu-end">
+                            <li><a class="dropdown-item" href="/admin/profile"><i class="fas fa-user me-2"></i>Profile</a></li>
+                            <li><a class="dropdown-item" href="/admin/settings"><i class="fas fa-cog me-2"></i>Settings</a></li>
+                            <li><hr class="dropdown-divider"></li>
+                            <li><a class="dropdown-item" href="#" onclick="showLogoutConfirm()"><i class="fas fa-sign-out-alt me-2"></i>Logout</a></li>
+                        </ul>
+                    </div>
+                </div>
+            </div>
+            <main class="content-area">
+                <div class="page-content">
+                    <div class="page-header">
+                        <h2 class="page-title">Notifications Dashboard</h2>
+                        <p class="page-description">Manage system notifications and user alerts</p>
+                    </div>
+                    
+                    <div class="empty-state">
+                        <div class="empty-icon"><i class="fas fa-bell"></i></div>
+                        <h3 class="empty-title">No Notifications Yet</h3>
+                        <p class="empty-description">
+                            System notifications will display here once notifications are sent. This will include:
+                        </p>
+                        
+                        <div class="empty-stats">
+                            <div class="empty-stat-card">
+                                <div class="empty-stat-icon"><i class="fas fa-bell"></i></div>
+                                <div class="empty-stat-value">0</div>
+                                <div class="empty-stat-label">Total Notifications</div>
+                            </div>
+                            <div class="empty-stat-card">
+                                <div class="empty-stat-icon"><i class="fas fa-envelope"></i></div>
+                                <div class="empty-stat-value">0</div>
+                                <div class="empty-stat-label">Email Sent</div>
+                            </div>
+                            <div class="empty-stat-card">
+                                <div class="empty-stat-icon"><i class="fas fa-mobile-alt"></i></div>
+                                <div class="empty-stat-value">0</div>
+                                <div class="empty-stat-label">SMS Sent</div>
+                            </div>
+                            <div class="empty-stat-card">
+                                <div class="empty-stat-icon"><i class="fas fa-users"></i></div>
+                                <div class="empty-stat-value">0</div>
+                                <div class="empty-stat-label">Active Recipients</div>
+                            </div>
+                        </div>
+                        
+                        <h4 class="empty-title">Notification Features</h4>
+                        <ul class="feature-list">
+                            <li class="feature-item">
+                                <div class="feature-icon bell">
+                                    <i class="fas fa-bell"></i>
+                                </div>
+                                <div class="feature-content">
+                                    <div class="feature-title">System Alerts</div>
+                                    <div class="feature-description">Real-time system notifications</div>
+                                </div>
+                            </li>
+                            <li class="feature-item">
+                                <div class="feature-icon envelope">
+                                    <i class="fas fa-envelope"></i>
+                                </div>
+                                <div class="feature-content">
+                                    <div class="feature-title">Email Notifications</div>
+                                    <div class="feature-description">Custom email templates</div>
+                                </div>
+                            </li>
+                            <li class="feature-item">
+                                <div class="feature-icon mobile-alt">
+                                    <i class="fas fa-mobile-alt"></i>
+                                </div>
+                                <div class="feature-content">
+                                    <div class="feature-title">SMS Notifications</div>
+                                    <div class="feature-description">Mobile text alerts</div>
+                                </div>
+                            </li>
+                            <li class="feature-item">
+                                <div class="feature-icon users">
+                                    <i class="fas fa-users"></i>
+                                </div>
+                                <div class="feature-content">
+                                    <div class="feature-title">User Targeting</div>
+                                    <div class="feature-description">Target specific user groups</div>
+                                </div>
+                            </li>
+                            <li class="feature-item">
+                                <div class="feature-icon cog">
+                                    <i class="fas fa-cog"></i>
+                                </div>
+                                <div class="feature-content">
+                                    <div class="feature-title">Notification Settings</div>
+                                    <div class="feature-description">Configure preferences</div>
+                                </div>
+                            </li>
+                            <li class="feature-item">
+                                <div class="feature-icon comment">
+                                    <i class="fas fa-comment"></i>
+                                </div>
+                                <div class="feature-content">
+                                    <div class="feature-title">Announcements</div>
+                                    <div class="feature-description">System-wide announcements</div>
+                                </div>
+                            </li>
+                        </ul>
+                        
+                        <div class="d-flex gap-2">
+                            <button class="btn btn-primary" onclick="sendNotification()">
+                                <i class="fas fa-paper-plane me-2"></i>Send Notification
+                            </button>
+                            <button class="btn btn-secondary" onclick="manageTemplates()">
+                                <i class="fas fa-file-alt me-2"></i>Manage Templates
+                            </button>
+                            <button class="btn btn-success" onclick="configureSettings()">
+                                <i class="fas fa-cog me-2"></i>Configure Settings
+                            </button>
+                        </div>
+                    </div>
+                </div>
+            </main>
+        </div>
+    </div>
+
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
+    <script>
+        document.addEventListener('DOMContentLoaded', function() {
+            // Initialize components
+            initializeTimeDisplay();
+            initializeNotifications();
+            initializeTooltips();
+            
+            console.log('Notifications page loaded successfully');
+        });
+        
+        function initializeTimeDisplay() {
+            function updateTime() {
+                const now = new Date();
+                const timeString = now.toLocaleString('en-US', { 
+                    weekday: 'short', 
+                    year: 'numeric', 
+                    month: 'short', 
+                    day: 'numeric', 
+                    hour: '2-digit', 
+                    minute: '2-digit' 
+                });
+                const timeElement = document.getElementById('currentTime');
+                if (timeElement) timeElement.textContent = timeString;
+            }
+            updateTime();
+            setInterval(updateTime, 60000);
+        }
+        
+        function initializeNotifications() {
+            // Initialize notification features (placeholder)
+        }
+        
+        function initializeTooltips() {
+            // Initialize Bootstrap tooltips
+            if (typeof bootstrap !== 'undefined' && bootstrap.Tooltip) {
+                const tooltipTriggerList = [].slice.call(document.querySelectorAll('[data-bs-toggle="tooltip"]'));
+                tooltipTriggerList.map(function (tooltipTriggerEl) {
+                    return new bootstrap.Tooltip(tooltipTriggerEl);
+                });
+            }
+            
+            // Initialize Bootstrap dropdowns
+            if (typeof bootstrap !== 'undefined' && bootstrap.Dropdown) {
+                const dropdownTriggerList = [].slice.call(document.querySelectorAll('[data-bs-toggle="dropdown"]'));
+                dropdownTriggerList.map(function (dropdownTriggerEl) {
+                    return new bootstrap.Dropdown(dropdownTriggerEl);
+                });
+            }
+        }
+        
+        function sendNotification() {
+            // Create send notification modal
+            const modalHtml = `
+                <div class="modal fade" id="sendNotificationModal" tabindex="-1" aria-labelledby="sendNotificationModalLabel" aria-hidden="true">
+                    <div class="modal-dialog modal-lg">
+                        <div class="modal-content">
+                            <div class="modal-header">
+                                <h5 class="modal-title" id="sendNotificationModalLabel">
+                                    <i class="fas fa-paper-plane me-2"></i>Send Notification
+                                </h5>
+                                <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+                            </div>
+                            <div class="modal-body">
+                                <form id="sendNotificationForm">
+                                    <div class="row">
+                                        <div class="col-md-6 mb-3">
+                                            <label for="notificationType" class="form-label">Notification Type *</label>
+                                            <select class="form-select" id="notificationType" required>
+                                                <option value="">Select type...</option>
+                                                <option value="info">Information</option>
+                                                <option value="warning">Warning</option>
+                                                <option value="success">Success</option>
+                                                <option value="error">Error</option>
+                                                <option value="alert">Alert</option>
+                                            </select>
+                                        </div>
+                                        <div class="col-md-6 mb-3">
+                                            <label for="priority" class="form-label">Priority *</label>
+                                            <select class="form-select" id="priority" required>
+                                                <option value="">Select priority...</option>
+                                                <option value="low">Low</option>
+                                                <option value="normal" selected>Normal</option>
+                                                <option value="high">High</option>
+                                                <option value="urgent">Urgent</option>
+                                            </select>
+                                        </div>
+                                    </div>
+                                    <div class="mb-3">
+                                        <label for="recipients" class="form-label">Recipients *</label>
+                                        <select class="form-select" id="recipients" required>
+                                            <option value="">Select recipients...</option>
+                                            <option value="all_users">All Users</option>
+                                            <option value="all_admins">All Administrators</option>
+                                            <option value="all_lecturers">All Lecturers</option>
+                                            <option value="all_students">All Students</option>
+                                            <option value="specific">Specific Users/Groups</option>
+                                        </select>
+                                    </div>
+                                    <div class="mb-3" id="specificRecipients" style="display: none;">
+                                        <label for="specificUsers" class="form-label">Specific Recipients</label>
+                                        <textarea class="form-control" id="specificUsers" rows="3" placeholder="Enter email addresses, one per line..."></textarea>
+                                        <small class="form-text text-muted">Enter email addresses or user groups separated by commas</small>
+                                    </div>
+                                    <div class="mb-3">
+                                        <label for="subject" class="form-label">Subject *</label>
+                                        <input type="text" class="form-control" id="subject" placeholder="Enter notification subject..." required>
+                                    </div>
+                                    <div class="mb-3">
+                                        <label for="message" class="form-label">Message *</label>
+                                        <textarea class="form-control" id="message" rows="4" placeholder="Enter your message here..." required></textarea>
+                                    </div>
+                                    <div class="mb-3">
+                                        <label class="form-label">Delivery Channels</label>
+                                        <div class="form-check">
+                                            <input class="form-check-input" type="checkbox" id="sendEmail" checked>
+                                            <label class="form-check-label" for="sendEmail">Email</label>
+                                        </div>
+                                        <div class="form-check">
+                                            <input class="form-check-input" type="checkbox" id="sendSMS">
+                                            <label class="form-check-label" for="sendSMS">SMS</label>
+                                        </div>
+                                        <div class="form-check">
+                                            <input class="form-check-input" type="checkbox" id="sendInApp" checked>
+                                            <label class="form-check-label" for="sendInApp">In-App Notification</label>
+                                        </div>
+                                    </div>
+                                    <div class="row">
+                                        <div class="col-md-6 mb-3">
+                                            <label for="scheduleType" class="form-label">Schedule</label>
+                                            <select class="form-select" id="scheduleType">
+                                                <option value="immediate">Send Immediately</option>
+                                                <option value="scheduled">Schedule for Later</option>
+                                            </select>
+                                        </div>
+                                        <div class="col-md-6 mb-3" id="scheduleDateTime" style="display: none;">
+                                            <label for="scheduleTime" class="form-label">Schedule Time</label>
+                                            <input type="datetime-local" class="form-control" id="scheduleTime">
+                                        </div>
+                                    </div>
+                                </form>
+                            </div>
+                            <div class="modal-footer">
+                                <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancel</button>
+                                <button type="button" class="btn btn-primary" onclick="sendNotificationNow()">
+                                    <i class="fas fa-paper-plane me-2"></i>Send Notification
+                                </button>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            `;
+            
+            // Remove existing modal if present
+            const existingModal = document.getElementById('sendNotificationModal');
+            if (existingModal) {
+                existingModal.remove();
+            }
+            
+            // Add modal to page
+            document.body.insertAdjacentHTML('beforeend', modalHtml);
+            
+            // Show modal
+            const modal = new bootstrap.Modal(document.getElementById('sendNotificationModal'));
+            modal.show();
+            
+            // Setup form interactions
+            document.getElementById('recipients').addEventListener('change', function() {
+                const specificRecipients = document.getElementById('specificRecipients');
+                specificRecipients.style.display = this.value === 'specific' ? 'block' : 'none';
+            });
+            
+            document.getElementById('scheduleType').addEventListener('change', function() {
+                const scheduleDateTime = document.getElementById('scheduleDateTime');
+                scheduleDateTime.style.display = this.value === 'scheduled' ? 'block' : 'none';
+            });
+        }
+        
+        function sendNotificationNow() {
+            const notification = {
+                type: document.getElementById('notificationType').value,
+                priority: document.getElementById('priority').value,
+                recipients: document.getElementById('recipients').value,
+                specificUsers: document.getElementById('specificUsers').value,
+                subject: document.getElementById('subject').value,
+                message: document.getElementById('message').value,
+                channels: {
+                    email: document.getElementById('sendEmail').checked,
+                    sms: document.getElementById('sendSMS').checked,
+                    inApp: document.getElementById('sendInApp').checked
+                },
+                schedule: {
+                    type: document.getElementById('scheduleType').value,
+                    time: document.getElementById('scheduleTime').value
+                }
+            };
+            
+            // Validate form
+            if (!notification.type || !notification.priority || !notification.recipients || !notification.subject || !notification.message) {
+                showValidationError('Please fill in all required fields.');
+                return;
+            }
+            
+            // Close modal
+            const modal = bootstrap.Modal.getInstance(document.getElementById('sendNotificationModal'));
+            modal.hide();
+            
+            // Show sending progress
+            showNotificationProgress(notification);
+        }
+        
+        function showNotificationProgress(notification) {
+            const progressHtml = `
+                <div class="modal fade" id="notificationProgressModal" tabindex="-1" data-bs-backdrop="static" data-bs-keyboard="false">
+                    <div class="modal-dialog">
+                        <div class="modal-content">
+                            <div class="modal-header">
+                                <h5 class="modal-title">
+                                    <i class="fas fa-paper-plane me-2"></i>Sending Notification...
+                                </h5>
+                            </div>
+                            <div class="modal-body">
+                                <div class="mb-3">
+                                    <div class="d-flex justify-content-between mb-2">
+                                        <span>Progress</span>
+                                        <span id="notificationProgressPercent">0%</span>
+                                    </div>
+                                    <div class="progress">
+                                        <div class="progress-bar" id="notificationProgressBar" role="progressbar" style="width: 0%"></div>
+                                    </div>
+                                </div>
+                                <div class="mb-3">
+                                    <strong>Notification Details:</strong>
+                                    <ul class="list-unstyled mt-2">
+                                        <li><i class="fas fa-tag me-2"></i>Type: ${notification.type}</li>
+                                        <li><i class="fas fa-exclamation-triangle me-2"></i>Priority: ${notification.priority}</li>
+                                        <li><i class="fas fa-users me-2"></i>Recipients: ${notification.recipients}</li>
+                                        <li><i class="fas fa-envelope me-2"></i>Channels: ${Object.keys(notification.channels).filter(key => notification.channels[key]).join(', ')}</li>
+                                    </ul>
+                                </div>
+                                <div id="notificationStatus" class="text-muted">
+                                    <i class="fas fa-info-circle me-2"></i>Preparing notification...
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            `;
+            
+            // Add progress modal to page
+            document.body.insertAdjacentHTML('beforeend', progressHtml);
+            
+            // Show progress modal
+            const progressModal = new bootstrap.Modal(document.getElementById('notificationProgressModal'));
+            progressModal.show();
+            
+            // Simulate sending progress
+            let progress = 0;
+            const progressBar = document.getElementById('notificationProgressBar');
+            const progressPercent = document.getElementById('notificationProgressPercent');
+            const notificationStatus = document.getElementById('notificationStatus');
+            
+            const progressInterval = setInterval(() => {
+                progress += Math.random() * 20;
+                if (progress >= 100) {
+                    progress = 100;
+                    clearInterval(progressInterval);
+                    
+                    // Show completion
+                    progressBar.style.width = '100%';
+                    progressPercent.textContent = '100%';
+                    notificationStatus.innerHTML = '<i class="fas fa-check-circle text-success me-2"></i>Notification sent successfully!';
+                    
+                    // Close modal after delay
+                    setTimeout(() => {
+                        progressModal.hide();
+                        showSuccessToast('Notification sent successfully!');
+                        updateNotificationCount();
+                        console.log('Notification sent:', notification);
+                    }, 2000);
+                } else {
+                    progressBar.style.width = progress + '%';
+                    progressPercent.textContent = Math.floor(progress) + '%';
+                    
+                    // Update status messages
+                    if (progress < 25) {
+                        notificationStatus.innerHTML = '<i class="fas fa-info-circle me-2"></i>Preparing notification...';
+                    } else if (progress < 50) {
+                        notificationStatus.innerHTML = '<i class="fas fa-users me-2"></i>Processing recipients...';
+                    } else if (progress < 75) {
+                        notificationStatus.innerHTML = '<i class="fas fa-envelope me-2"></i>Sending via channels...';
+                    } else {
+                        notificationStatus.innerHTML = '<i class="fas fa-check me-2"></i>Finalizing delivery...';
+                    }
+                }
+            }, 400);
+        }
+        
+        function manageTemplates() {
+            // Create template management modal
+            const modalHtml = `
+                <div class="modal fade" id="manageTemplatesModal" tabindex="-1" aria-labelledby="manageTemplatesModalLabel" aria-hidden="true">
+                    <div class="modal-dialog modal-xl">
+                        <div class="modal-content">
+                            <div class="modal-header">
+                                <h5 class="modal-title" id="manageTemplatesModalLabel">
+                                    <i class="fas fa-file-alt me-2"></i>Notification Templates
+                                </h5>
+                                <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+                            </div>
+                            <div class="modal-body">
+                                <div class="d-flex justify-content-between align-items-center mb-3">
+                                    <h6 class="mb-0">Existing Templates</h6>
+                                    <button class="btn btn-primary btn-sm" onclick="createNewTemplate()">
+                                        <i class="fas fa-plus me-2"></i>Create Template
+                                    </button>
+                                </div>
+                                
+                                <div class="table-responsive">
+                                    <table class="table table-hover">
+                                        <thead>
+                                            <tr>
+                                                <th>Template Name</th>
+                                                <th>Type</th>
+                                                <th>Language</th>
+                                                <th>Channels</th>
+                                                <th>Last Modified</th>
+                                                <th>Actions</th>
+                                            </tr>
+                                        </thead>
+                                        <tbody>
+                                            <tr>
+                                                <td>Welcome Email</td>
+                                                <td><span class="badge bg-info">Email</span></td>
+                                                <td>English</td>
+                                                <td>Email</td>
+                                                <td>2024-01-15</td>
+                                                <td>
+                                                    <button class="btn btn-sm btn-outline-primary" onclick="editTemplate('welcome_email')">Edit</button>
+                                                    <button class="btn btn-sm btn-outline-secondary" onclick="previewTemplate('welcome_email')">Preview</button>
+                                                </td>
+                                            </tr>
+                                            <tr>
+                                                <td>Password Reset</td>
+                                                <td><span class="badge bg-warning">Security</span></td>
+                                                <td>English</td>
+                                                <td>Email, SMS</td>
+                                                <td>2024-01-10</td>
+                                                <td>
+                                                    <button class="btn btn-sm btn-outline-primary" onclick="editTemplate('password_reset')">Edit</button>
+                                                    <button class="btn btn-sm btn-outline-secondary" onclick="previewTemplate('password_reset')">Preview</button>
+                                                </td>
+                                            </tr>
+                                            <tr>
+                                                <td>System Maintenance</td>
+                                                <td><span class="badge bg-secondary">System</span></td>
+                                                <td>English</td>
+                                                <td>Email, In-App</td>
+                                                <td>2024-01-05</td>
+                                                <td>
+                                                    <button class="btn btn-sm btn-outline-primary" onclick="editTemplate('maintenance')">Edit</button>
+                                                    <button class="btn btn-sm btn-outline-secondary" onclick="previewTemplate('maintenance')">Preview</button>
+                                                </td>
+                                            </tr>
+                                            <tr>
+                                                <td>Attendance Reminder</td>
+                                                <td><span class="badge bg-primary">Academic</span></td>
+                                                <td>English</td>
+                                                <td>Email, SMS</td>
+                                                <td>2024-01-20</td>
+                                                <td>
+                                                    <button class="btn btn-sm btn-outline-primary" onclick="editTemplate('attendance_reminder')">Edit</button>
+                                                    <button class="btn btn-sm btn-outline-secondary" onclick="previewTemplate('attendance_reminder')">Preview</button>
+                                                </td>
+                                            </tr>
+                                        </tbody>
+                                    </table>
+                                </div>
+                            </div>
+                            <div class="modal-footer">
+                                <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Close</button>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            `;
+            
+            // Remove existing modal if present
+            const existingModal = document.getElementById('manageTemplatesModal');
+            if (existingModal) {
+                existingModal.remove();
+            }
+            
+            // Add modal to page
+            document.body.insertAdjacentHTML('beforeend', modalHtml);
+            
+            // Show modal
+            const modal = new bootstrap.Modal(document.getElementById('manageTemplatesModal'));
+            modal.show();
+        }
+        
+        function createNewTemplate() {
+            // Close current modal
+            const currentModal = bootstrap.Modal.getInstance(document.getElementById('manageTemplatesModal'));
+            currentModal.hide();
+            
+            // Create new template modal
+            const templateModalHtml = `
+                <div class="modal fade" id="createTemplateModal" tabindex="-1" aria-labelledby="createTemplateModalLabel" aria-hidden="true">
+                    <div class="modal-dialog modal-lg">
+                        <div class="modal-content">
+                            <div class="modal-header">
+                                <h5 class="modal-title" id="createTemplateModalLabel">
+                                    <i class="fas fa-plus me-2"></i>Create New Template
+                                </h5>
+                                <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+                            </div>
+                            <div class="modal-body">
+                                <form id="createTemplateForm">
+                                    <div class="row">
+                                        <div class="col-md-6 mb-3">
+                                            <label for="templateName" class="form-label">Template Name *</label>
+                                            <input type="text" class="form-control" id="templateName" placeholder="e.g., Welcome Email" required>
+                                        </div>
+                                        <div class="col-md-6 mb-3">
+                                            <label for="templateType" class="form-label">Template Type *</label>
+                                            <select class="form-select" id="templateType" required>
+                                                <option value="">Select type...</option>
+                                                <option value="email">Email</option>
+                                                <option value="sms">SMS</option>
+                                                <option value="in_app">In-App</option>
+                                                <option value="push">Push Notification</option>
+                                            </select>
+                                        </div>
+                                    </div>
+                                    <div class="row">
+                                        <div class="col-md-6 mb-3">
+                                            <label for="templateLanguage" class="form-label">Language</label>
+                                            <select class="form-select" id="templateLanguage">
+                                                <option value="en" selected>English</option>
+                                                <option value="fr">French</option>
+                                                <option value="es">Spanish</option>
+                                            </select>
+                                        </div>
+                                        <div class="col-md-6 mb-3">
+                                            <label for="templateCategory" class="form-label">Category</label>
+                                            <select class="form-select" id="templateCategory">
+                                                <option value="">Select category...</option>
+                                                <option value="welcome">Welcome</option>
+                                                <option value="security">Security</option>
+                                                <option value="academic">Academic</option>
+                                                <option value="system">System</option>
+                                                <option value="marketing">Marketing</option>
+                                            </select>
+                                        </div>
+                                    </div>
+                                    <div class="mb-3">
+                                        <label for="templateSubject" class="form-label">Subject (for email templates)</label>
+                                        <input type="text" class="form-control" id="templateSubject" placeholder="Enter email subject...">
+                                    </div>
+                                    <div class="mb-3">
+                                        <label for="templateContent" class="form-label">Template Content *</label>
+                                        <textarea class="form-control" id="templateContent" rows="6" placeholder="Enter template content... Use {{variable}} for placeholders" required></textarea>
+                                        <small class="form-text text-muted">Available variables: {{name}}, {{email}}, {{date}}, {{institution}}, {{role}}</small>
+                                    </div>
+                                    <div class="mb-3">
+                                        <label for="templateDescription" class="form-label">Description</label>
+                                        <textarea class="form-control" id="templateDescription" rows="2" placeholder="Describe when this template is used..."></textarea>
+                                    </div>
+                                </form>
+                            </div>
+                            <div class="modal-footer">
+                                <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancel</button>
+                                <button type="button" class="btn btn-primary" onclick="saveTemplate()">
+                                    <i class="fas fa-save me-2"></i>Save Template
+                                </button>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            `;
+            
+            // Add template modal to page
+            document.body.insertAdjacentHTML('beforeend', templateModalHtml);
+            
+            // Show template modal
+            const templateModal = new bootstrap.Modal(document.getElementById('createTemplateModal'));
+            templateModal.show();
+        }
+        
+        function saveTemplate() {
+            const template = {
+                name: document.getElementById('templateName').value,
+                type: document.getElementById('templateType').value,
+                language: document.getElementById('templateLanguage').value,
+                category: document.getElementById('templateCategory').value,
+                subject: document.getElementById('templateSubject').value,
+                content: document.getElementById('templateContent').value,
+                description: document.getElementById('templateDescription').value
+            };
+            
+            // Validate form
+            if (!template.name || !template.type || !template.content) {
+                showValidationError('Please fill in all required fields.');
+                return;
+            }
+            
+            // Close modal
+            const modal = bootstrap.Modal.getInstance(document.getElementById('createTemplateModal'));
+            modal.hide();
+            
+            // Show success message
+            showSuccessToast(`Template "${template.name}" created successfully!`);
+            
+            // Log action
+            console.log('Template created:', template);
+        }
+        
+        function editTemplate(templateId) {
+            showSuccessToast(`Editing template: ${templateId}`);
+            console.log('Edit template:', templateId);
+        }
+        
+        function previewTemplate(templateId) {
+            showSuccessToast(`Previewing template: ${templateId}`);
+            console.log('Preview template:', templateId);
+        }
+        
+        function configureSettings() {
+            // Create settings modal
+            const modalHtml = `
+                <div class="modal fade" id="configureSettingsModal" tabindex="-1" aria-labelledby="configureSettingsModalLabel" aria-hidden="true">
+                    <div class="modal-dialog modal-lg">
+                        <div class="modal-content">
+                            <div class="modal-header">
+                                <h5 class="modal-title" id="configureSettingsModalLabel">
+                                    <i class="fas fa-cog me-2"></i>Notification Settings
+                                </h5>
+                                <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+                            </div>
+                            <div class="modal-body">
+                                <form id="notificationSettingsForm">
+                                    <div class="row">
+                                        <div class="col-md-6 mb-3">
+                                            <h6 class="text-primary mb-3">Email Settings</h6>
+                                            <div class="mb-3">
+                                                <label for="defaultEmailSender" class="form-label">Default Sender Email</label>
+                                                <input type="email" class="form-control" id="defaultEmailSender" value="noreply@attendrix.com">
+                                            </div>
+                                            <div class="mb-3">
+                                                <label for="emailProvider" class="form-label">Email Provider</label>
+                                                <select class="form-select" id="emailProvider">
+                                                    <option value="smtp">SMTP</option>
+                                                    <option value="sendgrid">SendGrid</option>
+                                                    <option value="aws-ses">AWS SES</option>
+                                                </select>
+                                            </div>
+                                            <div class="mb-3">
+                                                <div class="form-check">
+                                                    <input class="form-check-input" type="checkbox" id="enableEmailTracking" checked>
+                                                    <label class="form-check-label" for="enableEmailTracking">
+                                                        Enable Email Tracking
+                                                    </label>
+                                                </div>
+                                            </div>
+                                        </div>
+                                        <div class="col-md-6 mb-3">
+                                            <h6 class="text-primary mb-3">SMS Settings</h6>
+                                            <div class="mb-3">
+                                                <label for="smsProvider" class="form-label">SMS Provider</label>
+                                                <select class="form-select" id="smsProvider">
+                                                    <option value="twilio">Twilio</option>
+                                                    <option value="aws-sns">AWS SNS</option>
+                                                    <option value="nexmo">Nexmo</option>
+                                                </select>
+                                            </div>
+                                            <div class="mb-3">
+                                                <label for="defaultSMSSender" class="form-label">Default Sender Number</label>
+                                                <input type="tel" class="form-control" id="defaultSMSSender" placeholder="+1234567890">
+                                            </div>
+                                            <div class="mb-3">
+                                                <div class="form-check">
+                                                    <input class="form-check-input" type="checkbox" id="enableSMSDelivery" checked>
+                                                    <label class="form-check-label" for="enableSMSDelivery">
+                                                        Enable Delivery Reports
+                                                    </label>
+                                                </div>
+                                            </div>
+                                        </div>
+                                    </div>
+                                    <div class="row">
+                                        <div class="col-md-6 mb-3">
+                                            <h6 class="text-primary mb-3">User Preferences</h6>
+                                            <div class="mb-3">
+                                                <label for="defaultChannels" class="form-label">Default Channels</label>
+                                                <div class="form-check">
+                                                    <input class="form-check-input" type="checkbox" id="defaultEmail" checked>
+                                                    <label class="form-check-label" for="defaultEmail">Email</label>
+                                                </div>
+                                                <div class="form-check">
+                                                    <input class="form-check-input" type="checkbox" id="defaultSMS">
+                                                    <label class="form-check-label" for="defaultSMS">SMS</label>
+                                                </div>
+                                                <div class="form-check">
+                                                    <input class="form-check-input" type="checkbox" id="defaultInApp" checked>
+                                                    <label class="form-check-label" for="defaultInApp">In-App</label>
+                                                </div>
+                                            </div>
+                                        </div>
+                                        <div class="col-md-6 mb-3">
+                                            <h6 class="text-primary mb-3">Quiet Hours</h6>
+                                            <div class="mb-3">
+                                                <div class="form-check">
+                                                    <input class="form-check-input" type="checkbox" id="enableQuietHours">
+                                                    <label class="form-check-label" for="enableQuietHours">
+                                                        Enable Quiet Hours
+                                                    </label>
+                                                </div>
+                                            </div>
+                                            <div class="mb-3">
+                                                <label for="quietHoursStart" class="form-label">Start Time</label>
+                                                <input type="time" class="form-control" id="quietHoursStart" value="22:00">
+                                            </div>
+                                            <div class="mb-3">
+                                                <label for="quietHoursEnd" class="form-label">End Time</label>
+                                                <input type="time" class="form-control" id="quietHoursEnd" value="08:00">
+                                            </div>
+                                        </div>
+                                    </div>
+                                    <div class="row">
+                                        <div class="col-12 mb-3">
+                                            <h6 class="text-primary mb-3">Rate Limiting</h6>
+                                            <div class="row">
+                                                <div class="col-md-4 mb-2">
+                                                    <label for="maxEmailsPerHour" class="form-label">Max Emails/Hour</label>
+                                                    <input type="number" class="form-control" id="maxEmailsPerHour" value="1000">
+                                                </div>
+                                                <div class="col-md-4 mb-2">
+                                                    <label for="maxSMSPerHour" class="form-label">Max SMS/Hour</label>
+                                                    <input type="number" class="form-control" id="maxSMSPerHour" value="500">
+                                                </div>
+                                                <div class="col-md-4 mb-2">
+                                                    <label for="maxPushPerHour" class="form-label">Max Push/Hour</label>
+                                                    <input type="number" class="form-control" id="maxPushPerHour" value="2000">
+                                                </div>
+                                            </div>
+                                        </div>
+                                    </div>
+                                </form>
+                            </div>
+                            <div class="modal-footer">
+                                <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancel</button>
+                                <button type="button" class="btn btn-primary" onclick="saveNotificationSettings()">
+                                    <i class="fas fa-save me-2"></i>Save Settings
+                                </button>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            `;
+            
+            // Remove existing modal if present
+            const existingModal = document.getElementById('configureSettingsModal');
+            if (existingModal) {
+                existingModal.remove();
+            }
+            
+            // Add modal to page
+            document.body.insertAdjacentHTML('beforeend', modalHtml);
+            
+            // Show modal
+            const modal = new bootstrap.Modal(document.getElementById('configureSettingsModal'));
+            modal.show();
+        }
+        
+        function saveNotificationSettings() {
+            const settings = {
+                email: {
+                    defaultSender: document.getElementById('defaultEmailSender').value,
+                    provider: document.getElementById('emailProvider').value,
+                    tracking: document.getElementById('enableEmailTracking').checked
+                },
+                sms: {
+                    provider: document.getElementById('smsProvider').value,
+                    defaultSender: document.getElementById('defaultSMSSender').value,
+                    deliveryReports: document.getElementById('enableSMSDelivery').checked
+                },
+                userPreferences: {
+                    defaultEmail: document.getElementById('defaultEmail').checked,
+                    defaultSMS: document.getElementById('defaultSMS').checked,
+                    defaultInApp: document.getElementById('defaultInApp').checked
+                },
+                quietHours: {
+                    enabled: document.getElementById('enableQuietHours').checked,
+                    start: document.getElementById('quietHoursStart').value,
+                    end: document.getElementById('quietHoursEnd').value
+                },
+                rateLimiting: {
+                    maxEmailsPerHour: document.getElementById('maxEmailsPerHour').value,
+                    maxSMSPerHour: document.getElementById('maxSMSPerHour').value,
+                    maxPushPerHour: document.getElementById('maxPushPerHour').value
+                }
+            };
+            
+            // Close modal
+            const modal = bootstrap.Modal.getInstance(document.getElementById('configureSettingsModal'));
+            modal.hide();
+            
+            // Show success message
+            showSuccessToast('Notification settings saved successfully!');
+            
+            // Log action
+            console.log('Notification settings saved:', settings);
+        }
+        
+        function updateNotificationCount() {
+            // Simulate updating notification count
+            const notificationCountElement = document.querySelector('.empty-stat-value');
+            if (notificationCountElement) {
+                const currentCount = parseInt(notificationCountElement.textContent) || 0;
+                notificationCountElement.textContent = currentCount + 1;
+            }
+        }
+        
+        function showSuccessToast(message) {
+            // Create toast HTML
+            const toastHtml = `
+                <div class="toast-container position-fixed top-0 end-0 p-3">
+                    <div class="toast show" role="alert" aria-live="assertive" aria-atomic="true">
+                        <div class="toast-header bg-success text-white">
+                            <i class="fas fa-bell me-2"></i>
+                            <strong class="me-auto">Notifications</strong>
+                            <button type="button" class="btn-close btn-close-white" data-bs-dismiss="toast" aria-label="Close"></button>
+                        </div>
+                        <div class="toast-body">
+                            ${message}
+                        </div>
+                    </div>
+                </div>
+            `;
+            
+            // Add toast to page
+            document.body.insertAdjacentHTML('beforeend', toastHtml);
+            
+            // Auto remove after 5 seconds
+            setTimeout(() => {
+                const toastContainer = document.querySelector('.toast-container');
+                if (toastContainer) {
+                    toastContainer.remove();
+                }
+            }, 5000);
+        }
+        
+        function showValidationError(message) {
+            // Create validation error toast
+            const toastHtml = `
+                <div class="toast-container position-fixed top-0 end-0 p-3">
+                    <div class="toast show" role="alert" aria-live="assertive" aria-atomic="true">
+                        <div class="toast-header bg-danger text-white">
+                            <i class="fas fa-exclamation-triangle me-2"></i>
+                            <strong class="me-auto">Validation Error</strong>
+                            <button type="button" class="btn-close btn-close-white" data-bs-dismiss="toast" aria-label="Close"></button>
+                        </div>
+                        <div class="toast-body">
+                            ${message}
+                        </div>
+                    </div>
+                </div>
+            `;
+            
+            // Add toast to page
+            document.body.insertAdjacentHTML('beforeend', toastHtml);
+            
+            // Auto remove after 5 seconds
+            setTimeout(() => {
+                const toastContainer = document.querySelector('.toast-container');
+                if (toastContainer) {
+                    toastContainer.remove();
+                }
+            }, 5000);
+        }
+        
+        function showLogoutConfirm() {
+            if (confirm('Do you really want to log out?')) {
+                window.location.href = '/logout';
+            }
+        }
+        
+        function toggleSidebar() {
+            const sidebar = document.querySelector('.sidebar');
+            if (sidebar) {
+                sidebar.classList.toggle('open');
+            }
+        }
+    </script>
+</body>
+</html>
