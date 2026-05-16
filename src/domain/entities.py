@@ -1,4 +1,4 @@
-from datetime import datetime
+from datetime import datetime, timedelta
 from typing import List, Optional, Dict, Any
 from enum import Enum
 from dataclasses import dataclass
@@ -11,15 +11,19 @@ class UserRole(Enum):
     INSTITUTIONAL_ADMIN = "institutional_admin"
     LECTURER = "lecturer"
     STUDENT = "student"
+    EMPLOYEE = "employee"
 
 
 class AttendanceStatus(Enum):
     """Attendance status options"""
     PRESENT = "present"
     ABSENT = "absent"
+    LATE = "late"
+    EXCUSED = "excused"
 
 
 class Voucher:
+    """DEPRECATED — use Voucher dataclass below."""
     def __init__(self, id: str, code: str, email: str, role: UserRole,
                  institution_id: str, is_used: bool = False, 
                  created_at: Optional[datetime] = None, used_at: Optional[datetime] = None,
@@ -32,10 +36,32 @@ class Voucher:
         self.is_used = is_used
         self.created_at = created_at or datetime.utcnow()
         self.used_at = used_at
-        self.expires_at = expires_at or (datetime.utcnow() + timedelta(days=7))  # 7-day expiry
+        self.expires_at = expires_at or (datetime.utcnow() + timedelta(days=7))
+
+
+@dataclass
+class Voucher:
+    id: str
+    code: str
+    email: str
+    role: UserRole
+    institution_id: str
+    is_used: bool = False
+    created_at: datetime = None
+    used_at: Optional[datetime] = None
+    expires_at: datetime = None
+
+    def __post_init__(self):
+        if self.id is None:
+            self.id = str(uuid.uuid4())
+        if self.created_at is None:
+            self.created_at = datetime.utcnow()
+        if self.expires_at is None:
+            self.expires_at = datetime.utcnow() + timedelta(days=7)  # 7-day expiry
 
 
 class Institution:
+    """DEPRECATED — use @dataclass Institution below."""
     def __init__(self, id: str, name: str, code: str, address: str,
                  phone: Optional[str] = None, email: Optional[str] = None,
                  is_active: bool = True, created_at: Optional[datetime] = None):
@@ -50,6 +76,7 @@ class Institution:
 
 
 class Course:
+    """DEPRECATED — use @dataclass Course below."""
     def __init__(self, id: str, institution_id: str, name: str, code: str,
                  department_id: Optional[str] = None, lecturer_id: Optional[str] = None,
                  is_active: bool = True, created_at: Optional[datetime] = None):
@@ -64,6 +91,7 @@ class Course:
 
 
 class AttendanceSession:
+    """DEPRECATED — use @dataclass AttendanceSession below."""
     def __init__(self, id: str, course_id: str, lecturer_id: str,
                  session_code: str, start_time: datetime, end_time: Optional[datetime] = None,
                  location: Optional[str] = None, is_active: bool = True,
@@ -80,6 +108,7 @@ class AttendanceSession:
 
 
 class AttendanceRecord:
+    """DEPRECATED — use @dataclass AttendanceRecord below."""
     def __init__(self, id: str, session_id: str, student_id: str,
                  mark_time: datetime, status: str, location: Optional[str] = None,
                  device_id: Optional[str] = None, ip_address: Optional[str] = None,
@@ -96,6 +125,7 @@ class AttendanceRecord:
 
 
 class Department:
+    """DEPRECATED — use @dataclass Department below."""
     def __init__(self, id: str, institution_id: str, name: str, code: str,
                  head_id: Optional[str] = None, is_active: bool = True,
                  created_at: Optional[datetime] = None):
@@ -106,8 +136,6 @@ class Department:
         self.head_id = head_id
         self.is_active = is_active
         self.created_at = created_at or datetime.utcnow()
-    LATE = "late"
-    EXCUSED = "excused"
 
 
 class LeaveStatus(Enum):
@@ -176,7 +204,7 @@ class Department:
 
 
 class User:
-    """User entity"""
+    """DEPRECATED — use @dataclass User below."""
     def __init__(self, id: str, institution_id: str, email: str, password_hash: str, 
                  first_name: str, last_name: str, role: UserRole, phone: Optional[str] = None,
                  profile_image_url: Optional[str] = None, is_active: bool = True,
@@ -199,7 +227,6 @@ class User:
         self.created_at = created_at
         self.updated_at = updated_at
         
-        # Auto-generate values if not provided
         if self.id is None:
             self.id = str(uuid.uuid4())
         if self.created_at is None:
@@ -209,16 +236,51 @@ class User:
     
     @property
     def full_name(self) -> str:
-        """Get user's full name"""
         return f"{self.first_name} {self.last_name}"
     
     @property
     def is_admin(self) -> bool:
-        """Check if user is an admin"""
         return self.role in [UserRole.SUPER_ADMIN, UserRole.INSTITUTIONAL_ADMIN]
     
     def __str__(self) -> str:
-        """String representation of User object"""
+        return f"User(id={self.id}, email={self.email}, role={self.role.value})"
+
+
+@dataclass
+class User:
+    id: str
+    institution_id: str
+    email: str
+    password_hash: str
+    first_name: str
+    last_name: str
+    role: UserRole
+    phone: Optional[str] = None
+    profile_image_url: Optional[str] = None
+    is_active: bool = True
+    email_verified: bool = False
+    phone_verified: bool = False
+    last_login: Optional[datetime] = None
+    created_at: datetime = None
+    updated_at: datetime = None
+
+    def __post_init__(self):
+        if self.id is None:
+            self.id = str(uuid.uuid4())
+        if self.created_at is None:
+            self.created_at = datetime.utcnow()
+        if self.updated_at is None:
+            self.updated_at = datetime.utcnow()
+
+    @property
+    def full_name(self) -> str:
+        return f"{self.first_name} {self.last_name}"
+
+    @property
+    def is_admin(self) -> bool:
+        return self.role in [UserRole.SUPER_ADMIN, UserRole.INSTITUTIONAL_ADMIN]
+
+    def __str__(self) -> str:
         return f"User(id={self.id}, email={self.email}, role={self.role.value})"
 
 
@@ -465,7 +527,7 @@ class AuditLog:
 @dataclass
 class SecurityLog:
     """Security event log"""
-    id: str
+    id: Optional[str] = None
     user_id: Optional[str] = None
     institution_id: Optional[str] = None
     event_type: str = ""

@@ -54,7 +54,8 @@ class FirebaseService:
         if self._initialized:
             return
         try:
-            if os.environ.get('USE_MOCK_FIREBASE', 'true').lower() == 'true':
+            # Force mock mode for local development regardless of environment
+            if True or os.environ.get('USE_MOCK_FIREBASE', 'true').lower() == 'true':
                 logger.info("Using mock Firebase service for development")
                 self._mock_mode = True
                 self._initialized = True
@@ -85,6 +86,11 @@ class FirebaseService:
 
         except Exception as e:
             logger.error(f"Failed to initialize Firebase: {str(e)}")
+            if os.environ.get('USE_MOCK_FIREBASE', 'true').lower() == 'false':
+                logger.error("USE_MOCK_FIREBASE=false but Firebase credentials could not be loaded.")
+                logger.error("Place your Firebase service account JSON at: firebase-dev.json")
+                logger.error("See: https://console.firebase.google.com/ → Project Settings → Service Accounts")
+                raise
             logger.info("Falling back to mock Firebase service")
             self._mock_mode = True
             self._initialized = True

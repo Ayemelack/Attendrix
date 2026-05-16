@@ -239,7 +239,54 @@ def seed_comprehensive_demo_data(firebase_service, institution_id='inst_001'):
         })
     result['collections_created']['security_logs'] = len(security_events)
 
-    # ── ATTENDANCE SESSIONS ──
+    # ── DEPARTMENTS ──
+    dept_data = [
+        {'code': 'CSC', 'name': 'Computer Science', 'head': 'Dr. Ewane'},
+        {'code': 'CSE', 'name': 'Computer Engineering', 'head': 'Prof. Asongu'},
+        {'code': 'MAT', 'name': 'Mathematics', 'head': 'Dr. Mbah'},
+        {'code': 'PHY', 'name': 'Physics', 'head': 'Dr. Nkwi'},
+        {'code': 'BIO', 'name': 'Biology', 'head': 'Dr. Ndifor'},
+    ]
+    dept_ids = {}
+    for dept in dept_data:
+        did = firebase_service.create_document('departments', {
+            'institution_id': institution_id,
+            'name': dept['name'],
+            'code': dept['code'],
+            'head_id': '',
+            'is_active': True,
+            'created_at': (now - timedelta(days=random.randint(30, 90))).isoformat(),
+        })
+        dept_ids[dept['code']] = did
+    result['collections_created']['departments'] = len(dept_data)
+
+    # ── COURSES ──
+    course_data = [
+        {'code': 'CSC301', 'name': 'Data Structures', 'dept': 'CSC', 'lecturer': 'Dr. Ewane', 'credits': 4},
+        {'code': 'CSC401', 'name': 'Algorithms', 'dept': 'CSC', 'lecturer': 'Prof. Asongu', 'credits': 4},
+        {'code': 'CSE204', 'name': 'Digital Electronics', 'dept': 'CSE', 'lecturer': 'Dr. Nkwi', 'credits': 3},
+        {'code': 'CSE305', 'name': 'Computer Networks', 'dept': 'CSE', 'lecturer': 'Mr. Kelvin', 'credits': 3},
+        {'code': 'MAT201', 'name': 'Calculus II', 'dept': 'MAT', 'lecturer': 'Dr. Mbah', 'credits': 4},
+        {'code': 'MAT301', 'name': 'Linear Algebra', 'dept': 'MAT', 'lecturer': 'Dr. Mbah', 'credits': 3},
+        {'code': 'PHY201', 'name': 'Waves & Optics', 'dept': 'PHY', 'lecturer': 'Dr. Nkwi', 'credits': 3},
+    ]
+    course_ids = {}
+    for c in course_data:
+        cid = firebase_service.create_document('courses', {
+            'institution_id': institution_id,
+            'department_id': dept_ids.get(c['dept'], ''),
+            'code': c['code'],
+            'name': c['name'],
+            'lecturer_id': '',
+            'credits': c['credits'],
+            'description': f'{c["name"]} course',
+            'is_active': True,
+            'created_at': (now - timedelta(days=random.randint(30, 90))).isoformat(),
+        })
+        course_ids[c['code']] = cid
+    result['collections_created']['courses'] = len(course_data)
+
+    # ── ATTENDANCE SESSIONS (linked to courses) ──
     session_tpls = [
         ('CSC301', 'Data Structures', 'Dr. Ewane', 65),
         ('CSC401', 'Algorithms', 'Prof. Asongu', 48),
@@ -296,6 +343,45 @@ def seed_comprehensive_demo_data(firebase_service, institution_id='inst_001'):
             })
             record_count += 1
     result['collections_created']['attendance_records'] = record_count
+
+    # ── COURSE ENROLLMENTS ──
+    enrollment_count = 0
+    for student in students:
+        num_courses = random.randint(3, 5)
+        enrolled_courses = random.sample(list(course_ids.values()), min(num_courses, len(course_ids)))
+        for cid in enrolled_courses:
+            existing = firebase_service.query_documents(
+                'course_enrollments',
+                filters=[{'field': 'course_id', 'value': cid},
+                         {'field': 'student_id', 'value': student['id']}]
+            )
+            if not existing:
+                firebase_service.create_document('course_enrollments', {
+                    'course_id': cid,
+                    'student_id': student['id'],
+                    'institution_id': institution_id,
+                    'enrollment_date': (now - timedelta(days=random.randint(30, 60))).isoformat(),
+                    'is_active': True,
+                    'created_at': (now - timedelta(days=random.randint(30, 60))).isoformat(),
+                })
+                enrollment_count += 1
+    result['collections_created']['course_enrollments'] = enrollment_count
+
+    # ── USER PROFILES ──
+    for student in students:
+        existing_profiles = firebase_service.query_documents(
+            'user_profiles',
+            filters=[{'field': 'user_id', 'value': student['id']}]
+        )
+        if not existing_profiles:
+            firebase_service.create_document('user_profiles', {
+                'user_id': student['id'],
+                'institution_id': institution_id,
+                'department_id': random.choice(list(dept_ids.values())) if dept_ids else '',
+                'employee_id': '',
+                'student_id': f"STU{random.randint(10000, 99999)}",
+                'join_date': (now - timedelta(days=random.randint(90, 365))).isoformat(),
+            })
 
     # ── EXISTING STUDENT USERS GET FACULTY ASSIGNMENTS ──
     faculties = ['Faculty of Science', 'Faculty of Engineering', 'Faculty of Arts', 'HTTTC']

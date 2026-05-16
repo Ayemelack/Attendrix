@@ -1,0 +1,79 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Offline — Attendrix</title>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800&display=swap" rel="stylesheet">
+    <style>
+        * { margin: 0; padding: 0; box-sizing: border-box; }
+        body {
+            font-family: 'Inter', sans-serif;
+            min-height: 100vh;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            background: linear-gradient(135deg, #0F172A 0%, #1E293B 100%);
+            color: #fff;
+            padding: 2rem;
+        }
+        .offline-card {
+            background: rgba(255,255,255,0.04);
+            backdrop-filter: blur(24px);
+            border-radius: 24px;
+            border: 1px solid rgba(255,255,255,0.08);
+            padding: 3rem;
+            max-width: 480px;
+            width: 100%;
+            text-align: center;
+        }
+        .icon {
+            width: 64px; height: 64px;
+            background: linear-gradient(135deg, #F59E0B 0%, #EF4444 100%);
+            border-radius: 16px;
+            display: flex; align-items: center; justify-content: center;
+            margin: 0 auto 1.5rem;
+            font-size: 1.5rem;
+        }
+        h1 { font-size: 1.5rem; font-weight: 700; margin-bottom: 0.75rem; }
+        p { color: rgba(255,255,255,0.6); font-size: 0.9rem; line-height: 1.6; margin-bottom: 1.5rem; }
+        .status { font-size: 0.75rem; color: rgba(255,255,255,0.3); }
+        .dot {
+            display: inline-block; width: 8px; height: 8px;
+            border-radius: 50%; background: #F59E0B; margin-right: 0.4rem;
+            animation: pulse 1.5s ease-in-out infinite;
+        }
+        @keyframes pulse {
+            0%, 100% { opacity: 0.4; }
+            50% { opacity: 1; }
+        }
+        .retry-btn {
+            background: rgba(79,70,229,0.12);
+            border: 1px solid rgba(79,70,229,0.2);
+            color: #818CF8;
+            padding: 0.6rem 1.5rem;
+            border-radius: 8px;
+            font-size: 0.8rem;
+            font-weight: 600;
+            cursor: pointer;
+            transition: all 0.2s;
+            font-family: 'Inter', sans-serif;
+        }
+        .retry-btn:hover { background: rgba(79,70,229,0.2); }
+    </style>
+</head>
+<body>
+    <div class="offline-card">
+        <div class="icon">&#9888;</div>
+        <h1 data-i18n="offline_title">You're Offline</h1>
+        <p data-i18n="offline_desc">Attendrix is working in offline mode. Your data is stored locally and will sync automatically when the connection is restored.</p>
+        <p class="status"><span class="dot"></span><span data-i18n="offline_status">Waiting for network...</span></p>
+        <br>
+        <button class="retry-btn" onclick="retryConnection()" data-i18n="offline_retry">Retry Connection</button>
+    </div>
+    <script>
+        function retryConnection() { window.location.reload(); }
+        window.addEventListener('online', function() { window.location.reload(); });
+    </script>
+</body>
+</html>

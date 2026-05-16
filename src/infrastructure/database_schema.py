@@ -164,6 +164,26 @@ class DatabaseSchema:
                 }
             },
             
+            'course_enrollments': {
+                'description': 'Student-course enrollment records',
+                'fields': {
+                    'id': 'string PRIMARY KEY',
+                    'course_id': 'string NOT NULL',
+                    'student_id': 'string NOT NULL',
+                    'institution_id': 'string NOT NULL',
+                    'enrollment_date': 'datetime NOT NULL',
+                    'is_active': 'boolean DEFAULT true',
+                    'created_at': 'datetime DEFAULT CURRENT_TIMESTAMP',
+                    'updated_at': 'datetime DEFAULT CURRENT_TIMESTAMP'
+                },
+                'indexes': ['course_id', 'student_id', 'institution_id'],
+                'foreign_keys': {
+                    'course_id': 'courses.id',
+                    'student_id': 'users.id',
+                    'institution_id': 'institutions.id'
+                }
+            },
+
             'security_logs': {
                 'description': 'Security and audit events',
                 'fields': {

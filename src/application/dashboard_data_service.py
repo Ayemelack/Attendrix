@@ -197,12 +197,18 @@ class DashboardDataService:
     # attendance_records: id, attendance_session_id, student_id, status(present|absent),
     #                     marked_at
 
-    def get_session_health(self, institution_id: str) -> Dict[str, Any]:
-        sessions = self.fb.query_documents(
+    def get_session_health(self, institution_id: str, page: int = 1, per_page: int = 20) -> Dict[str, Any]:
+        all_sessions = self.fb.query_documents(
             'attendance_sessions',
             filters=[{'field': 'institution_id', 'value': institution_id}],
             order_by='-created_at'
         )
+
+        total = len(all_sessions)
+        total_pages = max(1, (total + per_page - 1) // per_page)
+        page = max(1, min(page, total_pages))
+        start = (page - 1) * per_page
+        sessions = all_sessions[start:start + per_page]
         result_sessions = []
         for sess in sessions:
             course_id = sess.get('course_id', '')
@@ -240,6 +246,10 @@ class DashboardDataService:
             'active_sessions': active_count,
             'total_sessions': len(result_sessions),
             'sessions': result_sessions,
+            'total': total,
+            'page': page,
+            'per_page': per_page,
+            'total_pages': total_pages,
         }
 
     def create_attendance_session(self, institution_id: str, course_id: str,
@@ -262,6 +272,48 @@ class DashboardDataService:
             'network_status': 'stable',
             'created_at': self._now(),
         })
+
+    # ── LIVE CHECK-INS (for SSE real-time) ──
+
+    def get_recent_checkins(self, institution_id: str, since: str = None) -> List[Dict[str, Any]]:
+        session_ids = set(
+            s['id'] for s in self.fb.query_documents(
+                'attendance_sessions',
+                filters=[{'field': 'institution_id', 'value': institution_id}]
+            )
+        )
+        all_records = self.fb.query_documents('attendance_records')
+        relevant = [r for r in all_records if r.get('attendance_session_id') in session_ids]
+        if since:
+            relevant = [r for r in relevant if r.get('created_at', '') > since or r.get('marked_at', '') > since]
+        relevant.sort(key=lambda r: r.get('marked_at', r.get('created_at', '')), reverse=True)
+
+        # Resolve student names from users collection
+        students_cache = {}
+        result = []
+        for r in relevant[:10]:
+            sid = r.get('student_id', '')
+            if sid and sid not in students_cache:
+                user = self.fb.get_document('users', sid)
+                students_cache[sid] = user.get('display_name', sid) if user else sid
+            name = students_cache.get(sid, sid)
+            session = None
+            sess_id = r.get('attendance_session_id', '')
+            if sess_id:
+                sess = self.fb.get_document('attendance_sessions', sess_id)
+                if sess:
+                    session = sess.get('course_name', sess_id)
+            result.append({
+                'id': r.get('id', ''),
+                'student_id': sid,
+                'student_name': name,
+                'status': r.get('status', 'present'),
+                'marked_at': r.get('marked_at', r.get('created_at', '')),
+                'session': session or sess_id,
+                'is_suspicious': r.get('is_suspicious', False),
+                'suspicion_reason': r.get('suspicion_reason', ''),
+            })
+        return result
 
     # ── ATTENDANCE TRENDS ──
     # Computed from attendance_records grouped by date
@@ -310,51 +362,65 @@ class DashboardDataService:
 
         faculty_comparison = []
         for fac, fac_students in faculty_students.items():
-            rates = []
+            fac_rates = []
             for s in fac_students:
                 student_records = [r for r in relevant if r.get('student_id') == s.get('id')]
                 total = len(student_records)
                 present = sum(1 for r in student_records if r.get('status') == 'present')
-                rates.append(round(present / total * 100, 1) if total > 0 else 0)
-            avg = round(sum(rates) / len(rates), 1) if rates else 0
-            faculty_comparison.append({'faculty': fac, 'rate': avg})
+                fac_rates.append(round(present / total * 100, 1) if total > 0 else 0)
+            fac_avg = round(sum(fac_rates) / len(fac_rates), 1) if fac_rates else 0
+            faculty_comparison.append({'faculty': fac, 'rate': fac_avg})
         if not faculty_comparison:
             faculty_comparison = [{'faculty': 'All', 'rate': 0}]
 
-        avg = round(sum(rates) / len(rates), 1) if rates else 0
+        overall_avg = round(sum(rates) / len(rates), 1) if rates else 0
         return {
             'daily_rates': rates,
             'dates': dates,
-            'average': avg,
+            'average': overall_avg,
             'faculty_comparison': faculty_comparison,
         }
 
     # ── STUDENTS WITH RISK ──
     # Collection: users with role=student + enrollment and attendance records
 
-    def get_students_with_risk(self, institution_id: str, limit: int = 12) -> List[Dict[str, Any]]:
-        students = self.fb.query_documents(
+    def get_students_with_risk(self, institution_id: str, page: int = 1, per_page: int = 12, search: str = '') -> Dict[str, Any]:
+        all_students = self.fb.query_documents(
             'users',
             filters=[{'field': 'institution_id', 'value': institution_id},
-                     {'field': 'role', 'value': 'student'}],
-            limit=limit
+                     {'field': 'role', 'value': 'student'}]
         )
-        # Get all attendance records for these students
-        student_ids = [s['id'] for s in students]
+
+        if search:
+            q = search.strip().lower()
+            all_students = [s for s in all_students if (
+                q in s.get('first_name', '').lower()
+                or q in s.get('last_name', '').lower()
+                or q in s.get('email', '').lower()
+                or q in (s.get('student_id') or '').lower()
+                or q in s.get('faculty', '').lower()
+            )]
+
+        total = len(all_students)
+        total_pages = max(1, (total + per_page - 1) // per_page)
+        page = max(1, min(page, total_pages))
+        start = (page - 1) * per_page
+        students_page = all_students[start:start + per_page]
+
+        student_ids = [s['id'] for s in students_page]
         all_records = self.fb.query_documents('attendance_records')
         relevant = [r for r in all_records if r.get('student_id') in student_ids]
 
-        # Get security events for these students
         alerts = self.fb.query_documents('security_logs')
         student_alerts = [a for a in alerts if a.get('user_id') in student_ids]
 
         result = []
-        for s in students:
+        for s in students_page:
             sid = s['id']
             records = [r for r in relevant if r.get('student_id') == sid]
-            total = len(records)
+            total_rec = len(records)
             present = sum(1 for r in records if r.get('status') == 'present')
-            attendance_pct = round(present / total * 100, 1) if total > 0 else 0
+            attendance_pct = round(present / total_rec * 100, 1) if total_rec > 0 else 0
 
             suspicious = [a for a in student_alerts if a.get('user_id') == sid and a.get('risk_score', 0) > 30]
             suspicious_count = len(suspicious)
@@ -367,7 +433,9 @@ class DashboardDataService:
                 risk = 'low'
 
             result.append({
+                'id': sid,
                 'name': f"{s.get('first_name', '')} {s.get('last_name', '')}".strip() or s.get('email', 'Unknown'),
+                'email': s.get('email', ''),
                 'student_id': s.get('student_id', s.get('id', '')[:8]),
                 'faculty': s.get('faculty', 'Allied Health'),
                 'attendance_pct': attendance_pct,
@@ -379,7 +447,84 @@ class DashboardDataService:
             })
 
         result.sort(key=lambda x: {'high': 0, 'medium': 1, 'low': 2}.get(x['risk_level'], 3))
-        return result
+        return {
+            'students': result,
+            'total': total,
+            'page': page,
+            'per_page': per_page,
+            'total_pages': total_pages,
+        }
+
+    def get_student_detail(self, institution_id: str, student_id: str) -> Optional[Dict[str, Any]]:
+        student = self.fb.get_document('users', student_id)
+        if not student or student.get('institution_id') != institution_id:
+            return None
+
+        all_records = self.fb.query_documents('attendance_records')
+        student_records = [r for r in all_records if r.get('student_id') == student_id]
+
+        session_ids = list(set(r.get('attendance_session_id') for r in student_records if r.get('attendance_session_id')))
+        sessions = []
+        for sid in session_ids:
+            session = self.fb.get_document('attendance_sessions', sid)
+            if session:
+                sessions.append(session)
+
+        all_security = self.fb.query_documents('security_logs')
+        student_security = [s for s in all_security if s.get('user_id') == student_id]
+
+        course_breakdown = {}
+        for rec in student_records:
+            sess_id = rec.get('attendance_session_id')
+            session = next((s for s in sessions if s.get('id') == sess_id), None)
+            course_name = session.get('course_name', 'Unknown') if session else 'Unknown'
+            course_breakdown.setdefault(course_name, {'total': 0, 'present': 0})
+            course_breakdown[course_name]['total'] += 1
+            if rec.get('status') == 'present':
+                course_breakdown[course_name]['present'] += 1
+
+        total_sessions = len(student_records)
+        present_count = sum(1 for r in student_records if r.get('status') == 'present')
+        attendance_pct = round(present_count / total_sessions * 100, 1) if total_sessions > 0 else 0
+
+        return {
+            'profile': {
+                'id': student['id'],
+                'email': student.get('email'),
+                'first_name': student.get('first_name'),
+                'last_name': student.get('last_name'),
+                'student_id': student.get('student_id'),
+                'faculty': student.get('faculty'),
+                'phone': student.get('phone'),
+                'is_active': student.get('is_active', True),
+                'email_verified': student.get('email_verified', False),
+                'trusted_device': student.get('trusted_device', False),
+                'vpn_detected': student.get('vpn_detected', False),
+                'last_login': student.get('last_login'),
+                'created_at': student.get('created_at'),
+            },
+            'attendance': {
+                'total_sessions': total_sessions,
+                'present': present_count,
+                'absent': total_sessions - present_count,
+                'attendance_pct': attendance_pct,
+                'course_breakdown': [
+                    {'course': k, 'total': v['total'], 'present': v['present'],
+                     'rate': round(v['present'] / v['total'] * 100, 1)}
+                    for k, v in course_breakdown.items()
+                ],
+            },
+            'security': {
+                'total_events': len(student_security),
+                'critical': sum(1 for e in student_security if e.get('severity') == 'critical'),
+                'high': sum(1 for e in student_security if e.get('severity') == 'high'),
+                'events': [
+                    {'event_type': e.get('event_type'), 'description': e.get('description'),
+                     'severity': e.get('severity'), 'created_at': e.get('created_at')}
+                    for e in student_security[-10:]
+                ],
+            },
+        }
 
     # ── OFFLINE LOG ──
     # Collection: offline_sync_queue, nodes from network_nodes
@@ -592,17 +737,21 @@ class DashboardDataService:
     # ── PAYMENTS ──
     # Collections: payment_transactions, mobile_money_providers
 
-    def get_payment_status(self, institution_id: str) -> Dict[str, Any]:
+    def get_payment_status(self, institution_id: str, page: int = 1, per_page: int = 10) -> Dict[str, Any]:
         providers = self.fb.query_documents(
             'mobile_money_providers',
             filters=[{'field': 'institution_id', 'value': institution_id}]
         )
-        txns = self.fb.query_documents(
+        all_txns = self.fb.query_documents(
             'payment_transactions',
             filters=[{'field': 'institution_id', 'value': institution_id}],
             order_by='-created_at',
-            limit=10
         )
+        total_txns = len(all_txns)
+        total_pages = max(1, (total_txns + per_page - 1) // per_page)
+        page = max(1, min(page, total_pages))
+        start = (page - 1) * per_page
+        txns = all_txns[start:start + per_page]
 
         pending_txns = sum(p.get('pending_txns', 0) for p in providers)
         total_sales = sum(t.get('amount_xaf', 0) for t in txns if t.get('status') == 'completed')
@@ -635,6 +784,10 @@ class DashboardDataService:
                 }
                 for t in txns
             ],
+            'total_txns': total_txns,
+            'page': page,
+            'per_page': per_page,
+            'total_pages': total_pages,
         }
 
     def create_transaction(self, institution_id: str, phone: str,
@@ -705,6 +858,323 @@ class DashboardDataService:
             self.fb.update_document('p2p_peers', peer_id, data)
             return peer_id
         return self.fb.create_document('p2p_peers', data)
+
+    # ── USER MANAGEMENT ──
+
+    def list_users(self, institution_id: str, search: str = '', page: int = 1, per_page: int = 20) -> Dict[str, Any]:
+        from src.infrastructure.repositories import user_repo, user_profile_repo
+        all_users = user_repo.get_by_institution(institution_id)
+        if search:
+            q = search.lower()
+            all_users = [u for u in all_users if q in u.get('first_name', '').lower() or q in u.get('last_name', '').lower() or q in u.get('email', '').lower()]
+        total = len(all_users)
+        all_users.sort(key=lambda u: u.get('created_at', ''), reverse=True)
+        total_pages = max(1, (total + per_page - 1) // per_page)
+        page = max(1, min(page, total_pages))
+        start = (page - 1) * per_page
+        users = all_users[start:start + per_page]
+        result = []
+        dept_cache = {}
+        for u in users:
+            profile = user_profile_repo.get_by_user(u.get('id', ''))
+            dept_id = profile.get('department_id', '') if profile else ''
+            dept_name = ''
+            if dept_id:
+                if dept_id not in dept_cache:
+                    d = self.fb.get_document('departments', dept_id)
+                    dept_cache[dept_id] = d.get('name', dept_id) if d else dept_id
+                dept_name = dept_cache[dept_id]
+            result.append({
+                'id': u.get('id', ''),
+                'email': u.get('email', ''),
+                'first_name': u.get('first_name', ''),
+                'last_name': u.get('last_name', ''),
+                'role': u.get('role', ''),
+                'phone': u.get('phone', ''),
+                'is_active': u.get('is_active', True),
+                'department_id': dept_id,
+                'department_name': dept_name,
+                'last_login': u.get('last_login', ''),
+                'created_at': u.get('created_at', ''),
+            })
+        return {'users': result, 'total': total, 'page': page, 'per_page': per_page, 'total_pages': total_pages}
+
+    def create_user(self, institution_id: str, data: Dict[str, Any]) -> str:
+        from src.infrastructure.repositories import user_repo
+        import uuid, hashlib
+        user_id = str(uuid.uuid4())
+        password_hash = hashlib.sha256((data.get('password', 'default123')).encode()).hexdigest()
+        doc = {
+            'id': user_id,
+            'email': data.get('email', ''),
+            'password_hash': password_hash,
+            'first_name': data.get('first_name', ''),
+            'last_name': data.get('last_name', ''),
+            'role': data.get('role', 'student'),
+            'institution_id': institution_id,
+            'phone': data.get('phone', ''),
+            'is_active': True,
+            'email_verified': False,
+            'created_at': self._now(),
+            'updated_at': self._now(),
+        }
+        user_repo.firebase_service.create_document('users', doc, user_id)
+        # Create profile if department provided
+        dept_id = data.get('department_id', '')
+        if dept_id:
+            profile = {
+                'id': str(uuid.uuid4()),
+                'user_id': user_id,
+                'institution_id': institution_id,
+                'department_id': dept_id,
+                'employee_id': data.get('employee_id', ''),
+                'student_id': data.get('student_id', ''),
+                'join_date': self._now(),
+            }
+            from src.infrastructure.repositories import user_profile_repo
+            user_profile_repo.firebase_service.create_document('user_profiles', profile, profile['id'])
+        return user_id
+
+    def update_user(self, user_id: str, data: Dict[str, Any]) -> bool:
+        from src.infrastructure.repositories import user_repo
+        update = {}
+        for k in ('first_name', 'last_name', 'email', 'phone', 'role'):
+            if k in data:
+                update[k] = data[k]
+        if 'is_active' in data:
+            update['is_active'] = data['is_active']
+        update['updated_at'] = self._now()
+        return user_repo.update(user_id, update)
+
+    def toggle_user_status(self, user_id: str) -> bool:
+        from src.infrastructure.repositories import user_repo
+        user = user_repo.get_by_id(user_id)
+        if not user:
+            return False
+        return user_repo.update(user_id, {'is_active': not user.get('is_active', True), 'updated_at': self._now()})
+
+    def delete_user(self, user_id: str) -> bool:
+        """Delete a user and their Firebase Auth account"""
+        from src.infrastructure.repositories import user_repo
+        user = user_repo.get_by_id(user_id)
+        if not user:
+            return False
+        try:
+            self.fb.delete_user(user_id)
+        except Exception:
+            pass  # Firebase Auth delete is best-effort
+        return user_repo.delete(user_id)
+
+    # ── COURSE MANAGEMENT ──
+
+    def list_courses(self, institution_id: str, search: str = '', page: int = 1, per_page: int = 20) -> Dict[str, Any]:
+        from src.infrastructure.repositories import course_repo
+        all_courses = course_repo.get_by_institution(institution_id)
+        if search:
+            q = search.lower()
+            all_courses = [c for c in all_courses if q in c.get('name', '').lower() or q in c.get('code', '').lower()]
+        total = len(all_courses)
+        all_courses.sort(key=lambda c: c.get('created_at', ''), reverse=True)
+        total_pages = max(1, (total + per_page - 1) // per_page)
+        page = max(1, min(page, total_pages))
+        start = (page - 1) * per_page
+        courses = all_courses[start:start + per_page]
+        result = []
+        dept_cache = {}
+        user_cache = {}
+        for c in courses:
+            dept_name = ''
+            did = c.get('department_id', '')
+            if did:
+                if did not in dept_cache:
+                    d = self.fb.get_document('departments', did)
+                    dept_cache[did] = d.get('name', did) if d else did
+                dept_name = dept_cache[did]
+            lecturer_name = ''
+            lid = c.get('lecturer_id', '')
+            if lid:
+                if lid not in user_cache:
+                    u = self.fb.get_document('users', lid)
+                    user_cache[lid] = f"{u.get('first_name','')} {u.get('last_name','')}".strip() if u else lid
+                lecturer_name = user_cache[lid]
+            result.append({
+                'id': c.get('id', ''),
+                'code': c.get('code', ''),
+                'name': c.get('name', ''),
+                'department_id': did,
+                'department_name': dept_name,
+                'lecturer_id': lid,
+                'lecturer_name': lecturer_name,
+                'description': c.get('description', ''),
+                'credits': c.get('credits', 0),
+                'is_active': c.get('is_active', True),
+                'created_at': c.get('created_at', ''),
+            })
+        return {'courses': result, 'total': total, 'page': page, 'per_page': per_page, 'total_pages': total_pages}
+
+    def create_course(self, institution_id: str, data: Dict[str, Any]) -> str:
+        from src.infrastructure.repositories import course_repo
+        import uuid
+        course_id = str(uuid.uuid4())
+        doc = {
+            'id': course_id,
+            'institution_id': institution_id,
+            'department_id': data.get('department_id', ''),
+            'code': data.get('code', ''),
+            'name': data.get('name', ''),
+            'lecturer_id': data.get('lecturer_id', ''),
+            'description': data.get('description', ''),
+            'credits': data.get('credits', 0),
+            'is_active': True,
+            'created_at': self._now(),
+        }
+        course_repo.firebase_service.create_document('courses', doc, course_id)
+        return course_id
+
+    def update_course(self, course_id: str, data: Dict[str, Any]) -> bool:
+        from src.infrastructure.repositories import course_repo
+        update = {}
+        for k in ('code', 'name', 'department_id', 'lecturer_id', 'description', 'credits', 'is_active'):
+            if k in data:
+                update[k] = data[k]
+        return course_repo.update(course_id, update)
+
+    def delete_course(self, course_id: str) -> bool:
+        from src.infrastructure.repositories import course_repo
+        return course_repo.delete(course_id)
+
+    # ── DEPARTMENT MANAGEMENT ──
+
+    def list_departments(self, institution_id: str, search: str = '', page: int = 1, per_page: int = 20) -> Dict[str, Any]:
+        from src.infrastructure.repositories import department_repo
+        all_depts = department_repo.get_by_institution(institution_id)
+        if search:
+            q = search.lower()
+            all_depts = [d for d in all_depts if q in d.get('name', '').lower() or q in d.get('code', '').lower()]
+        total = len(all_depts)
+        all_depts.sort(key=lambda d: d.get('created_at', ''), reverse=True)
+        total_pages = max(1, (total + per_page - 1) // per_page)
+        page = max(1, min(page, total_pages))
+        start = (page - 1) * per_page
+        depts = all_depts[start:start + per_page]
+        result = []
+        head_cache = {}
+        for d in depts:
+            head_name = ''
+            hid = d.get('head_id', '')
+            if hid:
+                if hid not in head_cache:
+                    u = self.fb.get_document('users', hid)
+                    head_cache[hid] = f"{u.get('first_name','')} {u.get('last_name','')}".strip() if u else hid
+                head_name = head_cache[hid]
+            result.append({
+                'id': d.get('id', ''),
+                'name': d.get('name', ''),
+                'code': d.get('code', ''),
+                'head_id': hid,
+                'head_name': head_name,
+                'description': d.get('description', ''),
+                'is_active': d.get('is_active', True),
+                'created_at': d.get('created_at', ''),
+            })
+        return {'departments': result, 'total': total, 'page': page, 'per_page': per_page, 'total_pages': total_pages}
+
+    def create_department(self, institution_id: str, data: Dict[str, Any]) -> str:
+        from src.infrastructure.repositories import department_repo
+        import uuid
+        dept_id = str(uuid.uuid4())
+        doc = {
+            'id': dept_id,
+            'institution_id': institution_id,
+            'name': data.get('name', ''),
+            'code': data.get('code', ''),
+            'head_id': data.get('head_id', ''),
+            'description': data.get('description', ''),
+            'is_active': True,
+            'created_at': self._now(),
+        }
+        department_repo.firebase_service.create_document('departments', doc, dept_id)
+        return dept_id
+
+    def update_department(self, dept_id: str, data: Dict[str, Any]) -> bool:
+        from src.infrastructure.repositories import department_repo
+        update = {}
+        for k in ('name', 'code', 'head_id', 'description', 'is_active'):
+            if k in data:
+                update[k] = data[k]
+        return department_repo.update(dept_id, update)
+
+    def delete_department(self, dept_id: str) -> bool:
+        from src.infrastructure.repositories import department_repo
+        return department_repo.delete(dept_id)
+
+    # ── ENROLLMENT MANAGEMENT ──
+
+    def list_enrollments(self, institution_id: str, search: str = '', page: int = 1, per_page: int = 20) -> Dict[str, Any]:
+        from src.infrastructure.repositories import course_enrollment_repo, course_repo, user_repo
+        all_enrollments = course_enrollment_repo.list_all(order_by='-created_at')
+        # Resolve course IDs to this institution
+        inst_courses = set(c['id'] for c in course_repo.get_by_institution(institution_id))
+        all_enrollments = [e for e in all_enrollments if e.get('course_id') in inst_courses]
+        if search:
+            q = search.lower()
+            all_enrollments = [e for e in all_enrollments if q in e.get('student_id', '').lower()]
+        total = len(all_enrollments)
+        total_pages = max(1, (total + per_page - 1) // per_page)
+        page = max(1, min(page, total_pages))
+        enrollments = all_enrollments[(page - 1) * per_page:page * per_page]
+        result = []
+        for e in enrollments:
+            student = user_repo.get_by_id(e.get('student_id', ''))
+            course = course_repo.get_by_id(e.get('course_id', ''))
+            result.append({
+                'id': e.get('id', ''),
+                'course_id': e.get('course_id', ''),
+                'course_name': course.get('name', e.get('course_id', '')) if course else e.get('course_id', ''),
+                'course_code': course.get('code', '') if course else '',
+                'student_id': e.get('student_id', ''),
+                'student_name': f"{student.get('first_name', '')} {student.get('last_name', '')}".strip() if student else e.get('student_id', ''),
+                'enrollment_date': e.get('enrollment_date', e.get('created_at', '')),
+                'is_active': e.get('is_active', True),
+                'created_at': e.get('created_at', ''),
+            })
+        return {'enrollments': result, 'total': total, 'page': page, 'per_page': per_page, 'total_pages': total_pages}
+
+    def create_enrollment(self, institution_id: str, data: Dict[str, Any]) -> str:
+        from src.infrastructure.repositories import course_enrollment_repo
+        import uuid
+        enrollment_id = str(uuid.uuid4())
+        doc = {
+            'id': enrollment_id,
+            'course_id': data.get('course_id', ''),
+            'student_id': data.get('student_id', ''),
+            'institution_id': institution_id,
+            'enrollment_date': self._now(),
+            'is_active': True,
+            'created_at': self._now(),
+            'updated_at': self._now(),
+        }
+        course_enrollment_repo.firebase_service.create_document('course_enrollments', doc, enrollment_id)
+        return enrollment_id
+
+    def delete_enrollment(self, enrollment_id: str) -> bool:
+        from src.infrastructure.repositories import course_enrollment_repo
+        return course_enrollment_repo.delete(enrollment_id)
+
+    # ── LOOKUP HELPERS ──
+
+    def list_lecturers(self, institution_id: str) -> List[Dict[str, str]]:
+        from src.infrastructure.repositories import user_repo
+        from src.domain.entities import UserRole
+        users = user_repo.get_by_institution_and_role(institution_id, UserRole.LECTURER)
+        return [{'id': u['id'], 'name': f"{u.get('first_name', '')} {u.get('last_name', '')}".strip()} for u in users]
+
+    def list_roles(self) -> List[Dict[str, str]]:
+        return [
+            {'id': 'student', 'name': 'Student'},
+            {'id': 'lecturer', 'name': 'Lecturer'},
+            {'id': 'institutional_admin', 'name': 'Admin'},
+        ]
 
     # ── QUICK ACTIONS (static) ──
 

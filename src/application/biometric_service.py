@@ -3,6 +3,8 @@ from datetime import datetime
 from typing import Optional, Dict, Any, List
 import base64
 import hashlib
+import math
+import secrets
 
 logger = logging.getLogger(__name__)
 
@@ -211,6 +213,160 @@ class BiometricService:
                 'error': 'Failed to revoke biometric enrollment'
             }
     
+    # ── FACE RECOGNITION ──
+
+    def enroll_face(self, user_id: str, descriptor: List[float], institution_id: str = None) -> Dict[str, Any]:
+        """Enroll a face descriptor (128-dim embedding from face-api.js)"""
+        try:
+            if not descriptor or len(descriptor) != 128:
+                return {'success': False, 'error': 'Invalid face descriptor (must be 128 floats)'}
+
+            enrollment_id = secrets.token_hex(8)
+            enrollment_data = {
+                'id': enrollment_id,
+                'user_id': user_id,
+                'institution_id': institution_id,
+                'biometric_type': 'face',
+                'biometric_data': descriptor,
+                'is_active': True,
+                'enrollment_date': datetime.utcnow().isoformat(),
+                'last_verified': datetime.utcnow().isoformat(),
+                'verification_count': 0,
+                'trust_score': 0.8,
+            }
+
+            self.firebase_service.create_document('biometric_enrollments', enrollment_data, enrollment_id)
+            logger.info(f"Face enrolled for user {user_id} (id={enrollment_id})")
+            return {'success': True, 'enrollment_id': enrollment_id, 'message': 'Face enrolled successfully'}
+
+        except Exception as e:
+            logger.error(f"Face enrollment error: {str(e)}")
+            return {'success': False, 'error': 'Failed to enroll face'}
+
+    def verify_face(self, user_id: str, descriptor: List[float], threshold: float = 0.6) -> Dict[str, Any]:
+        """Verify a face descriptor against enrolled faces using Euclidean distance"""
+        try:
+            if not descriptor or len(descriptor) != 128:
+                return {'verified': False, 'error': 'Invalid face descriptor (must be 128 floats)'}
+
+            enrollments = self.firebase_service.query_documents(
+                'biometric_enrollments',
+                filters=[
+                    {'field': 'user_id', 'value': user_id},
+                    {'field': 'biometric_type', 'value': 'face'},
+                    {'field': 'is_active', 'value': True}
+                ]
+            )
+
+            if not enrollments:
+                return {'verified': False, 'trust_score': 0.0, 'message': 'No face enrolled'}
+
+            best_distance = float('inf')
+            best_enrollment = None
+
+            for enrollment in enrollments:
+                enrolled_descriptor = enrollment.get('biometric_data', [])
+                if not enrolled_descriptor or len(enrolled_descriptor) != 128:
+                    continue
+
+                distance = self._euclidean_distance(descriptor, enrolled_descriptor)
+                if distance < best_distance:
+                    best_distance = distance
+                    best_enrollment = enrollment
+
+            if best_enrollment is None:
+                return {'verified': False, 'trust_score': 0.0, 'message': 'No valid enrolled faces'}
+
+            similarity = max(0.0, 1.0 - best_distance)
+            verified = best_distance <= threshold
+            trust_score = min(1.0, similarity)
+
+            if verified:
+                self.firebase_service.update_document('biometric_enrollments', best_enrollment['id'], {
+                    'last_verified': datetime.utcnow().isoformat(),
+                    'verification_count': best_enrollment.get('verification_count', 0) + 1,
+                    'trust_score': min(1.0, best_enrollment.get('trust_score', 0.8) + 0.02)
+                })
+                logger.info(f"Face verified for user {user_id} (distance={best_distance:.4f})")
+            else:
+                logger.warning(f"Face verification FAILED for user {user_id} (distance={best_distance:.4f} > threshold={threshold})")
+
+            return {
+                'verified': verified,
+                'confidence': round(similarity, 4),
+                'distance': round(best_distance, 4),
+                'threshold': threshold,
+                'trust_score': trust_score,
+                'enrollment_id': best_enrollment['id'],
+                'message': 'Face matched' if verified else 'Face does not match enrolled face'
+            }
+
+        except Exception as e:
+            logger.error(f"Face verification error: {str(e)}")
+            return {'verified': False, 'error': 'Failed to verify face'}
+
+    def get_face_status(self, user_id: str) -> Dict[str, Any]:
+        """Check if user has active face enrollment"""
+        try:
+            enrollments = self.firebase_service.query_documents(
+                'biometric_enrollments',
+                filters=[
+                    {'field': 'user_id', 'value': user_id},
+                    {'field': 'biometric_type', 'value': 'face'},
+                    {'field': 'is_active', 'value': True}
+                ]
+            )
+
+            if not enrollments:
+                return {'enrolled': False, 'total_enrollments': 0}
+
+            return {
+                'enrolled': True,
+                'total_enrollments': len(enrollments),
+                'enrollment': {
+                    'id': enrollments[0]['id'],
+                    'enrollment_date': enrollments[0]['enrollment_date'],
+                    'last_verified': enrollments[0].get('last_verified'),
+                    'verification_count': enrollments[0].get('verification_count', 0),
+                    'trust_score': enrollments[0].get('trust_score', 0.0)
+                }
+            }
+
+        except Exception as e:
+            logger.error(f"Face status error: {str(e)}")
+            return {'enrolled': False, 'error': 'Failed to get face status'}
+
+    def revoke_face(self, user_id: str) -> Dict[str, Any]:
+        """Revoke all face enrollments for a user"""
+        try:
+            enrollments = self.firebase_service.query_documents(
+                'biometric_enrollments',
+                filters=[
+                    {'field': 'user_id', 'value': user_id},
+                    {'field': 'biometric_type', 'value': 'face'},
+                    {'field': 'is_active', 'value': True}
+                ]
+            )
+
+            revoked = 0
+            for enrollment in enrollments:
+                self.firebase_service.update_document('biometric_enrollments', enrollment['id'], {
+                    'is_active': False,
+                    'revoked_date': datetime.utcnow().isoformat()
+                })
+                revoked += 1
+
+            logger.info(f"Revoked {revoked} face enrollment(s) for user {user_id}")
+            return {'success': True, 'revoked': revoked, 'message': f'Revoked {revoked} face enrollment(s)'}
+
+        except Exception as e:
+            logger.error(f"Face revocation error: {str(e)}")
+            return {'success': False, 'error': 'Failed to revoke face enrollments'}
+
+    def _euclidean_distance(self, a: List[float], b: List[float]) -> float:
+        """Euclidean distance between two vectors"""
+        return math.sqrt(sum((x - y) ** 2 for x, y in zip(a, b)))
+
     def _calculate_fingerprint_similarity(self, current: Dict[str, Any], enrolled: Dict[str, Any]) -> float:
         """Calculate similarity score between two fingerprints"""
         try:

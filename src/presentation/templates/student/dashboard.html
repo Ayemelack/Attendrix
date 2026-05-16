@@ -3,297 +3,1774 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Student Dashboard - Attendrix</title>
-    <meta name="description" content="Attendrix student dashboard for attendance tracking and course management">
-    
-    <!-- Favicon -->
+    <title>Attendrix Student</title>
+    <link rel="manifest" href="/static/manifest.json">
     <link rel="icon" type="image/x-icon" href="/static/images/favicon.ico">
-    
-    <!-- Bootstrap CSS -->
-    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
-    <!-- Font Awesome -->
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
-    <!-- Custom CSS -->
-    <link rel="stylesheet" href="{{ url_for('static', filename='css/landing.css') }}">
-    
+    <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.0/dist/chart.umd.min.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/@vladmandic/face-api/dist/face-api.js"></script>
+    <script src="/static/js/biometric-capture.js"></script>
+    <script>
+        if ('serviceWorker' in navigator) {
+            window.addEventListener('load', function() {
+                // navigator.serviceWorker.register('/static/js/sw.js', { scope: '/static/' }).then(function(reg) {
+                    console.log('SW registered:', reg.scope);
+                }, function(err) {
+                    console.warn('SW registration failed:', err);
+                });
+            });
+        }
+    </script>
     <style>
+        *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
         :root {
-            --primary-color: #4f46e5;
-            --primary-dark: #4338ca;
-            --secondary-color: #64748b;
-            --accent-color: #6366f1;
-            --bg-primary: #ffffff;
-            --bg-secondary: #f8fafc;
-            --bg-tertiary: #f1f5f9;
-            --text-primary: #1e293b;
-            --text-secondary: #64748b;
-            --text-tertiary: #94a3b8;
+            --bg-body: #07080e;
+            --bg-sidebar: #080b14;
+            --bg-card: #0f1225;
+            --bg-card-alt: #131730;
+            --bg-elevated: #181d38;
+            --border: #1a1f3a;
+            --border-light: #23284a;
+            --text: #e4e7f0;
+            --text-secondary: #9096b8;
+            --text-dim: #555b7a;
+            --accent: #7c5cfc;
+            --accent-soft: rgba(124,92,252,.08);
+            --accent-glow: rgba(124,92,252,.15);
+            --success: #10b981;
+            --success-soft: rgba(16,185,129,.12);
+            --warning: #f59e0b;
+            --warning-soft: rgba(245,158,11,.12);
+            --danger: #ef4444;
+            --danger-soft: rgba(239,68,68,.12);
+            --info: #06b6d4;
+            --sidebar-w: 200px;
+            --topbar-h: 56px;
+            --radius: 10px;
+            --radius-sm: 6px;
         }
-        
-        .dashboard-container {
-            padding: 20px;
-            max-width: 1400px;
-            margin: 0 auto;
+        html, body { height: 100%; font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, 'Inter', sans-serif; background: var(--bg-body); color: var(--text); font-size: 13.5px; line-height: 1.5; -webkit-font-smoothing: antialiased; }
+        ::-webkit-scrollbar { width: 5px; }
+        ::-webkit-scrollbar-thumb { background: var(--border-light); border-radius: 4px; }
+        ::-webkit-scrollbar-track { background: transparent; }
+
+        .app-wrap { display: flex; min-height: 100vh; }
+
+        /* ── SIDEBAR ── */
+        .sidebar { position: fixed; top: 0; left: 0; width: var(--sidebar-w); height: 100vh; background: var(--bg-sidebar); border-right: 1px solid var(--border); display: flex; flex-direction: column; z-index: 1000; transition: transform .25s cubic-bezier(.4,0,.2,1); }
+        .sidebar-brand { display: flex; align-items: center; gap: 10px; padding: 18px 16px; font-size: .95rem; font-weight: 700; background: linear-gradient(135deg,var(--accent),#a78bfa); -webkit-background-clip: text; -webkit-text-fill-color: transparent; border-bottom: 1px solid var(--border); }
+        .sidebar-brand i { -webkit-text-fill-color: var(--accent); font-size: 1.1rem; }
+        .sidebar-nav { flex: 1; padding: 8px 0; overflow-y: auto; }
+        .sidebar-nav a { display: flex; align-items: center; gap: 10px; padding: 10px 16px; color: var(--text-secondary); font-size: .78rem; font-weight: 500; transition: all .15s; border-left: 2px solid transparent; text-decoration: none; }
+        .sidebar-nav a i { width: 16px; text-align: center; font-size: .82rem; flex-shrink: 0; }
+        .sidebar-nav a:hover { color: var(--text); background: rgba(124,92,252,.05); }
+        .sidebar-nav a.active { color: var(--accent); background: var(--accent-soft); border-left-color: var(--accent); }
+        .sidebar-nav a .badge-dot { width: 6px; height: 6px; border-radius: 50%; margin-left: auto; }
+        .sidebar-nav a .badge-dot.red { background: var(--danger); }
+        .sidebar-nav a .badge-dot.green { background: var(--success); }
+        .sidebar-nav a .badge-dot.yellow { background: var(--warning); }
+        .sidebar-footer { padding: 8px 0; border-top: 1px solid var(--border); }
+        .sidebar-footer a { display: flex; align-items: center; gap: 10px; padding: 10px 16px; color: var(--text-dim); font-size: .75rem; font-weight: 500; text-decoration: none; }
+        .sidebar-footer a:hover { color: var(--text-secondary); }
+        .sidebar-overlay { display: none; position: fixed; inset: 0; background: rgba(0,0,0,.6); z-index: 999; }
+
+        /* ── MAIN ── */
+        .main { flex: 1; margin-left: var(--sidebar-w); display: flex; flex-direction: column; min-height: 100vh; }
+
+        /* ── TOPBAR ── */
+        .topbar { position: sticky; top: 0; height: var(--topbar-h); background: rgba(7,8,14,.85); backdrop-filter: blur(14px); -webkit-backdrop-filter: blur(14px); border-bottom: 1px solid var(--border); display: flex; align-items: center; justify-content: space-between; padding: 0 20px; z-index: 100; }
+        .topbar-left { display: flex; align-items: center; gap: 12px; }
+        .sidebar-toggle { display: none; background: none; border: none; color: var(--text-secondary); font-size: 1rem; cursor: pointer; padding: 4px; }
+        .topbar-title { font-size: .82rem; font-weight: 600; color: var(--text); }
+        .topbar-right { display: flex; align-items: center; gap: 10px; }
+        .topbar-icon-btn { position: relative; background: var(--bg-card); border: 1px solid var(--border); color: var(--text-secondary); width: 32px; height: 32px; border-radius: 8px; display: flex; align-items: center; justify-content: center; cursor: pointer; font-size: .78rem; transition: all .15s; }
+        .topbar-icon-btn:hover { background: var(--bg-elevated); color: var(--text); }
+        .topbar-icon-btn .badge-count { position: absolute; top: -4px; right: -4px; background: var(--danger); color: #fff; font-size: .55rem; font-weight: 700; padding: 1px 5px; border-radius: 10px; min-width: 16px; text-align: center; line-height: 1.4; }
+        .lang-btn { background: var(--bg-card); border: 1px solid var(--border); color: var(--text-secondary); padding: 4px 9px; border-radius: 6px; cursor: pointer; font-size: .68rem; font-weight: 600; transition: all .15s; }
+        .lang-btn:hover { background: var(--bg-elevated); color: var(--text); }
+        .topbar-user { display: flex; align-items: center; gap: 8px; cursor: pointer; }
+        .topbar-avatar { width: 30px; height: 30px; border-radius: 50%; background: linear-gradient(135deg,var(--accent),#a78bfa); color: #fff; display: flex; align-items: center; justify-content: center; font-size: .7rem; font-weight: 700; }
+        .topbar-name { font-size: .75rem; font-weight: 500; color: var(--text-secondary); }
+
+        /* ── NETWORK BAR ── */
+        .network-bar { display: flex; align-items: center; gap: 16px; padding: 6px 20px; background: var(--bg-card); border-bottom: 1px solid var(--border); font-size: .68rem; color: var(--text-dim); overflow-x: auto; }
+        .network-bar .item { display: flex; align-items: center; gap: 5px; white-space: nowrap; }
+        .network-bar .dot { width: 5px; height: 5px; border-radius: 50%; flex-shrink: 0; }
+        .network-bar .dot.green { background: var(--success); }
+        .network-bar .dot.yellow { background: var(--warning); }
+        .network-bar .dot.red { background: var(--danger); }
+        .network-bar .dot.gray { background: var(--text-dim); }
+
+        /* ── CONTENT ── */
+        .content { flex: 1; padding: 20px 24px; max-width: 1400px; width: 100%; margin: 0 auto; overflow-y: auto; }
+        .section { display: none; }
+        .section.active { display: block; animation: fadeUp .3s ease; }
+        @keyframes fadeUp { from { opacity: 0; transform: translateY(8px); } to { opacity: 1; transform: translateY(0); } }
+
+        .section-title { font-size: 1rem; font-weight: 700; margin-bottom: 16px; display: flex; align-items: center; gap: 8px; }
+        .section-sub { font-size: .75rem; color: var(--text-dim); margin-bottom: 18px; }
+
+        /* ── STATS GRID ── */
+        .stats-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(180px, 1fr)); gap: 12px; margin-bottom: 20px; }
+        .stat-card { background: var(--bg-card); border: 1px solid var(--border); border-radius: var(--radius); padding: 16px 18px; position: relative; overflow: hidden; }
+        .stat-card .stat-icon { font-size: 1.2rem; margin-bottom: 6px; }
+        .stat-card .stat-icon.purple { color: var(--accent); }
+        .stat-card .stat-icon.green { color: var(--success); }
+        .stat-card .stat-icon.yellow { color: var(--warning); }
+        .stat-card .stat-icon.blue { color: var(--info); }
+        .stat-value { font-size: 1.5rem; font-weight: 700; line-height: 1.2; }
+        .stat-label { font-size: .7rem; color: var(--text-dim); margin-top: 2px; }
+        .stat-trend { font-size: .65rem; margin-top: 4px; font-weight: 600; }
+        .stat-trend.up { color: var(--success); }
+        .stat-trend.down { color: var(--danger); }
+
+        /* ── STATUS BADGE ── */
+        .status-badge { display: inline-flex; align-items: center; gap: 5px; padding: 3px 12px; border-radius: 20px; font-size: .68rem; font-weight: 700; text-transform: uppercase; letter-spacing: .04em; }
+        .status-badge.safe { background: var(--success-soft); color: var(--success); }
+        .status-badge.at-risk { background: var(--warning-soft); color: var(--warning); }
+        .status-badge.critical { background: var(--danger-soft); color: var(--danger); }
+        .status-badge .dot { width: 5px; height: 5px; border-radius: 50%; }
+        .status-badge.safe .dot { background: var(--success); }
+        .status-badge.at-risk .dot { background: var(--warning); }
+        .status-badge.critical .dot { background: var(--danger); }
+
+        /* ── CARDS ── */
+        .card { background: var(--bg-card); border: 1px solid var(--border); border-radius: var(--radius); margin-bottom: 14px; }
+        .card-header { display: flex; align-items: center; justify-content: space-between; padding: 13px 16px; border-bottom: 1px solid var(--border); font-size: .78rem; font-weight: 600; }
+        .card-body { padding: 13px 16px; }
+
+        .grid-2col { display: grid; grid-template-columns: 1fr 1fr; gap: 14px; }
+        .empty-muted { padding: 24px; text-align: center; color: var(--text-dim); font-size: .78rem; }
+
+        /* ── FEED ── */
+        .feed-item { display: flex; align-items: center; gap: 10px; padding: 9px 0; border-bottom: 1px solid var(--border); }
+        .feed-item:last-child { border-bottom: none; }
+        .feed-dot { width: 7px; height: 7px; border-radius: 50%; flex-shrink: 0; }
+        .feed-msg { flex: 1; font-size: .75rem; color: var(--text-secondary); line-height: 1.4; }
+        .feed-time { font-size: .65rem; color: var(--text-dim); white-space: nowrap; }
+
+        /* ── TABLE ── */
+        .table-wrap { overflow-x: auto; }
+        .lec-table { width: 100%; border-collapse: collapse; font-size: .75rem; }
+        .lec-table th { text-align: left; padding: 10px 12px; color: var(--text-dim); font-weight: 600; font-size: .65rem; text-transform: uppercase; letter-spacing: .05em; border-bottom: 1px solid var(--border); }
+        .lec-table td { padding: 10px 12px; border-bottom: 1px solid var(--border); color: var(--text-secondary); }
+        .lec-table tr:hover td { background: var(--bg-card-alt); }
+        .lec-table .cell-name { font-weight: 500; color: var(--text); }
+
+        /* ── PILLS ── */
+        .pill { display: inline-block; padding: 2px 10px; border-radius: 12px; font-size: .65rem; font-weight: 600; }
+        .pill-green { background: var(--success-soft); color: var(--success); }
+        .pill-yellow { background: var(--warning-soft); color: var(--warning); }
+        .pill-red { background: var(--danger-soft); color: var(--danger); }
+        .pill-gray { background: rgba(85,91,122,.15); color: var(--text-dim); }
+
+        /* ── COURSE GRID ── */
+        .course-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(240px, 1fr)); gap: 12px; }
+        .course-card { background: var(--bg-card); border: 1px solid var(--border); border-radius: var(--radius); padding: 16px; transition: border-color .2s; }
+        .course-card:hover { border-color: var(--border-light); }
+        .course-card .cc-top { display: flex; justify-content: space-between; align-items: flex-start; margin-bottom: 6px; }
+        .course-card .cc-code { font-size: .68rem; color: var(--text-dim); font-weight: 600; }
+        .course-card .cc-name { font-size: .85rem; font-weight: 600; }
+        .course-card .cc-lecturer { font-size: .7rem; color: var(--text-dim); margin-bottom: 10px; }
+        .bar-track { height: 5px; background: var(--border); border-radius: 4px; overflow: hidden; margin: 8px 0; }
+        .bar-fill { height: 100%; border-radius: 4px; background: var(--accent); transition: width .6s ease; }
+        .bar-fill.good { background: var(--success); }
+        .bar-fill.warn { background: var(--warning); }
+        .bar-fill.bad { background: var(--danger); }
+        .course-card .cc-footer { display: flex; justify-content: space-between; font-size: .68rem; color: var(--text-dim); margin-top: 4px; }
+
+        /* ── RISK PILL ── */
+        .risk-badge { display: inline-block; padding: 1px 9px; border-radius: 12px; font-size: .6rem; font-weight: 700; text-transform: uppercase; letter-spacing: .04em; }
+        .risk-badge.low { background: var(--success-soft); color: var(--success); }
+        .risk-badge.medium { background: var(--warning-soft); color: var(--warning); }
+        .risk-badge.high { background: var(--danger-soft); color: var(--danger); }
+
+        /* ── SCANNER ── */
+        .scanner-card { max-width: 520px; background: var(--bg-card); border: 1px solid var(--border); border-radius: var(--radius); padding: 28px; text-align: center; }
+        .scanner-card .sc-icon { width: 56px; height: 56px; border-radius: 16px; background: var(--accent-soft); display: flex; align-items: center; justify-content: center; margin: 0 auto 14px; font-size: 1.4rem; color: var(--accent); }
+        .scanner-card h3 { font-size: .95rem; margin-bottom: 4px; }
+        .scanner-card .sc-sub { font-size: .72rem; color: var(--text-dim); margin-bottom: 18px; }
+        .code-input-group { display: flex; gap: 8px; max-width: 360px; margin: 0 auto; }
+        .code-input-group input { flex: 1; background: var(--bg-card-alt); border: 1px solid var(--border); border-radius: var(--radius-sm); padding: 10px 14px; color: var(--text); font-size: 1rem; text-align: center; letter-spacing: 2px; outline: none; transition: border-color .2s; }
+        .code-input-group input:focus { border-color: var(--accent); }
+        .code-input-group input::placeholder { letter-spacing: 0; font-size: .78rem; color: var(--text-dim); }
+        .btn { padding: 9px 18px; border-radius: var(--radius-sm); font-size: .78rem; font-weight: 600; cursor: pointer; border: none; transition: all .15s; }
+        .btn-primary { background: var(--accent); color: #fff; }
+        .btn-primary:hover { background: #6a4ce0; }
+        .btn-secondary { background: var(--bg-elevated); color: var(--text-secondary); border: 1px solid var(--border); }
+        .btn-secondary:hover { background: var(--border-light); color: var(--text); }
+
+        /* ── SCAN RESULT ── */
+        .scan-result { margin-top: 16px; text-align: left; display: none; }
+        .scan-result .sr-card { background: var(--bg-card-alt); border: 1px solid var(--border); border-radius: var(--radius); padding: 16px; }
+        .scan-result .sr-row { display: flex; justify-content: space-between; padding: 6px 0; font-size: .75rem; }
+        .scan-result .sr-row .lbl { color: var(--text-dim); }
+        .scan-result .sr-row .val { color: var(--text-secondary); font-weight: 500; }
+        .scan-result .trust-ring { width: 72px; height: 72px; margin: 0 auto 12px; position: relative; }
+        .scan-result .trust-ring svg { transform: rotate(-90deg); }
+        .scan-result .trust-ring .bg { fill: none; stroke: var(--border); stroke-width: 5; }
+        .scan-result .trust-ring .fg { fill: none; stroke: var(--accent); stroke-width: 5; stroke-linecap: round; transition: stroke-dashoffset 1s ease; }
+        .scan-result .trust-ring .center { position: absolute; inset: 0; display: flex; align-items: center; justify-content: center; font-size: 1.1rem; font-weight: 700; }
+        .checks-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 6px; margin-top: 10px; }
+        .check-item { display: flex; align-items: center; gap: 6px; font-size: .7rem; color: var(--text-dim); padding: 5px 8px; background: var(--bg-card); border-radius: 4px; }
+        .check-item .ck { font-size: .6rem; }
+        .check-item .ck.pass { color: var(--success); }
+        .check-item .ck.fail { color: var(--danger); }
+
+        /* ── SESSION LIST ── */
+        .session-list .s-item { display: flex; align-items: center; gap: 12px; padding: 11px 0; border-bottom: 1px solid var(--border); }
+        .s-item:last-child { border-bottom: none; }
+        .s-item .si-icon { width: 34px; height: 34px; border-radius: 10px; display: flex; align-items: center; justify-content: center; flex-shrink: 0; font-size: .8rem; }
+        .s-item .si-icon.active { background: var(--success-soft); color: var(--success); }
+        .s-item .si-icon.past { background: var(--bg-elevated); color: var(--text-dim); }
+        .s-item .si-body { flex: 1; min-width: 0; }
+        .s-item .si-title { font-size: .8rem; font-weight: 500; }
+        .s-item .si-sub { font-size: .68rem; color: var(--text-dim); }
+        .s-item .si-right { text-align: right; flex-shrink: 0; }
+
+        /* ── TRUST GAUGE ── */
+        .trust-gauge { text-align: center; padding: 20px; }
+        .trust-gauge .gauge-ring { width: 100px; height: 100px; margin: 0 auto 12px; position: relative; }
+        .trust-gauge .gauge-ring svg { transform: rotate(-90deg); }
+        .trust-gauge .gauge-ring .bg { fill: none; stroke: var(--border); stroke-width: 6; }
+        .trust-gauge .gauge-ring .fg { fill: none; stroke: var(--accent); stroke-width: 6; stroke-linecap: round; transition: stroke-dashoffset 1s ease; }
+        .trust-gauge .gauge-ring .center { position: absolute; inset: 0; display: flex; flex-direction: column; align-items: center; justify-content: center; }
+        .trust-gauge .gauge-ring .center .num { font-size: 1.4rem; font-weight: 700; }
+        .trust-gauge .gauge-ring .center .lbl { font-size: .55rem; color: var(--text-dim); text-transform: uppercase; }
+
+        /* ── NOTIF PANEL ── */
+        .notif-panel { position: fixed; top: 0; right: -360px; width: 360px; height: 100vh; background: var(--bg-card); border-left: 1px solid var(--border); z-index: 1100; transition: right .3s cubic-bezier(.4,0,.2,1); display: flex; flex-direction: column; }
+        .notif-panel.open { right: 0; }
+        .notif-panel .np-header { display: flex; align-items: center; justify-content: space-between; padding: 16px 18px; border-bottom: 1px solid var(--border); }
+        .notif-panel .np-header h3 { font-size: .85rem; font-weight: 600; }
+        .notif-panel .np-header button { background: none; border: none; color: var(--text-dim); cursor: pointer; font-size: .85rem; }
+        .notif-panel .np-body { flex: 1; overflow-y: auto; padding: 10px 0; }
+        .notif-panel .np-item { display: flex; gap: 10px; padding: 11px 18px; border-bottom: 1px solid var(--border); }
+        .notif-panel .np-item .np-icon { width: 28px; height: 28px; border-radius: 8px; display: flex; align-items: center; justify-content: center; flex-shrink: 0; font-size: .68rem; }
+        .notif-panel .np-item .np-icon.warning { background: var(--warning-soft); color: var(--warning); }
+        .notif-panel .np-item .np-icon.danger { background: var(--danger-soft); color: var(--danger); }
+        .notif-panel .np-item .np-icon.info { background: rgba(6,182,212,.12); color: var(--info); }
+        .notif-panel .np-item .np-body { flex: 1; }
+        .notif-panel .np-item .np-msg { font-size: .75rem; color: var(--text-secondary); }
+        .notif-panel .np-item .np-time { font-size: .62rem; color: var(--text-dim); margin-top: 2px; }
+
+        /* ── PAGINATION ── */
+        .pagination { display: flex; align-items: center; justify-content: center; gap: 8px; padding: 12px 0; }
+        .pagination button { background: var(--bg-card); border: 1px solid var(--border); border-radius: var(--radius-sm); padding: 6px 12px; color: var(--text-secondary); cursor: pointer; font-size: .72rem; transition: all .15s; }
+        .pagination button:hover { background: var(--bg-elevated); }
+        .pagination button:disabled { opacity: .35; cursor: default; }
+
+        /* ── TOAST ── */
+        .toast-container { position: fixed; top: 16px; right: 16px; z-index: 9999; display: flex; flex-direction: column; gap: 8px; max-width: 340px; }
+        .toast { padding: 11px 16px; border-radius: 8px; color: #fff; font-size: .78rem; box-shadow: 0 8px 24px rgba(0,0,0,.4); animation: slideIn .25s ease; display: flex; align-items: center; gap: 8px; }
+        .toast i { font-size: .75rem; }
+        @keyframes slideIn { from { transform: translateX(100%); opacity: 0; } to { transform: translateX(0); opacity: 1; } }
+
+        /* ── RESPONSIVE ── */
+        @media (max-width: 768px) {
+            .sidebar { transform: translateX(-100%); }
+            .sidebar.open { transform: translateX(0); }
+            .sidebar-overlay.show { display: block; }
+            .sidebar-toggle { display: block; }
+            .main { margin-left: 0; }
+            .content { padding: 14px; }
+            .stats-grid { grid-template-columns: repeat(2, 1fr); }
+            .grid-2col { grid-template-columns: 1fr; }
+            .course-grid { grid-template-columns: 1fr; }
+            .notif-panel { width: 100%; right: -100%; }
+            .code-input-group { max-width: 100%; }
+            .network-bar { gap: 10px; font-size: .62rem; }
+            .topbar-name { display: none; }
+            .checks-grid { grid-template-columns: 1fr; }
         }
-        
-        .stats-card {
-            background: white;
-            border-radius: 12px;
-            padding: 24px;
-            box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
-            margin-bottom: 24px;
-            border-left: 4px solid var(--primary-color);
+        @media (max-width: 480px) {
+            .stats-grid { grid-template-columns: 1fr 1fr; gap: 8px; }
+            .stat-card { padding: 12px; }
+            .stat-value { font-size: 1.2rem; }
         }
-        
-        .stats-grid {
-            display: grid;
-            grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
-            gap: 24px;
-            margin-bottom: 32px;
-        }
-        
-        .quick-actions {
-            background: white;
-            border-radius: 12px;
-            padding: 24px;
-            box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
-        }
-        
-        .action-btn {
-            display: block;
-            width: 100%;
-            padding: 12px 20px;
-            margin-bottom: 12px;
-            border: none;
-            border-radius: 8px;
-            font-weight: 600;
-            text-align: center;
-            text-decoration: none;
-            transition: all 0.3s ease;
-        }
-        
-        .btn-primary {
-            background: var(--primary-color);
-            color: white;
-        }
-        
-        .btn-secondary {
-            background: var(--secondary-color);
-            color: white;
-        }
-        
-        .action-btn:hover {
-            transform: translateY(-2px);
-            box-shadow: 0 6px 12px rgba(0, 0, 0, 0.15);
-        }
+
+        /* ── TOPOLOGY ── */
+        .topology-wrap { position: relative; width: 100%; height: 240px; background: var(--bg-card); border-radius: var(--radius); overflow: hidden; }
+        .topology-wrap canvas { width: 100%; height: 100%; display: block; }
+        .topology-legend { display: flex; gap: 12px; padding: 6px 12px; font-size: .62rem; color: var(--text-dim); flex-wrap: wrap; background: var(--bg-card); border-top: 1px solid var(--border); border-radius: 0 0 var(--radius) var(--radius); }
+        .topology-legend span { display: flex; align-items: center; gap: 4px; }
+        .topology-legend .dot { width: 6px; height: 6px; border-radius: 50%; display: inline-block; }
+
+        /* ── QUEUE INDICATOR ── */
+        .queue-pill { display: inline-flex; align-items: center; gap: 4px; font-size: .62rem; font-weight: 600; padding: 3px 10px; border-radius: 12px; white-space: nowrap; }
+        .queue-pill.healthy { background: var(--success-soft); color: var(--success); border: 1px solid rgba(16,185,129,.15); }
+        .queue-pill.degraded { background: var(--warning-soft); color: var(--warning); border: 1px solid rgba(245,158,11,.15); }
+        .queue-pill.critical { background: var(--danger-soft); color: var(--danger); border: 1px solid rgba(239,68,68,.15); }
+
+        /* ── CONNECTION QUALITY ── */
+        .conn-quality { display: inline-flex; align-items: center; gap: 4px; font-size: .62rem; font-weight: 600; padding: 2px 10px; border-radius: 12px; cursor: default; white-space: nowrap; }
+        .conn-quality .cq-dot { width: 5px; height: 5px; border-radius: 50%; }
+        .conn-online { background: var(--success-soft); color: var(--success); border: 1px solid rgba(16,185,129,.15); }
+        .conn-degraded { background: var(--warning-soft); color: var(--warning); border: 1px solid rgba(245,158,11,.15); }
+        .conn-offline { background: var(--danger-soft); color: var(--danger); border: 1px solid rgba(239,68,68,.15); }
+
+        /* ── QUICK ACTIONS ── */
+        .quick-actions { display: flex; gap: 6px; flex-wrap: wrap; padding: 6px 20px; background: var(--bg-card); border-bottom: 1px solid var(--border); }
+        .qa-btn { display: inline-flex; align-items: center; gap: 5px; padding: 5px 12px; border-radius: var(--radius-sm); font-size: .7rem; font-weight: 600; border: none; cursor: pointer; transition: all .15s; color: var(--text-secondary); background: var(--bg-card-alt); }
+        .qa-btn:hover { background: var(--bg-elevated); color: var(--text); transform: translateY(-1px); }
+        .qa-btn i { font-size: .65rem; }
+        .qa-btn.primary { background: var(--accent-soft); color: var(--accent); }
+        .qa-btn.primary:hover { background: rgba(124,92,252,.18); }
+
+        /* ── DRAWER ── */
+        .drawer-overlay { position: fixed; inset: 0; background: rgba(0,0,0,.5); z-index: 2000; display: none; }
+        .drawer-overlay.open { display: block; }
+        .drawer-panel { position: fixed; top: 0; right: -380px; width: 380px; max-width: 100vw; height: 100vh; background: var(--bg-card); border-left: 1px solid var(--border); z-index: 2001; transition: right .3s cubic-bezier(.4,0,.2,1); display: flex; flex-direction: column; }
+        .drawer-panel.open { right: 0; }
+        .modal-overlay { position: fixed; inset: 0; background: rgba(0,0,0,.6); z-index: 3000; display: none; align-items: center; justify-content: center; }
+        .modal { background: var(--bg-card); border: 1px solid var(--border); border-radius: var(--radius); max-width: 90vw; width: 100%; max-height: 90vh; overflow-y: auto; }
+        .modal-header { display: flex; justify-content: space-between; align-items: center; padding: 16px 20px; border-bottom: 1px solid var(--border); }
+        .drawer-header { display: flex; align-items: center; justify-content: space-between; padding: 14px 16px; border-bottom: 1px solid var(--border); flex-shrink: 0; }
+        .drawer-header h3 { font-size: .85rem; font-weight: 600; }
+        .drawer-close { background: none; border: none; color: var(--text-dim); font-size: 1rem; cursor: pointer; padding: 4px; }
+        .drawer-close:hover { color: var(--text); }
+        .drawer-body { flex: 1; overflow-y: auto; padding: 14px 16px; }
+        .drawer-section { margin-bottom: 14px; }
+        .drawer-section-title { font-size: .6rem; font-weight: 700; text-transform: uppercase; letter-spacing: .5px; color: var(--text-dim); margin-bottom: 8px; }
+        .drawer-field { display: flex; justify-content: space-between; padding: 5px 0; font-size: .75rem; border-bottom: 1px solid var(--border); }
+        .drawer-field .lbl { color: var(--text-dim); }
+        .drawer-field .val { color: var(--text-secondary); font-weight: 500; text-align: right; }
+
+        /* ── HISTORY TABLE ── */
+        .history-table { width: 100%; border-collapse: collapse; font-size: .72rem; }
+        .history-table th { text-align: left; padding: 8px 10px; color: var(--text-dim); font-weight: 600; font-size: .6rem; text-transform: uppercase; letter-spacing: .04em; border-bottom: 1px solid var(--border); }
+        .history-table td { padding: 8px 10px; border-bottom: 1px solid var(--border); color: var(--text-secondary); }
+        .history-table tr:hover td { background: var(--bg-card-alt); }
+
+        /* ── CALENDAR GRID ── */
+        .cal-grid { display: grid; grid-template-columns: repeat(7, 1fr); gap: 2px; }
+        .cal-header { text-align: center; font-size: .6rem; font-weight: 600; color: var(--text-dim); padding: 4px 0; text-transform: uppercase; }
+        .cal-day { aspect-ratio: 1; background: var(--bg-card-alt); border-radius: 4px; padding: 3px; font-size: .6rem; color: var(--text-dim); display: flex; flex-direction: column; align-items: center; justify-content: center; min-height: 44px; cursor: default; }
+        .cal-day.has-event { background: var(--accent-soft); color: var(--accent); font-weight: 600; border: 1px solid rgba(124,92,252,.15); }
+        .cal-day .cal-event-dot { width: 4px; height: 4px; border-radius: 50%; background: var(--accent); margin-top: 2px; }
+        .cal-day .cal-num { font-size: .72rem; font-weight: 600; }
     </style>
 </head>
-<body class="bg-tertiary">
-    <!-- Navigation -->
-    <nav class="navbar navbar-expand-lg navbar-dark">
-        <div class="container">
-            <a class="navbar-brand" href="/dashboard">
-                <i class="fas fa-graduation-cap me-2"></i>
-                Attendrix
-            </a>
-            <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbarNav">
-                <span class="navbar-toggler-icon"></span>
-            </button>
-            <div class="collapse navbar-collapse" id="navbarNav">
-                <ul class="navbar-nav ms-auto">
-                    <li class="nav-item">
-                        <a class="nav-link" href="/student/dashboard">
-                            <i class="fas fa-tachometer-alt me-2"></i>
-                            Dashboard
-                        </a>
-                    </li>
-                    <li class="nav-item dropdown">
-                        <a class="nav-link dropdown-toggle" href="#" id="attendanceDropdown" role=" dashboard" data-bs-toggle="dropdown">
-                            <i class="fas fa-chart-line me-2"></i>
-                            Attendance
-                        </a>
-                        <ul class="dropdown-menu">
-                            <li><a class="dropdown-item" href="/student/attendance">Mark Attendance</a></li>
-                            <li><a class="dropdown-item" href="/student/history">Attendance History</a></li>
-                            <li><a class="dropdown-item" href="/student/schedule">Class Schedule</a></li>
-                        </ul>
-                    </li>
-                    <li class="nav-item dropdown">
-                        <a class="nav-link dropdown-toggle" href="#" id="coursesDropdown" role="button" data-bs-toggle="dropdown">
-                            <i class="fas fa-book me-2"></i>
-                            Courses
-                        </a>
-                        <ul class="dropdown-menu">
-                            <li><a class="dropdown-item" href="/student/courses">My Courses</a></li>
-                            <li><a class="dropdown-item" href="/student/grades">Grades</a></li>
-                            <li><a class="dropdown-item" href="/student/assignments">Assignments</a></li>
-                        </ul>
-                    </li>
-                    <li class="nav-item">
-                        <a class="nav-link" href="/student/profile">
-                            <i class="fas fa-user me-2"></i>
-                            Profile
-                        </a>
-                    </li>
-                    <li class="nav-item ms-2">
-                        <a class="nav-link" href="/logout">
-                            <i class="fas fa-sign-out-alt me-2"></i>
-                            Logout
-                        </a>
-                    </li>
-                </ul>
-            </div>
-        </div>
-    </nav>
+<body>
 
-    <!-- Main Content -->
-    <div class="container dashboard-container">
-        <div class="row">
-            <div class="col-12">
-                <h1 class="mb-4">Student Dashboard</h1>
-                
-                <!-- Quick Stats -->
-                <div class="stats-grid">
-                    <div class="stats-card">
-                        <h5><i class="fas fa-chart-line text-primary me-2"></i>Attendance Rate</h5>
-                        <h2 class="mb-0">94.7%</h2>
-                        <p class="text-muted">Your attendance rate</p>
+<div class="app-wrap">
+    <div class="sidebar-overlay" id="sidebarOverlay"></div>
+
+    <!-- ═══ SIDEBAR ═══ -->
+    <aside class="sidebar" id="sidebar">
+        <div class="sidebar-brand"><i class="fas fa-graduation-cap"></i> Attendrix</div>
+        <nav class="sidebar-nav">
+            <a class="active" data-section="overview"><i class="fas fa-th-large"></i> <span data-i18n="overview">Overview</span></a>
+            <a data-section="mark-attendance"><i class="fas fa-qrcode"></i> <span data-i18n="mark_attendance">Mark Attendance</span> <span class="badge-dot green" id="liveBadge" style="display:none;"></span></a>
+            <a data-section="schedule"><i class="fas fa-calendar-alt"></i> <span data-i18n="schedule">Schedule</span></a>
+            <a data-section="sessions"><i class="fas fa-clock"></i> <span data-i18n="sessions">Sessions</span> <span class="badge-dot green" id="sessionBadge" style="display:none;"></span></a>
+            <a data-section="courses"><i class="fas fa-book"></i> <span data-i18n="courses">Courses</span></a>
+            <a data-section="analytics"><i class="fas fa-chart-bar"></i> <span data-i18n="analytics">Analytics</span></a>
+            <a data-section="security"><i class="fas fa-shield-alt"></i> <span data-i18n="security">Security</span> <span class="badge-dot red" id="secBadge" style="display:none;"></span></a>
+        </nav>
+        <div class="sidebar-footer">
+            <a href="/logout"><i class="fas fa-sign-out-alt"></i> <span data-i18n="logout">Logout</span></a>
+        </div>
+    </aside>
+
+    <!-- ═══ MAIN ═══ -->
+    <div class="main">
+        <header class="topbar">
+            <div class="topbar-left">
+                <button class="sidebar-toggle" id="sidebarToggle"><i class="fas fa-bars"></i></button>
+                <span class="topbar-title" id="pageTitle" data-i18n="overview">Overview</span>
+            </div>
+            <div class="topbar-right">
+                <button class="topbar-icon-btn" id="notifBtn" onclick="toggleNotifPanel()">
+                    <i class="fas fa-bell"></i>
+                    <span class="badge-count" id="notifBadge" style="display:none;">0</span>
+                </button>
+                <button class="lang-btn" id="langToggle" onclick="toggleLang()">FR</button>
+                <div class="topbar-user" onclick="switchSection('security')">
+                    <div class="topbar-avatar" id="userAvatar">S</div>
+                    <span class="topbar-name" id="userName">Student</span>
+                </div>
+            </div>
+        </header>
+
+        <!-- Network Status Bar -->
+        <div class="network-bar" id="networkBar">
+            <span class="item"><span class="conn-quality conn-online" id="connQuality"><span class="cq-dot" id="connDot"></span> <span id="connLabel">Online</span> <span id="connLatency" style="font-weight:400;opacity:.6;">—ms</span></span></span>
+            <span class="item"><i class="fas fa-microchip" style="font-size:.6rem;"></i> <span id="netBroker">Broker</span></span>
+            <span class="item"><i class="fas fa-sync-alt" style="font-size:.6rem;"></i> <span id="netSync" data-i18n="sync_active">Sync Active</span></span>
+            <span class="item"><i class="fas fa-cloud-download-alt" style="font-size:.6rem;"></i> <span id="queuePill"></span></span>
+        </div>
+
+        <!-- Quick Actions -->
+        <div class="quick-actions" id="quickActions">
+            <button class="qa-btn primary" onclick="switchSection('mark-attendance')"><i class="fas fa-qrcode"></i> <span data-i18n="mark_attendance">Mark Attendance</span></button>
+            <button class="qa-btn" onclick="switchSection('schedule')"><i class="fas fa-calendar-alt"></i> <span data-i18n="schedule">Schedule</span></button>
+            <button class="qa-btn" onclick="switchSection('sessions')"><i class="fas fa-history"></i> <span data-i18n="history">History</span></button>
+            <button class="qa-btn" onclick="switchSection('security')"><i class="fas fa-shield-alt"></i> <span data-i18n="security">Security</span></button>
+        </div>
+
+        <div class="content">
+
+            <!-- ═══ OVERVIEW ═══ -->
+            <div class="section active" id="secOverview">
+                <div style="display:flex;justify-content:space-between;align-items:center;flex-wrap:wrap;gap:8px;margin-bottom:16px;">
+                    <div>
+                        <h2 style="font-size:1.05rem;font-weight:700;" id="welcomeMsg" data-i18n="welcome_back">Welcome back</h2>
+                        <p style="font-size:.72rem;color:var(--text-dim);" id="welcomeSub"></p>
                     </div>
-                    <div class="stats-card">
-                        <h5><i class="fas fa-calendar-check text-primary me-2"></i>Classes Attended</h5>
-                        <h2 class="mb-0">42</h2>
-                        <p class="text-muted">Out of 45 total classes</p>
+                    <div id="attendanceStatusBadge"></div>
+                </div>
+
+                <div class="stats-grid" id="statsGrid">
+                    <div class="stat-card">
+                        <div class="stat-icon purple"><i class="fas fa-chart-line"></i></div>
+                        <div class="stat-value" id="ovRate">—</div>
+                        <div class="stat-label" data-i18n="attendance_rate">Attendance Rate</div>
+                        <div class="stat-trend" id="ovTrend"></div>
                     </div>
-                    <div class="stats-card">
-                        <h5><i class="fas fa-book text-primary me-2"></i>Active Courses</h5>
-                        <h2 class="mb-0">5</h2>
-                        <p class="text-muted">Currently enrolled courses</p>
+                    <div class="stat-card">
+                        <div class="stat-icon green"><i class="fas fa-check-circle"></i></div>
+                        <div class="stat-value" id="ovPresent">—</div>
+                        <div class="stat-label" data-i18n="present">Present</div>
                     </div>
-                    <div class="stats-card">
-                        <h5><i class="fas fa-trophy text-primary me-2"></i>Grade Point</h5>
-                        <h2 class="mb-0">3.6</h2>
-                        <p class="text-muted">Current GPA</p>
+                    <div class="stat-card">
+                        <div class="stat-icon yellow"><i class="fas fa-clock"></i></div>
+                        <div class="stat-value" id="ovLate">—</div>
+                        <div class="stat-label" data-i18n="late_absent">Late / Absent</div>
+                    </div>
+                    <div class="stat-card">
+                        <div class="stat-icon blue"><i class="fas fa-trophy"></i></div>
+                        <div class="stat-value" id="ovTrust">—</div>
+                        <div class="stat-label" data-i18n="trust_level">Trust Level</div>
                     </div>
                 </div>
-                
-                <!-- Quick Actions -->
-                <div class="quick-actions">
-                    <h5 class="mb-3">Quick Actions</h5>
-                    <button class="action-btn btn-primary" onclick="scanQRCode()">
-                        <i class="fas fa-qrcode me-2"></i>
-                        Scan QR for Attendance
-                    </button>
-                    <a href="/student/courses" class="action-btn btn-secondary">
-                        <i class="fas fa-book me-2"></i>
-                        My Courses
-                    </a>
-                    <a href="/student/grades" class="action-btn btn-secondary">
-                        <i class="fas fa-chart-line me-2"></i>
-                        View Grades
-                    </a>
-                    <a href="/student/schedule" class="action-btn btn-secondary">
-                        <i class="fas fa-calendar me-2"></i>
-                        My Schedule
-                    </a>
-                </div>
-                
-                <!-- QR Code Input -->
-                <div class="qr-input" id="qrInput" style="display: none;">
-                    <h5 class="mb-3">Mark Attendance</h5>
-                    <div class="form-floating mb-3">
-                        <input type="text" class="form-control" id="sessionCode" placeholder="Enter Session Code">
-                        <label for="sessionCode">
-                            <i class="fas fa-hashtag me-2"></i>
-                            Session Code
-                        </label>
+
+                <div class="grid-2col">
+                    <div class="card">
+                        <div class="card-header"><i class="fas fa-calendar-day" style="color:var(--accent);font-size:.7rem;"></i> <span data-i18n="todays_schedule">Today's Schedule</span></div>
+                        <div class="card-body session-list" id="todayList"><div class="empty-muted" data-i18n="no_sessions_today">No sessions today</div></div>
                     </div>
-                    <button class="action-btn btn-primary" onclick="markAttendance()">
-                        <i class="fas fa-check me-2"></i>
-                        Mark Attendance
-                    </button>
-                    <button class="action-btn btn-secondary mt-2" onclick="cancelQRScan()">
-                        <i class="fas fa-times me-2"></i>
-                        Cancel
-                    </button>
+                    <div class="card">
+                        <div class="card-header"><i class="fas fa-history" style="color:var(--info);font-size:.7rem;"></i> <span data-i18n="recent_activity">Recent Activity</span></div>
+                        <div class="card-body" id="recentList"><div class="empty-muted" data-i18n="no_activity">No recent activity</div></div>
+                    </div>
+                </div>
+
+                <div class="card">
+                    <div class="card-header"><i class="fas fa-graduation-cap" style="color:var(--success);font-size:.7rem;"></i> <span data-i18n="course_overview">Course Overview</span> <span style="font-size:.68rem;color:var(--text-dim);font-weight:400;" id="courseCount"></span></div>
+                    <div class="card-body" id="courseMiniList"><div class="empty-muted" data-i18n="no_courses">No courses</div></div>
+                </div>
+
+                <div class="card">
+                    <div class="card-header">
+                        <i class="fas fa-camera" style="color:var(--accent);font-size:.7rem;"></i> <span>Face Recognition</span>
+                        <span class="face-status-dot" id="faceStatusDot" style="display:inline-block;width:8px;height:8px;border-radius:50%;background:var(--text-dim);margin-left:6px;"></span>
+                    </div>
+                    <div class="card-body" id="faceStatusBody">
+                        <div id="faceNotEnrolled" style="display:none;">
+                            <p style="font-size:.75rem;color:var(--text-secondary);margin-bottom:10px;">Enroll your face to verify identity when marking attendance.</p>
+                            <button class="btn btn-primary btn-sm" onclick="openFaceEnroll()"><i class="fas fa-camera"></i> <span>Enroll Face</span></button>
+                        </div>
+                        <div id="faceEnrolled" style="display:none;">
+                            <div style="display:flex;justify-content:space-between;align-items:center;font-size:.75rem;">
+                                <span><i class="fas fa-check-circle" style="color:var(--success);"></i> Face enrolled</span>
+                                <span style="color:var(--text-dim);" id="faceEnrollDate"></span>
+                            </div>
+                            <div style="display:flex;gap:6px;margin-top:8px;">
+                                <button class="btn btn-sm" style="background:var(--bg-card-alt);border:1px solid var(--border);" onclick="reEnrollFace()"><i class="fas fa-sync"></i> Re-enroll</button>
+                                <button class="btn btn-sm" style="background:var(--bg-card-alt);border:1px solid var(--border);color:var(--danger);" onclick="revokeFace()"><i class="fas fa-trash"></i> Remove</button>
+                            </div>
+                        </div>
+                        <div id="faceLoading" style="display:none;"><span class="spinner"></span> Loading...</div>
+                    </div>
+                </div>
+
+                <div class="grid-2col">
+                    <div class="card">
+                        <div class="card-header"><i class="fas fa-network-wired" style="color:var(--info);font-size:.7rem;"></i> <span data-i18n="network_topology">Network Topology</span> <span style="font-size:.62rem;color:var(--text-dim);font-weight:400;" id="topologyNodeCount"></span></div>
+                        <div class="card-body" style="padding:0;">
+                            <div class="topology-wrap"><canvas id="topologyCanvas"></canvas></div>
+                            <div class="topology-legend" id="topologyLegend"><span data-i18n="loading">Loading...</span></div>
+                        </div>
+                    </div>
+                    <div class="card">
+                        <div class="card-header"><i class="fas fa-cloud-download-alt" style="color:var(--warning);font-size:.7rem;"></i> <span data-i18n="offline_queue">Offline Queue</span> <span id="queueHealthPill"></span></div>
+                        <div class="card-body" id="queueStatsBody">
+                            <div style="display:grid;grid-template-columns:1fr 1fr;gap:12px;">
+                                <div style="text-align:center;padding:8px;background:var(--bg-card-alt);border-radius:var(--radius-sm);">
+                                    <div style="font-size:.85rem;font-weight:700;color:var(--warning);" id="qPending">—</div>
+                                    <div style="font-size:.6rem;color:var(--text-dim);" data-i18n="pending">Pending</div>
+                                </div>
+                                <div style="text-align:center;padding:8px;background:var(--bg-card-alt);border-radius:var(--radius-sm);">
+                                    <div style="font-size:.85rem;font-weight:700;color:var(--danger);" id="qFailed">—</div>
+                                    <div style="font-size:.6rem;color:var(--text-dim);" data-i18n="failed">Failed</div>
+                                </div>
+                                <div style="text-align:center;padding:8px;background:var(--bg-card-alt);border-radius:var(--radius-sm);">
+                                    <div style="font-size:.85rem;font-weight:700;color:var(--success);" id="qSynced">—</div>
+                                    <div style="font-size:.6rem;color:var(--text-dim);" data-i18n="synced">Synced</div>
+                                </div>
+                                <div style="text-align:center;padding:8px;background:var(--bg-card-alt);border-radius:var(--radius-sm);">
+                                    <div style="font-size:.85rem;font-weight:700;color:var(--info);" id="qEstimate">—</div>
+                                    <div style="font-size:.6rem;color:var(--text-dim);" data-i18n="recovery">Recovery</div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- ═══ MARK ATTENDANCE ═══ -->
+            <div class="section" id="secMarkAttendance">
+                <h2 class="section-title"><i class="fas fa-qrcode" style="color:var(--accent);"></i> <span data-i18n="mark_attendance">Mark Attendance</span></h2>
+                <p class="section-sub" data-i18n="mark_attendance_sub">Enter your session code to mark attendance. The system will verify your identity and location automatically.</p>
+                <div class="scanner-card">
+                    <div class="sc-icon"><i class="fas fa-qrcode"></i></div>
+                    <h3 data-i18n="enter_session_code">Enter Session Code</h3>
+                    <p class="sc-sub" data-i18n="code_from_lecturer">Use the code provided by your lecturer</p>
+                    <div class="code-input-group">
+                        <input type="text" id="sessionCode" placeholder="e.g. 49801005" maxlength="12" autocomplete="off">
+                        <button class="btn btn-primary" onclick="verifyAndMark()" data-i18n="verify">Verify</button>
+                    </div>
+                    <div class="scan-result" id="scanResult">
+                        <div class="sr-card">
+                            <div class="trust-ring" id="trustRing">
+                                <svg width="72" height="72" viewBox="0 0 72 72">
+                                    <circle class="bg" cx="36" cy="36" r="30"/>
+                                    <circle class="fg" id="trustArc" cx="36" cy="36" r="30" stroke-dasharray="188.5" stroke-dashoffset="188.5"/>
+                                </svg>
+                                <div class="center" id="trustScoreDisplay">0</div>
+                            </div>
+                            <div style="text-align:center;margin-bottom:10px;">
+                                <span style="font-size:.85rem;font-weight:600;" id="scanCourseName"></span>
+                                <span style="font-size:.68rem;color:var(--text-dim);display:block;" id="scanLecturer"></span>
+                            </div>
+                            <div class="checks-grid" id="scanChecks"></div>
+                            <div class="sr-row" style="border-top:1px solid var(--border);padding-top:10px;margin-top:10px;justify-content:center;">
+                                <button class="btn btn-primary" onclick="confirmMark()" style="width:100%;" data-i18n="confirm_attendance">Confirm Attendance</button>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- ═══ SCHEDULE ═══ -->
+            <div class="section" id="secSchedule">
+                <h2 class="section-title"><i class="fas fa-calendar-alt" style="color:var(--info);"></i> <span data-i18n="schedule">Schedule</span></h2>
+                <p class="section-sub" data-i18n="schedule_sub">Your class schedule for this week</p>
+                <div class="card">
+                    <div class="card-header"><span data-i18n="weekly_calendar">Weekly Calendar</span> <span style="font-size:.68rem;color:var(--text-dim);font-weight:400;" id="scheduleWeekLabel"></span></div>
+                    <div class="card-body" id="scheduleCalendar"><div class="empty-muted" data-i18n="loading">Loading...</div></div>
+                </div>
+                <div class="card">
+                    <div class="card-header"><span data-i18n="upcoming_sessions">Upcoming Sessions</span></div>
+                    <div class="card-body session-list" id="scheduleList"><div class="empty-muted" data-i18n="loading">Loading...</div></div>
+                </div>
+            </div>
+
+            <!-- ═══ SESSIONS ═══ -->
+            <div class="section" id="secSessions">
+                <h2 class="section-title"><i class="fas fa-clock" style="color:var(--success);"></i> <span data-i18n="sessions">Sessions</span></h2>
+                <p class="section-sub" data-i18n="sessions_sub">Ongoing and recent attendance sessions</p>
+                <div id="sessionList"><div class="empty-muted" data-i18n="loading">Loading...</div></div>
+                <div class="card" style="margin-top:14px;">
+                    <div class="card-header"><i class="fas fa-history" style="color:var(--info);font-size:.7rem;"></i> <span data-i18n="attendance_history">Attendance History</span> <span style="font-size:.68rem;color:var(--text-dim);font-weight:400;" id="historyCount"></span></div>
+                    <div class="card-body" id="historyBody" style="overflow-x:auto;">
+                        <table class="history-table"><thead><tr><th data-i18n="date">Date</th><th data-i18n="course">Course</th><th data-i18n="status">Status</th><th data-i18n="lecturer">Lecturer</th></tr></thead><tbody id="historyTableBody"></tbody></table>
+                        <div class="pagination" id="historyPagination" style="display:none;"></div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- ═══ COURSES ═══ -->
+            <div class="section" id="secCourses">
+                <h2 class="section-title"><i class="fas fa-book" style="color:var(--accent);"></i> <span data-i18n="my_courses">My Courses</span></h2>
+                <p class="section-sub" data-i18n="courses_sub">Your enrolled courses with attendance performance</p>
+                <div class="course-grid" id="coursesGrid"><div class="empty-muted" data-i18n="loading">Loading...</div></div>
+            </div>
+
+            <!-- ═══ ANALYTICS ═══ -->
+            <div class="section" id="secAnalytics">
+                <h2 class="section-title"><i class="fas fa-chart-bar" style="color:var(--warning);"></i> <span data-i18n="analytics">Analytics</span></h2>
+                <p class="section-sub" data-i18n="analytics_sub">Your attendance trends, patterns, and insights</p>
+                <div class="card">
+                    <div class="card-header"><span data-i18n="attendance_trend">Attendance Trend (14 days)</span></div>
+                    <div class="card-body"><canvas id="trendChart" height="180"></canvas></div>
+                </div>
+                <div class="grid-2col">
+                    <div class="card">
+                        <div class="card-header"><span data-i18n="course_breakdown">Course Breakdown</span></div>
+                        <div class="card-body" id="analyticsCourseBody"><div class="empty-muted" data-i18n="loading">Loading...</div></div>
+                    </div>
+                    <div class="card">
+                        <div class="card-header"><span data-i18n="insights">Insights</span></div>
+                        <div class="card-body" id="analyticsInsights"><div class="empty-muted" data-i18n="loading">Loading...</div></div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- ═══ SECURITY ═══ -->
+            <div class="section" id="secSecurity">
+                <h2 class="section-title"><i class="fas fa-shield-alt" style="color:var(--info);"></i> <span data-i18n="security">Security</span></h2>
+                <p class="section-sub" data-i18n="security_sub">Device trust, login activity, and security events</p>
+                <div class="grid-2col">
+                    <div class="card">
+                        <div class="card-header"><span data-i18n="trust_level">Trust Level</span></div>
+                        <div class="card-body">
+                            <div class="trust-gauge" id="trustGauge">
+                                <div class="gauge-ring">
+                                    <svg width="100" height="100" viewBox="0 0 100 100">
+                                        <circle class="bg" cx="50" cy="50" r="42"/>
+                                        <circle class="fg" id="trustArcGauge" cx="50" cy="50" r="42" stroke-dasharray="263.9" stroke-dashoffset="263.9"/>
+                                    </svg>
+                                    <div class="center"><span class="num" id="trustNum">—</span><span class="lbl" data-i18n="trust_score">Trust</span></div>
+                                </div>
+                                <div style="font-size:.78rem;font-weight:600;" id="trustLabel"></div>
+                            </div>
+                        </div>
+                    </div>
+                    <div class="card">
+                        <div class="card-header"><span data-i18n="device_status">Device Status</span></div>
+                        <div class="card-body" id="deviceStatusBody"><div class="empty-muted" data-i18n="loading">Loading...</div></div>
+                    </div>
+                </div>
+                <div class="card">
+                    <div class="card-header"><span data-i18n="recent_events">Recent Events</span></div>
+                    <div class="card-body" id="securityEventsBody"><div class="empty-muted" data-i18n="no_events">No security events</div></div>
+                </div>
+            </div>
+
+        </div>
+    </div>
+
+    <!-- ═══ NOTIF PANEL ═══ -->
+    <div class="notif-panel" id="notifPanel">
+        <div class="np-header">
+            <h3 data-i18n="notifications">Notifications</h3>
+            <button onclick="toggleNotifPanel()"><i class="fas fa-times"></i></button>
+        </div>
+        <div class="np-body" id="notifBody"><div class="empty-muted" data-i18n="no_notifications">No notifications</div></div>
+    </div>
+
+    <!-- ═══ FACE ENROLLMENT MODAL ═══ -->
+    <div class="modal-overlay" id="faceModal" style="display:none;">
+        <div class="modal" style="max-width:420px;">
+            <div class="modal-header">
+                <h3>Face Enrollment</h3>
+                <button onclick="closeFaceModal()" style="background:none;border:none;color:var(--text);font-size:1.2rem;"><i class="fas fa-times"></i></button>
+            </div>
+            <div class="modal-body" style="padding:20px;">
+                <div id="faceEnrollStep1">
+                    <p style="font-size:.78rem;color:var(--text-secondary);margin-bottom:12px;">Position your face in the center of the camera frame. Ensure good lighting.</p>
+                    <div class="camera-preview" style="width:100%;aspect-ratio:4/3;background:#000;border-radius:var(--radius-sm);overflow:hidden;position:relative;">
+                        <video id="faceVideo" autoplay playsinline muted style="width:100%;height:100%;object-fit:cover;"></video>
+                        <div id="faceOverlay" style="position:absolute;top:0;left:0;right:0;bottom:0;display:flex;align-items:center;justify-content:center;pointer-events:none;">
+                            <div style="width:200px;height:200px;border:2px solid rgba(124,92,252,.6);border-radius:50%;"></div>
+                        </div>
+                    </div>
+                    <div style="margin-top:12px;display:flex;gap:8px;justify-content:center;">
+                        <button class="btn btn-primary" id="faceCaptureBtn" onclick="captureFace()"><i class="fas fa-camera"></i> Capture Face</button>
+                        <button class="btn" style="background:var(--bg-card-alt);border:1px solid var(--border);" onclick="closeFaceModal()">Cancel</button>
+                    </div>
+                    <div id="faceCaptureStatus" style="margin-top:8px;font-size:.72rem;color:var(--text-dim);text-align:center;"></div>
+                </div>
+                <div id="faceEnrollStep2" style="display:none;">
+                    <div style="text-align:center;padding:20px;">
+                        <div style="font-size:2rem;color:var(--success);margin-bottom:10px;"><i class="fas fa-check-circle"></i></div>
+                        <p style="font-weight:600;">Face captured successfully!</p>
+                        <p style="font-size:.78rem;color:var(--text-secondary);margin-top:4px;">Verifying quality and enrolling...</p>
+                        <div class="spinner" style="margin:16px auto;"></div>
+                    </div>
+                </div>
+                <div id="faceEnrollDone" style="display:none;">
+                    <div style="text-align:center;padding:20px;">
+                        <div style="font-size:2rem;color:var(--success);margin-bottom:10px;"><i class="fas fa-check-circle"></i></div>
+                        <p style="font-weight:600;">Face enrolled successfully!</p>
+                        <p style="font-size:.78rem;color:var(--text-secondary);margin-top:4px;" id="faceEnrollConfidence"></p>
+                        <button class="btn btn-primary" style="margin-top:14px;" onclick="closeFaceModal()">Done</button>
+                    </div>
+                </div>
+                <div id="faceEnrollError" style="display:none;">
+                    <div style="text-align:center;padding:20px;">
+                        <div style="font-size:2rem;color:var(--danger);margin-bottom:10px;"><i class="fas fa-exclamation-circle"></i></div>
+                        <p style="font-weight:600;" id="faceEnrollErrorText">Failed to capture face</p>
+                        <p style="font-size:.78rem;color:var(--text-secondary);margin-top:4px;">Make sure your face is visible and well-lit, then try again.</p>
+                        <button class="btn" style="margin-top:14px;background:var(--bg-card-alt);border:1px solid var(--border);" onclick="retryFaceCapture()">Try Again</button>
+                    </div>
                 </div>
             </div>
         </div>
     </div>
 
-    <!-- Bootstrap JS -->
-    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
-    
-    <script>
-        function scanQRCode() {
-            document.getElementById('qrInput').style.display = 'block';
-            document.querySelector('.quick-actions').style.display = 'none';
+    <!-- ═══ COURSE DRAWER ═══ -->
+    <div class="drawer-overlay" id="drawerOverlay" onclick="closeDrawer()"></div>
+    <div class="drawer-panel" id="drawerPanel">
+        <div class="drawer-header">
+            <h3 id="drawerTitle">Course Details</h3>
+            <button class="drawer-close" onclick="closeDrawer()"><i class="fas fa-times"></i></button>
+        </div>
+        <div class="drawer-body" id="drawerBody">
+            <div class="drawer-section">
+                <div class="drawer-section-title" data-i18n="course_info">Course Info</div>
+                <div class="drawer-field"><span class="lbl" data-i18n="course_code">Code</span><span class="val" id="drawerCode">—</span></div>
+                <div class="drawer-field"><span class="lbl" data-i18n="lecturer">Lecturer</span><span class="val" id="drawerLecturer">—</span></div>
+                <div class="drawer-field"><span class="lbl" data-i18n="risk_level">Risk Level</span><span class="val" id="drawerRisk">—</span></div>
+            </div>
+            <div class="drawer-section">
+                <div class="drawer-section-title" data-i18n="attendance_breakdown">Attendance Breakdown</div>
+                <div class="drawer-field"><span class="lbl" data-i18n="present">Present</span><span class="val" style="color:var(--success);" id="drawerPresent">0</span></div>
+                <div class="drawer-field"><span class="lbl" data-i18n="late">Late</span><span class="val" style="color:var(--warning);" id="drawerLate">0</span></div>
+                <div class="drawer-field"><span class="lbl" data-i18n="absent">Absent</span><span class="val" style="color:var(--danger);" id="drawerAbsent">0</span></div>
+                <div class="drawer-field"><span class="lbl" data-i18n="suspicious">Suspicious</span><span class="val" style="color:var(--danger);" id="drawerSuspicious">0</span></div>
+                <div class="drawer-field" style="border-top:1px solid var(--border);padding-top:8px;margin-top:4px;"><span class="lbl" data-i18n="overall_rate">Overall Rate</span><span class="val" style="font-weight:700;" id="drawerRate">—</span></div>
+            </div>
+            <div class="drawer-section">
+                <div class="drawer-section-title" data-i18n="recent_sessions">Recent Sessions</div>
+                <div id="drawerSessions"><div class="empty-muted" data-i18n="no_records">No records</div></div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<div class="toast-container" id="toastContainer"></div>
+
+<script>
+    var currentLang = localStorage.getItem('studentLang') || 'en';
+    var i18n = {
+            en: {
+            overview:'Overview', mark_attendance:'Mark Attendance', sessions:'Sessions', courses:'Courses',
+            analytics:'Analytics', security:'Security', logout:'Logout',
+            welcome_back:'Welcome back', attendance_rate:'Attendance Rate', present:'Present',
+            late_absent:'Late / Absent', trust_level:'Trust Level',
+            todays_schedule:"Today's Schedule", recent_activity:'Recent Activity',
+            course_overview:'Course Overview', no_sessions_today:'No sessions today',
+            no_activity:'No recent activity', no_courses:'No courses',
+            mark_attendance_sub:'Enter your session code to mark attendance. The system will verify your identity automatically.',
+            enter_session_code:'Enter Session Code', code_from_lecturer:'Use the code provided by your lecturer',
+            verify:'Verify', confirm_attendance:'Confirm Attendance',
+            sessions_sub:'Ongoing and recent attendance sessions',
+            courses_sub:'Your enrolled courses with attendance performance',
+            analytics_sub:'Your attendance trends, patterns, and insights',
+            security_sub:'Device trust, login activity, and security events',
+            attendance_trend:'Attendance Trend (14 days)', course_breakdown:'Course Breakdown',
+            insights:'Insights', trust_score:'Trust', device_status:'Device Status',
+            recent_events:'Recent Events', notifications:'Notifications',
+            no_notifications:'No notifications', no_events:'No security events',
+            connecting:'Connecting...', sync_active:'Sync Active',
+            safe:'Safe', at_risk:'At Risk', critical:'Critical',
+            low:'Low', medium:'Medium', high:'High', trusted:'Trusted', not_trusted:'Not Trusted',
+            attendance_marked:'Attendance marked successfully!', mark_failed:'Failed to mark attendance',
+            verify_first:'Please verify a session code first',
+            next:'Next', previous:'Previous', page:'Page', loading:'Loading...',
+            no_records:'No records', no_sessions:'No sessions',
+            present_label:'Present', absent:'Absent', late:'Late',
+            attended:'Attended', suspicious:'Suspicious',
+            active_now:'Active Now', past:'Past',
+            network_topology:'Network Topology', offline_queue:'Offline Queue',
+            pending:'Pending', failed:'Failed', synced:'Synced', recovery:'Recovery',
+            queue_healthy:'Queue Healthy', queue_degraded:'Needs Attention',
+            data_particles:'Data Particles', paused:'Paused', nodes:'nodes',
+            schedule:'Schedule', schedule_sub:'Your class schedule for this week',
+            weekly_calendar:'Weekly Calendar', upcoming_sessions:'Upcoming Sessions',
+            attendance_history:'Attendance History', history:'History',
+            course_info:'Course Info', course_code:'Code', lecturer:'Lecturer',
+            risk_level:'Risk Level', attendance_breakdown:'Attendance Breakdown',
+            overall_rate:'Overall Rate', recent_sessions:'Recent Sessions',
+            date:'Date', course:'Course', status:'Status',
+            course_details:'Course Details',
+        },
+            fr: {
+            overview:'Aper\u00e7u', mark_attendance:'Pr\u00e9sence', sessions:'Sessions',
+            courses:'Cours', analytics:'Analytique', security:'S\u00e9curit\u00e9',
+            logout:'D\u00e9connexion',
+            welcome_back:'Bon retour', attendance_rate:'Taux de Pr\u00e9sence',
+            present:'Pr\u00e9sent', late_absent:'Retard / Absent', trust_level:'Niveau de Confiance',
+            todays_schedule:'Emploi du Jour', recent_activity:'Activit\u00e9 R\u00e9cente',
+            course_overview:'Aper\u00e7u des Cours', no_sessions_today:'Aucune session aujourd\'hui',
+            no_activity:'Aucune activit\u00e9 r\u00e9cente', no_courses:'Aucun cours',
+            mark_attendance_sub:'Entrez votre code de session. Le syst\u00e8me v\u00e9rifie votre identit\u00e9 automatiquement.',
+            enter_session_code:'Code de Session', code_from_lecturer:'Utilisez le code fourni par votre enseignant',
+            verify:'V\u00e9rifier', confirm_attendance:'Confirmer la Pr\u00e9sence',
+            sessions_sub:'Sessions en cours et r\u00e9centes',
+            courses_sub:'Vos cours avec les performances de pr\u00e9sence',
+            analytics_sub:'Tendances, mod\u00e8les et aper\u00e7us de pr\u00e9sence',
+            security_sub:'Confiance des appareils, connexions et \u00e9v\u00e9nements de s\u00e9curit\u00e9',
+            attendance_trend:'Tendance des Pr\u00e9sences (14 jours)', course_breakdown:'R\u00e9partition par Cours',
+            insights:'Aper\u00e7us', trust_score:'Confiance', device_status:'\u00c9tat Appareil',
+            recent_events:'\u00c9v\u00e9nements R\u00e9cents', notifications:'Notifications',
+            no_notifications:'Aucune notification', no_events:'Aucun \u00e9v\u00e9nement',
+            connecting:'Connexion...', sync_active:'Sync Active',
+            safe:'S\u00fbr', at_risk:'En Risque', critical:'Critique',
+            low:'Faible', medium:'Moyen', high:'\u00c9lev\u00e9',
+            trusted:'Approuv\u00e9', not_trusted:'Non Approuv\u00e9',
+            attendance_marked:'Pr\u00e9sence marqu\u00e9e avec succ\u00e8s!',
+            mark_failed:'\u00c9chec du marquage',
+            verify_first:'Veuillez d\'abord v\u00e9rifier un code',
+            next:'Suivant', previous:'Pr\u00e9c\u00e9dent', page:'Page',
+            loading:'Chargement...', no_records:'Aucun enregistrement',
+            no_sessions:'Aucune session', present_label:'Pr\u00e9sent',
+            absent:'Absent', late:'En Retard',
+            active_now:'Actif Maintenant', past:'Pass\u00e9',
+            network_topology:'Topologie R\u00e9seau', offline_queue:'File d\'Attente Hors-Ligne',
+            pending:'En Attente', failed:'\u00c9chou\u00e9', synced:'Synchronis\u00e9',
+            recovery:'R\u00e9cup\u00e9ration',
+            queue_healthy:'File d\'attente saine', queue_degraded:'N\u00e9cessite Attention',
+            data_particles:'Particules de donn\u00e9es', paused:'En Pause', nodes:'n\u0153uds',
+            schedule:'Emploi du Temps', schedule_sub:'Votre emploi du temps de la semaine',
+            weekly_calendar:'Calendrier Hebdomadaire', upcoming_sessions:'Sessions \u00e0 Venir',
+            attendance_history:'Historique des Pr\u00e9sences', history:'Historique',
+            course_info:'Infos du Cours', course_code:'Code', lecturer:'Enseignant',
+            risk_level:'Niveau de Risque', attendance_breakdown:'R\u00e9partition des Pr\u00e9sences',
+            overall_rate:'Taux Global', recent_sessions:'Sessions R\u00e9centes',
+            date:'Date', course:'Cours', status:'Statut',
+            course_details:'D\u00e9tails du Cours',
         }
-        
-        function cancelQRScan() {
-            document.getElementById('qrInput').style.display = 'none';
-            document.querySelector('.quick-actions').style.display = 'block';
+    };
+
+    var dashboardData = null;
+    var analyticsData = null;
+    var securityData = null;
+    var verifiedSession = null;
+    var trendChartInstance = null;
+
+    function getToken() { return localStorage.getItem('accessToken'); }
+
+    async function apiFetch(url, opts) {
+        try {
+            var headers = { 'Authorization': 'Bearer ' + getToken() };
+            if (opts && opts.body) headers['Content-Type'] = 'application/json';
+            return await fetch(url, { headers: headers, ...opts });
+        } catch(e) { console.warn('apiFetch:', url); return null; }
+    }
+
+    var extendedI18n = {};
+
+    function t(key) {
+        return (i18n[currentLang] && i18n[currentLang][key]) || (extendedI18n[key] && extendedI18n[key][currentLang]) || key;
+    }
+
+    function applyTranslations() {
+        document.querySelectorAll('[data-i18n]').forEach(function(el) {
+            var key = el.dataset.i18n;
+            var val = t(key);
+            if (val !== key) el.textContent = val;
+        });
+    }
+
+    async function loadExtendedTranslations() {
+        try {
+            var res = await fetch('/api/institutional/translations/extended?lang=' + currentLang);
+            if (res && res.ok) {
+                var data = await res.json();
+                for (var k in data) {
+                    if (!i18n.en[k] && !i18n.fr[k]) {
+                        if (!extendedI18n[k]) extendedI18n[k] = {};
+                        extendedI18n[k].en = data[k];
+                        extendedI18n[k].fr = data[k];
+                    }
+                }
+                applyTranslations();
+            }
+        } catch(e) { /* silently fail, use embedded translations */ }
+    }
+
+    function toggleLang() {
+        currentLang = currentLang === 'en' ? 'fr' : 'en';
+        localStorage.setItem('studentLang', currentLang);
+        applyTranslations();
+        document.getElementById('langToggle').textContent = currentLang === 'en' ? 'FR' : 'EN';
+        if (trendChartInstance) { trendChartInstance.destroy(); trendChartInstance = null; }
+        if (dashboardData) renderAll();
+    }
+
+    function showToast(msg, type) {
+        var c = document.getElementById('toastContainer');
+        var icons = { error:'fa-exclamation-circle', success:'fa-check-circle', info:'fa-info-circle' };
+        var tEl = document.createElement('div');
+        tEl.className = 'toast';
+        tEl.style.background = type === 'error' ? '#EF4444' : type === 'success' ? '#10B981' : '#6366F1';
+        tEl.innerHTML = '<i class="fas ' + (icons[type] || icons.info) + '"></i> ' + msg;
+        c.appendChild(tEl);
+        setTimeout(function() { tEl.style.opacity = '0'; tEl.style.transition = 'opacity .3s'; setTimeout(function() { tEl.remove(); }, 300); }, 4000);
+    }
+
+    // ── SIDEBAR ──
+    document.getElementById('sidebarToggle').addEventListener('click', function() {
+        document.getElementById('sidebar').classList.toggle('open');
+        document.getElementById('sidebarOverlay').classList.toggle('show');
+    });
+    document.getElementById('sidebarOverlay').addEventListener('click', function() {
+        document.getElementById('sidebar').classList.remove('open');
+        document.getElementById('sidebarOverlay').classList.remove('show');
+    });
+    document.querySelectorAll('.sidebar-nav a').forEach(function(a) {
+        a.addEventListener('click', function(e) {
+            e.preventDefault();
+            switchSection(this.dataset.section);
+            document.getElementById('sidebar').classList.remove('open');
+            document.getElementById('sidebarOverlay').classList.remove('show');
+        });
+    });
+
+    function switchSection(name) {
+        var map = { overview:'secOverview','mark-attendance':'secMarkAttendance', schedule:'secSchedule', sessions:'secSessions', courses:'secCourses', analytics:'secAnalytics', security:'secSecurity' };
+        document.querySelectorAll('.section').forEach(function(s) { s.classList.remove('active'); });
+        document.querySelectorAll('.sidebar-nav a').forEach(function(a) { a.classList.remove('active'); });
+        var sec = document.getElementById(map[name]);
+        if (sec) sec.classList.add('active');
+        var nav = document.querySelector('.sidebar-nav a[data-section="' + name + '"]');
+        if (nav) nav.classList.add('active');
+        var titles = { overview:'overview','mark-attendance':'mark_attendance', schedule:'schedule', sessions:'sessions', courses:'courses', analytics:'analytics', security:'security' };
+        document.getElementById('pageTitle').textContent = t(titles[name] || 'overview');
+        if (name === 'sessions' && dashboardData) { renderSessions(); loadHistory(); }
+        if (name === 'schedule') { loadSchedule(); }
+        if (name === 'analytics' && !analyticsData) loadAnalytics();
+        if (name === 'security' && !securityData) loadSecurity();
+    }
+
+    function toggleNotifPanel() {
+        document.getElementById('notifPanel').classList.toggle('open');
+    }
+
+    // ── DASHBOARD DATA ──
+    async function loadDashboard() {
+        var res = await apiFetch('/api/student/dashboard');
+        if (!res || !res.ok) return;
+        dashboardData = await res.json();
+        renderAll();
+    }
+
+    function renderAll() {
+        renderProfile();
+        renderStats();
+        renderStatusBadge();
+        renderTodaySchedule();
+        renderRecent();
+        renderCourseMiniList();
+        renderSessions();
+        renderCourses();
+        renderNetwork();
+        renderNotifications();
+        analyticsData = null;
+        securityData = null;
+        loadAnalytics();
+        loadSecurity();
+        loadFaceStatus();
+    }
+
+    function renderProfile() {
+        if (!dashboardData || !dashboardData.profile) return;
+        var p = dashboardData.profile;
+        document.getElementById('userName').textContent = p.first_name || 'Student';
+        document.getElementById('userAvatar').textContent = (p.first_name || 'S')[0];
+        document.getElementById('welcomeMsg').textContent = t('welcome_back') + ', ' + (p.first_name || '') + '!';
+        document.getElementById('welcomeSub').textContent = p.faculty || '';
+    }
+
+    function renderStats() {
+        if (!dashboardData) return;
+        var s = dashboardData.stats || {};
+        document.getElementById('ovRate').textContent = s.rate !== undefined ? s.rate + '%' : '—';
+        document.getElementById('ovPresent').textContent = s.present || '0';
+        var lateAbsent = (s.late || 0) + (s.absent || 0);
+        document.getElementById('ovLate').textContent = lateAbsent;
+        var tl = dashboardData.trust_level || {};
+        document.getElementById('ovTrust').textContent = tl.score !== undefined ? tl.score + '%' : '—';
+        var trend = document.getElementById('ovTrend');
+        var wr = s.weekly_rate;
+        if (wr !== undefined && s.rate !== undefined && s.rate > 0) {
+            var diff = wr - s.rate;
+            trend.textContent = (diff >= 0 ? '+' : '') + diff.toFixed(1) + '% wk';
+            trend.className = 'stat-trend ' + (diff >= 0 ? 'up' : 'down');
+        }
+    }
+
+    function renderStatusBadge() {
+        var container = document.getElementById('attendanceStatusBadge');
+        var status = dashboardData && dashboardData.attendance_status ? dashboardData.attendance_status : 'safe';
+        var labels = { safe: t('safe'), at_risk: t('at_risk'), critical: t('critical') };
+        container.innerHTML = '<span class="status-badge ' + status + '"><span class="dot"></span> ' + (labels[status] || status) + '</span>';
+    }
+
+    function renderTodaySchedule() {
+        var list = document.getElementById('todayList');
+        var upcoming = dashboardData && dashboardData.upcoming ? dashboardData.upcoming : [];
+        var today = upcoming.filter(function(s) {
+            var d = s.created_at ? new Date(s.created_at) : null;
+            if (!d) return false;
+            var now = new Date();
+            return d.toDateString() === now.toDateString() || s.status === 'active';
+        });
+        if (!today.length) today = upcoming.slice(0, 3);
+        if (!today.length) {
+            list.innerHTML = '<div class="empty-muted">' + t('no_sessions_today') + '</div>';
+            return;
+        }
+        list.innerHTML = today.map(function(s) {
+            var isActive = s.status === 'active';
+            var time = s.created_at ? new Date(s.created_at).toLocaleTimeString([], { hour:'2-digit', minute:'2-digit' }) : '';
+            return '<div class="s-item"><div class="si-icon ' + (isActive ? 'active' : 'past') + '"><i class="fas ' + (isActive ? 'fa-play' : 'fa-calendar') + '"></i></div><div class="si-body"><div class="si-title">' + (s.course_name || '—') + '</div><div class="si-sub">' + (s.lecturer_name || '') + ' · ' + time + '</div></div><div class="si-right">' + (isActive ? '<span class="pill pill-green">' + t('active_now') + '</span>' : '') + '</div></div>';
+        }).join('');
+    }
+
+    function renderRecent() {
+        var list = document.getElementById('recentList');
+        var recent = dashboardData && dashboardData.recent ? dashboardData.recent : [];
+        if (!recent.length) { list.innerHTML = '<div class="empty-muted">' + t('no_activity') + '</div>'; return; }
+        list.innerHTML = recent.slice(0, 6).map(function(r) {
+            var clr = r.status === 'present' ? 'var(--success)' : r.status === 'late' ? 'var(--warning)' : r.status === 'suspicious' ? 'var(--danger)' : 'var(--text-dim)';
+            var lbl = r.status === 'present' ? t('present_label') : r.status === 'late' ? t('late') : r.status === 'suspicious' ? t('suspicious') : t('absent');
+            var time = r.marked_at ? new Date(r.marked_at).toLocaleDateString() : '';
+            return '<div class="feed-item"><span class="feed-dot" style="background:' + clr + '"></span><span class="feed-msg">' + (r.course_name || '—') + ' — ' + lbl + '</span><span class="feed-time">' + time + '</span></div>';
+        }).join('');
+    }
+
+    function renderCourseMiniList() {
+        var container = document.getElementById('courseMiniList');
+        var courses = dashboardData && dashboardData.courses ? dashboardData.courses : [];
+        document.getElementById('courseCount').textContent = courses.length + (currentLang === 'fr' ? ' cours' : ' courses');
+        if (!courses.length) { container.innerHTML = '<div class="empty-muted">' + t('no_courses') + '</div>'; return; }
+        container.innerHTML = '<div class="course-grid">' + courses.slice(0, 6).map(function(c) {
+            var barClass = c.rate >= 75 ? 'good' : c.rate >= 50 ? 'warn' : 'bad';
+            var riskLabel = t(c.risk || 'low');
+            return '<div class="course-card" style="cursor:pointer;" onclick="openCourseDrawer(' + JSON.stringify(c).replace(/"/g, '&quot;') + ')"><div class="cc-top"><span class="cc-code">' + (c.course_id || '') + '</span><span class="risk-badge ' + (c.risk || 'low') + '">' + riskLabel + '</span></div><div class="cc-name">' + (c.course_name || '—') + '</div><div class="cc-lecturer">' + (c.lecturer_name || '') + '</div><div class="bar-track"><div class="bar-fill ' + barClass + '" style="width:' + c.rate + '%"></div></div><div class="cc-footer"><span>' + t('attended') + ': ' + c.present + '/' + c.total + '</span><span>' + c.rate + '%</span></div></div>';
+        }).join('') + '</div>';
+    }
+
+    function renderCourses() {
+        var grid = document.getElementById('coursesGrid');
+        var courses = dashboardData && dashboardData.courses ? dashboardData.courses : [];
+        if (!courses.length) { grid.innerHTML = '<div class="empty-muted">' + t('no_courses') + '</div>'; return; }
+        grid.innerHTML = courses.map(function(c) {
+            var barClass = c.rate >= 75 ? 'good' : c.rate >= 50 ? 'warn' : 'bad';
+            var riskLabel = t(c.risk || 'low');
+            return '<div class="course-card" style="cursor:pointer;" onclick="openCourseDrawer(' + JSON.stringify(c).replace(/"/g, '&quot;') + ')"><div class="cc-top"><span class="cc-code">' + (c.course_id || '') + '</span><span class="risk-badge ' + (c.risk || 'low') + '">' + riskLabel + '</span></div><div class="cc-name">' + (c.course_name || '—') + '</div><div class="cc-lecturer">' + (c.lecturer_name || '') + '</div><div class="bar-track"><div class="bar-fill ' + barClass + '" style="width:' + c.rate + '%"></div></div><div class="cc-footer"><span>' + t('attended') + ': ' + c.present + '/' + c.total + '</span><span>' + c.rate + '%</span></div></div>';
+        }).join('');
+    }
+
+    function renderSessions() {
+        var container = document.getElementById('sessionList');
+        var sessions = dashboardData && dashboardData.upcoming ? dashboardData.upcoming : [];
+        if (!sessions.length) { container.innerHTML = '<div class="empty-muted">' + t('no_sessions') + '</div>'; return; }
+        var active = sessions.filter(function(s) { return s.status === 'active'; });
+        var past = sessions.filter(function(s) { return s.status !== 'active'; });
+        var html = '';
+        if (active.length) {
+            html += '<div class="card"><div class="card-header" style="color:var(--success);"><i class="fas fa-play-circle"></i> ' + t('active_now') + ' <span class="pill pill-green" style="margin-left:auto;">' + active.length + '</span></div><div class="card-body session-list">' +
+                active.map(function(s) {
+                    var time = s.created_at ? new Date(s.created_at).toLocaleString() : '';
+                    return '<div class="s-item"><div class="si-icon active"><i class="fas fa-play"></i></div><div class="si-body"><div class="si-title">' + (s.course_name || '—') + '</div><div class="si-sub">' + (s.lecturer_name || '') + ' · ' + time + '</div></div><div class="si-right"><span class="pill pill-green">' + t('active_now') + '</span></div></div>';
+                }).join('') + '</div></div>';
+        }
+        if (past.length) {
+            html += '<div class="card"><div class="card-header">' + t('past') + ' <span style="margin-left:auto;font-weight:400;font-size:.7rem;color:var(--text-dim);">' + past.length + '</span></div><div class="card-body session-list">' +
+                past.map(function(s) {
+                    var time = s.created_at ? new Date(s.created_at).toLocaleString() : '';
+                    return '<div class="s-item"><div class="si-icon past"><i class="fas fa-check"></i></div><div class="si-body"><div class="si-title">' + (s.course_name || '—') + '</div><div class="si-sub">' + (s.lecturer_name || '') + ' · ' + time + '</div></div></div>';
+                }).join('') + '</div></div>';
+        }
+        container.innerHTML = html;
+    }
+
+    function updateNetworkUI(status, latencyMs) {
+        var el = document.getElementById('connQuality');
+        var dot = document.getElementById('connDot');
+        var label = document.getElementById('connLabel');
+        var lat = document.getElementById('connLatency');
+        if (!el) return;
+        if (status === 'offline' || status === 'disconnected') {
+            el.className = 'conn-quality conn-offline';
+            dot.style.background = '#EF4444';
+            label.textContent = 'Offline';
+            lat.textContent = '';
+        } else if (latencyMs < 0 || latencyMs === undefined) {
+            el.className = 'conn-quality conn-degraded';
+            dot.style.background = '#F59E0B';
+            label.textContent = 'Connecting...';
+            lat.textContent = '';
+        } else if (latencyMs < 150) {
+            el.className = 'conn-quality conn-online';
+            dot.style.background = '#10B981';
+            label.textContent = latencyMs + 'ms';
+            lat.textContent = '';
+        } else if (latencyMs < 300) {
+            el.className = 'conn-quality conn-degraded';
+            dot.style.background = '#F59E0B';
+            label.textContent = latencyMs + 'ms';
+            lat.textContent = '';
+        } else {
+            el.className = 'conn-quality conn-offline';
+            dot.style.background = '#EF4444';
+            label.textContent = latencyMs + 'ms';
+            lat.textContent = '';
+        }
+    }
+
+    function renderNetwork() {
+        var net = dashboardData && dashboardData.network ? dashboardData.network : {};
+        var broker = document.getElementById('netBroker');
+        var sync = document.getElementById('netSync');
+        broker.innerHTML = '<i class="fas fa-microchip" style="font-size:.6rem;"></i> ' + (net.broker_online ? 'Broker Online' : 'Broker Offline');
+        sync.textContent = net.broker_online ? t('sync_active') : 'Sync Pending';
+        /* Live network monitor updates independently, but fallback to API data */
+        if (!window.AttendrixNetwork || !window.AttendrixNetwork.getStatus) {
+            updateNetworkUI(net.status, net.avg_latency_ms);
+        }
+    }
+
+    function renderNotifications() {
+        var notifs = dashboardData && dashboardData.notifications ? dashboardData.notifications : [];
+        var badge = document.getElementById('notifBadge');
+        var body = document.getElementById('notifBody');
+        var lastSeenKey = 'studentNotifLastSeen';
+        var lastSeen = parseInt(localStorage.getItem(lastSeenKey) || '0', 10);
+        var latestTs = 0;
+        notifs.forEach(function(n) {
+            var ts = n.created_at ? new Date(n.created_at).getTime() : 0;
+            if (ts > latestTs) latestTs = ts;
+        });
+        var unreadCount = 0;
+        if (latestTs > lastSeen) {
+            unreadCount = notifs.filter(function(n) {
+                var ts = n.created_at ? new Date(n.created_at).getTime() : 0;
+                return ts > lastSeen;
+            }).length;
+        }
+        if (unreadCount > 0) { badge.style.display = 'inline-block'; badge.textContent = unreadCount; } else { badge.style.display = 'none'; }
+        if (notifs.length) {
+            body.innerHTML = notifs.map(function(n) {
+                var icon = n.type === 'security' ? 'fa-shield-alt' : n.type === 'warning' ? 'fa-exclamation-triangle' : 'fa-info-circle';
+                var cls = n.severity === 'critical' ? 'danger' : n.severity === 'medium' ? 'warning' : 'info';
+                var time = n.created_at ? new Date(n.created_at).toLocaleDateString() : '';
+                return '<div class="np-item" onclick="markNotifSeen()" style="cursor:pointer;"><div class="np-icon ' + cls + '"><i class="fas ' + icon + '"></i></div><div class="np-body"><div class="np-msg">' + n.message + '</div><div class="np-time">' + time + '</div></div></div>';
+            }).join('');
+        } else {
+            body.innerHTML = '<div class="empty-muted">' + t('no_notifications') + '</div>';
+        }
+    }
+
+    function markNotifSeen() {
+        var notifs = dashboardData && dashboardData.notifications ? dashboardData.notifications : [];
+        var latestTs = 0;
+        notifs.forEach(function(n) {
+            var ts = n.created_at ? new Date(n.created_at).getTime() : 0;
+            if (ts > latestTs) latestTs = ts;
+        });
+        if (latestTs > 0) {
+            localStorage.setItem('studentNotifLastSeen', String(latestTs));
+            var badge = document.getElementById('notifBadge');
+            badge.style.display = 'none';
+        }
+    }
+
+    // ── MARK ATTENDANCE ──
+    var pendingVerification = null;
+
+    async function verifyAndMark() {
+        var code = document.getElementById('sessionCode').value.trim();
+        if (!code) { showToast(t('enter_session_code'), 'error'); return; }
+        document.getElementById('scanResult').style.display = 'none';
+        try {
+            var res = await apiFetch('/api/student/verify-scan', {
+                method: 'POST',
+                body: JSON.stringify({ session_code: code, device_fingerprint: generateFingerprint() })
+            });
+            if (!res) { showToast(t('mark_failed'), 'error'); return; }
+            var result = await res.json();
+            if (result.error) { showToast(result.error, 'error'); return; }
+            pendingVerification = result;
+            showScanResult(result);
+        } catch(e) { showToast(t('mark_failed'), 'error'); }
+    }
+
+    var CHECK_TRANSLATIONS = {
+        'Campus WiFi': { en: 'Campus WiFi', fr: 'WiFi Campus' },
+        'Secure Session': { en: 'Secure Session', fr: 'Session Sécurisée' },
+        'Device Verified': { en: 'Device Verified', fr: 'Appareil Vérifié' },
+        'Location Match': { en: 'Location Match', fr: 'Localisation Correspond' },
+        'Time Valid': { en: 'Time Valid', fr: 'Heure Valide' },
+    };
+    function translateCheck(key) {
+        var m = CHECK_TRANSLATIONS[key];
+        return m ? (m[currentLang] || m.en) : key;
+    }
+
+    function showScanResult(result) {
+        var el = document.getElementById('scanResult');
+        el.style.display = 'block';
+        var trust = result.trust_score || 0;
+        document.getElementById('trustScoreDisplay').textContent = trust + '%';
+        var arc = document.getElementById('trustArc');
+        var circumference = 188.5;
+        arc.style.strokeDashoffset = circumference - (trust / 100) * circumference;
+        arc.style.stroke = trust >= 80 ? '#10b981' : trust >= 50 ? '#f59e0b' : '#ef4444';
+        document.getElementById('scanCourseName').textContent = result.session ? result.session.course_name : '';
+        document.getElementById('scanLecturer').textContent = result.session ? result.session.lecturer_name : '';
+        var checks = document.getElementById('scanChecks');
+        var ck = result.checks || {};
+        checks.innerHTML = Object.keys(ck).map(function(k) {
+            var pass = ck[k];
+            return '<div class="check-item"><span class="ck ' + (pass ? 'pass' : 'fail') + '"><i class="fas ' + (pass ? 'fa-check-circle' : 'fa-times-circle') + '"></i></span> ' + translateCheck(k) + '</div>';
+        }).join('');
+    }
+
+    async function confirmMark() {
+        if (!pendingVerification) { showToast(t('verify_first'), 'error'); return; }
+        try {
+            var res = await apiFetch('/api/attendance/mark', {
+                method: 'POST',
+                body: JSON.stringify({ session_code: document.getElementById('sessionCode').value.trim(), device_fingerprint: generateFingerprint(), location: 'Campus' })
+            });
+            if (!res) { showToast(t('mark_failed'), 'error'); return; }
+            var result = await res.json();
+            if (result.error) { showToast(result.error, 'error'); return; }
+            showToast(t('attendance_marked'), 'success');
             document.getElementById('sessionCode').value = '';
+            document.getElementById('scanResult').style.display = 'none';
+            pendingVerification = null;
+            loadDashboard();
+        } catch(e) { showToast(t('mark_failed'), 'error'); }
+    }
+
+    function generateFingerprint() {
+        if (window.AttendrixSecurity && AttendrixSecurity.generateFingerprint) {
+            return AttendrixSecurity.generateFingerprint();
         }
-        
-        async function markAttendance() {
-            const sessionCode = document.getElementById('sessionCode').value;
-            
-            if (!sessionCode) {
-                alert('Please enter a session code');
+        var canvas = document.createElement('canvas');
+        canvas.width = 200; canvas.height = 50;
+        var ctx = canvas.getContext('2d');
+        ctx.textBaseline = 'top'; ctx.font = '14px Arial';
+        ctx.fillText('Student device ' + Math.random(), 10, 10);
+        return btoa(navigator.userAgent + navigator.language + screen.width + 'x' + screen.height + canvas.toDataURL()).substring(0, 32);
+    }
+
+    // ── ANALYTICS ──
+    async function loadAnalytics() {
+        try {
+            var res = await apiFetch('/api/student/analytics');
+            if (!res || !res.ok) return;
+            analyticsData = await res.json();
+            renderAnalyticsChart();
+            renderAnalyticsCourses();
+            renderInsights();
+        } catch(e) { console.warn('loadAnalytics:', e); }
+    }
+
+    function renderAnalyticsChart() {
+        if (!analyticsData || !analyticsData.daily_rates) return;
+        var data = analyticsData.daily_rates;
+        var labels = data.map(function(d) { var dt = new Date(d.date); return dt.toLocaleDateString(currentLang === 'fr' ? 'fr' : 'en', { month:'short', day:'numeric' }); });
+        var values = data.map(function(d) { return d.rate; });
+        if (trendChartInstance) { trendChartInstance.destroy(); trendChartInstance = null; }
+        var ctx = document.getElementById('trendChart').getContext('2d');
+        trendChartInstance = new Chart(ctx, {
+            type: 'line',
+            data: {
+                labels: labels,
+                datasets: [{
+                    label: t('attendance_rate'),
+                    data: values,
+                    borderColor: '#7c5cfc',
+                    backgroundColor: 'rgba(124,92,252,.08)',
+                    borderWidth: 2,
+                    fill: true,
+                    tension: .4,
+                    pointRadius: 3,
+                    pointBackgroundColor: '#7c5cfc',
+                    pointBorderColor: '#7c5cfc',
+                }]
+            },
+            options: {
+                responsive: true,
+                maintainAspectRatio: false,
+                plugins: { legend: { display: false } },
+                scales: {
+                    x: { ticks: { color: '#555b7a', font: { size: 9 } }, grid: { color: 'rgba(26,31,58,.5)' } },
+                    y: { min: 0, max: 100, ticks: { color: '#555b7a', font: { size: 9 }, callback: function(v) { return v + '%'; } }, grid: { color: 'rgba(26,31,58,.5)' } }
+                }
+            }
+        });
+    }
+
+    function renderAnalyticsCourses() {
+        var body = document.getElementById('analyticsCourseBody');
+        var courses = analyticsData && analyticsData.courses ? analyticsData.courses : (dashboardData && dashboardData.courses ? dashboardData.courses : []);
+        if (!courses.length) { body.innerHTML = '<div class="empty-muted">' + t('no_courses') + '</div>'; return; }
+        body.innerHTML = courses.map(function(c) {
+            var barClass = c.rate >= 75 ? 'good' : c.rate >= 50 ? 'warn' : 'bad';
+            return '<div style="margin-bottom:10px;"><div style="display:flex;justify-content:space-between;font-size:.72rem;margin-bottom:3px;"><span>' + (c.course_name || c.course_id) + '</span><span>' + c.rate + '%</span></div><div class="bar-track" style="height:4px;"><div class="bar-fill ' + barClass + '" style="width:' + c.rate + '%"></div></div></div>';
+        }).join('');
+    }
+
+    function renderInsights() {
+        var body = document.getElementById('analyticsInsights');
+        var html = '';
+        var courses = analyticsData && analyticsData.courses ? analyticsData.courses : [];
+        var worst = analyticsData && analyticsData.lowest_course ? analyticsData.lowest_course : null;
+        var totalLate = analyticsData ? analyticsData.total_late : 0;
+        var totalSuspicious = analyticsData ? analyticsData.total_suspicious : 0;
+        if (worst) {
+            html += '<div class="feed-item"><span class="feed-dot" style="background:var(--warning);"></span><span class="feed-msg"><strong>' + (worst.course_name || '—') + '</strong> ' + (currentLang === 'fr' ? 'a le plus faible taux' : 'has the lowest rate') + ': ' + worst.rate + '%</span></div>';
+        }
+        if (totalLate > 0) {
+            html += '<div class="feed-item"><span class="feed-dot" style="background:var(--warning);"></span><span class="feed-msg">' + (currentLang === 'fr' ? 'Vous avez été en retard' : 'You\'ve been late') + ' ' + totalLate + ' ' + (currentLang === 'fr' ? 'fois' : 'times') + '</span></div>';
+        }
+        if (totalSuspicious > 0) {
+            html += '<div class="feed-item"><span class="feed-dot" style="background:var(--danger);"></span><span class="feed-msg">' + (currentLang === 'fr' ? totalSuspicious + ' entrée(s) suspecte(s) détectée(s)' : totalSuspicious + ' suspicious entr' + (totalSuspicious > 1 ? 'ies' : 'y') + ' detected') + '</span></div>';
+        }
+        if (!html) html = '<div class="empty-muted">' + (currentLang === 'fr' ? 'Bonne performance!' : 'Good performance!') + '</div>';
+        body.innerHTML = html;
+    }
+
+    // ── SECURITY ──
+    async function loadSecurity() {
+        try {
+            var res = await apiFetch('/api/student/security');
+            if (!res || !res.ok) return;
+            securityData = await res.json();
+            renderSecurity();
+        } catch(e) { console.warn('loadSecurity:', e); }
+    }
+
+    function renderSecurity() {
+        if (!securityData) return;
+        var tl = dashboardData && dashboardData.trust_level ? dashboardData.trust_level : {};
+        var score = tl.score || 0;
+        var num = document.getElementById('trustNum');
+        var label = document.getElementById('trustLabel');
+        var arc = document.getElementById('trustArcGauge');
+        num.textContent = score + '%';
+        var lbl = score >= 80 ? t('high') : score >= 50 ? t('medium') : t('low');
+        var clr = score >= 80 ? 'var(--success)' : score >= 50 ? 'var(--warning)' : 'var(--danger)';
+        label.textContent = lbl + ' ' + t('trust_score');
+        label.style.color = clr;
+        var circumference = 263.9;
+        arc.style.strokeDashoffset = circumference - (score / 100) * circumference;
+        arc.style.stroke = clr;
+
+        var deviceBody = document.getElementById('deviceStatusBody');
+        var trusted = securityData.trusted_device;
+        var vpn = securityData.vpn_detected;
+        deviceBody.innerHTML = '<div class="feed-item"><span class="feed-dot" style="background:' + (trusted ? 'var(--success)' : 'var(--danger)') + '"></span><span class="feed-msg">' + (currentLang === 'fr' ? 'Appareil de confiance' : 'Trusted Device') + '</span><span style="font-size:.7rem;font-weight:600;color:' + (trusted ? 'var(--success)' : 'var(--danger)') + '">' + (trusted ? t('trusted') : t('not_trusted')) + '</span></div><div class="feed-item"><span class="feed-dot" style="background:' + (vpn ? 'var(--warning)' : 'var(--success)') + '"></span><span class="feed-msg">VPN ' + (currentLang === 'fr' ? 'Détecté' : 'Detected') + '</span><span style="font-size:.7rem;font-weight:600;color:' + (vpn ? 'var(--warning)' : 'var(--success)') + '">' + (vpn ? t('high') : t('low')) + '</span></div><div class="feed-item"><span class="feed-dot" style="background:var(--info);"></span><span class="feed-msg">' + (currentLang === 'fr' ? 'Dernière connexion' : 'Last Login') + '</span><span style="font-size:.7rem;color:var(--text-dim);">' + (securityData.last_login ? new Date(securityData.last_login).toLocaleDateString() : '—') + '</span></div>';
+
+        var eventsBody = document.getElementById('securityEventsBody');
+        var events = securityData.events || [];
+        if (events.length) {
+            eventsBody.innerHTML = events.map(function(e) {
+                var clr = e.severity === 'critical' ? 'var(--danger)' : e.severity === 'high' ? 'var(--warning)' : 'var(--info)';
+                var time = e.created_at ? new Date(e.created_at).toLocaleDateString() : '';
+                return '<div class="feed-item"><span class="feed-dot" style="background:' + clr + '"></span><span class="feed-msg">' + (e.description || e.event_type || '—') + '</span><span class="feed-time">' + time + '</span></div>';
+            }).join('');
+        } else {
+            eventsBody.innerHTML = '<div class="empty-muted">' + t('no_events') + '</div>';
+        }
+
+        var secBadge = document.getElementById('secBadge');
+        if (events.length) secBadge.style.display = 'inline-block'; else secBadge.style.display = 'none';
+    }
+    
+    // ── FACE RECOGNITION ──
+    var faceCapture = null;
+
+    async function loadFaceStatus() {
+        var notEnrolled = document.getElementById('faceNotEnrolled');
+        var enrolled = document.getElementById('faceEnrolled');
+        var loading = document.getElementById('faceLoading');
+        var dot = document.getElementById('faceStatusDot');
+        if (!notEnrolled) return;
+        loading.style.display = 'block';
+        notEnrolled.style.display = 'none';
+        enrolled.style.display = 'none';
+        try {
+            var res = await apiFetch('/api/biometric/face/status');
+            if (!res || !res.ok) { throw new Error('API error'); }
+            var data = await res.json();
+            loading.style.display = 'none';
+            if (data.enrolled) {
+                enrolled.style.display = 'block';
+                dot.style.background = 'var(--success)';
+                document.getElementById('faceEnrollDate').textContent = (currentLang === 'fr' ? 'Enr. ' : 'Enrolled ') + new Date(data.enrollment.enrollment_date).toLocaleDateString();
+            } else {
+                notEnrolled.style.display = 'block';
+                dot.style.background = 'var(--text-dim)';
+            }
+        } catch(e) {
+            loading.style.display = 'none';
+            notEnrolled.style.display = 'block';
+            dot.style.background = 'var(--text-dim)';
+        }
+    }
+
+    async function openFaceEnroll() {
+        document.getElementById('faceModal').style.display = 'flex';
+        document.getElementById('faceEnrollStep1').style.display = 'block';
+        document.getElementById('faceEnrollStep2').style.display = 'none';
+        document.getElementById('faceEnrollDone').style.display = 'none';
+        document.getElementById('faceEnrollError').style.display = 'none';
+        document.getElementById('faceCaptureStatus').textContent = (currentLang === 'fr' ? 'Initialisation de la caméra...' : 'Initializing camera...');
+        try {
+            faceCapture = Object.create(window.FaceCapture);
+            await faceCapture.init('faceVideo');
+            await faceCapture.loadModels();
+            await faceCapture.startCamera();
+            document.getElementById('faceCaptureStatus').textContent = (currentLang === 'fr' ? 'Caméra prête. Regardez la caméra.' : 'Camera ready. Look at the camera.');
+            document.getElementById('faceCaptureBtn').disabled = false;
+        } catch(e) {
+            document.getElementById('faceCaptureStatus').textContent = (currentLang === 'fr' ? 'Erreur caméra: ' : 'Camera error: ') + e.message;
+        }
+    }
+
+    function closeFaceModal() {
+        document.getElementById('faceModal').style.display = 'none';
+        if (faceCapture) faceCapture.stopCamera();
+    }
+
+    async function captureFace() {
+        var statusEl = document.getElementById('faceCaptureStatus');
+        var btn = document.getElementById('faceCaptureBtn');
+        btn.disabled = true;
+        statusEl.textContent = (currentLang === 'fr' ? 'Capture du visage...' : 'Capturing face...');
+        try {
+            var descriptor = await faceCapture.captureDescriptor();
+            if (!descriptor) {
+                document.getElementById('faceEnrollStep1').style.display = 'none';
+                document.getElementById('faceEnrollError').style.display = 'block';
+                document.getElementById('faceEnrollErrorText').textContent = (currentLang === 'fr' ? 'Aucun visage détecté. Assurez-vous d\'être bien éclairé.' : 'No face detected. Make sure you are well lit.');
+                btn.disabled = false;
                 return;
             }
-            
-            try {
-                const response = await fetch('/api/attendance/mark', {
-                    method: 'POST',
-                    headers: {
-                        'Content-Type': 'application/json',
-                        'Authorization': `Bearer ${localStorage.getItem('accessToken')}`
-                    },
-                    body: JSON.stringify({
-                        session_code: sessionCode,
-                        device_fingerprint: generateDeviceFingerprint(),
-                        location: 'Campus Location' // TODO: Get from GPS
-                    })
-                });
-                
-                const result = await response.json();
-                
-                if (result.error) {
-                    alert('Error marking attendance: ' + result.error);
-                    return;
-                }
-                
-                alert('Attendance marked successfully!');
-                cancelQRScan();
-                
-                // Refresh attendance stats
-                location.reload();
-                
-            } catch (error) {
-                console.error('Error marking attendance:', error);
-                alert('Failed to mark attendance');
+            document.getElementById('faceEnrollStep1').style.display = 'none';
+            document.getElementById('faceEnrollStep2').style.display = 'block';
+            var res = await apiFetch('/api/biometric/face/enroll', {
+                method: 'POST',
+                body: JSON.stringify({ descriptor: descriptor })
+            });
+            if (!res || !res.ok) {
+                var errData = res ? await res.json() : {};
+                throw new Error(errData.error || 'Enrollment failed');
+            }
+            var data = await res.json();
+            document.getElementById('faceEnrollStep2').style.display = 'none';
+            document.getElementById('faceEnrollDone').style.display = 'block';
+            document.getElementById('faceEnrollConfidence').textContent = (currentLang === 'fr' ? 'Visage inscrit avec succès' : 'Face enrolled successfully');
+            loadFaceStatus();
+        } catch(e) {
+            document.getElementById('faceEnrollStep1').style.display = 'none';
+            document.getElementById('faceEnrollStep2').style.display = 'none';
+            document.getElementById('faceEnrollError').style.display = 'block';
+            document.getElementById('faceEnrollErrorText').textContent = e.message;
+            btn.disabled = false;
+        }
+    }
+
+    function retryFaceCapture() {
+        document.getElementById('faceEnrollError').style.display = 'none';
+        document.getElementById('faceEnrollStep1').style.display = 'block';
+    }
+
+    async function reEnrollFace() {
+        await revokeFace();
+        openFaceEnroll();
+    }
+
+    async function revokeFace() {
+        try {
+            var res = await apiFetch('/api/biometric/face/revoke', { method: 'DELETE' });
+            if (res && res.ok) loadFaceStatus();
+        } catch(e) { console.warn('revokeFace:', e); }
+    }
+
+    // ── ATTENDANCE HISTORY (Gap 8) ──
+    var historyPage = 1;
+    var historyTotalPages = 1;
+
+    async function loadHistory(page) {
+        page = page || 1;
+        try {
+            var res = await apiFetch('/api/student/attendance-history?page=' + page + '&per_page=15');
+            if (!res || !res.ok) return;
+            var data = await res.json();
+            renderHistory(data);
+        } catch(e) { console.warn('loadHistory:', e); }
+    }
+
+    function renderHistory(data) {
+        var tbody = document.getElementById('historyTableBody');
+        var pag = document.getElementById('historyPagination');
+        var count = document.getElementById('historyCount');
+        if (!tbody) return;
+        historyPage = data.page || 1;
+        historyTotalPages = data.total_pages || 1;
+        if (count) count.textContent = data.total + ' ' + (currentLang === 'fr' ? 'enregistrements' : 'records');
+        if (!data.history || !data.history.length) {
+            tbody.innerHTML = '<tr><td colspan="4" class="empty-muted">' + t('no_records') + '</td></tr>';
+            pag.style.display = 'none';
+            return;
+        }
+        tbody.innerHTML = data.history.map(function(r) {
+            var statusLabel = r.status === 'present' ? t('present_label') : r.status === 'late' ? t('late') : r.status === 'suspicious' ? t('suspicious') : r.status === 'absent' ? t('absent') : r.status;
+            var statusClass = r.status === 'present' ? 'pill-green' : r.status === 'late' ? 'pill-yellow' : r.status === 'suspicious' || r.status === 'absent' ? 'pill-red' : 'pill-gray';
+            var date = r.marked_at ? new Date(r.marked_at).toLocaleDateString(currentLang === 'fr' ? 'fr' : 'en', { day:'numeric', month:'short' }) : '—';
+            return '<tr><td>' + date + '</td><td class="cell-name">' + (r.course_name || '—') + '</td><td><span class="pill ' + statusClass + '">' + statusLabel + '</span></td><td>' + (r.lecturer_name || '—') + '</td></tr>';
+        }).join('');
+        if (data.total_pages > 1) {
+            pag.style.display = 'flex';
+            pag.innerHTML = '<button ' + (data.page <= 1 ? 'disabled' : '') + ' onclick="loadHistory(' + (data.page - 1) + ')"><i class="fas fa-chevron-left"></i> ' + t('previous') + '</button><span style="font-size:.7rem;color:var(--text-dim);">' + t('page') + ' ' + data.page + ' / ' + data.total_pages + '</span><button ' + (data.page >= data.total_pages ? 'disabled' : '') + ' onclick="loadHistory(' + (data.page + 1) + ')">' + t('next') + ' <i class="fas fa-chevron-right"></i></button>';
+        } else {
+            pag.style.display = 'none';
+        }
+    }
+
+    // ── SCHEDULE / CALENDAR (Gap 9) ──
+    async function loadSchedule() {
+        try {
+            var res = await apiFetch('/api/student/schedule');
+            if (!res || !res.ok) return;
+            var data = await res.json();
+            renderSchedule(data.sessions || []);
+        } catch(e) { console.warn('loadSchedule:', e); }
+    }
+
+    function renderSchedule(sessions) {
+        var calEl = document.getElementById('scheduleCalendar');
+        var listEl = document.getElementById('scheduleList');
+        var weekLabel = document.getElementById('scheduleWeekLabel');
+        if (!calEl) return;
+        var now = new Date();
+        var dayNames = { en: ['Sun','Mon','Tue','Wed','Thu','Fri','Sat'], fr: ['Dim','Lun','Mar','Mer','Jeu','Ven','Sam'] };
+        var monthNames = { en: ['Jan','Feb','Mar','Apr','May','Jun','Jul','Aug','Sep','Oct','Nov','Dec'], fr: ['Jan','Fév','Mar','Avr','Mai','Juin','Juil','Août','Sep','Oct','Nov','Déc'] };
+        var days = dayNames[currentLang] || dayNames.en;
+        var months = monthNames[currentLang] || monthNames.en;
+
+        var startOfWeek = new Date(now);
+        startOfWeek.setDate(now.getDate() - now.getDay());
+        var weekEnd = new Date(startOfWeek);
+        weekEnd.setDate(startOfWeek.getDate() + 6);
+        if (weekLabel) weekLabel.textContent = startOfWeek.getDate() + ' ' + months[startOfWeek.getMonth()] + ' — ' + weekEnd.getDate() + ' ' + months[weekEnd.getMonth()];
+
+        var eventsByDay = {};
+        sessions.forEach(function(s) {
+            if (!s.created_at) return;
+            var d = new Date(s.created_at);
+            var key = d.toDateString();
+            if (!eventsByDay[key]) eventsByDay[key] = [];
+            eventsByDay[key].push(s);
+        });
+
+        var html = '<div class="cal-grid">';
+        days.forEach(function(d) { html += '<div class="cal-header">' + d + '</div>'; });
+        for (var i = 0; i < 7; i++) {
+            var d = new Date(startOfWeek);
+            d.setDate(startOfWeek.getDate() + i);
+            var key = d.toDateString();
+            var isToday = d.toDateString() === now.toDateString();
+            var hasEvent = !!eventsByDay[key];
+            html += '<div class="cal-day ' + (hasEvent ? 'has-event' : '') + '" style="' + (isToday ? 'border-color:var(--accent);' : '') + '"><span class="cal-num">' + d.getDate() + '</span>' + (hasEvent ? '<span class="cal-event-dot"></span>' : '') + '</div>';
+        }
+        html += '</div>';
+        calEl.innerHTML = html;
+
+        if (sessions.length) {
+            listEl.innerHTML = sessions.slice(0, 10).map(function(s) {
+                var time = s.created_at ? new Date(s.created_at).toLocaleString(currentLang === 'fr' ? 'fr' : 'en', { weekday:'short', month:'short', day:'numeric', hour:'2-digit', minute:'2-digit' }) : '';
+                var isActive = s.status === 'active';
+                return '<div class="s-item"><div class="si-icon ' + (isActive ? 'active' : 'past') + '"><i class="fas ' + (isActive ? 'fa-play' : 'fa-calendar-check') + '"></i></div><div class="si-body"><div class="si-title">' + (s.course_name || '—') + '</div><div class="si-sub">' + (s.lecturer_name || '') + ' · ' + time + '</div></div><div class="si-right">' + (isActive ? '<span class="pill pill-green">' + t('active_now') + '</span>' : '') + '</div></div>';
+            }).join('');
+        } else {
+            listEl.innerHTML = '<div class="empty-muted">' + t('no_sessions') + '</div>';
+        }
+    }
+
+    // ── LIVE BADGE (Gap 10) ──
+    function updateLiveBadge() {
+        var sessions = dashboardData && dashboardData.upcoming ? dashboardData.upcoming : [];
+        var active = sessions.filter(function(s) { return s.status === 'active'; });
+        var liveBadge = document.getElementById('liveBadge');
+        var sessionBadge = document.getElementById('sessionBadge');
+        if (active.length) {
+            if (liveBadge) liveBadge.style.display = 'inline-block';
+            if (sessionBadge) sessionBadge.style.display = 'inline-block';
+        } else {
+            if (liveBadge) liveBadge.style.display = 'none';
+            if (sessionBadge) sessionBadge.style.display = 'none';
+        }
+    }
+
+    // ── COURSE DRAWER (Gap 11) ──
+    function openCourseDrawer(course) {
+        if (!course) return;
+        document.getElementById('drawerTitle').textContent = course.course_name || t('course_details');
+        document.getElementById('drawerCode').textContent = course.course_id || '—';
+        document.getElementById('drawerLecturer').textContent = course.lecturer_name || '—';
+        document.getElementById('drawerPresent').textContent = course.present || 0;
+        document.getElementById('drawerLate').textContent = course.late || 0;
+        document.getElementById('drawerAbsent').textContent = course.absent || 0;
+        document.getElementById('drawerSuspicious').textContent = course.suspicious || 0;
+        document.getElementById('drawerRate').textContent = course.rate !== undefined ? course.rate + '%' : '—';
+        var riskEl = document.getElementById('drawerRisk');
+        var riskClass = course.risk === 'low' ? 'pill-green' : course.risk === 'medium' ? 'pill-yellow' : 'pill-red';
+        var riskText = t(course.risk || 'low');
+        riskEl.innerHTML = '<span class="pill ' + riskClass + '">' + riskText + '</span>';
+        /* Show recent sessions for this course */
+        var sessionsEl = document.getElementById('drawerSessions');
+        var allSessions = dashboardData && dashboardData.upcoming ? dashboardData.upcoming : [];
+        var courseSessions = allSessions.filter(function(s) { return s.course_id === course.course_id || s.course_name === course.course_name; });
+        if (courseSessions.length) {
+            sessionsEl.innerHTML = courseSessions.slice(0, 8).map(function(s) {
+                var time = s.created_at ? new Date(s.created_at).toLocaleDateString(currentLang === 'fr' ? 'fr' : 'en', { day:'numeric', month:'short' }) : '';
+                var active = s.status === 'active';
+                return '<div class="feed-item"><span class="feed-dot" style="background:' + (active ? 'var(--success)' : 'var(--text-dim)') + '"></span><span class="feed-msg">' + time + ' — ' + (active ? t('active_now') : t('past')) + '</span></div>';
+            }).join('');
+        } else {
+            sessionsEl.innerHTML = '<div class="empty-muted">' + t('no_records') + '</div>';
+        }
+        document.getElementById('drawerOverlay').classList.add('open');
+        document.getElementById('drawerPanel').classList.add('open');
+    }
+
+    function closeDrawer() {
+        document.getElementById('drawerOverlay').classList.remove('open');
+        document.getElementById('drawerPanel').classList.remove('open');
+    }
+
+    // ── QUEUE STATS ──
+    function renderQueueStats() {
+        if (!dashboardData || !dashboardData.queue_stats) return;
+        var qs = dashboardData.queue_stats;
+        document.getElementById('qPending').textContent = qs.pending || 0;
+        document.getElementById('qFailed').textContent = qs.failed || 0;
+        document.getElementById('qSynced').textContent = qs.synced || 0;
+        var est = dashboardData.sync_estimate || {};
+        var recoveryText = est.estimated_recovery_mins > 0.5
+            ? '~' + Math.ceil(est.estimated_recovery_mins) + 'm'
+            : est.estimated_seconds > 0 ? '~' + Math.ceil(est.estimated_seconds) + 's' : '—';
+        document.getElementById('qEstimate').textContent = recoveryText;
+        var pill = document.getElementById('queuePill');
+        if (qs.total > 0) {
+            if (qs.queue_healthy) {
+                pill.innerHTML = '<span class="queue-pill healthy">' + qs.pending + ' ' + t('pending') + ' &middot; ' + qs.synced + ' ' + t('synced') + '</span>';
+            } else {
+                pill.innerHTML = '<span class="queue-pill degraded">' + qs.failed + ' ' + t('failed') + ' &middot; ' + qs.conflicts + ' conflicts</span>';
+            }
+        } else {
+            pill.innerHTML = '<span class="queue-pill healthy">' + t('synced') + '</span>';
+        }
+        var healthPill = document.getElementById('queueHealthPill');
+        if (healthPill) {
+            if (qs.total > 0 && qs.queue_healthy) {
+                healthPill.innerHTML = '<span class="queue-pill healthy">' + t('queue_healthy') + '</span>';
+            } else if (qs.total > 0 && !qs.queue_healthy) {
+                healthPill.innerHTML = '<span class="queue-pill degraded">' + t('queue_degraded') + '</span>';
+            } else {
+                healthPill.innerHTML = '<span class="queue-pill healthy">' + t('synced') + '</span>';
             }
         }
-        
-        function generateDeviceFingerprint() {
-            const canvas = document.createElement('canvas');
-            const ctx = canvas.getContext('2d');
-            canvas.width = 200;
-            canvas.height = 50;
-            ctx.textBaseline = 'top';
-            ctx.font = '14px Arial';
-            ctx.fillText('Student device fingerprint', 10, 10);
-            
-            const fingerprint = btoa(
-                navigator.userAgent +
-                navigator.language +
-                screen.width + 'x' + screen.height +
-                canvas.toDataURL()
-            );
-            
-            return fingerprint.substring(0, 32);
+    }
+
+    // ── NETWORK TOPOLOGY ──
+    function renderTopology() {
+        if (!window.AttendrixTopology) return;
+        var net = dashboardData && dashboardData.network ? dashboardData.network : {};
+        var nodes = net.nodes || [];
+        var broker = net.broker || {};
+        var count = document.getElementById('topologyNodeCount');
+        if (count) count.textContent = nodes.length + ' ' + t('nodes');
+        if (nodes.length > 0) {
+            AttendrixTopology.start(nodes, broker, 'topologyCanvas');
         }
-    </script>
+    }
+
+    function stopTopology() {
+        if (window.AttendrixTopology) AttendrixTopology.stop();
+    }
+
+    // ── PING (backup for old measure) ──
+    async function measurePing() {
+        try {
+            var start = Date.now();
+            await fetch('/api/ping?_=' + Date.now(), { cache: 'no-store' });
+        } catch(e) {}
+    }
+
+    // ── PATCH renderAll to include new sections ──
+    var origRenderAll = renderAll;
+    renderAll = function() {
+        origRenderAll();
+        renderQueueStats();
+        renderTopology();
+        updateLiveBadge();
+    };
+
+    // ── SSE REAL-TIME CONNECTION ──
+    var sseClient = null;
+    var sseFallbackInterval = null;
+
+    function connectSSE() {
+        var token = getToken();
+        if (!token) return;
+
+        var url = '/api/student/events/stream?token=' + encodeURIComponent(token) +
+                  '&user_id=' + encodeURIComponent('dev_student') +
+                  '&institution_id=' + encodeURIComponent('inst_001');
+
+        if (sseClient) sseClient.close();
+
+        sseClient = new EventSource(url);
+        sseClient.addEventListener('notification', function(e) {
+            var data = JSON.parse(e.data);
+            if (data.notifications && data.notifications.length > 0) {
+                loadDashboard();
+            }
+        });
+        sseClient.addEventListener('sessions', function(e) {
+            loadDashboard();
+        });
+        sseClient.addEventListener('connected', function() {
+            console.log('Student SSE connected');
+        });
+        sseClient.onerror = function() {
+            if (sseClient) { sseClient.close(); sseClient = null; }
+            if (!sseFallbackInterval) {
+                sseFallbackInterval = setInterval(function() {
+                    if (!document.hidden) loadDashboard();
+                }, 30000);
+            }
+        };
+    }
+
+    // ── INIT ──
+    applyTranslations();
+    loadExtendedTranslations();
+    document.getElementById('langToggle').textContent = currentLang === 'en' ? 'FR' : 'EN';
+    loadDashboard();
+    measurePing();
+    connectSSE();
+
+    setInterval(function() { if (!document.hidden) loadDashboard(); }, 60000);
+</script>
+
+<script src="/static/js/device-fingerprint.js"></script>
+<script src="/static/js/network-monitor.js"></script>
+<script src="/static/js/network-topology.js"></script>
+<script>
+    /* Start AttendrixNetwork monitor after scripts loaded */
+    if (window.AttendrixNetwork && AttendrixNetwork.init) {
+        AttendrixNetwork.init(15000);
+        AttendrixNetwork.addListener(function(event) {
+            if (event.type === 'pong') {
+                updateNetworkUI('connected', event.latency >= 0 ? event.latency : -1);
+            } else if (event.type === 'online') {
+                updateNetworkUI('connected', 0);
+            } else if (event.type === 'offline') {
+                updateNetworkUI('offline', -1);
+            }
+        });
+    }
+
+    /* Auto-collect device signals */
+    if (window.AttendrixSecurity && AttendrixSecurity.collectAllSignals) {
+        AttendrixSecurity.collectAllSignals().catch(function() {});
+    }
+</script>
+
 </body>
 </html>

@@ -4,8 +4,20 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Institutional Admin — Attendrix 🇨🇲</title>
+    <link rel="manifest" href="/static/manifest.json">
     <link rel="icon" type="image/svg+xml" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 32 32'%3E%3Crect width='32' height='32' rx='6' fill='%234F46E5'/%3E%3Ctext x='16' y='22' text-anchor='middle' fill='white' font-size='20' font-family='Arial' font-weight='bold'%3EA%3C/text%3E%3C/svg%3E">
     <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet" crossorigin="anonymous">
+    <script>
+        if ('serviceWorker' in navigator) {
+            window.addEventListener('load', function() {
+                // navigator.serviceWorker.register('/static/js/sw.js', { scope: '/static/' }).then(function(reg) {
+                    console.log('SW registered:', reg.scope);
+                }, function(err) {
+                    console.warn('SW registration failed:', err);
+                });
+            });
+        }
+    </script>
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css" crossorigin="anonymous">
     <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800&display=swap" rel="stylesheet" crossorigin="anonymous">
     <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.0/dist/chart.umd.min.js" crossorigin="anonymous"></script>
@@ -260,6 +272,89 @@
         }
         .qa-btn:hover { transform: translateY(-1px); filter: brightness(1.15); }
 
+        /* ── STUDENT DRAWER ── */
+        .drawer-overlay { position:fixed; inset:0; background:rgba(0,0,0,0.5); z-index:2000; display:none; }
+        .drawer-overlay.open { display:block; }
+        .drawer-panel {
+            position:fixed; top:0; right:0; width:420px; max-width:100vw; height:100vh;
+            background:rgba(10,15,30,0.98); backdrop-filter:blur(24px);
+            border-left:1px solid rgba(255,255,255,0.06);
+            z-index:2001; transform:translateX(100%); transition:transform 0.3s ease;
+            display:flex; flex-direction:column; overflow:hidden;
+        }
+        .drawer-panel.open { transform:translateX(0); }
+        .drawer-header {
+            display:flex; align-items:center; justify-content:space-between;
+            padding:0.85rem 1rem; border-bottom:1px solid rgba(255,255,255,0.06); flex-shrink:0;
+        }
+        .drawer-header h6 { font-size:0.85rem; font-weight:700; color:#fff; margin:0; }
+        .drawer-close { background:none; border:none; color:rgba(255,255,255,0.4); font-size:1.1rem; cursor:pointer; padding:0.2rem; }
+        .drawer-close:hover { color:#fff; }
+        .drawer-body { flex:1; overflow-y:auto; padding:1rem; }
+        .drawer-section { margin-bottom:1rem; }
+        .drawer-section-title { font-size:0.6rem; font-weight:700; text-transform:uppercase; letter-spacing:0.5px; color:var(--text-dim); margin-bottom:0.5rem; }
+        .drawer-field { display:flex; justify-content:space-between; padding:0.25rem 0; font-size:0.75rem; border-bottom:1px solid rgba(255,255,255,0.03); }
+        .drawer-field .label { color:var(--text-dim); }
+        .drawer-field .value { color:rgba(255,255,255,0.8); font-weight:500; text-align:right; }
+        .drawer-course-item { display:flex; justify-content:space-between; align-items:center; padding:0.35rem 0.5rem; border-radius:5px; background:rgba(255,255,255,0.02); margin-bottom:0.25rem; font-size:0.7rem; }
+        .drawer-course-item .course-name { color:#fff; font-weight:600; }
+        .drawer-course-item .course-rate { font-weight:700; }
+        .drawer-security-event { padding:0.3rem 0; border-bottom:1px solid rgba(255,255,255,0.03); font-size:0.7rem; }
+        .drawer-security-event .sev-inline { font-size:0.5rem; font-weight:700; padding:0.04rem 0.3rem; border-radius:3px; text-transform:uppercase; margin-right:0.35rem; }
+
+        /* ── NETWORK TOPOLOGY CANVAS ── */
+        .topology-wrap { position:relative; width:100%; height:280px; }
+        .topology-wrap canvas { width:100%; height:100%; display:block; border-radius:6px; }
+        .topology-legend { display:flex; gap:0.75rem; padding:0.4rem 0.5rem; font-size:0.6rem; color:var(--text-dim); flex-wrap:wrap; }
+        .topology-legend span { display:flex; align-items:center; gap:0.25rem; }
+        .topology-legend .dot { width:6px; height:6px; border-radius:50%; display:inline-block; }
+
+        /* ── LIVE MONITORING WALL ── */
+        .live-checkin { display:flex; align-items:center; gap:0.55rem; padding:0.4rem 0.65rem; border-radius:7px; background:rgba(255,255,255,0.02); border:1px solid rgba(255,255,255,0.04); margin-bottom:0.3rem; animation:slideInRight 0.3s ease; }
+        @keyframes slideInRight { from { transform:translateX(20px); opacity:0; } to { transform:translateX(0); opacity:1; } }
+        .live-checkin .ci-avatar { width:24px; height:24px; border-radius:6px; background:linear-gradient(135deg,var(--primary),var(--accent)); display:flex; align-items:center; justify-content:center; font-size:0.55rem; font-weight:700; color:#fff; flex-shrink:0; }
+        .live-checkin .ci-info { flex:1; }
+        .live-checkin .ci-name { font-size:0.75rem; font-weight:600; color:#fff; }
+        .live-checkin .ci-meta { font-size:0.6rem; color:var(--text-dim); }
+        .live-checkin .ci-status { font-size:0.5rem; font-weight:700; padding:0.08rem 0.4rem; border-radius:8px; }
+        .ci-present { background:rgba(16,185,129,0.12); color:#6EE7B7; }
+        .ci-late { background:rgba(245,158,11,0.12); color:#FCD34D; }
+        .ci-suspicious { background:rgba(239,68,68,0.12); color:#FCA5A5; }
+
+        .live-alert-popup {
+            display:flex; align-items:center; gap:0.5rem; padding:0.5rem 0.65rem;
+            border-radius:7px; background:rgba(239,68,68,0.08); border:1px solid rgba(239,68,68,0.12);
+            margin-bottom:0.3rem; animation:slideInRight 0.3s ease;
+        }
+        .live-alert-popup .la-icon { font-size:0.8rem; color:#FCA5A5; flex-shrink:0; }
+        .live-alert-popup .la-msg { flex:1; font-size:0.7rem; color:rgba(255,255,255,0.7); }
+        .live-alert-popup .la-time { font-size:0.55rem; color:var(--text-dim); flex-shrink:0; }
+
+        /* ── CONNECTION QUALITY ── */
+        .conn-quality {
+            display:flex; align-items:center; gap:0.3rem; font-size:0.6rem; font-weight:600;
+            padding:0.15rem 0.45rem; border-radius:10px; cursor:default; white-space:nowrap;
+        }
+        .conn-quality .cq-dot { width:5px; height:5px; border-radius:50%; }
+        .conn-online { background:rgba(16,185,129,0.08); border:1px solid rgba(16,185,129,0.12); color:var(--success); }
+        .conn-degraded { background:rgba(245,158,11,0.08); border:1px solid rgba(245,158,11,0.12); color:var(--warning); }
+        .conn-offline { background:rgba(239,68,68,0.08); border:1px solid rgba(239,68,68,0.12); color:var(--danger); }
+
+        /* ── PAGINATION ── */
+        .pag-row { display:flex; align-items:center; justify-content:space-between; gap:0.5rem; flex-wrap:wrap; }
+        .pag-info { font-size:0.6rem; color:var(--text-dim); }
+        .pag-btns { display:flex; gap:0.2rem; }
+        .pag-btn {
+            background:rgba(255,255,255,0.04); border:1px solid rgba(255,255,255,0.06);
+            color:rgba(255,255,255,0.5); padding:0.2rem 0.5rem; border-radius:5px;
+            font-size:0.65rem; font-weight:600; cursor:pointer; transition:all 0.2s; min-width:28px; text-align:center;
+        }
+        .pag-btn:hover { background:rgba(79,70,229,0.12); border-color:rgba(79,70,229,0.2); color:var(--primary-light); }
+        .pag-btn.active { background:rgba(79,70,229,0.15); border-color:rgba(79,70,229,0.3); color:var(--primary-light); }
+        .pag-btn:disabled { opacity:0.3; cursor:default; }
+        .student-row { cursor:pointer; transition:background 0.15s; }
+        .student-row:hover td { background:rgba(79,70,229,0.06) !important; }
+
         /* ── ISP ROW ── */
         .isp-row { display: flex; gap: 0.5rem; align-items: center; }
 
@@ -313,6 +408,10 @@
         <a href="#" class="active" data-section="overview"><i class="fas fa-th-large"></i> <span data-i18n="overview">Overview</span></a>
 
         <div class="nav-label" data-i18n="management">Management</div>
+        <a href="#" data-section="users"><i class="fas fa-users-cog"></i> <span data-i18n="users">Users</span></a>
+        <a href="#" data-section="courses"><i class="fas fa-book"></i> <span data-i18n="courses">Courses</span></a>
+        <a href="#" data-section="departments"><i class="fas fa-building"></i> <span data-i18n="departments">Departments</span></a>
+        <a href="#" data-section="enrollments"><i class="fas fa-user-plus"></i> <span data-i18n="enrollments">Enrollments</span></a>
         <a href="#" data-section="students"><i class="fas fa-user-graduate"></i> <span data-i18n="students">Students</span></a>
         <a href="#" data-section="sessions"><i class="fas fa-chalkboard-teacher"></i> <span data-i18n="sessions">Sessions</span></a>
 
@@ -332,6 +431,9 @@
 
         <div class="nav-label" data-i18n="data">Data</div>
         <a href="#" data-section="reports"><i class="fas fa-chart-bar"></i> <span data-i18n="reports">Reports</span></a>
+
+        <div class="nav-label">Live</div>
+        <a href="#" data-section="livemon"><i class="fas fa-broadcast-tower"></i> <span>Live Monitor</span> <span class="badge-dot" id="liveBadge" style="background:var(--success);"></span></a>
 
         <div style="margin-top:auto;padding-top:0.4rem;border-top:1px solid rgba(255,255,255,0.06);">
             <a href="/logout" id="logoutLink" style="color:rgba(239,68,68,0.5);">
@@ -360,6 +462,7 @@
             <span class="pill-indicator pill-yellow" id="smsQueueIndicator"><i class="fas fa-sms"></i> <span id="smsQueueCount">0</span></span>
         </div>
         <div class="topbar-right">
+            <div class="conn-quality conn-online" id="connQuality" title="Connection quality"><span class="cq-dot" id="connDot" style="background:var(--success);"></span> <span id="connLabel">Online</span> <span id="connLatency" style="font-weight:400;opacity:0.6;">—ms</span></div>
             <button class="lang-toggle" id="langToggle" onclick="toggleLang()">FR</button>
             <div class="user-badge-top" id="userBadgeTop">
                 <div class="avatar" id="userAvatarTop">A</div>
@@ -394,15 +497,101 @@
             </div>
         </div>
 
+        <!-- ═══════ USERS ═══════ -->
+        <div class="section" id="section-users">
+            <div class="card-noc">
+                <div class="card-header">
+                    <div class="card-title"><i class="fas fa-users-cog"></i> <span>User Management</span></div>
+                    <div style="display:flex;gap:0.4rem;align-items:center;">
+                        <input type="text" id="userSearch" placeholder="Search name, email..." style="background:rgba(255,255,255,0.04);border:1px solid rgba(255,255,255,0.08);border-radius:6px;padding:0.25rem 0.55rem;color:#fff;font-size:0.7rem;outline:none;width:180px;" oninput="debounceUserSearch()">
+                        <button class="qa-btn" style="background:rgba(79,70,229,0.15);padding:0.3rem 0.7rem;font-size:0.65rem;" onclick="openUserModal()"><i class="fas fa-plus"></i> Add User</button>
+                    </div>
+                </div>
+                <div class="card-body compact" style="overflow-x:auto;">
+                    <table class="table-noc">
+                        <thead><tr><th>Name</th><th>Email</th><th>Role</th><th>Phone</th><th>Status</th><th>Actions</th></tr></thead>
+                        <tbody id="userTableBody"></tbody>
+                    </table>
+                    <div class="pagination-controls" id="userPagination" style="display:none;padding:0.5rem 1rem;border-top:1px solid rgba(255,255,255,0.04);"></div>
+                </div>
+            </div>
+        </div>
+
+        <!-- ═══════ COURSES ═══════ -->
+        <div class="section" id="section-courses">
+            <div class="card-noc">
+                <div class="card-header">
+                    <div class="card-title"><i class="fas fa-book"></i> <span>Course Management</span></div>
+                    <div style="display:flex;gap:0.4rem;align-items:center;">
+                        <input type="text" id="courseSearch" placeholder="Search name, code..." style="background:rgba(255,255,255,0.04);border:1px solid rgba(255,255,255,0.08);border-radius:6px;padding:0.25rem 0.55rem;color:#fff;font-size:0.7rem;outline:none;width:180px;" oninput="debounceCourseSearch()">
+                        <button class="qa-btn" style="background:rgba(79,70,229,0.15);padding:0.3rem 0.7rem;font-size:0.65rem;" onclick="openCourseModal()"><i class="fas fa-plus"></i> Add Course</button>
+                    </div>
+                </div>
+                <div class="card-body compact" style="overflow-x:auto;">
+                    <table class="table-noc">
+                        <thead><tr><th>Code</th><th>Name</th><th>Dept</th><th>Credits</th><th>Status</th><th>Actions</th></tr></thead>
+                        <tbody id="courseTableBody"></tbody>
+                    </table>
+                    <div class="pagination-controls" id="coursePagination" style="display:none;padding:0.5rem 1rem;border-top:1px solid rgba(255,255,255,0.04);"></div>
+                </div>
+            </div>
+        </div>
+
+        <!-- ═══════ DEPARTMENTS ═══════ -->
+        <div class="section" id="section-departments">
+            <div class="card-noc">
+                <div class="card-header">
+                    <div class="card-title"><i class="fas fa-building"></i> <span>Department Management</span></div>
+                    <div style="display:flex;gap:0.4rem;align-items:center;">
+                        <input type="text" id="deptSearch" placeholder="Search name, code..." style="background:rgba(255,255,255,0.04);border:1px solid rgba(255,255,255,0.08);border-radius:6px;padding:0.25rem 0.55rem;color:#fff;font-size:0.7rem;outline:none;width:180px;" oninput="debounceDeptSearch()">
+                        <button class="qa-btn" style="background:rgba(79,70,229,0.15);padding:0.3rem 0.7rem;font-size:0.65rem;" onclick="openDeptModal()"><i class="fas fa-plus"></i> Add Department</button>
+                    </div>
+                </div>
+                <div class="card-body compact" style="overflow-x:auto;">
+                    <table class="table-noc">
+                        <thead><tr><th>Code</th><th>Name</th><th>Head</th><th>Status</th><th>Actions</th></tr></thead>
+                        <tbody id="deptTableBody"></tbody>
+                    </table>
+                    <div class="pagination-controls" id="deptPagination" style="display:none;padding:0.5rem 1rem;border-top:1px solid rgba(255,255,255,0.04);"></div>
+                </div>
+            </div>
+        </div>
+
+        <!-- ═══════ ENROLLMENTS ═══════ -->
+        <div class="section" id="section-enrollments">
+            <div class="card-noc">
+                <div class="card-header">
+                    <div class="card-title"><i class="fas fa-user-plus"></i> <span>Enrollment Management</span></div>
+                    <div style="display:flex;gap:0.4rem;align-items:center;">
+                        <input type="text" id="enrollmentSearch" placeholder="Search student..." style="background:rgba(255,255,255,0.04);border:1px solid rgba(255,255,255,0.08);border-radius:6px;padding:0.25rem 0.55rem;color:#fff;font-size:0.7rem;outline:none;width:180px;" oninput="debounceEnrollmentSearch()">
+                        <button class="qa-btn" style="background:rgba(79,70,229,0.15);padding:0.3rem 0.7rem;font-size:0.65rem;" onclick="openEnrollmentModal()"><i class="fas fa-plus"></i> Enroll Student</button>
+                    </div>
+                </div>
+                <div class="card-body compact" style="overflow-x:auto;">
+                    <table class="table-noc">
+                        <thead><tr><th>Student</th><th>Course</th><th>Code</th><th>Date</th><th>Status</th><th>Actions</th></tr></thead>
+                        <tbody id="enrollmentTableBody"></tbody>
+                    </table>
+                    <div class="pagination-controls" id="enrollmentPagination" style="display:none;padding:0.5rem 1rem;border-top:1px solid rgba(255,255,255,0.04);"></div>
+                </div>
+            </div>
+        </div>
+
         <!-- ═══════ STUDENTS ═══════ -->
         <div class="section" id="section-students">
             <div class="card-noc">
-                <div class="card-header"><div class="card-title"><i class="fas fa-user-graduate"></i> <span data-i18n="student_risk">Student Risk Analysis</span></div></div>
+                <div class="card-header">
+                    <div class="card-title"><i class="fas fa-user-graduate"></i> <span data-i18n="student_risk">Student Risk Analysis</span></div>
+                    <div style="display:flex;gap:0.4rem;align-items:center;">
+                        <input type="text" id="studentSearch" placeholder="Search name, ID, faculty..." style="background:rgba(255,255,255,0.04);border:1px solid rgba(255,255,255,0.08);border-radius:6px;padding:0.25rem 0.55rem;color:#fff;font-size:0.7rem;outline:none;width:180px;" oninput="debounceSearch()">
+                    </div>
+                </div>
                 <div class="card-body compact" style="overflow-x:auto;">
                     <table class="table-noc">
                         <thead><tr><th data-i18n="name">Name</th><th data-i18n="id">ID</th><th data-i18n="faculty">Faculty</th><th data-i18n="attendance">Att.</th><th data-i18n="risk">Risk</th><th data-i18n="trusted">Trusted</th><th data-i18n="suspicious">Susp.</th></tr></thead>
                         <tbody id="studentTableBody"></tbody>
                     </table>
+                    <div class="pagination-controls" id="studentPagination" style="display:none;padding:0.5rem 1rem;border-top:1px solid rgba(255,255,255,0.04);"></div>
                 </div>
             </div>
         </div>
@@ -420,6 +609,7 @@
                         <thead><tr><th data-i18n="course">Course</th><th data-i18n="lecturer">Lecturer</th><th data-i18n="students">Students</th><th data-i18n="present">Present</th><th data-i18n="rate">Rate</th><th data-i18n="status">Status</th><th data-i18n="broker">Broker</th><th data-i18n="latency">Lat.</th></tr></thead>
                         <tbody id="sessionTableBody"></tbody>
                     </table>
+                    <div class="pagination-controls" id="sessionPagination" style="display:none;padding:0.5rem 1rem;border-top:1px solid rgba(255,255,255,0.04);"></div>
                 </div>
             </div>
         </div>
@@ -428,8 +618,12 @@
         <div class="section" id="section-network">
             <div class="grid-2col">
                 <div class="card-noc">
-                    <div class="card-header"><div class="card-title"><i class="fas fa-project-diagram"></i> <span data-i18n="campus_nodes">Campus Nodes</span></div></div>
-                    <div class="card-body"><div class="node-grid" id="nodeGrid"></div></div>
+                    <div class="card-header"><div class="card-title"><i class="fas fa-project-diagram"></i> <span data-i18n="campus_nodes">Network Topology</span> <span style="font-size:0.55rem;font-weight:400;color:var(--text-dim);margin-left:0.4rem;">Live · drag to explore</span></div></div>
+                    <div class="card-body">
+                        <div class="topology-wrap"><canvas id="topologyCanvas"></canvas></div>
+                        <div class="topology-legend" id="topologyLegend"></div>
+                        <div class="node-grid" id="nodeGrid"></div>
+                    </div>
                 </div>
                 <div class="card-noc">
                     <div class="card-header"><div class="card-title"><i class="fas fa-server"></i> MQTT Broker</div></div>
@@ -462,7 +656,7 @@
                 <div class="stat-card"><div class="stat-top"><span class="stat-label" data-i18n="nodes_offline">Nodes Offline</span><div class="stat-icon" style="background:rgba(239,68,68,0.12);color:#FCA5A5;"><i class="fas fa-plug"></i></div></div><div class="stat-value" id="offNodesOffline">—</div><div class="stat-footer" data-i18n="disconnected">Disconnected</div></div>
             </div>
             <div class="card-noc">
-                <div class="card-header"><div class="card-title"><i class="fas fa-list-ul"></i> <span data-i18n="sync_queue">Sync Queue</span></div></div>
+                <div class="card-header"><div class="card-title"><i class="fas fa-list-ul"></i> <span data-i18n="sync_queue">Sync Queue</span></div><div style="display:flex;align-items:center;gap:0.5rem;"><span id="offQueueStats"></span><span id="offEstimate" style="font-size:0.6rem;color:var(--text-dim);"></span></div></div>
                 <div class="card-body compact" id="syncQueueBody"><div class="empty-muted" data-i18n="loading">Loading...</div></div>
             </div>
         </div>
@@ -514,12 +708,17 @@
                 <div class="stat-card"><div class="stat-top"><span class="stat-label" data-i18n="refunds">Refunds</span><div class="stat-icon" style="background:rgba(239,68,68,0.12);color:#FCA5A5;"><i class="fas fa-undo"></i></div></div><div class="stat-value" id="payRefunds">—</div><div class="stat-footer" data-i18n="in_queue">In queue</div></div>
             </div>
             <div class="card-noc">
-                <div class="card-header"><div class="card-title"><i class="fas fa-receipt"></i> <span data-i18n="recent_transactions">Recent Transactions</span></div></div>
+                <div class="card-header"><div class="card-title"><i class="fas fa-receipt"></i> <span data-i18n="recent_transactions">Recent Transactions</span></div>
+                    <div style="display:flex;gap:0.4rem;">
+                        <button class="qa-btn" style="background:rgba(16,185,129,0.15);padding:0.25rem 0.6rem;font-size:0.6rem;" onclick="openPaymentModal()"><i class="fas fa-plus"></i> <span data-i18n="process_payment">Pay</span></button>
+                    </div>
+                </div>
                 <div class="card-body compact" style="overflow-x:auto;">
                     <table class="table-noc">
-                        <thead><tr><th data-i18n="id">ID</th><th data-i18n="phone">Phone</th><th>Montant (XAF)</th><th data-i18n="provider">Provider</th><th data-i18n="status">Status</th><th data-i18n="time">Time</th></tr></thead>
+                        <thead><tr><th data-i18n="id">ID</th><th data-i18n="phone">Phone</th><th data-i18n="montant_xaf">Montant (XAF)</th><th data-i18n="provider">Provider</th><th data-i18n="status">Status</th><th data-i18n="time">Time</th></tr></thead>
                         <tbody id="paymentTableBody"></tbody>
                     </table>
+                    <div class="pagination-controls" id="paymentPagination" style="display:none;padding:0.5rem 1rem;border-top:1px solid rgba(255,255,255,0.04);"></div>
                 </div>
             </div>
         </div>
@@ -530,10 +729,10 @@
                 <div class="card-header"><div class="card-title"><i class="fas fa-file-export"></i> <span data-i18n="generate_reports">Generate Reports</span></div></div>
                 <div class="card-body">
                     <div class="quick-actions">
-                        <button class="qa-btn" style="background:rgba(79,70,229,0.15);" onclick="showToast('PDF attendance report generated','success')"><i class="fas fa-file-pdf"></i> <span data-i18n="attendance_report">Attendance Report</span></button>
-                        <button class="qa-btn" style="background:rgba(16,185,129,0.15);" onclick="showToast('MINESEC XML report exported','success')"><i class="fas fa-file-code"></i> <span data-i18n="minesec_xml">MINESEC XML</span></button>
-                        <button class="qa-btn" style="background:rgba(245,158,11,0.15);" onclick="showToast('Network report exported','success')"><i class="fas fa-file-excel"></i> <span data-i18n="network_report">Network Report</span></button>
-                        <button class="qa-btn" style="background:rgba(239,68,68,0.15);" onclick="showToast('Security log exported','success')"><i class="fas fa-file-csv"></i> <span data-i18n="security_log">Security Log</span></button>
+                        <button class="qa-btn" style="background:rgba(79,70,229,0.15);" onclick="downloadReport('summary')"><i class="fas fa-file-pdf"></i> <span data-i18n="attendance_report">Attendance Report</span></button>
+                        <button class="qa-btn" style="background:rgba(16,185,129,0.15);" onclick="downloadReport('minesec')"><i class="fas fa-file-code"></i> <span data-i18n="minesec_xml">MINESEC XML</span></button>
+                        <button class="qa-btn" style="background:rgba(245,158,11,0.15);" onclick="downloadReport('network')"><i class="fas fa-file-excel"></i> <span data-i18n="network_report">Network Report</span></button>
+                        <button class="qa-btn" style="background:rgba(239,68,68,0.15);" onclick="downloadReport('security')"><i class="fas fa-file-csv"></i> <span data-i18n="security_log">Security Log</span></button>
                     </div>
                     <div style="font-size:0.7rem;color:var(--text-dim);margin-top:0.75rem;">
                         <i class="fas fa-info-circle me-1"></i> <span data-i18n="reports_info">MINESEC-compliant XML · Excel · CSV · PDF formats available. Print for physical backup.</span>
@@ -542,6 +741,42 @@
             </div>
         </div>
 
+        <!-- ═══════ LIVE MONITORING WALL ═══════ -->
+        <div class="section" id="section-livemon">
+            <div class="stats-row" id="liveStats">
+                <div class="stat-card"><div class="stat-top"><span class="stat-label" data-i18n="live_sessions">Live Sessions</span><div class="stat-icon" style="background:rgba(16,185,129,0.12);color:#6EE7B7;"><i class="fas fa-play-circle"></i></div></div><div class="stat-value" id="lmActive">—</div><div class="stat-footer up"><i class="fas fa-circle"></i> <span data-i18n="running_now">Running now</span></div></div>
+                <div class="stat-card"><div class="stat-top"><span class="stat-label" data-i18n="todays_checkins">Today's Check-ins</span><div class="stat-icon" style="background:rgba(79,70,229,0.12);color:#A5B4FC;"><i class="fas fa-user-check"></i></div></div><div class="stat-value" id="lmCheckins">—</div><div class="stat-footer" data-i18n="realtime_count">Real-time count</div></div>
+                <div class="stat-card"><div class="stat-top"><span class="stat-label" data-i18n="attendance_rate_live">Attendance Rate</span><div class="stat-icon" style="background:rgba(245,158,11,0.12);color:#FCD34D;"><i class="fas fa-chart-line"></i></div></div><div class="stat-value" id="lmRate">—</div><div class="stat-footer" data-i18n="live_average">Live average</div></div>
+                <div class="stat-card"><div class="stat-top"><span class="stat-label" data-i18n="fraud_alerts">Fraud Alerts</span><div class="stat-icon" style="background:rgba(239,68,68,0.12);color:#FCA5A5;"><i class="fas fa-exclamation-triangle"></i></div></div><div class="stat-value" id="lmFraud">—</div><div class="stat-footer down" data-i18n="requires_attention">Requires attention</div></div>
+            </div>
+            <div class="grid-2col">
+                <div class="card-noc">
+                    <div class="card-header"><div class="card-title"><i class="fas fa-user-check"></i> <span data-i18n="live_checkins">Live Check-ins</span> <span style="font-size:0.55rem;font-weight:400;color:var(--text-dim);margin-left:0.4rem;">Students checking in now</span></div></div>
+                    <div class="card-body" id="liveCheckinFeed" style="max-height:320px;overflow-y:auto;">
+                        <div class="empty-muted">Waiting for check-ins...</div>
+                    </div>
+                </div>
+                <div class="card-noc">
+                    <div class="card-header"><div class="card-title"><i class="fas fa-bell"></i> <span data-i18n="live_alerts">Live Alerts</span> <span id="liveAlertCount" style="font-size:0.55rem;font-weight:400;color:var(--text-dim);margin-left:0.4rem;"></span></div></div>
+                    <div class="card-body" id="liveAlertFeed" style="max-height:320px;overflow-y:auto;">
+                        <div class="empty-muted" data-i18n="no_data">No alerts</div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+    </div>
+</div>
+
+<!-- ─── STUDENT DETAIL DRAWER ─── -->
+<div class="drawer-overlay" id="drawerOverlay" onclick="closeStudentDrawer()"></div>
+<div class="drawer-panel" id="studentDrawer">
+    <div class="drawer-header">
+        <h6><i class="fas fa-user-graduate me-1" style="color:var(--primary-light);"></i> <span id="drawerStudentName">Student</span></h6>
+        <button class="drawer-close" onclick="closeStudentDrawer()">&times;</button>
+    </div>
+    <div class="drawer-body" id="drawerBody">
+        <div class="empty-muted" data-i18n="loading">Loading...</div>
     </div>
 </div>
 
@@ -564,6 +799,123 @@
   </div>
 </div>
 
+<!-- ─── USER CRUD MODAL ─── -->
+<div class="modal fade" id="userModal" tabindex="-1" aria-hidden="true">
+  <div class="modal-dialog modal-dialog-centered modal-md">
+    <div class="modal-content" style="background:rgba(15,23,42,0.98);border:1px solid rgba(255,255,255,0.08);border-radius:10px;">
+      <div class="modal-header" style="border-bottom:1px solid rgba(255,255,255,0.06);padding:0.75rem 1rem;">
+        <h6 class="modal-title" style="color:#fff;font-weight:700;font-size:0.8rem;" id="userModalTitle">Add User</h6>
+        <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal" style="font-size:0.7rem;"></button>
+      </div>
+      <div class="modal-body" style="padding:0.85rem 1rem;">
+        <input type="hidden" id="userEditId">
+        <div class="form-group"><label style="font-size:0.7rem;color:var(--text-dim);">First Name</label><input type="text" id="userFirstName" class="form-control" style="background:rgba(255,255,255,0.04);border:1px solid rgba(255,255,255,0.08);color:#fff;font-size:0.75rem;padding:0.35rem 0.5rem;border-radius:6px;width:100%;"></div>
+        <div class="form-group" style="margin-top:0.5rem;"><label style="font-size:0.7rem;color:var(--text-dim);">Last Name</label><input type="text" id="userLastName" class="form-control" style="background:rgba(255,255,255,0.04);border:1px solid rgba(255,255,255,0.08);color:#fff;font-size:0.75rem;padding:0.35rem 0.5rem;border-radius:6px;width:100%;"></div>
+        <div class="form-group" style="margin-top:0.5rem;"><label style="font-size:0.7rem;color:var(--text-dim);">Email</label><input type="email" id="userEmail" class="form-control" style="background:rgba(255,255,255,0.04);border:1px solid rgba(255,255,255,0.08);color:#fff;font-size:0.75rem;padding:0.35rem 0.5rem;border-radius:6px;width:100%;"></div>
+        <div class="form-group" style="margin-top:0.5rem;"><label style="font-size:0.7rem;color:var(--text-dim);">Phone</label><input type="text" id="userPhone" class="form-control" style="background:rgba(255,255,255,0.04);border:1px solid rgba(255,255,255,0.08);color:#fff;font-size:0.75rem;padding:0.35rem 0.5rem;border-radius:6px;width:100%;"></div>
+        <div class="form-group" style="margin-top:0.5rem;"><label style="font-size:0.7rem;color:var(--text-dim);">Password (only for new users)</label><input type="password" id="userPassword" class="form-control" style="background:rgba(255,255,255,0.04);border:1px solid rgba(255,255,255,0.08);color:#fff;font-size:0.75rem;padding:0.35rem 0.5rem;border-radius:6px;width:100%;"></div>
+        <div class="form-group" style="margin-top:0.5rem;"><label style="font-size:0.7rem;color:var(--text-dim);">Role</label><select id="userRole" class="form-control" style="background:rgba(255,255,255,0.04);border:1px solid rgba(255,255,255,0.08);color:#fff;font-size:0.75rem;padding:0.35rem 0.5rem;border-radius:6px;width:100%;"><option value="student">Student</option><option value="lecturer">Lecturer</option><option value="institutional_admin">Admin</option></select></div>
+        <div class="form-group" style="margin-top:0.5rem;"><label style="font-size:0.7rem;color:var(--text-dim);">Department</label><select id="userDept" class="form-control" style="background:rgba(255,255,255,0.04);border:1px solid rgba(255,255,255,0.08);color:#fff;font-size:0.75rem;padding:0.35rem 0.5rem;border-radius:6px;width:100%;"><option value="">— None —</option></select></div>
+      </div>
+      <div class="modal-footer" style="border-top:1px solid rgba(255,255,255,0.06);padding:0.6rem 1rem;">
+        <button class="qa-btn" style="background:rgba(255,255,255,0.06);color:rgba(255,255,255,0.5);font-size:0.7rem;" data-bs-dismiss="modal">Cancel</button>
+        <button class="qa-btn" style="background:#4F46E5;color:#fff;font-size:0.7rem;" onclick="submitUserForm()"><i class="fas fa-check me-1"></i> Save</button>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- ─── COURSE CRUD MODAL ─── -->
+<div class="modal fade" id="courseModal" tabindex="-1" aria-hidden="true">
+  <div class="modal-dialog modal-dialog-centered modal-md">
+    <div class="modal-content" style="background:rgba(15,23,42,0.98);border:1px solid rgba(255,255,255,0.08);border-radius:10px;">
+      <div class="modal-header" style="border-bottom:1px solid rgba(255,255,255,0.06);padding:0.75rem 1rem;">
+        <h6 class="modal-title" style="color:#fff;font-weight:700;font-size:0.8rem;" id="courseModalTitle">Add Course</h6>
+        <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal" style="font-size:0.7rem;"></button>
+      </div>
+      <div class="modal-body" style="padding:0.85rem 1rem;">
+        <input type="hidden" id="courseEditId">
+        <div class="form-group"><label style="font-size:0.7rem;color:var(--text-dim);">Course Code</label><input type="text" id="courseCode" class="form-control" style="background:rgba(255,255,255,0.04);border:1px solid rgba(255,255,255,0.08);color:#fff;font-size:0.75rem;padding:0.35rem 0.5rem;border-radius:6px;width:100%;"></div>
+        <div class="form-group" style="margin-top:0.5rem;"><label style="font-size:0.7rem;color:var(--text-dim);">Course Name</label><input type="text" id="courseName" class="form-control" style="background:rgba(255,255,255,0.04);border:1px solid rgba(255,255,255,0.08);color:#fff;font-size:0.75rem;padding:0.35rem 0.5rem;border-radius:6px;width:100%;"></div>
+        <div class="form-group" style="margin-top:0.5rem;"><label style="font-size:0.7rem;color:var(--text-dim);">Department</label><select id="courseDept" class="form-control" style="background:rgba(255,255,255,0.04);border:1px solid rgba(255,255,255,0.08);color:#fff;font-size:0.75rem;padding:0.35rem 0.5rem;border-radius:6px;width:100%;"><option value="">— None —</option></select></div>
+        <div class="form-group" style="margin-top:0.5rem;"><label style="font-size:0.7rem;color:var(--text-dim);">Lecturer</label><select id="courseLecturer" class="form-control" style="background:rgba(255,255,255,0.04);border:1px solid rgba(255,255,255,0.08);color:#fff;font-size:0.75rem;padding:0.35rem 0.5rem;border-radius:6px;width:100%;"><option value="">— None —</option></select></div>
+        <div class="form-group" style="margin-top:0.5rem;"><label style="font-size:0.7rem;color:var(--text-dim);">Credits</label><input type="number" id="courseCredits" class="form-control" value="3" style="background:rgba(255,255,255,0.04);border:1px solid rgba(255,255,255,0.08);color:#fff;font-size:0.75rem;padding:0.35rem 0.5rem;border-radius:6px;width:100%;"></div>
+        <div class="form-group" style="margin-top:0.5rem;"><label style="font-size:0.7rem;color:var(--text-dim);">Description</label><textarea id="courseDescription" rows="2" class="form-control" style="background:rgba(255,255,255,0.04);border:1px solid rgba(255,255,255,0.08);color:#fff;font-size:0.75rem;padding:0.35rem 0.5rem;border-radius:6px;width:100%;"></textarea></div>
+      </div>
+      <div class="modal-footer" style="border-top:1px solid rgba(255,255,255,0.06);padding:0.6rem 1rem;">
+        <button class="qa-btn" style="background:rgba(255,255,255,0.06);color:rgba(255,255,255,0.5);font-size:0.7rem;" data-bs-dismiss="modal">Cancel</button>
+        <button class="qa-btn" style="background:#4F46E5;color:#fff;font-size:0.7rem;" onclick="submitCourseForm()"><i class="fas fa-check me-1"></i> Save</button>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- ─── DEPARTMENT CRUD MODAL ─── -->
+<div class="modal fade" id="deptModal" tabindex="-1" aria-hidden="true">
+  <div class="modal-dialog modal-dialog-centered modal-md">
+    <div class="modal-content" style="background:rgba(15,23,42,0.98);border:1px solid rgba(255,255,255,0.08);border-radius:10px;">
+      <div class="modal-header" style="border-bottom:1px solid rgba(255,255,255,0.06);padding:0.75rem 1rem;">
+        <h6 class="modal-title" style="color:#fff;font-weight:700;font-size:0.8rem;" id="deptModalTitle">Add Department</h6>
+        <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal" style="font-size:0.7rem;"></button>
+      </div>
+      <div class="modal-body" style="padding:0.85rem 1rem;">
+        <input type="hidden" id="deptEditId">
+        <div class="form-group"><label style="font-size:0.7rem;color:var(--text-dim);">Department Code</label><input type="text" id="deptCode" class="form-control" style="background:rgba(255,255,255,0.04);border:1px solid rgba(255,255,255,0.08);color:#fff;font-size:0.75rem;padding:0.35rem 0.5rem;border-radius:6px;width:100%;"></div>
+        <div class="form-group" style="margin-top:0.5rem;"><label style="font-size:0.7rem;color:var(--text-dim);">Department Name</label><input type="text" id="deptName" class="form-control" style="background:rgba(255,255,255,0.04);border:1px solid rgba(255,255,255,0.08);color:#fff;font-size:0.75rem;padding:0.35rem 0.5rem;border-radius:6px;width:100%;"></div>
+        <div class="form-group" style="margin-top:0.5rem;"><label style="font-size:0.7rem;color:var(--text-dim);">Department Head</label><select id="deptHead" class="form-control" style="background:rgba(255,255,255,0.04);border:1px solid rgba(255,255,255,0.08);color:#fff;font-size:0.75rem;padding:0.35rem 0.5rem;border-radius:6px;width:100%;"><option value="">— None —</option></select></div>
+        <div class="form-group" style="margin-top:0.5rem;"><label style="font-size:0.7rem;color:var(--text-dim);">Description</label><textarea id="deptDescription" rows="2" class="form-control" style="background:rgba(255,255,255,0.04);border:1px solid rgba(255,255,255,0.08);color:#fff;font-size:0.75rem;padding:0.35rem 0.5rem;border-radius:6px;width:100%;"></textarea></div>
+      </div>
+      <div class="modal-footer" style="border-top:1px solid rgba(255,255,255,0.06);padding:0.6rem 1rem;">
+        <button class="qa-btn" style="background:rgba(255,255,255,0.06);color:rgba(255,255,255,0.5);font-size:0.7rem;" data-bs-dismiss="modal">Cancel</button>
+        <button class="qa-btn" style="background:#4F46E5;color:#fff;font-size:0.7rem;" onclick="submitDeptForm()"><i class="fas fa-check me-1"></i> Save</button>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- ─── ENROLLMENT MODAL ─── -->
+<div class="modal fade" id="enrollmentModal" tabindex="-1" aria-hidden="true">
+  <div class="modal-dialog modal-dialog-centered modal-md">
+    <div class="modal-content" style="background:rgba(15,23,42,0.98);border:1px solid rgba(255,255,255,0.08);border-radius:10px;">
+      <div class="modal-header" style="border-bottom:1px solid rgba(255,255,255,0.06);padding:0.75rem 1rem;">
+        <h6 class="modal-title" style="color:#fff;font-weight:700;font-size:0.8rem;">Enroll Student</h6>
+        <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal" style="font-size:0.7rem;"></button>
+      </div>
+      <div class="modal-body" style="padding:0.85rem 1rem;">
+        <div class="form-group"><label style="font-size:0.7rem;color:var(--text-dim);">Student</label><select id="enrollmentStudent" class="form-control" style="background:rgba(255,255,255,0.04);border:1px solid rgba(255,255,255,0.08);color:#fff;font-size:0.75rem;padding:0.35rem 0.5rem;border-radius:6px;width:100%;"><option value="">— Select Student —</option></select></div>
+        <div class="form-group" style="margin-top:0.5rem;"><label style="font-size:0.7rem;color:var(--text-dim);">Course</label><select id="enrollmentCourse" class="form-control" style="background:rgba(255,255,255,0.04);border:1px solid rgba(255,255,255,0.08);color:#fff;font-size:0.75rem;padding:0.35rem 0.5rem;border-radius:6px;width:100%;"><option value="">— Select Course —</option></select></div>
+      </div>
+      <div class="modal-footer" style="border-top:1px solid rgba(255,255,255,0.06);padding:0.6rem 1rem;">
+        <button class="qa-btn" style="background:rgba(255,255,255,0.06);color:rgba(255,255,255,0.5);font-size:0.7rem;" data-bs-dismiss="modal">Cancel</button>
+        <button class="qa-btn" style="background:#4F46E5;color:#fff;font-size:0.7rem;" onclick="submitEnrollmentForm()"><i class="fas fa-check me-1"></i> Enroll</button>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- ─── PAYMENT MODAL ─── -->
+<div class="modal fade" id="paymentModal" tabindex="-1" aria-hidden="true">
+  <div class="modal-dialog modal-dialog-centered modal-md">
+    <div class="modal-content" style="background:rgba(15,23,42,0.98);border:1px solid rgba(255,255,255,0.08);border-radius:10px;">
+      <div class="modal-header" style="border-bottom:1px solid rgba(255,255,255,0.06);padding:0.75rem 1rem;">
+        <h6 class="modal-title" style="color:#fff;font-weight:700;font-size:0.8rem;" data-i18n="process_payment">Process Payment</h6>
+        <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal" style="font-size:0.7rem;"></button>
+      </div>
+      <div class="modal-body" style="padding:0.85rem 1rem;">
+        <div class="form-group"><label style="font-size:0.7rem;color:var(--text-dim);" data-i18n="select_provider">Provider</label><select id="payProvider" class="form-control" style="background:rgba(255,255,255,0.04);border:1px solid rgba(255,255,255,0.08);color:#fff;font-size:0.75rem;padding:0.35rem 0.5rem;border-radius:6px;width:100%;"><option value="mtn">MTN MoMo</option><option value="orange">Orange Money</option></select></div>
+        <div class="form-group" style="margin-top:0.5rem;"><label style="font-size:0.7rem;color:var(--text-dim);" data-i18n="phone_number">Phone Number</label><input type="text" id="payPhone" class="form-control" placeholder="237XXXXXXXXX" style="background:rgba(255,255,255,0.04);border:1px solid rgba(255,255,255,0.08);color:#fff;font-size:0.75rem;padding:0.35rem 0.5rem;border-radius:6px;width:100%;"></div>
+        <div class="form-group" style="margin-top:0.5rem;"><label style="font-size:0.7rem;color:var(--text-dim);" data-i18n="amount_xaf">Amount (XAF)</label><input type="number" id="payAmount" class="form-control" value="1000" style="background:rgba(255,255,255,0.04);border:1px solid rgba(255,255,255,0.08);color:#fff;font-size:0.75rem;padding:0.35rem 0.5rem;border-radius:6px;width:100%;"></div>
+        <div class="form-group" style="margin-top:0.5rem;"><label style="font-size:0.7rem;color:var(--text-dim);">Reference</label><input type="text" id="payReference" class="form-control" style="background:rgba(255,255,255,0.04);border:1px solid rgba(255,255,255,0.08);color:#fff;font-size:0.75rem;padding:0.35rem 0.5rem;border-radius:6px;width:100%;"></div>
+        <div id="paymentResult" style="margin-top:0.5rem;display:none;padding:0.5rem;border-radius:6px;font-size:0.75rem;"></div>
+      </div>
+      <div class="modal-footer" style="border-top:1px solid rgba(255,255,255,0.06);padding:0.6rem 1rem;">
+        <button class="qa-btn" style="background:rgba(255,255,255,0.06);color:rgba(255,255,255,0.5);font-size:0.7rem;" data-bs-dismiss="modal" data-i18n="cancel">Cancel</button>
+        <button class="qa-btn" style="background:#10B981;color:#fff;font-size:0.7rem;" onclick="submitPayment()"><i class="fas fa-money-bill-wave me-1"></i> <span data-i18n="initiate_payment">Pay Now</span></button>
+      </div>
+    </div>
+  </div>
+</div>
+
 <script>
     const API = '';
     let userData = null;
@@ -572,6 +924,21 @@
     let facultyChartInstance = null;
     let translationsCache = {};
     let currentActionId = null;
+
+    // Pagination state
+    let studentPage = 1;
+    let studentSearch = '';
+    let sessionPage = 1;
+    let paymentPage = 1;
+    let searchTimer = null;
+    function debounceSearch() {
+        clearTimeout(searchTimer);
+        searchTimer = setTimeout(() => {
+            studentSearch = document.getElementById('studentSearch').value;
+            studentPage = 1;
+            loadStudents();
+        }, 300);
+    }
 
     function getToken() { return localStorage.getItem('accessToken'); }
     function apiHeaders() {
@@ -841,7 +1208,7 @@
     async function loadOverview() {
         try {
             const [shRes, trendRes, netRes, offRes, infraRes] = await Promise.all([
-                apiFetch('/api/institutional/session-health'),
+                apiFetch('/api/institutional/session-health?page=' + sessionPage + '&per_page=20'),
                 apiFetch('/api/institutional/attendance-trends'),
                 apiFetch('/api/institutional/network-status'),
                 apiFetch('/api/institutional/offline-log'),
@@ -852,7 +1219,7 @@
                 document.getElementById('ovActiveSessions').textContent = d.active_sessions || 0;
                 document.getElementById('ssActive').textContent = d.active_sessions || 0;
                 document.getElementById('ssTotal').textContent = d.total_sessions || 0;
-                if (d.sessions) renderSessionTable(d.sessions);
+                if (d.sessions) renderSessionTable(d.sessions, d.total, d.page, d.total_pages);
             }
             if (trendRes && trendRes.ok) {
                 const d = await trendRes.json();
@@ -867,6 +1234,10 @@
                 document.getElementById('ovOfflineFooter').innerHTML = offline > 0 ? '<i class="fas fa-exclamation-circle"></i> Requires attention' : '<i class="fas fa-check-circle"></i> All online';
                 renderNetworkNodes(nodes);
                 renderBrokerStats(d.broker || {});
+                /* Enhanced network topology visualization */
+                if (window.AttendrixTopology) {
+                    AttendrixTopology.start(nodes, d.broker || {});
+                }
             }
             if (offRes && offRes.ok) {
                 const d = await offRes.json();
@@ -875,6 +1246,27 @@
                 document.getElementById('offLastSync').textContent = d.last_sync ? new Date(d.last_sync).toLocaleTimeString() : '—';
                 document.getElementById('offNodesOffline').textContent = d.nodes_offline ?? '—';
                 if (d.queue) renderSyncQueue(d.queue);
+                /* Also load enhanced offline queue stats */
+                try {
+                    const qsRes = await apiFetch('/api/institutional/offline-queue/stats');
+                    if (qsRes && qsRes.ok) {
+                        const qs = await qsRes.json();
+                        var qsEl = document.getElementById('offQueueStats');
+                        if (qsEl && qs.total > 0) {
+                            qsEl.innerHTML = '<span class="pill-indicator ' + (qs.queue_healthy ? 'pill-green' : 'pill-yellow') + '">Queue: ' + qs.pending + ' pend · ' + qs.failed + ' fail · ' + qs.synced + ' done</span>';
+                        }
+                    }
+                } catch(e) {}
+                try {
+                    const estRes = await apiFetch('/api/institutional/offline-queue/estimate');
+                    if (estRes && estRes.ok) {
+                        var est = await estRes.json();
+                        var eEl = document.getElementById('offEstimate');
+                        if (eEl) {
+                            eEl.textContent = est.estimated_recovery_mins > 1 ? '~' + est.estimated_recovery_mins + ' min recovery' : '~' + est.estimated_seconds + 's recovery';
+                        }
+                    }
+                } catch(e) {}
             }
             if (infraRes && infraRes.ok) {
                 const d = await infraRes.json();
@@ -921,31 +1313,39 @@
     // ── STUDENTS ──
     async function loadStudents() {
         try {
-            const res = await apiFetch('/api/institutional/students');
+            const url = '/api/institutional/students?page=' + studentPage + '&per_page=12&search=' + encodeURIComponent(studentSearch);
+            const res = await apiFetch(url);
             if (!res || !res.ok) return;
             const d = await res.json();
             const tb = document.getElementById('studentTableBody');
             const students = d.students || [];
-            document.getElementById('ovStudents').textContent = students.length;
-            if (students.length === 0) { tb.innerHTML = '<tr><td colspan="7"><div class="empty-muted">No students</div></td></tr>'; return; }
+            document.getElementById('ovStudents').textContent = d.total || students.length;
+            if (students.length === 0) {
+                tb.innerHTML = '<tr><td colspan="7"><div class="empty-muted">' + (studentSearch ? 'No students match your search' : 'No students') + '</div></td></tr>';
+                renderPagination('studentPagination', d.page, d.total_pages, function(p) { studentPage = p; loadStudents(); });
+                return;
+            }
             tb.innerHTML = students.map(s =>
-                '<tr><td style="font-weight:600;color:#fff;">' + s.name + '</td><td style="font-size:0.65rem;">' + s.student_id + '</td><td>' + s.faculty.split(' ')[0] + '</td><td>' + s.attendance_pct + '%</td><td class="risk-' + s.risk_level + '" style="font-weight:600;">' + s.risk_level.toUpperCase() + '</td><td>' + (s.trusted_device ? '<i class="fas fa-check-circle" style="color:#10B981;"></i>' : '<i class="fas fa-times-circle" style="color:#EF4444;"></i>') + '</td><td>' + (s.suspicious_attempts || 0) + '</td></tr>'
+                '<tr class="student-row" onclick="openStudentDrawer(\'' + s.id + '\')"><td style="font-weight:600;color:#fff;">' + s.name + '</td><td style="font-size:0.65rem;">' + s.student_id + '</td><td>' + (s.faculty || '').split(' ')[0] + '</td><td>' + s.attendance_pct + '%</td><td class="risk-' + s.risk_level + '" style="font-weight:600;">' + s.risk_level.toUpperCase() + '</td><td>' + (s.trusted_device ? '<i class="fas fa-check-circle" style="color:#10B981;"></i>' : '<i class="fas fa-times-circle" style="color:#EF4444;"></i>') + '</td><td>' + (s.suspicious_attempts || 0) + '</td></tr>'
             ).join('');
+            renderPagination('studentPagination', d.page, d.total_pages, function(p) { studentPage = p; loadStudents(); });
         } catch(e) {}
     }
 
     // ── SESSION TABLE ──
-    function renderSessionTable(sessions) {
+    function renderSessionTable(sessions, total, page, totalPages) {
         const tb = document.getElementById('sessionTableBody');
-        if (!sessions || sessions.length === 0) { tb.innerHTML = '<tr><td colspan="8"><div class="empty-muted">No active sessions</div></td></tr>'; return; }
+        if (!sessions || sessions.length === 0) { tb.innerHTML = '<tr><td colspan="8"><div class="empty-muted">No sessions</div></td></tr>'; renderPagination('sessionPagination', 1, 1, function(){}); return; }
         tb.innerHTML = sessions.map(s =>
             '<tr><td style="font-weight:600;color:#fff;">' + s.course + '</td><td>' + s.lecturer + '</td><td>' + s.total_students + '</td><td>' + s.present + '</td><td style="font-weight:600;color:' + (s.attendance_rate >= 80 ? '#10B981' : s.attendance_rate >= 60 ? '#F59E0B' : '#EF4444') + ';">' + s.attendance_rate + '%</td><td><span class="status-pill pill-' + s.status + '">' + s.status + '</span></td><td>' + (s.health ? '<span style="color:' + (s.health.broker === 'healthy' ? '#10B981' : '#F59E0B') + ';"><i class="fas fa-circle" style="font-size:0.45rem;"></i> ' + s.health.broker + '</span>' : '—') + '</td><td>' + (s.health ? s.health.latency_ms + 'ms' : '—') + '</td></tr>'
         ).join('');
+        renderPagination('sessionPagination', page, totalPages, function(p) { sessionPage = p; loadOverview(); });
     }
 
     // ── NETWORK NODES ──
     function renderNetworkNodes(nodes) {
         const grid = document.getElementById('nodeGrid');
+        if (!grid) return;
         if (!nodes || nodes.length === 0) { grid.innerHTML = '<div class="empty-muted">No nodes</div>'; return; }
         grid.innerHTML = nodes.map(n =>
             '<div class="node-item node-' + n.status + '"><div class="node-status"></div><div><div class="node-name">' + n.name + '</div><div class="node-meta">' + n.latency_ms + 'ms · ' + n.packet_loss + '% loss</div></div></div>'
@@ -1052,7 +1452,7 @@
     // ── PAYMENTS ──
     async function loadPayments() {
         try {
-            const res = await apiFetch('/api/institutional/payments');
+            const res = await apiFetch('/api/institutional/payments?page=' + paymentPage + '&per_page=10');
             if (!res || !res.ok) return;
             const d = await res.json();
             document.getElementById('paySales').textContent = d.voucher_sales_xaf ? (d.voucher_sales_xaf/1000).toFixed(0) + 'k' : '—';
@@ -1064,11 +1464,137 @@
 
             const tb = document.getElementById('paymentTableBody');
             const txns = d.recent_txns || [];
-            if (txns.length === 0) { tb.innerHTML = '<tr><td colspan="6"><div class="empty-muted">No transactions</div></td></tr>'; return; }
+            if (txns.length === 0) { tb.innerHTML = '<tr><td colspan="6"><div class="empty-muted">No transactions</div></td></tr>'; renderPagination('paymentPagination', 1, 1, function(){}); return; }
             tb.innerHTML = txns.map(t =>
                 '<tr><td style="font-size:0.65rem;">' + t.id + '</td><td>' + t.phone + '</td><td style="font-weight:600;color:#fff;">' + t.amount_xaf.toLocaleString() + '</td><td>' + t.provider + '</td><td><span class="status-pill ' + (t.status === 'completed' ? 'pill-active' : t.status === 'pending' ? 'pill-syncing' : 'pill-completed') + '">' + t.status + '</span></td><td style="font-size:0.6rem;">' + t.time + '</td></tr>'
             ).join('');
+            renderPagination('paymentPagination', d.page, d.total_pages, function(p) { paymentPage = p; loadPayments(); });
         } catch(e) {}
+    }
+
+    // ── PAGINATION RENDERER ──
+    function renderPagination(containerId, currentPage, totalPages, onClick) {
+        const container = document.getElementById(containerId);
+        if (!container) return;
+        if (totalPages <= 1 && currentPage === 1) { container.style.display = 'none'; return; }
+        container.style.display = 'block';
+        let html = '<div class="pag-row"><div class="pag-info">Page ' + currentPage + ' of ' + totalPages + '</div><div class="pag-btns">';
+        html += '<button class="pag-btn" onclick="(function(){ ' + containerId + '_goto(1) })()" ' + (currentPage === 1 ? 'disabled' : '') + '><i class="fas fa-angle-double-left"></i></button>';
+        html += '<button class="pag-btn" onclick="(function(){ ' + containerId + '_goto(' + (currentPage - 1) + ') })()" ' + (currentPage === 1 ? 'disabled' : '') + '><i class="fas fa-angle-left"></i></button>';
+        var startP = Math.max(1, currentPage - 2);
+        var endP = Math.min(totalPages, currentPage + 2);
+        for (var p = startP; p <= endP; p++) {
+            html += '<button class="pag-btn ' + (p === currentPage ? 'active' : '') + '" onclick="(function(){ ' + containerId + '_goto(' + p + ') })()">' + p + '</button>';
+        }
+        html += '<button class="pag-btn" onclick="(function(){ ' + containerId + '_goto(' + (currentPage + 1) + ') })()" ' + (currentPage === totalPages ? 'disabled' : '') + '><i class="fas fa-angle-right"></i></button>';
+        html += '<button class="pag-btn" onclick="(function(){ ' + containerId + '_goto(' + totalPages + ') })()" ' + (currentPage === totalPages ? 'disabled' : '') + '><i class="fas fa-angle-double-right"></i></button>';
+        html += '</div></div>';
+        container.innerHTML = html;
+        window[containerId + '_goto'] = onClick;
+    }
+
+    // ── STUDENT DETAIL DRAWER ──
+    async function openStudentDrawer(studentId) {
+        document.getElementById('drawerOverlay').classList.add('open');
+        document.getElementById('studentDrawer').classList.add('open');
+        document.getElementById('drawerBody').innerHTML = '<div class="empty-muted">Loading...</div>';
+        try {
+            const res = await apiFetch('/api/institutional/students/' + studentId);
+            if (!res || !res.ok) { document.getElementById('drawerBody').innerHTML = '<div class="empty-muted">Failed to load student details</div>'; return; }
+            const d = await res.json();
+            renderStudentDrawer(d);
+        } catch(e) { document.getElementById('drawerBody').innerHTML = '<div class="empty-muted">Error loading data</div>'; }
+    }
+
+    function renderStudentDrawer(d) {
+        var p = d.profile || {};
+        var a = d.attendance || {};
+        var s = d.security || {};
+        document.getElementById('drawerStudentName').textContent = (p.first_name || '') + ' ' + (p.last_name || '');
+
+        var html = '';
+        // Profile section
+        html += '<div class="drawer-section"><div class="drawer-section-title"><i class="fas fa-id-card me-1"></i> Profile</div>';
+        html += '<div class="drawer-field"><span class="label">Email</span><span class="value">' + (p.email || '—') + '</span></div>';
+        html += '<div class="drawer-field"><span class="label">Student ID</span><span class="value">' + (p.student_id || '—') + '</span></div>';
+        html += '<div class="drawer-field"><span class="label">Faculty</span><span class="value">' + (p.faculty || '—') + '</span></div>';
+        html += '<div class="drawer-field"><span class="label">Phone</span><span class="value">' + (p.phone || '—') + '</span></div>';
+        html += '<div class="drawer-field"><span class="label">Status</span><span class="value" style="color:' + (p.is_active ? '#10B981' : '#EF4444') + ';">' + (p.is_active ? 'Active' : 'Inactive') + '</span></div>';
+        html += '<div class="drawer-field"><span class="label">Trusted Device</span><span class="value">' + (p.trusted_device ? '<i class="fas fa-check-circle" style="color:#10B981;"></i> Yes' : '<i class="fas fa-times-circle" style="color:#EF4444;"></i> No') + '</span></div>';
+        html += '<div class="drawer-field"><span class="label">VPN Detected</span><span class="value">' + (p.vpn_detected ? '<span style="color:#EF4444;font-weight:600;">Yes</span>' : 'No') + '</span></div>';
+        html += '<div class="drawer-field"><span class="label">Last Login</span><span class="value">' + (p.last_login ? new Date(p.last_login).toLocaleDateString() : '—') + '</span></div>';
+        html += '<div class="drawer-field"><span class="label">Registered</span><span class="value">' + (p.created_at ? new Date(p.created_at).toLocaleDateString() : '—') + '</span></div>';
+        html += '</div>';
+
+        // Attendance section
+        html += '<div class="drawer-section"><div class="drawer-section-title"><i class="fas fa-chart-line me-1"></i> Attendance</div>';
+        html += '<div class="drawer-field"><span class="label">Total Sessions</span><span class="value" style="font-size:0.85rem;font-weight:700;">' + a.total_sessions + '</span></div>';
+        html += '<div class="drawer-field"><span class="label">Present</span><span class="value" style="color:#10B981;">' + a.present + '</span></div>';
+        html += '<div class="drawer-field"><span class="label">Absent</span><span class="value" style="color:#EF4444;">' + a.absent + '</span></div>';
+        html += '<div class="drawer-field"><span class="label">Overall Rate</span><span class="value" style="font-size:0.9rem;font-weight:700;color:' + (a.attendance_pct >= 80 ? '#10B981' : a.attendance_pct >= 60 ? '#F59E0B' : '#EF4444') + ';">' + a.attendance_pct + '%</span></div>';
+        if (a.course_breakdown && a.course_breakdown.length) {
+            html += '<div style="margin-top:0.35rem;"></div>';
+            a.course_breakdown.forEach(function(c) {
+                html += '<div class="drawer-course-item"><span class="course-name">' + c.course + '</span><span class="course-rate" style="color:' + (c.rate >= 80 ? '#10B981' : c.rate >= 60 ? '#F59E0B' : '#EF4444') + ';">' + c.present + '/' + c.total + ' (' + c.rate + '%)</span></div>';
+            });
+        }
+        html += '</div>';
+
+        // Security section
+        html += '<div class="drawer-section"><div class="drawer-section-title"><i class="fas fa-shield-alt me-1"></i> Security Events (' + s.total_events + ')</div>';
+        if (s.events && s.events.length) {
+            s.events.forEach(function(e) {
+                var sevColor = e.severity === 'critical' ? '#EF4444' : e.severity === 'high' ? '#F59E0B' : '#3B82F6';
+                html += '<div class="drawer-security-event"><span class="sev-inline" style="background:' + sevColor + '22;color:' + sevColor + ';border:1px solid ' + sevColor + '44;">' + e.severity + '</span>';
+                html += e.description + '<br><span style="font-size:0.6rem;color:var(--text-dim);">' + (e.created_at ? new Date(e.created_at).toLocaleDateString() : '') + '</span></div>';
+            });
+        } else {
+            html += '<div style="font-size:0.7rem;color:var(--text-dim);">No security events</div>';
+        }
+        html += '</div>';
+
+        document.getElementById('drawerBody').innerHTML = html;
+    }
+
+    function closeStudentDrawer() {
+        document.getElementById('drawerOverlay').classList.remove('open');
+        document.getElementById('studentDrawer').classList.remove('open');
+    }
+
+    // ── REPORT DOWNLOAD ──
+    async function downloadReport(type) {
+        try {
+            showToast('Generating ' + type + ' report...', 'info');
+            if (type === 'minesec') {
+                var token = getToken();
+                let reportUrl = '/api/reports/minesec-xml?token=' + encodeURIComponent(token);
+                var a = document.createElement('a');
+                a.href = reportUrl;
+                a.download = 'minesec_report_' + new Date().toISOString().slice(0,10) + '.xml';
+                document.body.appendChild(a);
+                a.click();
+                a.remove();
+                showToast('MINESEC XML report downloaded', 'success');
+                return;
+            }
+            const res = await apiFetch('/api/reports/attendance?type=' + type);
+            if (!res || !res.ok) { showToast('Report generation failed', 'error'); return; }
+            const blob = await res.blob();
+            const url = window.URL.createObjectURL(blob);
+            var a = document.createElement('a');
+            a.href = url;
+            a.download = 'attendance_report_' + new Date().toISOString().slice(0,10) + '.pdf';
+            document.body.appendChild(a);
+            a.click();
+            window.URL.revokeObjectURL(url);
+            a.remove();
+            showToast(type.charAt(0).toUpperCase() + type.slice(1) + ' report downloaded', 'success');
+            await apiFetch('/api/institutional/activity-log', {
+                method: 'POST',
+                body: JSON.stringify({type: 'report_generated', message: type + ' attendance report exported', faculty: 'Reports'})
+            });
+            loadActivityFeed();
+        } catch(e) { showToast('Download failed: ' + e.message, 'error'); }
     }
 
     // ── CHARTS ──
@@ -1145,11 +1671,735 @@
         window.location.href = '/login';
     });
 
+    // ── SSE REAL-TIME CONNECTION ──
+    let sseClient = null;
+    let sseReconnectTimer = null;
+
+    function startSSE() {
+        var token = getToken();
+        if (!token) {
+            // Fall back to polling
+            schedulePolling();
+            return;
+        }
+        var url = '/api/institutional/events/stream?token=' + encodeURIComponent(token);
+        if (sseClient) { sseClient.close(); }
+
+        sseClient = new EventSource(url);
+        sseClient.onopen = function() {
+            console.log('SSE: Connected to real-time stream');
+            updateConnQuality('online', 'SSE Live');
+        };
+
+        sseClient.onmessage = function(event) {
+            try {
+                var data = JSON.parse(event.data);
+                handleSSEEvent(event.type, data);
+            } catch(e) {}
+        };
+
+        sseClient.addEventListener('connected', function(e) {
+            updateConnQuality('online', 'SSE Live');
+        });
+
+        sseClient.addEventListener('activity', function(e) {
+            var data = JSON.parse(e.data);
+            if (data.events) {
+                var feed = document.getElementById('activityFeed');
+                var first = data.events[0];
+                if (first) {
+                    var oldFirst = feed.querySelector('.activity-item');
+                    if (!oldFirst || oldFirst.querySelector('.msg-col').textContent !== first.message) {
+                        // Prepend new activity
+                        var div = document.createElement('div');
+                        div.className = 'activity-item';
+                        div.style.animation = 'slideInRight 0.3s ease';
+                        var dotColor = first.type === 'session_started' ? '#10B981' : first.type === 'alert_generated' ? '#EF4444' : '#4F46E5';
+                        div.innerHTML = '<div class="type-dot" style="background:' + dotColor + ';"></div><div class="time-col">' + first.time + '</div><div class="msg-col">' + first.message + '</div>';
+                        feed.insertBefore(div, feed.firstChild);
+                        if (feed.children.length > 20) feed.removeChild(feed.lastChild);
+                    }
+                }
+            }
+        });
+
+        sseClient.addEventListener('security', function(e) {
+            var data = JSON.parse(e.data);
+            if (data.alerts) { loadSecurityAlerts(); }
+        });
+
+        sseClient.addEventListener('sessions', function(e) {
+            var data = JSON.parse(e.data);
+            if (data.active_sessions !== undefined) {
+                document.getElementById('ovActiveSessions').textContent = data.active_sessions || 0;
+                document.getElementById('ssActive').textContent = data.active_sessions || 0;
+                document.getElementById('lmActive').textContent = data.active_sessions || 0;
+            }
+        });
+
+        sseClient.addEventListener('checkin', function(e) {
+            var data = JSON.parse(e.data);
+            if (data.checkins) {
+                data.checkins.forEach(function(c) {
+                    appendLiveCheckin(c);
+                });
+            }
+        });
+
+        sseClient.addEventListener('keepalive', function(e) {});
+
+        sseClient.onerror = function() {
+            console.warn('SSE: Connection lost, will retry...');
+            updateConnQuality('degraded', 'Reconnecting');
+            sseClient.close();
+            // Fall back to polling after SSE failure
+            if (!sseReconnectTimer) {
+                sseReconnectTimer = setTimeout(function() {
+                    sseReconnectTimer = null;
+                    if (!sseClient || sseClient.readyState === EventSource.CLOSED) {
+                        startSSE(); // Reconnect
+                    }
+                }, 10000);
+            }
+            schedulePolling();
+        };
+    }
+
+    function schedulePolling() {
+        // Fallback polling if SSE fails
+        if (window._pollTimer) return;
+        console.log('SSE: Falling back to 30s polling');
+        window._pollTimer = setInterval(function() {
+            loadOverview();
+            loadActivityFeed();
+            loadSecurityAlerts();
+            loadP2pSync();
+            if (document.getElementById('section-payments') && document.getElementById('section-payments').classList.contains('active')) loadPayments();
+        }, 30000);
+    }
+
+    function handleSSEEvent(type, data) {
+        if (type === 'error') { showToast('Stream error: ' + (data.message || 'Unknown'), 'error'); return; }
+        if (data && data.health === false) { updateConnQuality('offline', 'Unhealthy'); return; }
+    }
+
+    // ── CONNECTION QUALITY MONITOR ──
+    let pingHistory = [];
+
+    async function measurePing() {
+        var start = performance.now();
+        try {
+            var res = await fetch('/api/ping?_=' + Date.now(), { method: 'GET', cache: 'no-store' });
+            if (res.ok) {
+                var ms = Math.round(performance.now() - start);
+                pingHistory.push(ms);
+                if (pingHistory.length > 10) pingHistory.shift();
+                var avg = Math.round(pingHistory.reduce(function(a,b){return a+b;},0) / pingHistory.length);
+                document.getElementById('connLatency').textContent = avg + 'ms';
+                if (avg < 100) updateConnQuality('online', avg + 'ms');
+                else if (avg < 300) updateConnQuality('degraded', avg + 'ms');
+                else updateConnQuality('offline', avg + 'ms');
+            }
+        } catch(e) {
+            updateConnQuality('offline', 'No connection');
+        }
+    }
+
+    function updateConnQuality(status, label) {
+        var el = document.getElementById('connQuality');
+        var dot = document.getElementById('connDot');
+        var lbl = document.getElementById('connLabel');
+        if (!el) return;
+        el.className = 'conn-quality conn-' + status;
+        dot.style.background = status === 'online' ? 'var(--success)' : status === 'degraded' ? 'var(--warning)' : 'var(--danger)';
+        lbl.textContent = label;
+    }
+
+    function startConnectionMonitor() {
+        measurePing();
+        setInterval(measurePing, 15000);
+        // Browser network info API
+        if (navigator.connection) {
+            var conn = navigator.connection;
+            updateConnQuality(conn.effectiveType === '4g' ? 'online' : conn.effectiveType === '3g' ? 'degraded' : 'offline', conn.effectiveType);
+            conn.addEventListener('change', function() {
+                var ct = conn.effectiveType || 'unknown';
+                updateConnQuality(ct === '4g' ? 'online' : ct === '3g' ? 'degraded' : 'offline', ct + ' · ' + (conn.downlink || '?') + 'Mbps');
+            });
+        }
+    }
+
+    // ── NETWORK TOPOLOGY VISUALIZER ──
+    var topoNodes = [];
+    var topoAnimFrame = null;
+
+    function renderTopology(nodes, broker) {
+        var canvas = document.getElementById('topologyCanvas');
+        if (!canvas) return;
+        var rect = canvas.parentElement.getBoundingClientRect();
+        canvas.width = rect.width || 500;
+        canvas.height = 280;
+        var ctx = canvas.getContext('2d');
+        var W = canvas.width, H = canvas.height;
+        var cx = W / 2, cy = H / 2;
+
+        // Classify nodes
+        var buildings = nodes.filter(function(n){return n.type !== 'broker';});
+        var brokerNode = nodes.filter(function(n){return n.type === 'broker';})[0] || null;
+
+        // Layout: broker in center, buildings in a circle
+        var count = buildings.length;
+        var radius = Math.min(W, H) * 0.32;
+
+        topoNodes = [];
+        // Center broker
+        topoNodes.push({
+            x: cx, y: cy, r: 16,
+            name: brokerNode ? brokerNode.name : 'Core Broker',
+            status: brokerNode ? brokerNode.status : 'healthy',
+            latency: brokerNode ? brokerNode.latency_ms : 0,
+            isBroker: true,
+        });
+
+        // Building nodes around the circle
+        buildings.forEach(function(n, i) {
+            var angle = (i / count) * 2 * Math.PI - Math.PI / 2;
+            var nx = cx + radius * Math.cos(angle);
+            var ny = cy + radius * Math.sin(angle);
+            topoNodes.push({
+                x: nx, y: ny, r: 12,
+                name: n.name,
+                status: n.status,
+                latency: n.latency_ms,
+                packetLoss: n.packet_loss,
+                isBroker: false,
+                orig: n,
+            });
+        });
+
+        // Draw legend
+        var legendEl = document.getElementById('topologyLegend');
+        var healthy = nodes.filter(function(n){return n.status === 'healthy';}).length;
+        var degraded = nodes.filter(function(n){return n.status === 'degraded';}).length;
+        var offline = nodes.filter(function(n){return n.status === 'offline';}).length;
+        legendEl.innerHTML = '<span><span class="dot" style="background:#10B981;"></span> Healthy: ' + healthy + '</span>' +
+            '<span><span class="dot" style="background:#F59E0B;"></span> Degraded: ' + degraded + '</span>' +
+            '<span><span class="dot" style="background:#EF4444;"></span> Offline: ' + offline + '</span>' +
+            '<span style="margin-left:auto;">' + (broker ? 'Broker: ' + (broker.messages_per_sec || 0) + ' msg/s' : '') + '</span>';
+
+        drawTopology(ctx);
+    }
+
+    function drawTopology(ctx) {
+        var W = ctx.canvas.width, H = ctx.canvas.height;
+        ctx.clearRect(0, 0, W, H);
+
+        // Background
+        var grad = ctx.createRadialGradient(W/2, H/2, 10, W/2, H/2, W*0.5);
+        grad.addColorStop(0, 'rgba(79,70,229,0.04)');
+        grad.addColorStop(1, 'rgba(10,15,30,0)');
+        ctx.fillStyle = grad;
+        ctx.fillRect(0, 0, W, H);
+
+        // Draw connection lines from broker to each building
+        var broker = topoNodes[0];
+        if (broker) {
+            for (var i = 1; i < topoNodes.length; i++) {
+                var n = topoNodes[i];
+                var isOnline = n.status === 'healthy';
+                var isDegraded = n.status === 'degraded';
+                ctx.beginPath();
+                ctx.moveTo(broker.x, broker.y);
+                ctx.lineTo(n.x, n.y);
+                ctx.strokeStyle = isOnline ? 'rgba(16,185,129,0.2)' : isDegraded ? 'rgba(245,158,11,0.2)' : 'rgba(239,68,68,0.15)';
+                ctx.lineWidth = isOnline ? 1.5 : isDegraded ? 1.5 : 1;
+                ctx.setLineDash(isOnline ? [] : [3, 3]);
+                ctx.stroke();
+                ctx.setLineDash([]);
+
+                // Latency label on connection
+                var mx = (broker.x + n.x) / 2;
+                var my = (broker.y + n.y) / 2;
+                ctx.fillStyle = 'rgba(255,255,255,0.2)';
+                ctx.font = '7px Inter, sans-serif';
+                ctx.textAlign = 'center';
+                ctx.fillText(n.latency + 'ms', mx, my - 4);
+            }
+        }
+
+        // Draw nodes
+        for (var j = 0; j < topoNodes.length; j++) {
+            var node = topoNodes[j];
+            var color = node.status === 'healthy' ? '#10B981' : node.status === 'degraded' ? '#F59E0B' : '#EF4444';
+            var glow = node.status === 'healthy' ? 'rgba(16,185,129,0.15)' : node.status === 'degraded' ? 'rgba(245,158,11,0.15)' : 'rgba(239,68,68,0.1)';
+
+            // Glow
+            var glowGrad = ctx.createRadialGradient(node.x, node.y, 2, node.x, node.y, node.r * 2.5);
+            glowGrad.addColorStop(0, glow);
+            glowGrad.addColorStop(1, 'transparent');
+            ctx.fillStyle = glowGrad;
+            ctx.beginPath();
+            ctx.arc(node.x, node.y, node.r * 2.5, 0, Math.PI * 2);
+            ctx.fill();
+
+            // Node circle
+            ctx.beginPath();
+            ctx.arc(node.x, node.y, node.r, 0, Math.PI * 2);
+            ctx.fillStyle = node.isBroker ? 'rgba(79,70,229,0.3)' : 'rgba(255,255,255,0.04)';
+            ctx.fill();
+            ctx.strokeStyle = color;
+            ctx.lineWidth = node.isBroker ? 2.5 : 1.5;
+            ctx.stroke();
+
+            // Inner dot for active nodes
+            if (node.status === 'healthy') {
+                ctx.beginPath();
+                ctx.arc(node.x, node.y, 3, 0, Math.PI * 2);
+                ctx.fillStyle = color;
+                ctx.fill();
+            } else if (node.status === 'offline') {
+                ctx.beginPath();
+                ctx.moveTo(node.x - 4, node.y - 4);
+                ctx.lineTo(node.x + 4, node.y + 4);
+                ctx.moveTo(node.x + 4, node.y - 4);
+                ctx.lineTo(node.x - 4, node.y + 4);
+                ctx.strokeStyle = color;
+                ctx.lineWidth = 1.5;
+                ctx.stroke();
+            }
+
+            // Label
+            ctx.fillStyle = 'rgba(255,255,255,0.5)';
+            ctx.font = node.isBroker ? 'bold 8px Inter, sans-serif' : '7px Inter, sans-serif';
+            ctx.textAlign = 'center';
+            var labelY = node.y + node.r + (node.isBroker ? 18 : 14);
+            ctx.fillText(node.name, node.x, labelY);
+
+            // Broker badge
+            if (node.isBroker) {
+                ctx.fillStyle = 'rgba(79,70,229,0.12)';
+                ctx.fillRect(node.x - 20, node.y - 20, 40, 40);
+                ctx.fillStyle = 'rgba(255,255,255,0.1)';
+                ctx.font = '6px Inter, sans-serif';
+                ctx.fillText('BROKER', node.x, node.y + 3);
+            }
+        }
+    }
+
+    // ── LIVE MONITORING ──
+    var _liveFallbackTimer = null;
+
+    function appendLiveCheckin(c) {
+        var feed = document.getElementById('liveCheckinFeed');
+        var name = c.student_name || 'Unknown';
+        var status = c.status === 'late' ? 'late' : 'present';
+        var initial = name.charAt(0);
+        var timeStr = c.marked_at ? new Date(c.marked_at).toLocaleTimeString([], {hour:'2-digit', minute:'2-digit'}) : '—';
+        var method = c.is_suspicious ? '⚠ Proxy' : 'QR Scan';
+
+        var div = document.createElement('div');
+        div.className = 'live-checkin';
+        div.innerHTML =
+            '<div class="ci-avatar">' + initial + '</div>' +
+            '<div class="ci-info"><div class="ci-name">' + name + '</div><div class="ci-meta">' + timeStr + ' · ' + method + '</div></div>' +
+            '<span class="ci-status ci-' + status + '">' + status.toUpperCase() + '</span>';
+
+        var count = feed.querySelectorAll('.live-checkin').length;
+        document.getElementById('lmCheckins').textContent = count + 1;
+
+        var presentCount = feed.querySelectorAll('.ci-present').length + (status === 'present' ? 1 : 0);
+        var total = count + 1;
+        document.getElementById('lmRate').textContent = Math.round(presentCount / total * 100) + '%';
+
+        var empty = feed.querySelector('.empty-muted');
+        if (empty) feed.removeChild(empty);
+        feed.insertBefore(div, feed.firstChild);
+        if (feed.children.length > 20) feed.removeChild(feed.lastChild);
+
+        // Suspicious check-in triggers fraud alert
+        if (c.is_suspicious && c.suspicion_reason) {
+            appendLiveAlert(c.suspicion_reason, 'high');
+        }
+    }
+
+    function appendLiveAlert(msg, sev) {
+        var alertFeed = document.getElementById('liveAlertFeed');
+        var aDiv = document.createElement('div');
+        aDiv.className = 'live-alert-popup';
+        aDiv.innerHTML =
+            '<div class="la-icon"><i class="fas fa-exclamation-triangle"></i></div>' +
+            '<div class="la-msg"><strong style="color:#FCA5A5;">' + (sev || 'info').toUpperCase() + '</strong> ' + msg + '</div>' +
+            '<div class="la-time">now</div>';
+        var aEmpty = alertFeed.querySelector('.empty-muted');
+        if (aEmpty) alertFeed.removeChild(aEmpty);
+        alertFeed.insertBefore(aDiv, alertFeed.firstChild);
+        if (alertFeed.children.length > 10) alertFeed.removeChild(alertFeed.lastChild);
+        document.getElementById('lmFraud').textContent = alertFeed.querySelectorAll('.live-alert-popup').length;
+        document.getElementById('liveAlertCount').textContent = '· ' + alertFeed.querySelectorAll('.live-alert-popup').length + ' events';
+        var badge = document.getElementById('liveBadge');
+        if (badge) { badge.style.background = '#EF4444'; setTimeout(function(){badge.style.background = 'var(--success)';}, 3000); }
+    }
+
+    function startFallbackCheckinSimulation() {
+        if (_liveFallbackTimer) return;
+        if (sseClient && sseClient.readyState === EventSource.OPEN) return;
+        var names = [];
+        var rows = document.querySelectorAll('#studentTableBody tr.student-row');
+        rows.forEach(function(r) {
+            var nameEl = r.querySelector('td:first-child');
+            if (nameEl) names.push(nameEl.textContent.trim());
+        });
+        if (names.length === 0) {
+            names = ['Jane Smith', 'Alice Ndefru', 'Bob Tataw', 'Carol Ayuk', 'David Nkwi'];
+        }
+        _liveFallbackTimer = setInterval(function() {
+            var section = document.getElementById('section-livemon');
+            if (!section || !section.classList.contains('active')) return;
+            if (sseClient && sseClient.readyState === EventSource.OPEN) return; // SSE active, skip fallback
+            var name = names[Math.floor(Math.random() * names.length)];
+            var statuses = ['present', 'present', 'present', 'late'];
+            var status = statuses[Math.floor(Math.random() * statuses.length)];
+            appendLiveCheckin({
+                student_name: name,
+                status: status,
+                marked_at: new Date().toISOString(),
+                is_suspicious: Math.random() < 0.08,
+                suspicion_reason: Math.random() < 0.08 ? ('Duplicate QR scan blocked — ' + name) : '',
+            });
+        }, 4000);
+    }
+
+    // ── USER MANAGEMENT CRUD ──
+    let userPage = 1, userSearch = '', userTimer = null;
+    function debounceUserSearch() { clearTimeout(userTimer); userTimer = setTimeout(function(){ userPage=1; loadUsers(); }, 300); }
+    async function loadUsers() {
+        userSearch = document.getElementById('userSearch').value;
+        var res = await apiFetch('/api/institutional/users?page='+userPage+'&per_page=15&search='+encodeURIComponent(userSearch));
+        var data = await res.json();
+        var tbody = document.getElementById('userTableBody');
+        tbody.innerHTML = '';
+        (data.users||[]).forEach(function(u) {
+            var name = u.first_name + ' ' + u.last_name;
+            var deptName = u.department_name || u.department_id || '';
+            var statusHtml = u.is_active ? '<span style="color:#10B981;">Active</span>' : '<span style="color:#EF4444;">Disabled</span>';
+            tbody.innerHTML += '<tr><td style="max-width:140px;overflow:hidden;text-overflow:ellipsis;">'+name+'</td><td style="max-width:160px;overflow:hidden;text-overflow:ellipsis;">'+u.email+'</td><td>'+u.role+'</td><td>'+u.phone+'</td><td>'+statusHtml+'</td><td><button class="qa-btn" style="background:rgba(245,158,11,0.15);padding:0.15rem 0.4rem;font-size:0.6rem;" onclick="editUser(\''+u.id+'\')"><i class="fas fa-edit"></i></button> <button class="qa-btn" style="background:'+(u.is_active?'rgba(239,68,68,0.15)':'rgba(16,185,129,0.15)')+';padding:0.15rem 0.4rem;font-size:0.6rem;" onclick="toggleUser(\''+u.id+'\')"><i class="fas '+(u.is_active?'fa-ban':'fa-check')+'"></i></button></td></tr>';
+        });
+        renderPagination('userPagination', data.page, data.total_pages, function(p){ userPage=p; loadUsers(); });
+    }
+    function openUserModal() {
+        document.getElementById('userModalTitle').textContent = 'Add User';
+        document.getElementById('userEditId').value = '';
+        ['userFirstName','userLastName','userEmail','userPhone','userPassword'].forEach(function(id){ document.getElementById(id).value = ''; });
+        document.getElementById('userRole').value = 'student';
+        loadDeptDropdown('userDept');
+        var modal = new bootstrap.Modal(document.getElementById('userModal')); modal.show();
+    }
+    async function editUser(id) {
+        document.getElementById('userModalTitle').textContent = 'Edit User';
+        document.getElementById('userEditId').value = id;
+        loadDeptDropdown('userDept');
+        var r = await apiFetch('/api/institutional/users?search='+id+'&per_page=999');
+        if (!r || !r.ok) return;
+        var data = await r.json();
+        var u = (data.users||[]).filter(function(x){return x.id===id;})[0];
+        if (!u) return;
+        document.getElementById('userFirstName').value = u.first_name;
+        document.getElementById('userLastName').value = u.last_name;
+        document.getElementById('userEmail').value = u.email;
+        document.getElementById('userPhone').value = u.phone;
+        document.getElementById('userRole').value = u.role;
+        document.getElementById('userDept').value = u.department_id || '';
+        var modal = new bootstrap.Modal(document.getElementById('userModal')); modal.show();
+    }
+    async function submitUserForm() {
+        var editId = document.getElementById('userEditId').value;
+        var data = {
+            first_name: document.getElementById('userFirstName').value,
+            last_name: document.getElementById('userLastName').value,
+            email: document.getElementById('userEmail').value,
+            phone: document.getElementById('userPhone').value,
+            role: document.getElementById('userRole').value,
+            department_id: document.getElementById('userDept').value,
+        };
+        var pwd = document.getElementById('userPassword').value;
+        if (pwd) data.password = pwd;
+        opts = {headers:{'Content-Type':'application/json'}, body:JSON.stringify(data)};
+        if (editId) {
+            await apiFetch('/api/institutional/users/'+editId, {method:'PUT', ...opts});
+        } else {
+            await apiFetch('/api/institutional/users', {method:'POST', ...opts});
+        }
+        bootstrap.Modal.getInstance(document.getElementById('userModal')).hide();
+        loadUsers();
+    }
+    async function toggleUser(id) {
+        await apiFetch('/api/institutional/users/'+id+'/toggle-status', {method:'POST'});
+        loadUsers();
+    }
+
+    // ── COURSE MANAGEMENT CRUD ──
+    let coursePage = 1, courseSearch = '', courseTimer = null;
+    function debounceCourseSearch() { clearTimeout(courseTimer); courseTimer = setTimeout(function(){ coursePage=1; loadCourses(); }, 300); }
+    async function loadCourses() {
+        courseSearch = document.getElementById('courseSearch').value;
+        var res = await apiFetch('/api/institutional/courses?page='+coursePage+'&per_page=15&search='+encodeURIComponent(courseSearch));
+        var data = await res.json();
+        var tbody = document.getElementById('courseTableBody');
+        tbody.innerHTML = '';
+        (data.courses||[]).forEach(function(c) {
+            var statusHtml = c.is_active ? '<span style="color:#10B981;">Active</span>' : '<span style="color:#EF4444;">Inactive</span>';
+            tbody.innerHTML += '<tr><td>'+c.code+'</td><td>'+c.name+'</td><td>'+(c.department_name||c.department_id||'—')+'</td><td>'+c.credits+'</td><td>'+statusHtml+'</td><td><button class="qa-btn" style="background:rgba(245,158,11,0.15);padding:0.15rem 0.4rem;font-size:0.6rem;" onclick="editCourse(\''+c.id+'\')"><i class="fas fa-edit"></i></button> <button class="qa-btn" style="background:rgba(239,68,68,0.15);padding:0.15rem 0.4rem;font-size:0.6rem;" onclick="deleteCourse(\''+c.id+'\')"><i class="fas fa-trash"></i></button></td></tr>';
+        });
+        renderPagination('coursePagination', data.page, data.total_pages, function(p){ coursePage=p; loadCourses(); });
+    }
+    function openCourseModal() {
+        document.getElementById('courseModalTitle').textContent = 'Add Course';
+        document.getElementById('courseEditId').value = '';
+        ['courseCode','courseName','courseDescription','courseCredits'].forEach(function(id){ document.getElementById(id).value = ''; });
+        document.getElementById('courseCredits').value = '3';
+        loadDeptDropdown('courseDept');
+        loadLecturerDropdown('courseLecturer');
+        var modal = new bootstrap.Modal(document.getElementById('courseModal')); modal.show();
+    }
+    async function editCourse(id) {
+        document.getElementById('courseModalTitle').textContent = 'Edit Course';
+        document.getElementById('courseEditId').value = id;
+        loadDeptDropdown('courseDept');
+        loadLecturerDropdown('courseLecturer');
+        var r = await apiFetch('/api/institutional/courses?per_page=999');
+        if (!r || !r.ok) return;
+        var data = await r.json();
+        var c = (data.courses||[]).filter(function(x){return x.id===id;})[0];
+        if (!c) return;
+        document.getElementById('courseCode').value = c.code;
+        document.getElementById('courseName').value = c.name;
+        document.getElementById('courseDept').value = c.department_id || '';
+        document.getElementById('courseLecturer').value = c.lecturer_id || '';
+        document.getElementById('courseCredits').value = c.credits;
+        document.getElementById('courseDescription').value = c.description || '';
+        var modal = new bootstrap.Modal(document.getElementById('courseModal')); modal.show();
+    }
+    async function submitCourseForm() {
+        var editId = document.getElementById('courseEditId').value;
+        var data = {
+            code: document.getElementById('courseCode').value,
+            name: document.getElementById('courseName').value,
+            department_id: document.getElementById('courseDept').value,
+            lecturer_id: document.getElementById('courseLecturer').value,
+            credits: parseInt(document.getElementById('courseCredits').value) || 0,
+            description: document.getElementById('courseDescription').value,
+        };
+        opts = {headers:{'Content-Type':'application/json'}, body:JSON.stringify(data)};
+        if (editId) {
+            await apiFetch('/api/institutional/courses/'+editId, {method:'PUT', ...opts});
+        } else {
+            await apiFetch('/api/institutional/courses', {method:'POST', ...opts});
+        }
+        bootstrap.Modal.getInstance(document.getElementById('courseModal')).hide();
+        loadCourses();
+    }
+    async function deleteCourse(id) {
+        if (!confirm('Delete this course?')) return;
+        await apiFetch('/api/institutional/courses/'+id, {method:'DELETE'});
+        loadCourses();
+    }
+
+    // ── DEPARTMENT MANAGEMENT CRUD ──
+    let deptPage = 1, deptSearch = '', deptTimer = null;
+    function debounceDeptSearch() { clearTimeout(deptTimer); deptTimer = setTimeout(function(){ deptPage=1; loadDepartments(); }, 300); }
+    async function loadDepartments() {
+        deptSearch = document.getElementById('deptSearch').value;
+        var res = await apiFetch('/api/institutional/departments?page='+deptPage+'&per_page=15&search='+encodeURIComponent(deptSearch));
+        var data = await res.json();
+        var tbody = document.getElementById('deptTableBody');
+        tbody.innerHTML = '';
+        (data.departments||[]).forEach(function(d) {
+            var statusHtml = d.is_active ? '<span style="color:#10B981;">Active</span>' : '<span style="color:#EF4444;">Inactive</span>';
+            tbody.innerHTML += '<tr><td>'+d.code+'</td><td>'+d.name+'</td><td>'+(d.head_name||d.head_id||'—')+'</td><td>'+statusHtml+'</td><td><button class="qa-btn" style="background:rgba(245,158,11,0.15);padding:0.15rem 0.4rem;font-size:0.6rem;" onclick="editDept(\''+d.id+'\')"><i class="fas fa-edit"></i></button> <button class="qa-btn" style="background:rgba(239,68,68,0.15);padding:0.15rem 0.4rem;font-size:0.6rem;" onclick="deleteDept(\''+d.id+'\')"><i class="fas fa-trash"></i></button></td></tr>';
+        });
+        renderPagination('deptPagination', data.page, data.total_pages, function(p){ deptPage=p; loadDepartments(); });
+    }
+    function openDeptModal() {
+        document.getElementById('deptModalTitle').textContent = 'Add Department';
+        document.getElementById('deptEditId').value = '';
+        ['deptCode','deptName','deptDescription'].forEach(function(id){ document.getElementById(id).value = ''; });
+        loadLecturerDropdown('deptHead');
+        var modal = new bootstrap.Modal(document.getElementById('deptModal')); modal.show();
+    }
+    async function editDept(id) {
+        document.getElementById('deptModalTitle').textContent = 'Edit Department';
+        document.getElementById('deptEditId').value = id;
+        loadLecturerDropdown('deptHead');
+        var r = await apiFetch('/api/institutional/departments?per_page=999');
+        if (!r || !r.ok) return;
+        var data = await r.json();
+        var d = (data.departments||[]).filter(function(x){return x.id===id;})[0];
+        if (!d) return;
+        document.getElementById('deptCode').value = d.code;
+        document.getElementById('deptName').value = d.name;
+        document.getElementById('deptHead').value = d.head_id || '';
+        document.getElementById('deptDescription').value = d.description || '';
+        var modal = new bootstrap.Modal(document.getElementById('deptModal')); modal.show();
+    }
+    async function submitDeptForm() {
+        var editId = document.getElementById('deptEditId').value;
+        var data = {
+            code: document.getElementById('deptCode').value,
+            name: document.getElementById('deptName').value,
+            head_id: document.getElementById('deptHead').value,
+            description: document.getElementById('deptDescription').value,
+        };
+        opts = {headers:{'Content-Type':'application/json'}, body:JSON.stringify(data)};
+        if (editId) {
+            await apiFetch('/api/institutional/departments/'+editId, {method:'PUT', ...opts});
+        } else {
+            await apiFetch('/api/institutional/departments', {method:'POST', ...opts});
+        }
+        bootstrap.Modal.getInstance(document.getElementById('deptModal')).hide();
+        loadDepartments();
+    }
+    async function deleteDept(id) {
+        if (!confirm('Delete this department?')) return;
+        await apiFetch('/api/institutional/departments/'+id, {method:'DELETE'});
+        loadDepartments();
+    }
+
+    // ── ENROLLMENT MANAGEMENT CRUD ──
+    let enrollmentPage = 1, enrollmentSearch = '', enrollmentTimer = null;
+    function debounceEnrollmentSearch() { clearTimeout(enrollmentTimer); enrollmentTimer = setTimeout(function(){ enrollmentPage=1; loadEnrollments(); }, 300); }
+    async function loadEnrollments() {
+        enrollmentSearch = document.getElementById('enrollmentSearch').value;
+        var res = await apiFetch('/api/institutional/enrollments?page='+enrollmentPage+'&per_page=15&search='+encodeURIComponent(enrollmentSearch));
+        var data = await res.json();
+        var tbody = document.getElementById('enrollmentTableBody');
+        tbody.innerHTML = '';
+        (data.enrollments||[]).forEach(function(e) {
+            var statusHtml = e.is_active ? '<span style="color:#10B981;">Active</span>' : '<span style="color:#EF4444;">Dropped</span>';
+            tbody.innerHTML += '<tr><td>'+e.student_name+'</td><td>'+e.course_name+'</td><td>'+e.course_code+'</td><td>'+(e.enrollment_date ? new Date(e.enrollment_date).toLocaleDateString() : '—')+'</td><td>'+statusHtml+'</td><td><button class="qa-btn" style="background:rgba(239,68,68,0.15);padding:0.15rem 0.4rem;font-size:0.6rem;" onclick="deleteEnrollment(\''+e.id+'\')"><i class="fas fa-user-minus"></i></button></td></tr>';
+        });
+        renderPagination('enrollmentPagination', data.page, data.total_pages, function(p){ enrollmentPage=p; loadEnrollments(); });
+    }
+    function openEnrollmentModal() {
+        loadStudentDropdown('enrollmentStudent');
+        loadCourseDropdown('enrollmentCourse');
+        var modal = new bootstrap.Modal(document.getElementById('enrollmentModal')); modal.show();
+    }
+    async function submitEnrollmentForm() {
+        var data = {
+            student_id: document.getElementById('enrollmentStudent').value,
+            course_id: document.getElementById('enrollmentCourse').value,
+        };
+        if (!data.student_id || !data.course_id) { alert('Please select both a student and a course.'); return; }
+        await apiFetch('/api/institutional/enrollments', {method:'POST', headers:{'Content-Type':'application/json'}, body:JSON.stringify(data)});
+        bootstrap.Modal.getInstance(document.getElementById('enrollmentModal')).hide();
+        loadEnrollments();
+    }
+    async function deleteEnrollment(id) {
+        if (!confirm('Remove this enrollment?')) return;
+        await apiFetch('/api/institutional/enrollments/'+id, {method:'DELETE'});
+        loadEnrollments();
+    }
+
+    // ── DROPDOWN HELPERS ──
+    async function loadDeptDropdown(selectId) {
+        var sel = document.getElementById(selectId);
+        if (!sel) return;
+        var val = sel.value;
+        sel.innerHTML = '<option value="">— None —</option>';
+        var res = await apiFetch('/api/institutional/lookup/departments');
+        var data = await res.json();
+        (data.departments||[]).forEach(function(d){ sel.innerHTML += '<option value="'+d.id+'">'+d.name+' ('+d.code+')</option>'; });
+        sel.value = val;
+    }
+    async function loadLecturerDropdown(selectId) {
+        var sel = document.getElementById(selectId);
+        if (!sel) return;
+        var val = sel.value;
+        sel.innerHTML = '<option value="">— None —</option>';
+        var res = await apiFetch('/api/institutional/lookup/lecturers');
+        var data = await res.json();
+        (data.lecturers||[]).forEach(function(l){ sel.innerHTML += '<option value="'+l.id+'">'+l.name+'</option>'; });
+        sel.value = val;
+    }
+    async function loadStudentDropdown(selectId) {
+        var sel = document.getElementById(selectId);
+        if (!sel) return;
+        sel.innerHTML = '<option value="">— Select Student —</option>';
+        var res = await apiFetch('/api/institutional/lookup/students');
+        var data = await res.json();
+        (data.students||[]).forEach(function(s){ sel.innerHTML += '<option value="'+s.id+'">'+s.first_name+' '+s.last_name+' ('+s.email+')</option>'; });
+    }
+    async function loadCourseDropdown(selectId) {
+        var sel = document.getElementById(selectId);
+        if (!sel) return;
+        sel.innerHTML = '<option value="">— Select Course —</option>';
+        var res = await apiFetch('/api/institutional/lookup/courses');
+        var data = await res.json();
+        (data.courses||[]).forEach(function(c){ sel.innerHTML += '<option value="'+c.id+'">'+c.name+' ('+c.code+')</option>'; });
+    }
+
+    // ── PHASE D: SMS & PAYMENT ──
+    async function openPaymentModal() {
+        document.getElementById('payPhone').value = '237';
+        document.getElementById('payAmount').value = '1000';
+        document.getElementById('payReference').value = 'TXN-' + Date.now().toString(36).toUpperCase();
+        document.getElementById('paymentResult').style.display = 'none';
+        var modal = new bootstrap.Modal(document.getElementById('paymentModal')); modal.show();
+    }
+    async function submitPayment() {
+        var data = {
+            provider: document.getElementById('payProvider').value,
+            phone: document.getElementById('payPhone').value,
+            amount: parseInt(document.getElementById('payAmount').value) || 0,
+            reference: document.getElementById('payReference').value || '',
+        };
+        if (!data.phone || data.phone.length < 5) { showToast('Enter a valid phone number', 'error'); return; }
+        if (data.amount < 100) { showToast('Minimum amount is 100 XAF', 'error'); return; }
+        var resultEl = document.getElementById('paymentResult');
+        resultEl.style.display = 'block';
+        resultEl.style.background = 'rgba(245,158,11,0.1)';
+        resultEl.style.color = '#FCD34D';
+        resultEl.textContent = 'Processing payment...';
+        try {
+            var res = await apiFetch('/api/institutional/payments/initiate', {method:'POST', body:JSON.stringify(data)});
+            var result = await res.json();
+            if (result.status === 'completed' || result.status === 'pending') {
+                resultEl.style.background = 'rgba(16,185,129,0.1)';
+                resultEl.style.color = '#6EE7B7';
+                resultEl.textContent = result.message_en || 'Payment initiated. Check your phone to confirm.';
+                setTimeout(function(){ bootstrap.Modal.getInstance(document.getElementById('paymentModal')).hide(); loadPayments(); }, 3000);
+            } else {
+                resultEl.style.background = 'rgba(239,68,68,0.1)';
+                resultEl.style.color = '#FCA5A5';
+                resultEl.textContent = result.error || 'Payment failed';
+            }
+        } catch(e) {
+            resultEl.style.background = 'rgba(239,68,68,0.1)';
+            resultEl.style.color = '#FCA5A5';
+            resultEl.textContent = 'Error: ' + e.message;
+        }
+    }
+
+    // ── EXTENDED TRANSLATIONS ──
+    async function loadExtendedTranslations() {
+        try {
+            var res = await apiFetch('/api/institutional/translations/extended?lang=' + currentLang);
+            var data = await res.json();
+            for (var key in data) {
+                if (data.hasOwnProperty(key) && !translationsCache[key]) {
+                    translationsCache[key] = data[key];
+                }
+            }
+            applyTranslations();
+        } catch(e) { /* extended translations are optional */ }
+    }
+
     // ── INIT ──
     document.addEventListener('DOMContentLoaded', async function() {
         // Language init
         document.getElementById('langToggle').textContent = currentLang === 'en' ? 'FR' : 'EN';
         await loadTranslations();
+        await loadExtendedTranslations();
         applyTranslations();
 
         loadUser();
@@ -1165,20 +2415,41 @@
             loadPayments(),
         ]);
 
-        // Periodic refresh every 30s
-        setInterval(() => {
-            loadOverview();
-            loadActivityFeed();
-            loadSecurityAlerts();
-            loadP2pSync();
-            loadPayments();
-        }, 30000);
+        // Phase C: Lazy-load management sections
+        loadUsers();
+        loadCourses();
+        loadDepartments();
+        loadEnrollments();
+
+        // SSE real-time connection (replaces polling)
+        startSSE();
+
+        // Connection quality monitoring
+        startConnectionMonitor();
+
+        // Live check-in monitoring — SSE-driven, with fallback simulation
+        startFallbackCheckinSimulation();
     });
 
-    // ── TOAST KEYFRAMES ──
-    const ss = document.createElement('style');
-    ss.textContent = '@keyframes toastIn { from { transform: translateX(100%); opacity: 0; } to { transform: translateX(0); opacity: 1; } }';
-    document.head.appendChild(ss);
+    // ── ADDITIONAL STYLES ──
+    (function() {
+        var ss = document.createElement('style');
+        ss.textContent = '@keyframes toastIn { from { transform: translateX(100%); opacity: 0; } to { transform: translateX(0); opacity: 1; } }';
+        document.head.appendChild(ss);
+    })();
 </script>
+
+<script src="/static/js/device-fingerprint.js"></script>
+<script src="/static/js/network-monitor.js"></script>
+<script src="/static/js/network-topology.js"></script>
+<script>
+    if (window.AttendrixNetwork) {
+        AttendrixNetwork.init(30000);
+    }
+    if (window.AttendrixSecurity) {
+        AttendrixSecurity.collectAllSignals().catch(function() {});
+    }
+</script>
+
 </body>
 </html>

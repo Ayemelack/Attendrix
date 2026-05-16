@@ -304,6 +304,21 @@ class AuthenticationService:
             logger.error(f"Email verification failed: {str(e)}")
             return None
 
+    def update_profile(self, user_id: str, data: Dict[str, Any]) -> bool:
+        """Update user profile fields (non-password)."""
+        try:
+            allowed = {'first_name', 'last_name', 'phone', 'avatar_url'}
+            update = {k: v for k, v in data.items() if k in allowed}
+            if not update:
+                return False
+            update["updated_at"] = datetime.utcnow().isoformat()
+            self.firebase_service.update_document("users", user_id, update)
+            return True
+        except Exception as e:
+            logger.error(f"Profile update failed: {str(e)}")
+            return False
+
+
     def _generate_access_token(self, user_data: Dict[str, Any]) -> str:
         payload = {
             'user_id': user_data['id'],

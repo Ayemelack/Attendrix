@@ -117,6 +117,13 @@ class RolePermissions:
             Permission.SUBMIT_LEAVE_REQUEST,
             Permission.VIEW_ANALYTICS,
         ],
+
+        UserRole.EMPLOYEE: [
+            Permission.VIEW_COURSES,
+            Permission.VIEW_ATTENDANCE,
+            Permission.VIEW_SCHEDULES,
+            Permission.SUBMIT_LEAVE_REQUEST,
+        ],
         
         UserRole.STUDENT: [
             Permission.VIEW_COURSES,
@@ -162,7 +169,8 @@ def require_auth(f):
                 request.path.startswith('/institutional-admin/') or
                 request.path.startswith('/lecturer/') or
                 request.path.startswith('/student/') or
-                request.path.startswith('/employee/')):
+                request.path.startswith('/employee/') or
+                request.path.startswith('/api/biometric/')):
                 
                 # Try to get role from query parameter first
                 role = request.args.get('role')
@@ -179,6 +187,8 @@ def require_auth(f):
                         role = UserRole.STUDENT.value
                     elif request.path.startswith('/employee/'):
                         role = UserRole.EMPLOYEE.value
+                    elif request.path.startswith('/api/biometric/'):
+                        role = UserRole.STUDENT.value
                     else:
                         # Don't default to super_admin - require explicit role
                         return jsonify({'error': 'Access denied - role parameter required for development mode'}), 403

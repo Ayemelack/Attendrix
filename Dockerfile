@@ -14,7 +14,6 @@ RUN apt-get update && apt-get install -y \
     build-essential \
     curl \
     gcc \
-    libpq-dev \
     && rm -rf /var/lib/apt/lists/*
 
 # Create and activate virtual environment
@@ -37,7 +36,6 @@ ENV PYTHONDONTWRITEBYTECODE=1 \
 # Install runtime dependencies
 RUN apt-get update && apt-get install -y \
     curl \
-    libpq5 \
     && rm -rf /var/lib/apt/lists/* \
     && apt-get clean
 

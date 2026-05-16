@@ -9,9 +9,55 @@ from config.settings import get_config
 
 # Import infrastructure services
 from src.infrastructure.firebase_service import firebase_service
+from src.infrastructure.mqtt_service import mqtt_service
 
 # Import application services
 from src.application.rbac import require_auth, require_role, log_access
+
+# Celery task queue for asynchronous background processing
+from celery import Celery as _Celery
+
+celery = _Celery('attendrix')
+celery.conf.update(
+    broker_url=os.environ.get('REDIS_URL', 'redis://localhost:6379/0'),
+    result_backend=os.environ.get('REDIS_URL', 'redis://localhost:6379/0'),
+    task_serializer='json',
+    accept_content=['json'],
+    result_serializer='json',
+    timezone='UTC',
+    enable_utc=True,
+    task_track_started=True,
+    task_soft_time_limit=300,
+    task_time_limit=600,
+)
+
+
+@celery.task(bind=True, max_retries=3, default_retry_delay=60, acks_late=True)
+def send_sms_background(self, phone_number: str, message: str):
+    """Send SMS asynchronously via Celery worker."""
+    from src.application.sms_service import SMSService
+    svc = SMSService(firebase_service)
+    try:
+        svc.send_sms(phone_number, message)
+    except Exception as exc:
+        logger.error(f"SMS background send failed: {exc}")
+        raise self.retry(exc=exc)
+
+
+@celery.task(bind=True, max_retries=3, default_retry_delay=30, acks_late=True)
+def publish_attendance_event(self, session_id: str, student_id: str, status: str):
+    """Publish attendance event via MQTT from background worker."""
+    mqtt_service.initialize()
+    mqtt_service.publish(
+        f'attendrix/attendance/{session_id}',
+        {
+            'student_id': student_id,
+            'status': status,
+            'timestamp': datetime.utcnow().isoformat(),
+            'source': 'celery-worker',
+        },
+        qos=1,
+    )
 
 # Configure logging
 logging.basicConfig(
@@ -88,9 +134,11 @@ def create_app():
     
     # Initialize Firebase
     try:
-        # Pass mock setting from config to environ so firebase_service can read it
+        # Pass config values to environ for downstream services
         os.environ['USE_MOCK_FIREBASE'] = app.config.get('USE_MOCK_FIREBASE', 'true')
+        os.environ.setdefault('FIREBASE_CREDENTIALS_PATH', 'firebase-dev.json')
         
+        # Trigger reload
         firebase_service.initialize(
             credentials_path='firebase-dev.json',
             project_id=None
@@ -119,81 +167,101 @@ def create_app():
         logger.error(f"Dashboard data service initialization failed: {str(e)}")
         dashboard_service = None
 
-    # Auto-seed demo data on first startup (development mode only)
-    if app.config.get('ENVIRONMENT', 'development') == 'development' and auth_service:
-        try:
-            existing = firebase_service.query_documents('users', limit=1)
-            if not existing:
-                logger.info("No users found — auto-seeding demo data for development...")
-                from src.application.voucher_seeder import VoucherSeeder
-                from src.domain.entities import UserRole
+    # Initialize student dashboard service
+    try:
+        from src.application.student_dashboard_service import StudentDashboardService
+        global student_dashboard_service
+        student_dashboard_service = StudentDashboardService(firebase_service)
+        logger.info("Student dashboard service initialized successfully")
+    except Exception as e:
+        logger.error(f"Student dashboard service initialization failed: {str(e)}")
+        student_dashboard_service = None
 
-                seeder = VoucherSeeder(firebase_service)
-                seeder.generate_seed_vouchers()
+    # Initialize event service for SSE
+    try:
+        from src.application.event_service import EventService
+        global event_service
+        event_service = EventService(firebase_service, dashboard_service)
+        logger.info("Event service initialized successfully")
+    except Exception as e:
+        logger.error(f"Event service initialization failed: {str(e)}")
+        event_service = None
 
-                demo_users = [
-                    {'email': 'admin@attendrix.demo', 'password': 'password123', 'first_name': 'Admin', 'last_name': 'User', 'role': UserRole.INSTITUTIONAL_ADMIN, 'voucher': 'ADMIN123'},
-                    {'email': 'lecturer1@attendrix.demo', 'password': 'password123', 'first_name': 'John', 'last_name': 'Doe', 'role': UserRole.LECTURER, 'voucher': 'LECT4567'},
-                    {'email': 'student1@attendrix.demo', 'password': 'password123', 'first_name': 'Jane', 'last_name': 'Smith', 'role': UserRole.STUDENT, 'voucher': 'STUD7890'},
-                ]
-                # Register extra student users for richer dashboard data
-                student_voucher_codes = ['STUD7900', 'STUD7901', 'STUD7902', 'STUD7903', 'STUD7904',
-                                         'STUD7905', 'STUD7906', 'STUD7907', 'STUD7908', 'STUD7909']
-                extra_students = [
-                    ('alice@attendrix.demo', 'Alice', 'Ndefru'),
-                    ('bob@attendrix.demo', 'Bob', 'Tataw'),
-                    ('carol@attendrix.demo', 'Carol', 'Ayuk'),
-                    ('david@attendrix.demo', 'David', 'Nkwi'),
-                    ('eve@attendrix.demo', 'Eve', 'Mbah'),
-                    ('frank@attendrix.demo', 'Frank', 'Asaah'),
-                    ('grace@attendrix.demo', 'Grace', 'Kum'),
-                    ('henry@attendrix.demo', 'Henry', 'Ndifor'),
-                    ('iris@attendrix.demo', 'Iris', 'Lum'),
-                    ('jack@attendrix.demo', 'Jack', 'Njini'),
-                ]
-                for idx, (email, fn, ln) in enumerate(extra_students):
-                    demo_users.append(
-                        {'email': email, 'password': 'password123', 'first_name': fn, 'last_name': ln,
-                         'role': UserRole.STUDENT, 'voucher': student_voucher_codes[idx]}
-                    )
+    # Initialize SMS service
+    try:
+        from src.application.sms_service import SMSService
+        global sms_service
+        sms_service = SMSService(firebase_service)
+        sms_service.configure(provider=os.environ.get('SMS_PROVIDER', 'mock'))
+        logger.info("SMS service initialized successfully")
+    except Exception as e:
+        logger.error(f"SMS service initialization failed: {str(e)}")
+        sms_service = None
 
-                created = 0
-                for u in demo_users:
-                    try:
-                        voucher_code = u.get('voucher')
-                        # Create a voucher for this user if it doesn't exist yet
-                        if voucher_code and not firebase_service.query_documents(
-                            'vouchers', filters=[{'field': 'code', 'value': voucher_code}]
-                        ):
-                            from src.application.voucher_management_service import VoucherManagementService
-                            vm = VoucherManagementService(firebase_service)
-                            vm.generate_voucher_batch(
-                                role=u['role'], institution_id='inst_001',
-                                quantity=1, email_binding=u['email'],
-                                fixed_code=voucher_code
-                            )
-                        auth_service.register_user(
-                            email=u['email'], password=u['password'],
-                            first_name=u['first_name'], last_name=u['last_name'],
-                            role=u['role'], institution_id='inst_001',
-                            voucher_code=voucher_code
-                        )
-                        created += 1
-                    except ValueError as ve:
-                        logger.warning(f"Auto-seed user {u['email']}: {ve}")
-                    except Exception as ue:
-                        logger.warning(f"Auto-seed user {u['email']} failed: {ue}")
-                logger.info(f"Auto-seed complete: {len(demo_users)} vouchers, {created} demo users")
+    # Initialize payment service
+    try:
+        from src.application.payment_service import PaymentService
+        global payment_service
+        payment_service = PaymentService(firebase_service)
+        logger.info("Payment service initialized successfully")
+    except Exception as e:
+        logger.error(f"Payment service initialization failed: {str(e)}")
+        payment_service = None
 
-                # Seed comprehensive dashboard demo data
-                try:
-                    from src.application.dashboard_seeder import seed_comprehensive_demo_data
-                    seed_result = seed_comprehensive_demo_data(firebase_service, 'inst_001')
-                    logger.info(f"Dashboard demo data seeded: {seed_result.get('total_documents_created', 0)} documents")
-                except Exception as dse:
-                    logger.warning(f"Dashboard data seeding skipped: {dse}")
-        except Exception as seed_err:
-            logger.warning(f"Auto-seeding skipped: {seed_err}")
+    # Initialize scheduling engine
+    try:
+        from src.application.scheduling_service import SchedulingEngine
+        global scheduling_engine
+        scheduling_engine = SchedulingEngine()
+        logger.info("Scheduling engine initialized successfully")
+    except Exception as e:
+        logger.error(f"Scheduling engine initialization failed: {str(e)}")
+        scheduling_engine = None
+
+    # Initialize attendance engine
+    try:
+        from src.application.attendance_service import AttendanceEngine
+        global attendance_engine
+        attendance_engine = AttendanceEngine()
+        logger.info("Attendance engine initialized successfully")
+    except Exception as e:
+        logger.error(f"Attendance engine initialization failed: {str(e)}")
+        attendance_engine = None
+
+    # Initialize offline queue service
+    try:
+        from src.application.offline_queue_service import OfflineQueueService
+        global offline_queue_service
+        offline_queue_service = OfflineQueueService(firebase_service)
+        logger.info("Offline queue service initialized successfully")
+    except Exception as e:
+        logger.error(f"Offline queue service initialization failed: {str(e)}")
+        offline_queue_service = None
+
+    # Initialize MQTT service
+    try:
+        mqtt_service.initialize()
+        if os.environ.get('MQTT_AUTO_CONNECT', 'false').lower() == 'true':
+            mqtt_service.connect()
+        logger.info(f"MQTT service initialized (mock={os.environ.get('USE_MOCK_MQTT', 'true')})")
+    except Exception as e:
+        logger.error(f"MQTT service initialization failed: {str(e)}")
+
+    # Initialize Biometric service
+    try:
+        from src.application.biometric_service import BiometricService as _BiometricService
+        global biometric_service_
+        biometric_service_ = _BiometricService(firebase_service)
+        logger.info("Biometric service initialized successfully")
+    except Exception as e:
+        logger.error(f"Biometric service initialization failed: {str(e)}")
+        biometric_service_ = None
+
+    # Update Celery config with app-level settings
+    celery.conf.update(
+        broker_url=app.config.get('CELERY_BROKER_URL', os.environ.get('REDIS_URL', 'redis://localhost:6379/0')),
+        result_backend=app.config.get('CELERY_RESULT_BACKEND', os.environ.get('REDIS_URL', 'redis://localhost:6379/0')),
+    )
 
     # Error handlers
     @app.errorhandler(404)
@@ -235,6 +303,21 @@ def create_app():
             'environment': app.config.get('ENVIRONMENT', 'unknown')
         })
     
+    @app.route('/api/ping')
+    def ping():
+        """Lightweight ping endpoint for latency measurement."""
+        import time as time_mod
+        return jsonify({
+            'pong': True,
+            'server_time': datetime.utcnow().isoformat(),
+            'timestamp': time_mod.time(),
+        })
+
+    @app.route('/api/mqtt/status')
+    def mqtt_status():
+        """MQTT broker connection status (mock or real)."""
+        return jsonify(mqtt_service.status)
+
     @app.route('/api/demo/request', methods=['POST'])
     @log_access
     def demo_request():
@@ -415,10 +498,34 @@ def create_app():
                 return jsonify({'message': 'Logged out successfully'}), 200
             else:
                 return jsonify({'error': 'Logout failed'}), 500
-                
         except Exception as e:
             logger.error(f"Logout error: {str(e)}")
             return jsonify({'error': 'Logout failed'}), 500
+
+    @app.route('/api/auth/change-password', methods=['POST'])
+    @require_auth
+    @log_access
+    def change_password():
+        """Change password for authenticated user"""
+        try:
+            data = request.get_json()
+            if not data or not data.get('current_password') or not data.get('new_password'):
+                return jsonify({'error': 'current_password and new_password required'}), 400
+
+            user_id = request.current_user.get('user_id')
+            ok = auth_service.change_password(
+                user_id=user_id,
+                current_password=data['current_password'],
+                new_password=data['new_password']
+            )
+            if ok:
+                return jsonify({'message': 'Password changed successfully'}), 200
+            else:
+                return jsonify({'error': 'Current password is incorrect'}), 401
+        except Exception as e:
+            logger.error(f"Password change error: {str(e)}")
+            return jsonify({'error': 'Password change failed'}), 500
+
 
     @app.route('/logout', methods=['GET'])
     def logout_page():
@@ -533,6 +640,21 @@ def create_app():
             session_code = data.get('session_code')
             if not session_code:
                 return jsonify({'error': 'Session code required'}), 400
+
+            # Optional face verification
+            face_descriptor = data.get('face_descriptor')
+            if face_descriptor:
+                from src.application.biometric_service import BiometricService as _BS
+                bs = _BS(firebase_service)
+                face_result = bs.verify_face(
+                    request.current_user.get('user_id'),
+                    face_descriptor
+                )
+                if not face_result.get('verified'):
+                    return jsonify({
+                        'error': 'Face verification failed',
+                        'face_result': face_result
+                    }), 403
             
             # Use real attendance security service
             from src.application.attendance_security_service import AttendanceSecurityService
@@ -545,10 +667,21 @@ def create_app():
                 ip_address=request.remote_addr,
                 location=data.get('location')
             )
-            
+
             if 'error' in result:
                 return jsonify(result), 400
             else:
+                mqtt_service.publish(
+                    f'attendrix/attendance/{result.get("session_id", session_code)}',
+                    {
+                        'student_id': request.current_user.get('user_id'),
+                        'status': 'present',
+                        'session_code': session_code,
+                        'method': result.get('method', 'qr'),
+                        'timestamp': datetime.utcnow().isoformat(),
+                    },
+                    qos=1,
+                )
                 return jsonify(result), 200
                 
         except Exception as e:
@@ -579,7 +712,79 @@ def create_app():
         except Exception as e:
             logger.error(f"Session closure error: {str(e)}")
             return jsonify({'error': 'Failed to close session'}), 500
-    
+
+    # ── FACE RECOGNITION ENDPOINTS ──
+
+    @app.route('/api/biometric/face/status', methods=['GET'])
+    @require_auth
+    def face_status():
+        """Check if user has face enrolled"""
+        try:
+            from src.application.biometric_service import BiometricService as _BS
+            bs = _BS(firebase_service)
+            user_id = request.current_user.get('user_id')
+            result = bs.get_face_status(user_id)
+            return jsonify(result), 200
+        except Exception as e:
+            logger.error(f"Face status error: {str(e)}")
+            return jsonify({'enrolled': False, 'error': 'Failed to check face status'}), 500
+
+    @app.route('/api/biometric/face/enroll', methods=['POST'])
+    @require_auth
+    @require_role('student')
+    def face_enroll():
+        """Enroll face descriptor for current user"""
+        try:
+            data = request.get_json()
+            descriptor = data.get('descriptor')
+            if not descriptor:
+                return jsonify({'success': False, 'error': 'Face descriptor required'}), 400
+            from src.application.biometric_service import BiometricService as _BS
+            bs = _BS(firebase_service)
+            user_id = request.current_user.get('user_id')
+            institution_id = request.current_user.get('institution_id')
+            result = bs.enroll_face(user_id, descriptor, institution_id)
+            status = 200 if result.get('success') else 400
+            return jsonify(result), status
+        except Exception as e:
+            logger.error(f"Face enroll error: {str(e)}")
+            return jsonify({'success': False, 'error': 'Failed to enroll face'}), 500
+
+    @app.route('/api/biometric/face/verify', methods=['POST'])
+    @require_auth
+    @require_role('student')
+    def face_verify():
+        """Verify face descriptor against enrolled face"""
+        try:
+            data = request.get_json()
+            descriptor = data.get('descriptor')
+            threshold = data.get('threshold', 0.6)
+            if not descriptor:
+                return jsonify({'verified': False, 'error': 'Face descriptor required'}), 400
+            from src.application.biometric_service import BiometricService as _BS
+            bs = _BS(firebase_service)
+            user_id = request.current_user.get('user_id')
+            result = bs.verify_face(user_id, descriptor, threshold)
+            status = 200 if not result.get('error') else 400
+            return jsonify(result), status
+        except Exception as e:
+            logger.error(f"Face verify error: {str(e)}")
+            return jsonify({'verified': False, 'error': 'Failed to verify face'}), 500
+
+    @app.route('/api/biometric/face/revoke', methods=['DELETE'])
+    @require_auth
+    def face_revoke():
+        """Revoke face enrollment"""
+        try:
+            from src.application.biometric_service import BiometricService as _BS
+            bs = _BS(firebase_service)
+            user_id = request.current_user.get('user_id')
+            result = bs.revoke_face(user_id)
+            return jsonify(result), 200
+        except Exception as e:
+            logger.error(f"Face revoke error: {str(e)}")
+            return jsonify({'success': False, 'error': 'Failed to revoke face'}), 500
+
     @app.route('/api/attendance/sessions/<session_id>/statistics', methods=['GET'])
     @require_auth
     @require_role('lecturer', 'institutional_admin', 'super_admin')
@@ -602,8 +807,6 @@ def create_app():
         """Get user profile"""
         try:
             user_id = request.current_user.get('user_id')
-            
-            from src.infrastructure.repositories import user_repo
             user_data = user_repo.get_by_id(user_id)
             
             if user_data:
@@ -616,6 +819,26 @@ def create_app():
         except Exception as e:
             logger.error(f"Profile retrieval error: {str(e)}")
             return jsonify({'error': 'Failed to get profile'}), 500
+    @app.route('/api/users/profile', methods=['PUT'])
+    @require_auth
+    @log_access
+    def update_user_profile():
+        """Update user profile"""
+        try:
+            data = request.get_json()
+            if not data:
+                return jsonify({'error': 'No data provided'}), 400
+
+            user_id = request.current_user.get('user_id')
+            ok = auth_service.update_profile(user_id, data)
+            if ok:
+                return jsonify({'message': 'Profile updated'}), 200
+            else:
+                return jsonify({'error': 'No valid fields to update'}), 400
+        except Exception as e:
+            logger.error(f"Profile update error: {str(e)}")
+            return jsonify({'error': 'Profile update failed'}), 500
+
     
     # Dashboard routes
     @app.route('/api/dashboard', methods=['GET'])
@@ -662,17 +885,11 @@ def create_app():
     
     # Clean dashboard routes - no old logic
     @app.route('/admin/dashboard')
-    @require_auth
-    @require_role('super_admin')
-    @log_access
     def admin_dashboard():
         """Hidden System Administration - PRIVATE ROUTE"""
         return render_template('admin/dashboard.html')
     
     @app.route('/institutional-admin/dashboard')
-    @require_auth
-    @require_role('institutional_admin')
-    @log_access
     def institutional_admin_dashboard():
         """Institutional Administrator Dashboard"""
         return render_template('institutional-admin/dashboard.html')
@@ -680,7 +897,7 @@ def create_app():
     # ── Institutional Admin API Endpoints ──
     @app.route('/api/institutional/activity-feed')
     @require_auth
-    @require_role('institutional_admin', 'super_admin')
+    @require_role('institutional_admin', 'super_admin', 'lecturer')
     @log_access
     def institutional_activity_feed():
         institution_id = request.current_user.get('institution_id', 'inst_001')
@@ -689,7 +906,7 @@ def create_app():
 
     @app.route('/api/institutional/security-alerts')
     @require_auth
-    @require_role('institutional_admin', 'super_admin')
+    @require_role('institutional_admin', 'super_admin', 'lecturer')
     @log_access
     def institutional_security_alerts():
         institution_id = request.current_user.get('institution_id', 'inst_001')
@@ -698,7 +915,7 @@ def create_app():
 
     @app.route('/api/institutional/network-status')
     @require_auth
-    @require_role('institutional_admin', 'super_admin')
+    @require_role('institutional_admin', 'super_admin', 'lecturer')
     @log_access
     def institutional_network_status():
         institution_id = request.current_user.get('institution_id', 'inst_001')
@@ -707,16 +924,18 @@ def create_app():
 
     @app.route('/api/institutional/session-health')
     @require_auth
-    @require_role('institutional_admin', 'super_admin')
+    @require_role('institutional_admin', 'super_admin', 'lecturer')
     @log_access
     def institutional_session_health():
         institution_id = request.current_user.get('institution_id', 'inst_001')
-        data = dashboard_service.get_session_health(institution_id) if dashboard_service else {'active_sessions': 0, 'total_sessions': 0, 'sessions': []}
+        page = request.args.get('page', 1, type=int)
+        per_page = request.args.get('per_page', 20, type=int)
+        data = dashboard_service.get_session_health(institution_id, page=page, per_page=per_page) if dashboard_service else {'active_sessions': 0, 'total_sessions': 0, 'sessions': [], 'total': 0, 'page': 1, 'per_page': 20, 'total_pages': 1}
         return jsonify(data)
 
     @app.route('/api/institutional/attendance-trends')
     @require_auth
-    @require_role('institutional_admin', 'super_admin')
+    @require_role('institutional_admin', 'super_admin', 'lecturer')
     @log_access
     def institutional_attendance_trends():
         institution_id = request.current_user.get('institution_id', 'inst_001')
@@ -725,16 +944,30 @@ def create_app():
 
     @app.route('/api/institutional/students')
     @require_auth
-    @require_role('institutional_admin', 'super_admin')
+    @require_role('institutional_admin', 'super_admin', 'lecturer')
     @log_access
     def institutional_students():
         institution_id = request.current_user.get('institution_id', 'inst_001')
-        students = dashboard_service.get_students_with_risk(institution_id) if dashboard_service else []
-        return jsonify({'students': students})
+        page = request.args.get('page', 1, type=int)
+        per_page = request.args.get('per_page', 12, type=int)
+        search = request.args.get('search', '', type=str)
+        result = dashboard_service.get_students_with_risk(institution_id, page=page, per_page=per_page, search=search) if dashboard_service else {'students': [], 'total': 0, 'page': 1, 'per_page': 12, 'total_pages': 1}
+        return jsonify(result)
+
+    @app.route('/api/institutional/students/<student_id>')
+    @require_auth
+    @require_role('institutional_admin', 'super_admin', 'lecturer')
+    @log_access
+    def institutional_student_detail(student_id):
+        institution_id = request.current_user.get('institution_id', 'inst_001')
+        detail = dashboard_service.get_student_detail(institution_id, student_id) if dashboard_service else None
+        if not detail:
+            return jsonify({'error': 'Student not found'}), 404
+        return jsonify(detail)
 
     @app.route('/api/institutional/offline-log')
     @require_auth
-    @require_role('institutional_admin', 'super_admin')
+    @require_role('institutional_admin', 'super_admin', 'lecturer')
     @log_access
     def institutional_offline_log():
         institution_id = request.current_user.get('institution_id', 'inst_001')
@@ -765,7 +998,9 @@ def create_app():
     @log_access
     def institutional_payments():
         institution_id = request.current_user.get('institution_id', 'inst_001')
-        data = dashboard_service.get_payment_status(institution_id) if dashboard_service else {}
+        page = request.args.get('page', 1, type=int)
+        per_page = request.args.get('per_page', 10, type=int)
+        data = dashboard_service.get_payment_status(institution_id, page=page, per_page=per_page) if dashboard_service else {}
         return jsonify(data)
 
     @app.route('/api/institutional/p2p-sync')
@@ -777,6 +1012,37 @@ def create_app():
         data = dashboard_service.get_p2p_sync_status(institution_id) if dashboard_service else {}
         return jsonify(data)
 
+    @app.route('/api/reports/attendance')
+    @require_auth
+    @require_role('institutional_admin', 'super_admin', 'lecturer')
+    @log_access
+    def download_attendance_report():
+        """Generate and download attendance report as PDF"""
+        try:
+            institution_id = request.current_user.get('institution_id', 'inst_001')
+            report_type = request.args.get('type', 'summary')
+
+            from src.application.report_service import ReportService
+            report_svc = ReportService(firebase_service)
+            pdf_bytes = report_svc.generate_attendance_report(
+                institution_id, report_type=report_type
+            )
+
+            if not pdf_bytes:
+                return jsonify({'error': 'Report generation failed'}), 500
+
+            from flask import send_file
+            import io as io_mod
+            return send_file(
+                io_mod.BytesIO(pdf_bytes),
+                mimetype='application/pdf',
+                as_attachment=True,
+                download_name=f'attendance_report_{datetime.utcnow().strftime("%Y%m%d")}.pdf'
+            )
+        except Exception as e:
+            logger.error(f"Report download failed: {str(e)}")
+            return jsonify({'error': 'Report generation failed'}), 500
+
     @app.route('/api/institutional/quick-actions')
     @require_auth
     @require_role('institutional_admin', 'super_admin')
@@ -786,13 +1052,176 @@ def create_app():
         return jsonify({'actions': actions})
 
     @app.route('/api/institutional/translations')
+    @require_auth
     @log_access
     def institutional_translations():
         lang = request.args.get('lang', 'en')
         data = dashboard_service.get_translations(lang) if dashboard_service else {}
         return jsonify(data)
 
+    # ── SSE REAL-TIME EVENT STREAM ──
+    @app.route('/api/institutional/events/stream')
+    def institutional_event_stream():
+        """Server-Sent Events endpoint for real-time dashboard updates.
+
+        Uses ?token= query param because EventSource does not support headers.
+        In dev mode, falls back to ?institution_id if no token provided.
+        """
+        from flask import Response as FlaskResponse
+
+        token = request.args.get('token')
+        user_id = None
+        institution_id = None
+
+        if token:
+            try:
+                payload = auth_service.verify_token(token)
+                if payload:
+                    user_id = payload.get('user_id')
+                    institution_id = payload.get('institution_id', 'inst_001')
+            except Exception as e:
+                logger.warning(f"SSE token validation failed: {e}")
+        elif app.config.get('ENVIRONMENT', 'development') == 'development':
+            inst_arg = request.args.get('institution_id', 'inst_001')
+            user_id = f"dev_user_{inst_arg}"
+            institution_id = inst_arg
+            logger.warning(f"SSE dev fallback — no token, auto-created user={user_id}")
+
+        if not user_id or not institution_id:
+            return jsonify({'error': 'Authentication required'}), 401
+
+        if not event_service:
+            return jsonify({'error': 'Event service unavailable'}), 503
+
+        return FlaskResponse(
+            event_service.generate_stream(institution_id, user_id),
+            mimetype='text/event-stream',
+            headers={
+                'Cache-Control': 'no-cache',
+                'Connection': 'keep-alive',
+                'X-Accel-Buffering': 'no',
+                'Access-Control-Allow-Origin': '*',
+            }
+        )
+
+    @app.route('/api/student/events/stream')
+    def student_event_stream():
+        """SSE endpoint for student real-time updates.
+
+        Mirrors the institutional stream but filters events relevant to students:
+        attendance confirmations, schedule changes, notifications.
+        """
+        from flask import Response as FlaskResponse
+
+        token = request.args.get('token')
+        user_id = None
+        institution_id = None
+
+        if token:
+            try:
+                payload = auth_service.verify_token(token)
+                if payload:
+                    user_id = payload.get('user_id')
+                    institution_id = payload.get('institution_id', 'inst_001')
+            except Exception as e:
+                logger.warning(f"Student SSE auth failed: {e}")
+        elif app.config.get('ENVIRONMENT', 'development') == 'development':
+            user_id = request.args.get('user_id', 'dev_student')
+            institution_id = request.args.get('institution_id', 'inst_001')
+            logger.warning(f"Student SSE dev fallback — user={user_id}")
+
+        if not user_id or not institution_id:
+            return jsonify({'error': 'Authentication required'}), 401
+
+        if not event_service:
+            return jsonify({'error': 'Event service unavailable'}), 503
+
+        return FlaskResponse(
+            event_service.generate_student_stream(institution_id, user_id),
+            mimetype='text/event-stream',
+            headers={
+                'Cache-Control': 'no-cache',
+                'Connection': 'keep-alive',
+                'X-Accel-Buffering': 'no',
+                'Access-Control-Allow-Origin': '*',
+            }
+        )
+
     # ── DATA CREATION / MANAGEMENT ENDPOINTS ──
+
+    # Wire additional repository-layer endpoints
+    from src.infrastructure.repositories import (
+        institution_repo, notification_repo, leave_request_repo,
+        system_config_repo, department_repo, course_repo,
+        attendance_session_repo, attendance_record_repo, security_log_repo,
+    )
+
+    @app.route('/api/institutions', methods=['GET'])
+    @require_auth
+    @require_role('super_admin')
+    @log_access
+    def list_institutions():
+        limit = request.args.get('limit', 50, type=int)
+        data = institution_repo.list_all(limit=limit)
+        return jsonify({'institutions': data})
+
+    @app.route('/api/institutions/<institution_id>', methods=['GET'])
+    @require_auth
+    @require_role('super_admin', 'institutional_admin')
+    @log_access
+    def get_institution(institution_id):
+        data = institution_repo.get_by_id(institution_id)
+        if not data:
+            return jsonify({'error': 'Institution not found'}), 404
+        return jsonify(data)
+
+    @app.route('/api/notifications', methods=['GET'])
+    @require_auth
+    @log_access
+    def list_notifications():
+        user_id = request.current_user.get('user_id')
+        unread = request.args.get('unread', '').lower() == 'true'
+        if unread:
+            data = notification_repo.get_unread(user_id)
+        else:
+            data = notification_repo.get_by_user(user_id)
+        return jsonify({'notifications': data})
+
+    @app.route('/api/notifications/<notification_id>/read', methods=['POST'])
+    @require_auth
+    @log_access
+    def mark_notification_read(notification_id):
+        notification_repo.update(notification_id, {'is_read': True, 'read_at': datetime.utcnow().isoformat()})
+        return jsonify({'message': 'Notification marked as read'})
+
+    @app.route('/api/leave-requests', methods=['GET'])
+    @require_auth
+    @log_access
+    def list_leave_requests():
+        user_id = request.current_user.get('user_id')
+        institution_id = request.current_user.get('institution_id', 'inst_001')
+        role = request.current_user.get('role')
+        if role in ('super_admin', 'institutional_admin'):
+            data = leave_request_repo.get_by_institution(institution_id)
+        else:
+            data = leave_request_repo.get_by_user(user_id)
+        return jsonify({'leave_requests': data})
+
+    @app.route('/api/leave-requests', methods=['POST'])
+    @require_auth
+    @log_access
+    def create_leave_request():
+        data = request.get_json()
+        doc_id = leave_request_repo.create({
+            'user_id': request.current_user.get('user_id'),
+            'institution_id': request.current_user.get('institution_id', 'inst_001'),
+            'leave_type': data.get('leave_type', ''),
+            'start_date': data.get('start_date', ''),
+            'end_date': data.get('end_date', ''),
+            'reason': data.get('reason', ''),
+            'status': 'pending',
+        })
+        return jsonify({'id': doc_id, 'message': 'Leave request submitted'}), 201
 
     @app.route('/api/institutional/activity-log', methods=['POST'])
     @require_auth
@@ -862,7 +1291,7 @@ def create_app():
 
     @app.route('/api/institutional/offline-sync', methods=['POST'])
     @require_auth
-    @require_role('institutional_admin', 'super_admin')
+    @require_role('institutional_admin', 'super_admin', 'lecturer')
     @log_access
     def enqueue_offline_sync():
         institution_id = request.current_user.get('institution_id', 'inst_001')
@@ -873,6 +1302,120 @@ def create_app():
             records=data.get('records', 0)
         )
         return jsonify({'id': doc_id, 'message': 'Offline sync enqueued'}), 201
+
+    # ── OFFLINE QUEUE SERVICE API ──
+
+    @app.route('/api/institutional/offline-queue/stats')
+    @require_auth
+    @require_role('institutional_admin', 'super_admin', 'lecturer')
+    @log_access
+    def offline_queue_stats():
+        institution_id = request.current_user.get('institution_id', 'inst_001')
+        if not offline_queue_service:
+            return jsonify({'error': 'Offline queue service unavailable'}), 503
+        stats = offline_queue_service.get_queue_stats(institution_id)
+        return jsonify(stats)
+
+    @app.route('/api/institutional/offline-queue/process', methods=['POST'])
+    @require_auth
+    @require_role('institutional_admin', 'super_admin')
+    @log_access
+    def offline_queue_process():
+        institution_id = request.current_user.get('institution_id', 'inst_001')
+        if not offline_queue_service:
+            return jsonify({'error': 'Offline queue service unavailable'}), 503
+        result = offline_queue_service.process_queue(institution_id)
+        return jsonify(result)
+
+    @app.route('/api/institutional/offline-queue/pending')
+    @require_auth
+    @require_role('institutional_admin', 'super_admin', 'lecturer')
+    @log_access
+    def offline_queue_pending():
+        institution_id = request.current_user.get('institution_id', 'inst_001')
+        if not offline_queue_service:
+            return jsonify({'error': 'Offline queue service unavailable'}), 503
+        pending = offline_queue_service.get_pending(institution_id)
+        return jsonify({'pending': pending[:25], 'total': len(pending)})
+
+    @app.route('/api/institutional/offline-queue/failed')
+    @require_auth
+    @require_role('institutional_admin', 'super_admin')
+    @log_access
+    def offline_queue_failed():
+        institution_id = request.current_user.get('institution_id', 'inst_001')
+        if not offline_queue_service:
+            return jsonify({'error': 'Offline queue service unavailable'}), 503
+        failed = offline_queue_service.get_failed(institution_id)
+        return jsonify({'failed': failed[:25], 'total': len(failed)})
+
+    @app.route('/api/institutional/offline-queue/retry', methods=['POST'])
+    @require_auth
+    @require_role('institutional_admin', 'super_admin')
+    @log_access
+    def offline_queue_retry():
+        institution_id = request.current_user.get('institution_id', 'inst_001')
+        data = request.get_json() or {}
+        entry_id = data.get('entry_id')
+        if not offline_queue_service:
+            return jsonify({'error': 'Offline queue service unavailable'}), 503
+        count = offline_queue_service.retry_failed(entry_id=entry_id, institution_id=institution_id)
+        return jsonify({'retried': count, 'message': f'Reset {count} entries for retry'})
+
+    @app.route('/api/institutional/offline-queue/clear', methods=['POST'])
+    @require_auth
+    @require_role('institutional_admin', 'super_admin')
+    @log_access
+    def offline_queue_clear():
+        institution_id = request.current_user.get('institution_id', 'inst_001')
+        data = request.get_json() or {}
+        older_than = data.get('older_than_hours', 24)
+        if not offline_queue_service:
+            return jsonify({'error': 'Offline queue service unavailable'}), 503
+        removed = offline_queue_service.clear_synced(institution_id, older_than_hours=older_than)
+        return jsonify({'removed': removed, 'message': f'Cleared {removed} old synced entries'})
+
+    @app.route('/api/institutional/offline-queue/estimate')
+    @require_auth
+    @require_role('institutional_admin', 'super_admin', 'lecturer')
+    @log_access
+    def offline_queue_estimate():
+        institution_id = request.current_user.get('institution_id', 'inst_001')
+        if not offline_queue_service:
+            return jsonify({'error': 'Offline queue service unavailable'}), 503
+        estimate = offline_queue_service.estimate_sync_duration(institution_id)
+        return jsonify(estimate)
+
+    @app.route('/api/institutional/offline-queue/nodes')
+    @require_auth
+    @require_role('institutional_admin', 'super_admin')
+    @log_access
+    def offline_queue_nodes():
+        institution_id = request.current_user.get('institution_id', 'inst_001')
+        if not offline_queue_service:
+            return jsonify({'error': 'Offline queue service unavailable'}), 503
+        nodes = offline_queue_service.get_node_sync_status(institution_id)
+        return jsonify({'nodes': nodes})
+
+    @app.route('/api/institutional/offline-queue/enqueue', methods=['POST'])
+    @require_auth
+    @require_role('institutional_admin', 'super_admin', 'lecturer')
+    @log_access
+    def offline_queue_enqueue():
+        institution_id = request.current_user.get('institution_id', 'inst_001')
+        data = request.get_json()
+        if not data or not data.get('operation_type') or not data.get('payload'):
+            return jsonify({'error': 'operation_type and payload are required'}), 400
+        if not offline_queue_service:
+            return jsonify({'error': 'Offline queue service unavailable'}), 503
+        entry_id = offline_queue_service.enqueue(
+            institution_id=institution_id,
+            operation_type=data['operation_type'],
+            payload=data['payload'],
+            node_name=data.get('node_name', 'web'),
+            priority=data.get('priority', 0)
+        )
+        return jsonify({'id': entry_id, 'message': 'Operation queued for sync'}), 201
 
     @app.route('/api/institutional/infrastructure/ups', methods=['POST'])
     @require_auth
@@ -973,22 +1516,503 @@ def create_app():
             logger.error(f"Demo seed error: {str(e)}")
             return jsonify({'error': f'Seeding failed: {str(e)}'}), 500
 
-    @app.route('/lecturer/dashboard')
+    # ── USER MANAGEMENT API ──
+
+    @app.route('/api/institutional/users')
     @require_auth
-    @require_role('lecturer')
+    @require_role('institutional_admin', 'super_admin')
     @log_access
+    def institutional_users():
+        institution_id = request.current_user.get('institution_id', 'inst_001')
+        page = request.args.get('page', 1, type=int)
+        per_page = request.args.get('per_page', 20, type=int)
+        search = request.args.get('search', '', type=str)
+        result = dashboard_service.list_users(institution_id, search=search, page=page, per_page=per_page) if dashboard_service else {'users': [], 'total': 0, 'page': 1, 'per_page': 20, 'total_pages': 1}
+        return jsonify(result)
+
+    @app.route('/api/institutional/users', methods=['POST'])
+    @require_auth
+    @require_role('institutional_admin', 'super_admin')
+    @log_access
+    def institutional_create_user():
+        institution_id = request.current_user.get('institution_id', 'inst_001')
+        data = request.get_json()
+        if not data:
+            return jsonify({'error': 'No data provided'}), 400
+        user_id = dashboard_service.create_user(institution_id, data) if dashboard_service else None
+        if not user_id:
+            return jsonify({'error': 'Failed to create user'}), 500
+        return jsonify({'id': user_id, 'message': 'User created'}), 201
+
+    @app.route('/api/institutional/users/<user_id>', methods=['PUT'])
+    @require_auth
+    @require_role('institutional_admin', 'super_admin')
+    @log_access
+    def institutional_update_user(user_id):
+        data = request.get_json()
+        if not data:
+            return jsonify({'error': 'No data provided'}), 400
+        ok = dashboard_service.update_user(user_id, data) if dashboard_service else False
+        if not ok:
+            return jsonify({'error': 'User not found'}), 404
+        return jsonify({'message': 'User updated'})
+
+    @app.route('/api/institutional/users/<user_id>/toggle-status', methods=['POST'])
+    @require_auth
+    @require_role('institutional_admin', 'super_admin')
+    @log_access
+    def institutional_toggle_user(user_id):
+        ok = dashboard_service.toggle_user_status(user_id) if dashboard_service else False
+        if not ok:
+            return jsonify({'error': 'User not found'}), 404
+        return jsonify({'message': 'User status toggled'})
+    @app.route('/api/institutional/users/<user_id>', methods=['DELETE'])
+    @require_auth
+    @require_role('institutional_admin', 'super_admin')
+    @log_access
+    def institutional_delete_user(user_id):
+        """Delete a user"""
+        try:
+            ok = dashboard_service.delete_user(user_id) if dashboard_service else False
+            if not ok:
+                return jsonify({'error': 'User not found'}), 404
+            return jsonify({'message': 'User deleted'}), 200
+        except Exception as e:
+            logger.error(f"User deletion error: {str(e)}")
+            return jsonify({'error': 'Failed to delete user'}), 500
+
+
+    # ── COURSE MANAGEMENT API ──
+
+    @app.route('/api/institutional/courses')
+    @require_auth
+    @require_role('institutional_admin', 'super_admin', 'lecturer')
+    @log_access
+    def institutional_courses():
+        institution_id = request.current_user.get('institution_id', 'inst_001')
+        page = request.args.get('page', 1, type=int)
+        per_page = request.args.get('per_page', 20, type=int)
+        search = request.args.get('search', '', type=str)
+        result = dashboard_service.list_courses(institution_id, search=search, page=page, per_page=per_page) if dashboard_service else {'courses': [], 'total': 0, 'page': 1, 'per_page': 20, 'total_pages': 1}
+        return jsonify(result)
+
+    @app.route('/api/institutional/courses', methods=['POST'])
+    @require_auth
+    @require_role('institutional_admin', 'super_admin')
+    @log_access
+    def institutional_create_course():
+        institution_id = request.current_user.get('institution_id', 'inst_001')
+        data = request.get_json()
+        if not data:
+            return jsonify({'error': 'No data provided'}), 400
+        course_id = dashboard_service.create_course(institution_id, data) if dashboard_service else None
+        if not course_id:
+            return jsonify({'error': 'Failed to create course'}), 500
+        return jsonify({'id': course_id, 'message': 'Course created'}), 201
+
+    @app.route('/api/institutional/courses/<course_id>', methods=['PUT'])
+    @require_auth
+    @require_role('institutional_admin', 'super_admin')
+    @log_access
+    def institutional_update_course(course_id):
+        data = request.get_json()
+        if not data:
+            return jsonify({'error': 'No data provided'}), 400
+        ok = dashboard_service.update_course(course_id, data) if dashboard_service else False
+        if not ok:
+            return jsonify({'error': 'Course not found'}), 404
+        return jsonify({'message': 'Course updated'})
+
+    @app.route('/api/institutional/courses/<course_id>', methods=['DELETE'])
+    @require_auth
+    @require_role('institutional_admin', 'super_admin')
+    @log_access
+    def institutional_delete_course(course_id):
+        ok = dashboard_service.delete_course(course_id) if dashboard_service else False
+        if not ok:
+            return jsonify({'error': 'Course not found'}), 404
+        return jsonify({'message': 'Course deleted'})
+
+    # ── DEPARTMENT MANAGEMENT API ──
+
+    @app.route('/api/institutional/departments')
+    @require_auth
+    @require_role('institutional_admin', 'super_admin')
+    @log_access
+    def institutional_departments():
+        institution_id = request.current_user.get('institution_id', 'inst_001')
+        page = request.args.get('page', 1, type=int)
+        per_page = request.args.get('per_page', 20, type=int)
+        search = request.args.get('search', '', type=str)
+        result = dashboard_service.list_departments(institution_id, search=search, page=page, per_page=per_page) if dashboard_service else {'departments': [], 'total': 0, 'page': 1, 'per_page': 20, 'total_pages': 1}
+        return jsonify(result)
+
+    @app.route('/api/institutional/departments', methods=['POST'])
+    @require_auth
+    @require_role('institutional_admin', 'super_admin')
+    @log_access
+    def institutional_create_department():
+        institution_id = request.current_user.get('institution_id', 'inst_001')
+        data = request.get_json()
+        if not data:
+            return jsonify({'error': 'No data provided'}), 400
+        dept_id = dashboard_service.create_department(institution_id, data) if dashboard_service else None
+        if not dept_id:
+            return jsonify({'error': 'Failed to create department'}), 500
+        return jsonify({'id': dept_id, 'message': 'Department created'}), 201
+
+    @app.route('/api/institutional/departments/<dept_id>', methods=['PUT'])
+    @require_auth
+    @require_role('institutional_admin', 'super_admin')
+    @log_access
+    def institutional_update_department(dept_id):
+        data = request.get_json()
+        if not data:
+            return jsonify({'error': 'No data provided'}), 400
+        ok = dashboard_service.update_department(dept_id, data) if dashboard_service else False
+        if not ok:
+            return jsonify({'error': 'Department not found'}), 404
+        return jsonify({'message': 'Department updated'})
+
+    @app.route('/api/institutional/departments/<dept_id>', methods=['DELETE'])
+    @require_auth
+    @require_role('institutional_admin', 'super_admin')
+    @log_access
+    def institutional_delete_department(dept_id):
+        ok = dashboard_service.delete_department(dept_id) if dashboard_service else False
+        if not ok:
+            return jsonify({'error': 'Department not found'}), 404
+        return jsonify({'message': 'Department deleted'})
+
+    # ── ENROLLMENT MANAGEMENT API ──
+
+    @app.route('/api/institutional/enrollments')
+    @require_auth
+    @require_role('institutional_admin', 'super_admin')
+    @log_access
+    def institutional_enrollments():
+        institution_id = request.current_user.get('institution_id', 'inst_001')
+        page = request.args.get('page', 1, type=int)
+        per_page = request.args.get('per_page', 20, type=int)
+        search = request.args.get('search', '', type=str)
+        result = dashboard_service.list_enrollments(institution_id, search=search, page=page, per_page=per_page) if dashboard_service else {'enrollments': [], 'total': 0, 'page': 1, 'per_page': 20, 'total_pages': 1}
+        return jsonify(result)
+
+    @app.route('/api/institutional/enrollments', methods=['POST'])
+    @require_auth
+    @require_role('institutional_admin', 'super_admin')
+    @log_access
+    def institutional_create_enrollment():
+        institution_id = request.current_user.get('institution_id', 'inst_001')
+        data = request.get_json()
+        if not data:
+            return jsonify({'error': 'No data provided'}), 400
+        enrollment_id = dashboard_service.create_enrollment(institution_id, data) if dashboard_service else None
+        if not enrollment_id:
+            return jsonify({'error': 'Failed to create enrollment'}), 500
+        return jsonify({'id': enrollment_id, 'message': 'Enrollment created'}), 201
+
+    @app.route('/api/institutional/enrollments/<enrollment_id>', methods=['DELETE'])
+    @require_auth
+    @require_role('institutional_admin', 'super_admin')
+    @log_access
+    def institutional_delete_enrollment(enrollment_id):
+        ok = dashboard_service.delete_enrollment(enrollment_id) if dashboard_service else False
+        if not ok:
+            return jsonify({'error': 'Enrollment not found'}), 404
+        return jsonify({'message': 'Enrollment deleted'})
+
+    # ── LOOKUP HELPERS ──
+
+    @app.route('/api/institutional/lookup/lecturers')
+    @require_auth
+    @require_role('institutional_admin', 'super_admin')
+    @log_access
+    def institutional_lookup_lecturers():
+        institution_id = request.current_user.get('institution_id', 'inst_001')
+        lecturers = dashboard_service.list_lecturers(institution_id) if dashboard_service else []
+        return jsonify({'lecturers': lecturers})
+
+    @app.route('/api/institutional/lookup/departments')
+    @require_auth
+    @require_role('institutional_admin', 'super_admin')
+    @log_access
+    def institutional_lookup_departments():
+        institution_id = request.current_user.get('institution_id', 'inst_001')
+        result = dashboard_service.list_departments(institution_id) if dashboard_service else {'departments': []}
+        return jsonify(result)
+
+    @app.route('/api/institutional/lookup/courses')
+    @require_auth
+    @require_role('institutional_admin', 'super_admin')
+    @log_access
+    def institutional_lookup_courses():
+        institution_id = request.current_user.get('institution_id', 'inst_001')
+        result = dashboard_service.list_courses(institution_id, per_page=999) if dashboard_service else {'courses': []}
+        return jsonify(result)
+
+    @app.route('/api/institutional/lookup/students')
+    @require_auth
+    @require_role('institutional_admin', 'super_admin')
+    @log_access
+    def institutional_lookup_students():
+        institution_id = request.current_user.get('institution_id', 'inst_001')
+        search = request.args.get('search', '', type=str)
+        result = dashboard_service.list_users(institution_id, search=search, per_page=50) if dashboard_service else {'users': []}
+        # Filter to students only
+        students = [u for u in result.get('users', []) if u.get('role') == 'student']
+        return jsonify({'students': students})
+
+    # ── PHASE D: MINESEC XML, SMS, MOBILE MONEY ──
+
+    @app.route('/api/reports/minesec-xml')
+    @require_auth
+    @require_role('institutional_admin', 'super_admin', 'lecturer')
+    @log_access
+    def minesec_xml_report():
+        institution_id = request.current_user.get('institution_id', 'inst_001')
+        from src.application.report_service import ReportService
+        rs = ReportService(firebase_service)
+        xml_bytes = rs.generate_minesec_xml(institution_id)
+        if not xml_bytes:
+            return jsonify({'error': 'Failed to generate MINESEC XML report'}), 500
+        from flask import Response as FlaskResponse
+        return FlaskResponse(
+            xml_bytes,
+            mimetype='application/xml',
+            headers={
+                'Content-Disposition': f'attachment; filename=minesec_report_{institution_id}.xml',
+                'Content-Type': 'application/xml; charset=utf-8',
+            }
+        )
+
+    @app.route('/api/institutional/sms/send', methods=['POST'])
+    @require_auth
+    @require_role('institutional_admin', 'super_admin')
+    @log_access
+    def institutional_send_sms():
+        data = request.get_json()
+        if not data or not data.get('to') or not data.get('message'):
+            return jsonify({'error': 'Phone number and message are required'}), 400
+        to = data['to']
+        message = data['message']
+        priority = data.get('priority', 'normal')
+        if sms_service:
+            result = sms_service.send_sms(to, message, priority)
+            return jsonify(result)
+        return jsonify({'error': 'SMS service unavailable'}), 503
+
+    @app.route('/api/institutional/sms/queue', methods=['POST'])
+    @require_auth
+    @require_role('institutional_admin', 'super_admin')
+    @log_access
+    def institutional_queue_sms():
+        data = request.get_json()
+        if not data or not data.get('to') or not data.get('message'):
+            return jsonify({'error': 'Phone number and message are required'}), 400
+        if sms_service:
+            result = sms_service.queue_sms(data['to'], data['message'], data.get('priority', 'normal'))
+            return jsonify(result), 201
+        return jsonify({'error': 'SMS service unavailable'}), 503
+
+    @app.route('/api/institutional/sms/queue/process', methods=['POST'])
+    @require_auth
+    @require_role('institutional_admin', 'super_admin')
+    @log_access
+    def institutional_process_sms_queue():
+        if sms_service:
+            sent = sms_service.process_queue()
+            stats = sms_service.get_queue_stats()
+            return jsonify({'sent': sent, 'stats': stats})
+        return jsonify({'error': 'SMS service unavailable'}), 503
+
+    @app.route('/api/institutional/sms/stats')
+    @require_auth
+    @require_role('institutional_admin', 'super_admin')
+    @log_access
+    def institutional_sms_stats():
+        if sms_service:
+            return jsonify(sms_service.get_queue_stats())
+        return jsonify({'queued': 0, 'sent': 0, 'failed': 0, 'total': 0})
+
+    @app.route('/api/institutional/payments/initiate', methods=['POST'])
+    @require_auth
+    @require_role('institutional_admin', 'super_admin')
+    @log_access
+    def institutional_initiate_payment():
+        data = request.get_json()
+        if not data or not data.get('provider') or not data.get('phone') or not data.get('amount'):
+            return jsonify({'error': 'Provider, phone, and amount are required'}), 400
+        if payment_service:
+            result = payment_service.initiate_payment(
+                provider=data['provider'],
+                phone=data['phone'],
+                amount=int(data['amount']),
+                reference=data.get('reference', ''),
+                description=data.get('description', ''),
+            )
+            return jsonify(result)
+        return jsonify({'error': 'Payment service unavailable'}), 503
+
+    @app.route('/api/institutional/payments/confirm', methods=['POST'])
+    @require_auth
+    @require_role('institutional_admin', 'super_admin')
+    @log_access
+    def institutional_confirm_payment():
+        data = request.get_json()
+        if not data or not data.get('transaction_id'):
+            return jsonify({'error': 'Transaction ID is required'}), 400
+        if payment_service:
+            result = payment_service.confirm_payment(
+                transaction_id=data['transaction_id'],
+                provider_ref=data.get('provider_reference', ''),
+            )
+            return jsonify(result)
+        return jsonify({'error': 'Payment service unavailable'}), 503
+
+    @app.route('/api/institutional/payments/providers')
+    @require_auth
+    @require_role('institutional_admin', 'super_admin')
+    @log_access
+    def institutional_payment_providers():
+        if payment_service:
+            return jsonify({'providers': payment_service.get_provider_status()})
+        return jsonify({'providers': []})
+
+    @app.route('/api/institutional/translations/extended')
+    @require_auth
+    @require_role('institutional_admin', 'super_admin')
+    @log_access
+    def institutional_translations_extended():
+        lang = request.args.get('lang', 'en')
+        from src.application.bilingual import TRANSLATIONS
+        result = {}
+        for key, val in TRANSLATIONS.items():
+            result[key] = val.get(lang, val.get('en', key))
+        return jsonify(result)
+
+    @app.route('/lecturer/dashboard')
     def lecturer_dashboard():
         """Lecturer Dashboard"""
         return render_template('lecturer/dashboard.html')
     
     @app.route('/student/dashboard')
-    @require_auth
-    @require_role('student')
-    @log_access
     def student_dashboard():
         """Student Dashboard"""
         return render_template('student/dashboard.html')
     
+    @app.route('/api/student/dashboard', methods=['GET'])
+    @require_auth
+    @require_role('student')
+    @log_access
+    def api_student_dashboard():
+        """Student dashboard data API"""
+        try:
+            user_id = request.current_user.get('user_id')
+            inst_id = request.current_user.get('institution_id', '')
+            if student_dashboard_service is None:
+                return jsonify({'error': 'Service not available'}), 503
+            data = student_dashboard_service.get_dashboard_data(user_id, inst_id)
+            return jsonify(data), 200
+        except Exception as e:
+            logger.error(f"Student dashboard API error: {str(e)}")
+            return jsonify({'error': 'Failed to load dashboard'}), 500
+
+    @app.route('/api/student/attendance-history', methods=['GET'])
+    @require_auth
+    @require_role('student')
+    @log_access
+    def api_student_attendance_history():
+        """Student attendance history"""
+        try:
+            user_id = request.current_user.get('user_id')
+            inst_id = request.current_user.get('institution_id', '')
+            page = int(request.args.get('page', 1))
+            per_page = int(request.args.get('per_page', 20))
+            if student_dashboard_service is None:
+                return jsonify({'error': 'Service not available'}), 503
+            data = student_dashboard_service.get_attendance_history(user_id, inst_id, page, per_page)
+            return jsonify(data), 200
+        except Exception as e:
+            logger.error(f"Attendance history API error: {str(e)}")
+            return jsonify({'error': 'Failed to load history'}), 500
+
+    @app.route('/api/student/schedule', methods=['GET'])
+    @require_auth
+    @require_role('student')
+    @log_access
+    def api_student_schedule():
+        """Student class schedule"""
+        try:
+            inst_id = request.current_user.get('institution_id', '')
+            if student_dashboard_service is None:
+                return jsonify({'error': 'Service not available'}), 503
+            sessions = student_dashboard_service.get_schedule(request.current_user.get('user_id'), inst_id)
+            return jsonify({'sessions': sessions}), 200
+        except Exception as e:
+            logger.error(f"Schedule API error: {str(e)}")
+            return jsonify({'error': 'Failed to load schedule'}), 500
+
+    @app.route('/api/student/analytics', methods=['GET'])
+    @require_auth
+    @require_role('student')
+    @log_access
+    def api_student_analytics():
+        """Student attendance analytics"""
+        try:
+            user_id = request.current_user.get('user_id')
+            inst_id = request.current_user.get('institution_id', '')
+            if student_dashboard_service is None:
+                return jsonify({'error': 'Service not available'}), 503
+            data = student_dashboard_service.get_analytics(user_id, inst_id)
+            return jsonify(data), 200
+        except Exception as e:
+            logger.error(f"Analytics API error: {str(e)}")
+            return jsonify({'error': 'Failed to load analytics'}), 500
+
+    @app.route('/api/student/security', methods=['GET'])
+    @require_auth
+    @require_role('student')
+    @log_access
+    def api_student_security():
+        """Student security data (devices, events)"""
+        try:
+            user_id = request.current_user.get('user_id')
+            inst_id = request.current_user.get('institution_id', '')
+            if student_dashboard_service is None:
+                return jsonify({'error': 'Service not available'}), 503
+            data = student_dashboard_service.get_security_data(user_id, inst_id)
+            return jsonify(data), 200
+        except Exception as e:
+            logger.error(f"Security data API error: {str(e)}")
+            return jsonify({'error': 'Failed to load security data'}), 500
+
+    @app.route('/api/student/verify-scan', methods=['POST'])
+    @require_auth
+    @require_role('student')
+    @log_access
+    def api_student_verify_scan():
+        """Verify a session code before marking attendance"""
+        try:
+            data = request.get_json()
+            session_code = data.get('session_code', '')
+            device_fingerprint = data.get('device_fingerprint', '')
+            if not session_code:
+                return jsonify({'error': 'Session code required'}), 400
+            if student_dashboard_service is None:
+                return jsonify({'error': 'Service not available'}), 503
+            result = student_dashboard_service.verify_scan(
+                session_code=session_code,
+                user_id=request.current_user.get('user_id'),
+                device_fingerprint=device_fingerprint
+            )
+            if 'error' in result:
+                return jsonify(result), 400
+            return jsonify(result), 200
+        except Exception as e:
+            logger.error(f"Verify scan error: {str(e)}")
+            return jsonify({'error': 'Verification failed'}), 500
+
     @app.route('/admin/institutions')
     @require_auth
     @require_role('super_admin')
@@ -1094,7 +2118,7 @@ def create_app():
     @log_access
     def admin_reports():
         """Reports page"""
-        return render_template('admin/security.html')
+        return render_template('admin/reports.html')
     
     # Fallback route for dashboard access
     @app.route('/<path:path>')
@@ -1260,11 +2284,54 @@ def create_app():
             logger.error(f"Voucher statistics error: {str(e)}")
             return jsonify({'error': 'Failed to get statistics'}), 500
     
+    @app.route('/offline')
+    def offline_page():
+        return render_template('offline.html')
+
     @app.route('/favicon.ico')
     def favicon():
         return '', 204
 
+    @app.route('/system/bootstrap', methods=['POST'])
+    def bootstrap():
+        """First-run bootstrap: create initial admin user if no users exist."""
+        try:
+            existing = firebase_service.query_documents('users', limit=1)
+            if existing:
+                return jsonify({'error': 'System already bootstrapped'}), 400
+
+            data = request.get_json() or {}
+            email = data.get('email', 'admin@attendrix.demo')
+            password = data.get('password', 'password123')
+            first_name = data.get('first_name', 'Admin')
+            last_name = data.get('last_name', 'User')
+
+            from src.domain.entities import UserRole
+            user = auth_service.register_user(
+                email=email, password=password,
+                first_name=first_name, last_name=last_name,
+                role=UserRole.SUPER_ADMIN,
+                institution_id='inst_001',
+                voucher_code=None
+            )
+
+            from src.application.voucher_seeder import VoucherSeeder
+            seeder = VoucherSeeder(firebase_service)
+            seeder.generate_seed_vouchers()
+
+            return jsonify({
+                'success': True,
+                'message': 'Admin user created. You can now log in.',
+                'email': email
+            }), 201
+
+        except Exception as e:
+            logger.error(f"Bootstrap error: {str(e)}")
+            return jsonify({'error': f'Bootstrap failed: {str(e)}'}), 500
+
     @app.route('/system/voucher/seed', methods=['POST'])
+    @require_auth
+    @require_role('super_admin')
     @log_access
     def seed_vouchers():
         """System bootstrap - generate initial seed vouchers and demo users"""
@@ -1319,12 +2386,10 @@ def create_app():
         except Exception as e:
             logger.error(f"Voucher seeding error: {str(e)}")
             return jsonify({'error': 'Failed to seed vouchers'}), 500
-                
-        except Exception as e:
-            logger.error(f"Voucher seeding error: {str(e)}")
-            return jsonify({'error': 'Failed to seed vouchers'}), 500
     
     @app.route('/system/voucher/force-reseed', methods=['POST'])
+    @require_auth
+    @require_role('super_admin')
     @log_access
     def force_reseed_vouchers():
         """Force reseed vouchers - override existing"""
@@ -1359,6 +2424,8 @@ def create_app():
             return jsonify({'error': 'Failed to force reseed vouchers'}), 500
     
     @app.route('/system/voucher/check', methods=['GET'])
+    @require_auth
+    @require_role('super_admin')
     @log_access
     def check_voucher_status():
         """Check voucher system status"""
@@ -1385,6 +2452,8 @@ def create_app():
             return jsonify({'error': 'Failed to check voucher status'}), 500
     
     @app.route('/system/voucher/debug', methods=['GET'])
+    @require_auth
+    @require_role('super_admin')
     @log_access
     def debug_vouchers():
         """Debug endpoint to see all vouchers in database"""
