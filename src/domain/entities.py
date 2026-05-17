@@ -1,7 +1,7 @@
 from datetime import datetime, timedelta
 from typing import List, Optional, Dict, Any
 from enum import Enum
-from dataclasses import dataclass
+from dataclasses import dataclass, field
 import uuid
 
 
@@ -616,3 +616,53 @@ class SystemConfiguration:
             self.created_at = datetime.utcnow()
         if self.updated_at is None:
             self.updated_at = datetime.utcnow()
+
+
+class DemoBookingStatus(Enum):
+    PENDING = "pending"
+    CONFIRMED = "confirmed"
+    SCHEDULED = "scheduled"
+    ONBOARDING = "onboarding"
+    ACTIVE = "active"
+    COMPLETED = "completed"
+    EXPIRED = "expired"
+    CANCELLED = "cancelled"
+
+
+@dataclass
+class DemoBooking:
+    id: str
+    email: str
+    full_name: str
+    phone: str
+    institution: str
+    institution_type: Optional[str] = None
+    number_of_students: Optional[int] = None
+    preferred_date: Optional[str] = None
+    preferred_time: Optional[str] = None
+    status: str = DemoBookingStatus.PENDING.value
+    booking_token: Optional[str] = None
+    csrf_token: Optional[str] = None
+    session_token: Optional[str] = None
+    meeting_url: Optional[str] = None
+    meeting_provider: Optional[str] = None
+    onboarding_progress: Dict[str, Any] = field(default_factory=dict)
+    onboarding_completed: bool = False
+    metadata: Dict[str, Any] = field(default_factory=dict)
+    created_at: datetime = None
+    updated_at: datetime = None
+    expires_at: Optional[datetime] = None
+    confirmed_at: Optional[datetime] = None
+    scheduled_at: Optional[datetime] = None
+
+    def __post_init__(self):
+        if self.id is None:
+            self.id = str(uuid.uuid4())
+        if self.created_at is None:
+            self.created_at = datetime.utcnow()
+        if self.updated_at is None:
+            self.updated_at = datetime.utcnow()
+        if self.expires_at is None:
+            self.expires_at = datetime.utcnow() + timedelta(days=30)
+        if self.booking_token is None:
+            self.booking_token = uuid.uuid4().hex

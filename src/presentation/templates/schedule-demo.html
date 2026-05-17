@@ -1,0 +1,554 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Schedule Your Demo — Attendrix</title>
+    <link rel="icon" type="image/svg+xml" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 32 32'%3E%3Crect width='32' height='32' rx='6' fill='%234F46E5'/%3E%3Ctext x='16' y='22' text-anchor='middle' fill='white' font-size='20' font-family='Arial' font-weight='bold'%3EA%3C/text%3E%3C/svg%3E">
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet" crossorigin="anonymous">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css" crossorigin="anonymous">
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800;900&display=swap" rel="stylesheet" crossorigin="anonymous">
+    <style>
+        :root {
+            --primary: #4F46E5; --primary-dark: #3730A3; --primary-light: #818CF8;
+            --accent: #06B6D4; --dark: #0F172A; --light: #F8FAFC;
+            --text: #1E293B; --text-muted: #64748B; --border: #E2E8F0;
+            --success: #10B981; --success-light: rgba(16,185,129,0.1);
+            --gradient-primary: linear-gradient(135deg, #4F46E5 0%, #7C3AED 100%);
+            --gradient-hero: linear-gradient(135deg, #F8FAFC 0%, #F1F5F9 100%);
+            --shadow-sm: 0 1px 3px rgba(0,0,0,0.1);
+            --shadow-md: 0 4px 20px rgba(0,0,0,0.12);
+            --shadow-lg: 0 10px 40px rgba(0,0,0,0.15);
+        }
+        html { overflow-x: hidden; width: 100%; }
+        * { margin: 0; padding: 0; box-sizing: border-box; }
+        body {
+            font-family: 'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+            background: var(--light); color: var(--text); line-height: 1.6;
+            overflow-x: hidden; width: 100%;
+        }
+        .navbar {
+            position: fixed; top: 0; left: 0; right: 0; z-index: 1000;
+            background: rgba(15,23,42,0.85); backdrop-filter: blur(20px);
+            -webkit-backdrop-filter: blur(20px);
+            border-bottom: 1px solid rgba(255,255,255,0.06);
+            height: 72px; display: flex; align-items: center;
+        }
+        .navbar .container { display: flex; align-items: center; justify-content: space-between; height: 100%; }
+        .navbar-brand { display: flex; align-items: center; gap: 0.6rem; font-weight: 800; font-size: 1.3rem; color: #fff; text-decoration: none; }
+        .navbar-brand .brand-icon { width: 34px; height: 34px; background: var(--gradient-primary); border-radius: 10px; display: flex; align-items: center; justify-content: center; font-size: 1rem; color: #fff; box-shadow: 0 4px 12px rgba(79,70,229,0.4); }
+        .navbar-brand .brand-text { background: linear-gradient(135deg, #fff 60%, rgba(255,255,255,0.7)); -webkit-background-clip: text; -webkit-text-fill-color: transparent; background-clip: text; }
+        .schedule-page { padding-top: 72px; min-height: 100vh; }
+        .schedule-header { padding: 4rem 0 2rem; text-align: center; background: var(--gradient-hero); }
+        .schedule-header h1 { font-size: 2.5rem; font-weight: 800; margin-bottom: 0.5rem; }
+        .schedule-header h1 span { background: var(--gradient-primary); -webkit-background-clip: text; -webkit-text-fill-color: transparent; background-clip: text; }
+        .schedule-header p { color: var(--text-muted); font-size: 1.05rem; max-width: 500px; margin: 0 auto; }
+        .schedule-body { padding: 3rem 0 4rem; }
+        .scheduler-card { background: #fff; border-radius: 24px; padding: 2.5rem; border: 1px solid var(--border); box-shadow: var(--shadow-lg); max-width: 720px; margin: 0 auto; }
+
+        /* Step indicator */
+        .step-dots { display: flex; align-items: center; justify-content: center; gap: 0.5rem; margin-bottom: 2rem; }
+        .step-dot { width: 10px; height: 10px; border-radius: 50%; background: var(--border); transition: all 0.3s ease; }
+        .step-dot.active { background: var(--primary); width: 28px; border-radius: 5px; }
+        .step-dot.done { background: var(--success); }
+
+        /* Form layout */
+        .form-section { margin-bottom: 1.5rem; }
+        .form-section h3 { font-size: 1.1rem; font-weight: 700; margin-bottom: 0.25rem; }
+        .form-section p { font-size: 0.85rem; color: var(--text-muted); margin-bottom: 1.25rem; }
+        .form-row { display: grid; grid-template-columns: 1fr 1fr; gap: 1rem; }
+        .form-group { margin-bottom: 1rem; }
+        .form-group label { display: block; font-size: 0.82rem; font-weight: 600; margin-bottom: 0.35rem; color: var(--text); }
+        .form-control { width: 100%; padding: 0.7rem 0.9rem; border: 1.5px solid var(--border); border-radius: 10px; font-family: 'Inter', sans-serif; font-size: 0.9rem; transition: all 0.2s ease; background: #fff; }
+        .form-control:focus { outline: none; border-color: var(--primary); box-shadow: 0 0 0 3px rgba(79,70,229,0.1); }
+        .form-control.error { border-color: #EF4444; }
+        .field-error { font-size: 0.75rem; color: #EF4444; margin-top: 0.25rem; display: none; }
+        .field-error.show { display: block; }
+
+        .cal-placeholder { background: var(--light); border-radius: 16px; border: 1.5px dashed var(--border); padding: 2rem; text-align: center; margin-bottom: 1rem; }
+        .cal-placeholder i { font-size: 2.2rem; color: var(--primary-light); margin-bottom: 0.5rem; }
+        .cal-placeholder p { font-size: 0.85rem; color: var(--text-muted); margin-bottom: 0.2rem; }
+        .time-slots h4 { font-size: 0.9rem; font-weight: 600; margin-bottom: 1rem; }
+        .slot-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(100px, 1fr)); gap: 0.6rem; margin-bottom: 1.5rem; }
+        .slot-btn { padding: 0.6rem; border-radius: 10px; border: 1.5px solid var(--border); background: #fff; font-family: 'Inter', sans-serif; font-size: 0.82rem; font-weight: 500; color: var(--text); cursor: pointer; transition: all 0.2s ease; }
+        .slot-btn:hover { border-color: var(--primary); color: var(--primary); }
+        .slot-btn.selected { border-color: var(--primary); background: rgba(79,70,229,0.08); color: var(--primary); font-weight: 600; }
+        .btn-confirm {
+            width: 100%; padding: 0.9rem; border-radius: 12px;
+            background: var(--gradient-primary); color: #fff; font-weight: 700; font-size: 0.95rem;
+            border: none; cursor: pointer; transition: all 0.3s ease;
+            box-shadow: 0 4px 20px rgba(79,70,229,0.3); font-family: 'Inter', sans-serif;
+            display: inline-flex; align-items: center; justify-content: center; gap: 0.5rem;
+        }
+        .btn-confirm:hover { transform: translateY(-2px); box-shadow: 0 8px 30px rgba(79,70,229,0.4); }
+        .btn-confirm:disabled { opacity: 0.5; cursor: not-allowed; transform: none; }
+        .btn-confirm .spinner { display: none; width: 18px; height: 18px; border: 2px solid rgba(255,255,255,0.3); border-top-color: #fff; border-radius: 50%; animation: spin 0.6s linear infinite; }
+        .btn-confirm.loading .spinner { display: inline-block; }
+        .btn-confirm.loading .btn-text { display: none; }
+        @keyframes spin { to { transform: rotate(360deg); } }
+
+        /* ── SUCCESS STATE ── */
+        .booking-confirmed { display: none; padding: 1rem 0; }
+        .booking-confirmed.show { display: block; animation: fadeInUp 0.6s ease forwards; }
+        @keyframes fadeInUp { from { opacity: 0; transform: translateY(20px); } to { opacity: 1; transform: translateY(0); } }
+
+        .success-header { text-align: center; margin-bottom: 2rem; }
+        .success-check {
+            width: 80px; height: 80px; border-radius: 50%;
+            background: var(--success-light); display: flex; align-items: center; justify-content: center;
+            margin: 0 auto 1.25rem; position: relative;
+        }
+        .success-check svg { width: 40px; height: 40px; }
+        .success-check .check-circle { stroke-dasharray: 166; stroke-dashoffset: 166; stroke-width: 3; stroke: #10B981; fill: none; animation: circleAnim 0.6s ease forwards 0.2s; }
+        .success-check .check-path { stroke-dasharray: 48; stroke-dashoffset: 48; stroke-width: 3; stroke: #10B981; fill: none; animation: checkAnim 0.4s ease forwards 0.7s; }
+        @keyframes circleAnim { to { stroke-dashoffset: 0; } }
+        @keyframes checkAnim { to { stroke-dashoffset: 0; } }
+
+        .success-header h2 { font-size: 1.5rem; font-weight: 800; margin-bottom: 0.3rem; }
+        .success-header h2 .highlight { background: var(--gradient-primary); -webkit-background-clip: text; -webkit-text-fill-color: transparent; background-clip: text; }
+        .success-header p { color: var(--text-muted); font-size: 0.9rem; max-width: 420px; margin: 0 auto; }
+
+        .booking-details-card {
+            background: var(--light); border-radius: 16px; padding: 1.25rem 1.5rem;
+            border: 1px solid var(--border); margin-bottom: 2rem;
+        }
+        .booking-details-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 1rem; }
+        .detail-item { display: flex; align-items: center; gap: 0.75rem; }
+        .detail-item .icon { width: 36px; height: 36px; border-radius: 10px; background: rgba(79,70,229,0.08); display: flex; align-items: center; justify-content: center; color: var(--primary); font-size: 0.85rem; flex-shrink: 0; }
+        .detail-item .label { font-size: 0.75rem; color: var(--text-muted); font-weight: 500; }
+        .detail-item .value { font-size: 0.88rem; font-weight: 600; }
+
+        .expectation-timeline { margin-bottom: 2rem; }
+        .expectation-timeline h4 { font-size: 0.95rem; font-weight: 700; margin-bottom: 1rem; display: flex; align-items: center; gap: 0.5rem; }
+        .timeline { position: relative; padding-left: 1rem; }
+        .timeline::before { content: ''; position: absolute; left: 8px; top: 8px; bottom: 8px; width: 2px; background: var(--border); }
+        .timeline-item { position: relative; padding-left: 2rem; padding-bottom: 1.25rem; }
+        .timeline-item:last-child { padding-bottom: 0; }
+        .timeline-dot { position: absolute; left: -1rem; top: 4px; width: 20px; height: 20px; border-radius: 50%; background: #fff; border: 2px solid var(--primary); display: flex; align-items: center; justify-content: center; font-size: 0.6rem; color: var(--primary); }
+        .timeline-dot.done { background: var(--primary); color: #fff; }
+        .timeline-item .step-label { font-size: 0.82rem; font-weight: 600; margin-bottom: 0.1rem; }
+        .timeline-item .step-desc { font-size: 0.78rem; color: var(--text-muted); }
+
+        .success-actions { display: grid; grid-template-columns: 1fr 1fr; gap: 0.75rem; margin-bottom: 1.5rem; }
+        .btn-primary-action {
+            padding: 0.85rem; border-radius: 12px; border: none; font-family: 'Inter', sans-serif;
+            font-weight: 700; font-size: 0.88rem; cursor: pointer; transition: all 0.3s ease;
+            display: inline-flex; align-items: center; justify-content: center; gap: 0.5rem;
+            text-decoration: none;
+            background: var(--gradient-primary); color: #fff;
+            box-shadow: 0 4px 20px rgba(79,70,229,0.3);
+        }
+        .btn-primary-action:hover { transform: translateY(-2px); box-shadow: 0 8px 30px rgba(79,70,229,0.4); color: #fff; }
+        .btn-secondary-action {
+            padding: 0.85rem; border-radius: 12px; border: 1.5px solid var(--border); font-family: 'Inter', sans-serif;
+            font-weight: 600; font-size: 0.88rem; cursor: pointer; transition: all 0.2s ease;
+            display: inline-flex; align-items: center; justify-content: center; gap: 0.5rem;
+            text-decoration: none; background: #fff; color: var(--text);
+        }
+        .btn-secondary-action:hover { border-color: var(--primary); color: var(--primary); }
+
+        .success-footer-links { text-align: center; margin-top: 1rem; }
+        .success-footer-links a { color: var(--text-muted); font-size: 0.82rem; text-decoration: none; margin: 0 0.75rem; transition: color 0.2s ease; }
+        .success-footer-links a:hover { color: var(--primary); }
+        .success-footer-links a i { margin-right: 0.35rem; }
+
+        /* Error banner */
+        .error-banner { display: none; background: #FEF2F2; border: 1px solid #FECACA; border-radius: 12px; padding: 0.75rem 1rem; margin-bottom: 1rem; font-size: 0.82rem; color: #DC2626; }
+        .error-banner.show { display: block; }
+
+                        /* Duplicate state */
+                        .duplicate-banner { display: none; text-align: center; padding: 2rem 0; animation: fadeInUp 0.5s ease forwards; }
+                        .duplicate-banner.show { display: block; }
+                        .duplicate-banner .dup-icon { font-size: 2.5rem; color: var(--warning); margin-bottom: 0.75rem; }
+                        .duplicate-banner h3 { font-size: 1.1rem; font-weight: 700; margin-bottom: 0.4rem; }
+                        .duplicate-banner p { font-size: 0.82rem; color: var(--text-muted); max-width: 420px; margin: 0 auto 1rem; }
+                        .dup-btn { display: inline-flex; align-items: center; gap: 0.5rem; padding: 0.7rem 1.5rem; border-radius: 10px; background: var(--gradient-primary); color: #fff; text-decoration: none; font-weight: 600; font-size: 0.85rem; }
+                        .dup-btn:hover { color: #fff; }
+
+                        /* Returning user */
+                        .returning-user { text-align: center; margin-top: 1.5rem; padding-top: 1.5rem; border-top: 1px solid var(--border); }
+                        .returning-user p { font-size: 0.82rem; color: var(--text-muted); margin-bottom: 0.75rem; }
+                        .returning-row { display: flex; gap: 0.5rem; max-width: 400px; margin: 0 auto; }
+                        .returning-row input { flex: 1; }
+                        .returning-row button { padding: 0.6rem 1.2rem; border-radius: 10px; background: var(--primary); color: #fff; font-weight: 600; font-size: 0.82rem; border: none; cursor: pointer; font-family: 'Inter', sans-serif; white-space: nowrap; }
+                        .returning-row button:hover { background: var(--primary-dark); }
+                        .returning-row button:disabled { opacity: 0.5; cursor: not-allowed; }
+                        .returning-msg { font-size: 0.78rem; margin-top: 0.5rem; display: none; }
+                        .returning-msg.show { display: block; }
+                        .returning-msg.success { color: var(--success); }
+                        .returning-msg.error { color: #DC2626; }
+
+        @media (max-width: 768px) {
+            .schedule-header h1 { font-size: 1.8rem; }
+            .scheduler-card { padding: 1.5rem; }
+            .form-row { grid-template-columns: 1fr; }
+            .slot-grid { grid-template-columns: repeat(3, 1fr); }
+            .booking-details-grid { grid-template-columns: 1fr; }
+            .success-actions { grid-template-columns: 1fr; }
+        }
+    </style>
+</head>
+<body>
+    <nav class="navbar">
+        <div class="container">
+            <a href="/" class="navbar-brand">
+                <div class="brand-icon"><i class="fas fa-graduation-cap"></i></div>
+                <span class="brand-text">Attendrix</span>
+            </a>
+        </div>
+    </nav>
+    
+    <div class="schedule-page">
+        <div class="schedule-header">
+            <h1>Schedule Your <span>Personalized Demo</span></h1>
+            <p>Tell us about yourself, pick a time, and get ready for a tailored walkthrough.</p>
+        </div>
+        
+        <div class="schedule-body">
+            <div class="container">
+                <div class="scheduler-card" id="schedulerCard">
+                    <!-- Step indicator -->
+                    <div class="step-dots">
+                        <div class="step-dot active" id="dot1"></div>
+                        <div class="step-dot" id="dot2"></div>
+                        <div class="step-dot" id="dot3"></div>
+                    </div>
+
+                    <!-- Step 1: Contact Info + Time Slot -->
+                    <div id="bookingForm">
+                        <div class="form-section">
+                            <h3><i class="fas fa-user" style="color:var(--primary);margin-right:0.5rem;"></i>Your Information</h3>
+                            <p>We'll use these details to personalize your demo experience.</p>
+                            <div class="form-row">
+                                <div class="form-group">
+                                    <label for="fullName">Full Name</label>
+                                    <input type="text" class="form-control" id="fullName" placeholder="Dr. Jane Smith" autocomplete="name">
+                                    <div class="field-error" id="nameError">Please enter your name</div>
+                                </div>
+                                <div class="form-group">
+                                    <label for="email">Work Email</label>
+                                    <input type="email" class="form-control" id="email" placeholder="jane@institution.edu" autocomplete="email">
+                                    <div class="field-error" id="emailError">Please enter a valid email</div>
+                                </div>
+                            </div>
+                            <div class="form-row">
+                                <div class="form-group">
+                                    <label for="institution">Institution / Organization</label>
+                                    <input type="text" class="form-control" id="institution" placeholder="State University" autocomplete="organization">
+                                    <div class="field-error" id="instError">Please enter your institution</div>
+                                </div>
+                                <div class="form-group">
+                                    <label for="phone">Phone Number</label>
+                                    <input type="tel" class="form-control" id="phone" placeholder="+1 (555) 123-4567" autocomplete="tel">
+                                    <div class="field-error" id="phoneError">Please enter your phone number</div>
+                                </div>
+                            </div>
+                        </div>
+
+                        <div class="form-section">
+                            <h3><i class="fas fa-calendar-alt" style="color:var(--primary);margin-right:0.5rem;"></i>Choose a Time</h3>
+                            <p>Select a preferred time slot and we'll confirm your booking instantly.</p>
+                            
+                            <div class="time-slots">
+                                <h4>Available Time Slots — <span id="dateLabel">Tomorrow</span></h4>
+                                <div class="slot-grid" id="slotGrid">
+                                    <button class="slot-btn" data-time="09:00">9:00 AM</button>
+                                    <button class="slot-btn" data-time="10:00">10:00 AM</button>
+                                    <button class="slot-btn" data-time="11:00">11:00 AM</button>
+                                    <button class="slot-btn" data-time="13:00">1:00 PM</button>
+                                    <button class="slot-btn" data-time="14:00">2:00 PM</button>
+                                    <button class="slot-btn" data-time="15:00">3:00 PM</button>
+                                    <button class="slot-btn" data-time="16:00">4:00 PM</button>
+                                </div>
+                            </div>
+                        </div>
+
+                        <div class="error-banner" id="errorBanner"></div>
+                        <button class="btn-confirm" id="confirmBtn" disabled>
+                            <span class="spinner"></span>
+                            <span class="btn-text"><i class="fas fa-calendar-check"></i> Confirm Booking</span>
+                        </button>
+
+                        <!-- Returning User -->
+                        <div class="returning-user">
+                            <p><i class="fas fa-rotate-left" style="color:var(--primary);margin-right:0.3rem;"></i>Already booked a demo? <strong>Restore your session</strong></p>
+                            <div class="returning-row">
+                                <input type="email" class="form-control" id="lookupEmail" placeholder="Enter your email" autocomplete="email">
+                                <button id="lookupBtn" onclick="lookupBooking()"><i class="fas fa-search"></i> Restore</button>
+                            </div>
+                            <div class="returning-msg" id="lookupMsg"></div>
+                        </div>
+
+                        <input type="hidden" id="csrfToken" value="{{ csrf_token }}">
+                    </div>
+
+                    <!-- Duplicate Booking Banner -->
+                    <div class="duplicate-banner" id="duplicateBanner">
+                        <div class="dup-icon"><i class="fas fa-circle-exclamation"></i></div>
+                        <h3>Booking Already Exists</h3>
+                        <p id="duplicateMsg"></p>
+                        <div style="display:flex;gap:0.75rem;justify-content:center;flex-wrap:wrap;">
+                            <a href="#" class="dup-btn" id="dupPortalBtn"><i class="fas fa-rocket"></i> Continue to Portal</a>
+                            <button class="btn-secondary-action" onclick="showForm()" style="padding:0.7rem 1.5rem;font-size:0.85rem;"><i class="fas fa-plus"></i> New Booking</button>
+                        </div>
+                    </div>
+
+                    <!-- Step 2: Premium Success Confirmation -->
+                    <div class="booking-confirmed" id="bookingConfirmed">
+                        <div class="success-header">
+                            <div class="success-check">
+                                <svg viewBox="0 0 52 52">
+                                    <circle class="check-circle" cx="26" cy="26" r="25"/>
+                                    <path class="check-path" d="M14 27l7 7 16-16"/>
+                                </svg>
+                            </div>
+                            <h2>You're all set, <span class="highlight" id="confirmName">Jane</span>!</h2>
+                            <p>Your personalized demo has been scheduled. Here's what to expect next.</p>
+                        </div>
+
+                        <div class="booking-details-card">
+                            <div class="booking-details-grid">
+                                <div class="detail-item">
+                                    <div class="icon"><i class="fas fa-calendar-day"></i></div>
+                                    <div>
+                                        <div class="label">Date</div>
+                                        <div class="value" id="confirmDate">Tomorrow</div>
+                                    </div>
+                                </div>
+                                <div class="detail-item">
+                                    <div class="icon"><i class="fas fa-clock"></i></div>
+                                    <div>
+                                        <div class="label">Time</div>
+                                        <div class="value" id="confirmTime">10:00 AM</div>
+                                    </div>
+                                </div>
+                                <div class="detail-item">
+                                    <div class="icon"><i class="fas fa-building"></i></div>
+                                    <div>
+                                        <div class="label">Institution</div>
+                                        <div class="value" id="confirmInst">State University</div>
+                                    </div>
+                                </div>
+                                <div class="detail-item">
+                                    <div class="icon"><i class="fas fa-envelope"></i></div>
+                                    <div>
+                                        <div class="label">Contact Email</div>
+                                        <div class="value" id="confirmEmail">jane@institution.edu</div>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+
+                        <div class="expectation-timeline">
+                            <h4><i class="fas fa-list-check" style="color:var(--primary);"></i> Your 3-Step Journey</h4>
+                            <div class="timeline">
+                                <div class="timeline-item">
+                                    <div class="timeline-dot done"><i class="fas fa-check" style="font-size:0.5rem;"></i></div>
+                                    <div class="step-label">1. Booking Confirmed</div>
+                                    <div class="step-desc">Your time slot is reserved. You'll receive a calendar invite shortly.</div>
+                                </div>
+                                <div class="timeline-item">
+                                    <div class="timeline-dot"><span style="font-size:0.65rem;font-weight:700;">2</span></div>
+                                    <div class="step-label">2. Preparation Phase</div>
+                                    <div class="step-desc">Our team will customize the demo based on your institution's profile and goals.</div>
+                                </div>
+                                <div class="timeline-item">
+                                    <div class="timeline-dot"><span style="font-size:0.65rem;font-weight:700;">3</span></div>
+                                    <div class="step-label">3. Live Demo Session</div>
+                                    <div class="step-desc">Join the personalized walkthrough with one of our product specialists.</div>
+                                </div>
+                            </div>
+                        </div>
+
+                        <div class="success-actions">
+                            <a href="#" class="btn-primary-action" id="enterPortalBtn">
+                                <i class="fas fa-rocket"></i> Enter Demo Preparation Portal
+                            </a>
+                            <a href="#" class="btn-secondary-action" id="addCalendarBtn">
+                                <i class="fas fa-calendar-plus"></i> Add to Calendar
+                            </a>
+                        </div>
+
+                        <div class="success-footer-links">
+                            <a href="/product-overview"><i class="fas fa-play-circle"></i> Watch Product Overview</a>
+                            <a href="/brochure"><i class="fas fa-file-pdf"></i> Download Brochure</a>
+                            <a href="/"><i class="fas fa-arrow-left"></i> Back to Home</a>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+    
+    <script>
+        var slots = document.querySelectorAll('.slot-btn');
+        var confirmBtn = document.getElementById('confirmBtn');
+        var selectedSlot = null;
+        var selectedDate = document.getElementById('dateLabel');
+
+        slots.forEach(function(btn) {
+            btn.addEventListener('click', function() {
+                slots.forEach(function(s) { s.classList.remove('selected'); });
+                this.classList.add('selected');
+                selectedSlot = this.getAttribute('data-time');
+                validateForm();
+            });
+        });
+
+        var dateOptions = ['Tomorrow', 'Day After', 'This Week'];
+        selectedDate.textContent = dateOptions[Math.floor(Math.random() * dateOptions.length)];
+
+        function validateForm() {
+            var name = document.getElementById('fullName').value.trim();
+            var email = document.getElementById('email').value.trim();
+            var inst = document.getElementById('institution').value.trim();
+            var phone = document.getElementById('phone').value.trim();
+            confirmBtn.disabled = !(name && email && inst && phone && selectedSlot);
+        }
+
+        document.querySelectorAll('.form-control').forEach(function(field) {
+            field.addEventListener('input', validateForm);
+        });
+
+        function showForm() {
+            document.getElementById('duplicateBanner').classList.remove('show');
+            document.getElementById('bookingForm').style.display = 'block';
+        }
+
+        document.getElementById('confirmBtn').addEventListener('click', function() {
+            var name = document.getElementById('fullName').value.trim();
+            var email = document.getElementById('email').value.trim();
+            var inst = document.getElementById('institution').value.trim();
+            var phone = document.getElementById('phone').value.trim();
+            var csrf = document.getElementById('csrfToken').value;
+
+            var hasError = false;
+            if (!name) { document.getElementById('nameError').classList.add('show'); hasError = true; } else { document.getElementById('nameError').classList.remove('show'); }
+            if (!email || !email.includes('@')) { document.getElementById('emailError').classList.add('show'); hasError = true; } else { document.getElementById('emailError').classList.remove('show'); }
+            if (!inst) { document.getElementById('instError').classList.add('show'); hasError = true; } else { document.getElementById('instError').classList.remove('show'); }
+            if (!phone) { document.getElementById('phoneError').classList.add('show'); hasError = true; } else { document.getElementById('phoneError').classList.remove('show'); }
+            if (hasError) return;
+
+            var btn = this;
+            btn.classList.add('loading');
+            btn.disabled = true;
+            document.getElementById('errorBanner').classList.remove('show');
+
+            fetch('/api/demo/book', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({
+                    fullName: name,
+                    email: email,
+                    institution: inst,
+                    phone: phone,
+                    time: selectedSlot,
+                    date: selectedDate.textContent,
+                    csrfToken: csrf
+                })
+            })
+            .then(function(r) {
+                if (r.status === 409) return r.json().then(function(d) { d._status = 409; return d; });
+                return r.json();
+            })
+            .then(function(data) {
+                btn.classList.remove('loading');
+                if (data.success) {
+                    showSuccess(name, email, inst, data);
+                } else if (data._status === 409 || data.duplicate) {
+                    document.getElementById('duplicateMsg').textContent = data.message;
+                    document.getElementById('dupPortalBtn').href = '/demo-prep?token=' + data.existing_token;
+                    document.getElementById('bookingForm').style.display = 'none';
+                    document.getElementById('duplicateBanner').classList.add('show');
+                    btn.disabled = false;
+                } else {
+                    document.getElementById('errorBanner').textContent = data.message || data.error || 'Booking failed. Please try again.';
+                    document.getElementById('errorBanner').classList.add('show');
+                    btn.disabled = false;
+                }
+            })
+            .catch(function(err) {
+                btn.classList.remove('loading');
+                document.getElementById('errorBanner').textContent = 'Network error. Please check your connection and try again.';
+                document.getElementById('errorBanner').classList.add('show');
+                btn.disabled = false;
+            });
+        });
+
+        function lookupBooking() {
+            var email = document.getElementById('lookupEmail').value.trim();
+            var msg = document.getElementById('lookupMsg');
+            var btn = document.getElementById('lookupBtn');
+            if (!email || !email.includes('@')) {
+                msg.className = 'returning-msg show error';
+                msg.textContent = 'Please enter a valid email.';
+                return;
+            }
+            btn.disabled = true;
+            msg.className = 'returning-msg show';
+            msg.textContent = 'Looking up your booking...';
+
+            fetch('/api/demo/lookup', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({ email: email })
+            })
+            .then(function(r) { return r.json(); })
+            .then(function(data) {
+                btn.disabled = false;
+                if (data.success) {
+                    document.getElementById('bookingForm').style.display = 'none';
+                    showSuccess(data.booking.name, data.booking.email, data.booking.institution, {
+                        token: data.token,
+                        booking: { time: data.booking.time, date: data.booking.date, institution: data.booking.institution }
+                    });
+                } else {
+                    msg.className = 'returning-msg show error';
+                    msg.textContent = data.message || 'No active booking found for this email.';
+                }
+            })
+            .catch(function() {
+                btn.disabled = false;
+                msg.className = 'returning-msg show error';
+                msg.textContent = 'Lookup failed. Please try again.';
+            });
+        }
+
+        function showSuccess(name, email, inst, data) {
+            document.getElementById('bookingForm').style.display = 'none';
+            document.getElementById('bookingConfirmed').classList.add('show');
+            document.getElementById('dot1').classList.remove('active');
+            document.getElementById('dot1').classList.add('done');
+            document.getElementById('dot2').classList.add('active');
+
+            document.getElementById('confirmName').textContent = name;
+            document.getElementById('confirmDate').textContent = data.booking.date || selectedDate.textContent;
+            document.getElementById('confirmTime').textContent = formatTime(data.booking.time);
+            document.getElementById('confirmInst').textContent = data.booking.institution;
+            document.getElementById('confirmEmail').textContent = email;
+
+            var portalBtn = document.getElementById('enterPortalBtn');
+            portalBtn.href = '/demo-prep?token=' + data.token;
+
+            var calBtn = document.getElementById('addCalendarBtn');
+            calBtn.addEventListener('click', function(e) {
+                e.preventDefault();
+                var calText = 'Demo with Attendrix - ' + name;
+                var calDetails = 'Attendrix Demo for ' + inst + ' at ' + formatTime(data.booking.time) + ' on ' + data.booking.date;
+                var calUrl = 'https://calendar.google.com/calendar/render?action=TEMPLATE&text=' + encodeURIComponent(calText) + '&details=' + encodeURIComponent(calDetails);
+                window.open(calUrl, '_blank');
+            });
+        }
+
+        function formatTime(t) {
+            if (!t) return '';
+            var parts = t.split(':');
+            var h = parseInt(parts[0]);
+            var ampm = h >= 12 ? 'PM' : 'AM';
+            if (h > 12) h = h - 12;
+            if (h === 0) h = 12;
+            return h + ':' + parts[1] + ' ' + ampm;
+        }
+    </script>
+</body>
+</html>

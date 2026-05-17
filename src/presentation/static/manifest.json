@@ -27,10 +27,10 @@
   "screenshots": [],
   "related_applications": [],
   "prefer_related_applications": false,
-  "scope": "/static/",
+  "scope": "/",
   "serviceworker": {
     "src": "/static/js/sw.js",
-    "scope": "/static/",
+"scope": "/",
     "use_cache": true
   },
   "share_target": {

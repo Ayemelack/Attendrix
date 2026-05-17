@@ -1,0 +1,222 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Brochure - Attendrix</title>
+    <link rel="icon" type="image/svg+xml" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 32 32'%3E%3Crect width='32' height='32' rx='6' fill='%234F46E5'/%3E%3Ctext x='16' y='22' text-anchor='middle' fill='white' font-size='20' font-family='Arial' font-weight='bold'%3EA%3C/text%3E%3C/svg%3E">
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet" crossorigin="anonymous">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css" crossorigin="anonymous">
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800&display=swap" rel="stylesheet" crossorigin="anonymous">
+    <style>
+        :root {
+            --primary: #4F46E5; --primary-dark: #3730A3; --primary-light: #818CF8;
+            --accent: #06B6D4; --dark: #0F172A; --light: #F8FAFC;
+            --text: #1E293B; --text-muted: #64748B; --border: #E2E8F0;
+            --gradient-primary: linear-gradient(135deg, #4F46E5 0%, #7C3AED 100%);
+            --gradient-hero: linear-gradient(135deg, #F8FAFC 0%, #F1F5F9 100%);
+            --shadow-sm: 0 1px 3px rgba(0,0,0,0.1);
+            --shadow-md: 0 4px 12px rgba(0,0,0,0.1);
+            --shadow-lg: 0 10px 30px rgba(0,0,0,0.12);
+            --shadow-xl: 0 20px 50px rgba(0,0,0,0.15);
+        }
+        html { overflow-x: hidden; width: 100%; }
+        * { margin: 0; padding: 0; box-sizing: border-box; }
+        body {
+            font-family: 'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+            background: #fff; color: var(--text); line-height: 1.6;
+            overflow-x: hidden; width: 100%;
+        }
+        .navbar {
+            position: fixed; top: 0; left: 0; right: 0; z-index: 1000;
+            background: rgba(15,23,42,0.8); backdrop-filter: blur(20px);
+            -webkit-backdrop-filter: blur(20px);
+            border-bottom: 1px solid rgba(255,255,255,0.06);
+            height: 72px; display: flex; align-items: center;
+        }
+        .navbar .container { display: flex; align-items: center; justify-content: space-between; height: 100%; }
+        .navbar-brand { display: flex; align-items: center; gap: 0.6rem; font-weight: 800; font-size: 1.3rem; color: #fff; text-decoration: none; }
+        .navbar-brand .brand-icon { width: 34px; height: 34px; background: var(--gradient-primary); border-radius: 10px; display: flex; align-items: center; justify-content: center; font-size: 1rem; color: #fff; box-shadow: 0 4px 12px rgba(79,70,229,0.4); }
+        .navbar-brand .brand-text { background: linear-gradient(135deg, #fff 60%, rgba(255,255,255,0.7)); -webkit-background-clip: text; -webkit-text-fill-color: transparent; background-clip: text; }
+        .page-content { padding-top: 72px; }
+        .brochure-header { padding: 4rem 0 2rem; text-align: center; background: var(--gradient-hero); position: relative; }
+        .brochure-header h1 { font-size: 2.5rem; font-weight: 800; margin-bottom: 0.5rem; }
+        .brochure-header h1 span { background: var(--gradient-primary); -webkit-background-clip: text; -webkit-text-fill-color: transparent; background-clip: text; }
+        .brochure-header p { color: var(--text-muted); font-size: 1.05rem; max-width: 500px; margin: 0 auto 1.5rem; }
+        .btn-download-pdf { display: inline-flex; align-items: center; gap: 0.5rem; padding: 0.85rem 2rem; border-radius: 12px; background: var(--gradient-primary); color: #fff; font-weight: 700; font-size: 0.95rem; border: none; cursor: pointer; transition: all 0.3s ease; box-shadow: 0 4px 20px rgba(79,70,229,0.3); text-decoration: none; }
+        .btn-download-pdf:hover { transform: translateY(-2px); box-shadow: 0 8px 30px rgba(79,70,229,0.4); color: #fff; }
+        .brochure-section { padding: 3rem 0; }
+        .brochure-section:nth-child(even) { background: var(--light); }
+        .brochure-section h2 { font-size: 1.6rem; font-weight: 800; margin-bottom: 1.5rem; }
+        .brochure-section h2 span { background: var(--gradient-primary); -webkit-background-clip: text; -webkit-text-fill-color: transparent; background-clip: text; }
+        .brochure-section p { font-size: 0.95rem; color: var(--text-muted); line-height: 1.8; margin-bottom: 1rem; }
+        .brochure-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(280px, 1fr)); gap: 1.5rem; margin-top: 1.5rem; }
+        .brochure-card { background: #fff; border-radius: 16px; padding: 1.5rem; border: 1px solid var(--border); }
+        .brochure-card h4 { font-size: 1rem; font-weight: 700; margin-bottom: 0.4rem; }
+        .brochure-card p { font-size: 0.85rem; color: var(--text-muted); margin-bottom: 0; }
+        .brochure-card .bc-icon { width: 40px; height: 40px; border-radius: 10px; display: flex; align-items: center; justify-content: center; margin-bottom: 0.75rem; font-size: 1rem; }
+        .arch-diagram { background: var(--dark); border-radius: 20px; padding: 3rem; text-align: center; margin-top: 1.5rem; }
+        .arch-diagram h4 { color: #fff; font-size: 1.1rem; font-weight: 700; margin-bottom: 0.5rem; }
+        .arch-diagram p { color: rgba(255,255,255,0.5); font-size: 0.85rem; }
+        .use-case-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(240px, 1fr)); gap: 1rem; }
+        .use-case-item { display: flex; align-items: center; gap: 0.75rem; padding: 0.75rem; border-radius: 12px; background: #fff; border: 1px solid var(--border); }
+        .use-case-item i { color: var(--primary); font-size: 1rem; width: 20px; }
+        .use-case-item span { font-size: 0.9rem; font-weight: 500; }
+        .use-case-item small { font-size: 0.8rem; color: var(--text-muted); display: block; margin-top: 0.1rem; }
+        .footer-bar { padding: 2rem 0; text-align: center; border-top: 1px solid var(--border); color: var(--text-muted); font-size: 0.8rem; }
+        @media (max-width: 768px) { .brochure-header h1 { font-size: 1.8rem; } }
+    </style>
+</head>
+<body>
+    <nav class="navbar">
+        <div class="container">
+            <a href="/" class="navbar-brand">
+                <div class="brand-icon"><i class="fas fa-graduation-cap"></i></div>
+                <span class="brand-text">Attendrix</span>
+            </a>
+        </div>
+    </nav>
+    
+    <div class="page-content">
+        <div class="brochure-header">
+            <h1>Attendrix <span>Brochure</span></h1>
+            <p>Everything you need to know about the intelligent attendance platform for modern universities.</p>
+            <a href="/api/brochure/download" class="btn-download-pdf" download><i class="fas fa-file-pdf"></i> Download PDF Brochure</a>
+        </div>
+        
+        <div class="brochure-section">
+            <div class="container">
+                <h2>Introduction</h2>
+                <p>Attendrix is a next-generation attendance management system purpose-built for higher education institutions. It replaces traditional, error-prone roll-calling methods with an AI-powered, anti-proxy platform that delivers real-time visibility, automated reporting, and seamless integration with existing campus infrastructure.</p>
+                <p>Trusted by over 500 institutions worldwide, Attendrix processes millions of attendance records daily — ensuring accuracy, fairness, and accountability across every classroom.</p>
+            </div>
+        </div>
+        
+        <div class="brochure-section" style="background:var(--light);">
+            <div class="container">
+                <h2>Features</h2>
+                <div class="brochure-grid">
+                    <div class="brochure-card">
+                        <div class="bc-icon" style="background:rgba(79,70,229,0.1);color:var(--primary);"><i class="fas fa-shield-alt"></i></div>
+                        <h4>Anti-Proxy Shield</h4>
+                        <p>Multi-layered detection using device fingerprinting, geolocation, and behavioral analysis prevents proxy attendance.</p>
+                    </div>
+                    <div class="brochure-card">
+                        <div class="bc-icon" style="background:rgba(16,185,129,0.1);color:#10B981;"><i class="fas fa-fingerprint"></i></div>
+                        <h4>Biometric Verification</h4>
+                        <p>Facial recognition and fingerprint scanning ensure each attendance record is authentic and verifiable.</p>
+                    </div>
+                    <div class="brochure-card">
+                        <div class="bc-icon" style="background:rgba(6,182,212,0.1);color:var(--accent);"><i class="fas fa-chart-line"></i></div>
+                        <h4>Real-Time Analytics</h4>
+                        <p>Live dashboards with predictive insights help administrators identify trends and intervene early.</p>
+                    </div>
+                    <div class="brochure-card">
+                        <div class="bc-icon" style="background:rgba(245,158,11,0.1);color:#F59E0B;"><i class="fas fa-wifi"></i></div>
+                        <h4>Offline-First Sync</h4>
+                        <p>Distributed architecture allows attendance recording without internet. Data syncs automatically on reconnection.</p>
+                    </div>
+                    <div class="brochure-card">
+                        <div class="bc-icon" style="background:rgba(239,68,68,0.1);color:#EF4444;"><i class="fas fa-bolt"></i></div>
+                        <h4>Real-Time Sync</h4>
+                        <p>Changes propagate across campus in real time — even in large-scale deployments with thousands of concurrent users.</p>
+                    </div>
+                    <div class="brochure-card">
+                        <div class="bc-icon" style="background:rgba(139,92,246,0.1);color:#8B5CF6;"><i class="fas fa-file-export"></i></div>
+                        <h4>Automated Reporting</h4>
+                        <p>Export attendance reports to PDF or Excel. Schedule automated delivery to stakeholders and department heads.</p>
+                    </div>
+                </div>
+            </div>
+        </div>
+        
+        <div class="brochure-section">
+            <div class="container">
+                <h2>Architecture Summary</h2>
+                <p>Attendrix is built on a distributed, offline-first architecture that ensures high availability, data integrity, and low latency — even under adverse network conditions.</p>
+                <div class="arch-diagram">
+                    <i class="fas fa-sitemap" style="font-size:2.5rem;color:var(--primary-light);margin-bottom:1rem;"></i>
+                    <h4>Distributed Node Mesh</h4>
+                    <p>Each classroom operates as an independent node. Data synchronizes across LAN and cloud with automatic conflict resolution.</p>
+                    <div style="display:flex;flex-wrap:wrap;justify-content:center;gap:1rem;margin-top:1.5rem;">
+                        <span style="padding:0.4rem 1rem;border-radius:8px;background:rgba(79,70,229,0.2);color:var(--primary-light);font-size:0.8rem;font-weight:600;">Classroom Nodes</span>
+                        <span style="padding:0.4rem 1rem;border-radius:8px;background:rgba(16,185,129,0.2);color:#10B981;font-size:0.8rem;font-weight:600;">Edge Sync</span>
+                        <span style="padding:0.4rem 1rem;border-radius:8px;background:rgba(6,182,212,0.2);color:var(--accent);font-size:0.8rem;font-weight:600;">Cloud Aggregation</span>
+                        <span style="padding:0.4rem 1rem;border-radius:8px;background:rgba(245,158,11,0.2);color:#F59E0B;font-size:0.8rem;font-weight:600;">Analytics Engine</span>
+                    </div>
+                </div>
+            </div>
+        </div>
+        
+        <div class="brochure-section" style="background:var(--light);">
+            <div class="container">
+                <h2>Benefits</h2>
+                <div class="brochure-grid">
+                    <div class="brochure-card">
+                        <h4><i class="fas fa-check" style="color:#10B981;margin-right:0.4rem;"></i> Zero Proxy Attendance</h4>
+                        <p>Eliminate fraudulent attendance with multi-factor verification that makes proxy attendance virtually impossible.</p>
+                    </div>
+                    <div class="brochure-card">
+                        <h4><i class="fas fa-check" style="color:#10B981;margin-right:0.4rem;"></i> 80% Less Admin Work</h4>
+                        <p>Automate attendance tracking, reporting, and notifications — freeing staff for higher-value tasks.</p>
+                    </div>
+                    <div class="brochure-card">
+                        <h4><i class="fas fa-check" style="color:#10B981;margin-right:0.4rem;"></i> Real-Time Insights</h4>
+                        <p>Monitor attendance across every classroom, department, and campus from a single dashboard.</p>
+                    </div>
+                    <div class="brochure-card">
+                        <h4><i class="fas fa-check" style="color:#10B981;margin-right:0.4rem;"></i> Student Accountability</h4>
+                        <p>Improve attendance rates and student engagement with transparent, fair, and consistent tracking.</p>
+                    </div>
+                    <div class="brochure-card">
+                        <h4><i class="fas fa-check" style="color:#10B981;margin-right:0.4rem;"></i> Compliance Ready</h4>
+                        <p>GDPR and FERPA compliant. SOC 2 certified infrastructure with end-to-end encryption.</p>
+                    </div>
+                    <div class="brochure-card">
+                        <h4><i class="fas fa-check" style="color:#10B981;margin-right:0.4rem;"></i> Enterprise Scale</h4>
+                        <p>Designed for institutions from 500 to 50,000+ students with 99.9% uptime SLA.</p>
+                    </div>
+                </div>
+            </div>
+        </div>
+        
+        <div class="brochure-section">
+            <div class="container">
+                <h2>Use Cases</h2>
+                <div class="use-case-grid">
+                    <div class="use-case-item">
+                        <i class="fas fa-university"></i>
+                        <div><span>University Lectures</span><small>500-2000 student courses</small></div>
+                    </div>
+                    <div class="use-case-item">
+                        <i class="fas fa-flask"></i>
+                        <div><span>Lab Sessions</span><small>Small group verification</small></div>
+                    </div>
+                    <div class="use-case-item">
+                        <i class="fas fa-chalkboard-teacher"></i>
+                        <div><span>Seminars & Workshops</span><small>Flexible attendance modes</small></div>
+                    </div>
+                    <div class="use-case-item">
+                        <i class="fas fa-globe"></i>
+                        <div><span>Multi-Campus Institutions</span><small>Unified across locations</small></div>
+                    </div>
+                    <div class="use-case-item">
+                        <i class="fas fa-graduation-cap"></i>
+                        <div><span>Examination Halls</span><small>Strict identity verification</small></div>
+                    </div>
+                    <div class="use-case-item">
+                        <i class="fas fa-building"></i>
+                        <div><span>Corporate Training</span><small>Employee tracking</small></div>
+                    </div>
+                </div>
+            </div>
+        </div>
+        
+        <div class="footer-bar">
+            <div class="container">
+                &copy; 2025 Attendrix. All rights reserved. | <a href="/" style="color:var(--primary);text-decoration:none;">attendix.com</a>
+            </div>
+        </div>
+    </div>
+</body>
+</html>

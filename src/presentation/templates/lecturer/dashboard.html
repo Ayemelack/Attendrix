@@ -7,6 +7,7 @@
     <link rel="icon" type="image/x-icon" href="/static/images/favicon.ico">
     <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <link rel="stylesheet" href="/static/css/responsive.css">
     <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.0/dist/chart.umd.min.js"></script>
     <style>
         * { margin: 0; padding: 0; box-sizing: border-box; }
@@ -221,12 +222,23 @@
             .sidebar-overlay.show { display: block; }
             .main { margin-left: 0; }
             .sidebar-toggle { display: block; }
-            .content { padding: 12px; }
+            .content { padding: 8px; }
             .grid-2col { grid-template-columns: 1fr; }
             .session-panel-body { grid-template-columns: 1fr; }
             .session-qr-area { border-right: none; border-bottom: 1px solid var(--border-color); }
             .state-timeline { flex-wrap: wrap; gap: 2px; }
-            .stats-grid { grid-template-columns: repeat(auto-fit, minmax(140px, 1fr)); }
+            .stats-grid { grid-template-columns: repeat(2, 1fr); gap: 8px; }
+            
+            .card-noc { border-radius: 0; border-left: none; border-right: none; margin-left: -8px; margin-right: -8px; }
+            .card-header, .card-body { padding-left: 12px; padding-right: 12px; }
+            
+            input[type="text"], input[type="password"], input[type="email"], select {
+                font-size: 16px !important;
+                min-height: 44px;
+            }
+            .btn-prime { min-height: 44px; padding: 0.5rem 1rem; }
+            .topbar-right .topbar-name { display: none; }
+            .student-drawer { width: 100vw; right: -100vw; }
         }
     </style>
 </head>
@@ -1468,5 +1480,6 @@
         setInterval(measurePing, 15000);
         setInterval(function() { if (!currentSessionId) getAllData(); }, 30000);
     </script>
+<script src="/static/js/responsive.js"></script>
 </body>
 </html>

@@ -12,6 +12,7 @@
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css" crossorigin="anonymous">
     <!-- Google Fonts -->
     <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800&display=swap" rel="stylesheet" crossorigin="anonymous">
+    <link rel="stylesheet" href="/static/css/responsive.css">
     
     <style>
         :root {
@@ -32,15 +33,24 @@
             --shadow-xl: 0 20px 50px rgba(0,0,0,0.15);
         }
         
-        * { margin: 0; padding: 0; box-sizing: border-box; }
-        
-        body {
-            font-family: 'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
-            background: var(--light);
-            color: var(--text);
-            line-height: 1.6;
-            overflow-x: hidden;
-        }
+html {
+    overflow-x: hidden;
+    width: 100%;
+    position: relative;
+}
+* { margin: 0; padding: 0; box-sizing: border-box; }
+
+body {
+    font-family: 'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+    background: var(--light);
+    color: var(--text);
+    line-height: 1.6;
+    overflow-x: hidden;
+    width: 100%;
+    max-width: 100vw;
+    position: relative;
+    overscroll-behavior-x: none;
+}
         
         /* ─── PREMIUM NAVBAR ─── */
         .navbar {
@@ -58,6 +68,7 @@
             min-height: 72px !important;
             display: flex !important;
             flex-wrap: nowrap !important;
+            overflow: hidden !important;
             transition: all 0.4s cubic-bezier(0.4, 0, 0.2, 1);
         }
         
@@ -157,6 +168,23 @@
             background: rgba(255, 255, 255, 0.06);
         }
         
+        .nav-link.active {
+            color: #fff;
+            background: rgba(79, 70, 229, 0.2);
+        }
+        
+        .nav-link.active::after {
+            content: '';
+            position: absolute;
+            bottom: 2px;
+            left: 50%;
+            transform: translateX(-50%);
+            width: 20px;
+            height: 3px;
+            background: var(--gradient-primary);
+            border-radius: 2px;
+        }
+        
         .btn-signup-nav {
             background: var(--gradient-primary);
             color: #fff;
@@ -228,16 +256,17 @@
             opacity: 0.5;
         }
         
-        .hero-section::after {
-            content: '';
-            position: absolute;
-            top: -50%;
-            right: -20%;
-            width: 600px;
-            height: 600px;
-            background: radial-gradient(circle, rgba(79,70,229,0.08) 0%, transparent 70%);
-            pointer-events: none;
-        }
+.hero-section::after {
+    content: '';
+    position: absolute;
+    top: -50%;
+    right: -20%;
+    width: min(600px, 80vw);
+    height: min(600px, 80vw);
+    max-width: 100vw;
+    background: radial-gradient(circle, rgba(79,70,229,0.08) 0%, transparent 70%);
+    pointer-events: none;
+}
         
         .hero-container {
             max-width: 1200px;
@@ -261,6 +290,14 @@
             -webkit-text-fill-color: transparent;
             background-clip: text;
             letter-spacing: -1px;
+            background-size: 200% 200%;
+            animation: gradientShift 4s ease infinite;
+        }
+        
+        @keyframes gradientShift {
+            0% { background-position: 0% 50%; }
+            50% { background-position: 100% 50%; }
+            100% { background-position: 0% 50%; }
         }
         
         .hero-subtitle {
@@ -286,18 +323,17 @@
         }
         
         .animated-text span {
-            opacity: 0;
             display: inline-block;
-            animation: fadeInUp 0.6s ease forwards;
+            animation: gentleWave 2.5s ease-in-out infinite;
         }
         
-        .animated-text span:nth-child(1) { animation-delay: 0.2s; }
+        .animated-text span:nth-child(1) { animation-delay: 0s; }
         .animated-text span:nth-child(2) { animation-delay: 0.4s; }
-        .animated-text span:nth-child(3) { animation-delay: 0.6s; }
+        .animated-text span:nth-child(3) { animation-delay: 0.8s; }
         
-        @keyframes fadeInUp {
-            from { opacity: 0; transform: translateY(20px); }
-            to { opacity: 1; transform: translateY(0); }
+        @keyframes gentleWave {
+            0%, 100% { transform: translateY(0); opacity: 1; }
+            50% { transform: translateY(-6px); opacity: 0.85; }
         }
         
         .hero-description {
@@ -355,18 +391,25 @@
         /* ─── DASHBOARD MOCKUP ─── */
         .hero-visual { position: relative; }
         
+        @keyframes float {
+            0%, 100% { transform: translateY(0); }
+            50% { transform: translateY(-10px); }
+        }
+        
         .dashboard-mockup {
             background: #fff;
             border-radius: 20px;
             border: 1px solid var(--border);
             overflow: hidden;
             position: relative;
+            animation: float 3s ease-in-out infinite;
             transition: all 0.4s ease;
             box-shadow: var(--shadow-xl);
         }
         
         .dashboard-mockup:hover {
-            transform: translateY(-8px) scale(1.01);
+            transform: translateY(-8px) scale(1.01) !important;
+            animation: none;
             box-shadow: 0 35px 80px rgba(0,0,0,0.15);
         }
         
@@ -511,8 +554,10 @@
         .section-subtitle {
             font-size: 1.1rem;
             color: var(--text-muted);
-            max-width: 600px;
             margin: 0 auto;
+            max-width: min(600px, 100%);
+            overflow-wrap: break-word;
+            word-break: break-word;
         }
         
         .features-grid {
@@ -589,6 +634,609 @@
             font-size: 0.95rem;
         }
         
+        /* ─── ABOUT SECTION ─── */
+        .about-section {
+            padding: 6rem 0;
+            background: #fff;
+            position: relative;
+            overflow: hidden;
+        }
+
+        .about-section::before {
+            content: '';
+            position: absolute;
+            top: -50%;
+            right: -30%;
+            width: 700px;
+            height: 700px;
+            background: radial-gradient(circle, rgba(79,70,229,0.05) 0%, transparent 70%);
+            pointer-events: none;
+        }
+
+        .about-container {
+            max-width: 1200px;
+            margin: 0 auto;
+            padding: 0 2rem;
+            position: relative;
+            z-index: 1;
+        }
+
+        .about-grid {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 4rem;
+            align-items: center;
+        }
+
+        .about-content .about-tagline {
+            display: inline-block;
+            font-size: 0.75rem;
+            font-weight: 700;
+            text-transform: uppercase;
+            letter-spacing: 2px;
+            color: var(--primary);
+            background: rgba(79, 70, 229, 0.08);
+            padding: 0.35rem 0.9rem;
+            border-radius: 20px;
+            border: 1px solid rgba(79, 70, 229, 0.15);
+            margin-bottom: 1.25rem;
+        }
+
+        .about-content h2 {
+            font-size: 2.5rem;
+            font-weight: 800;
+            line-height: 1.15;
+            margin-bottom: 1.5rem;
+            color: var(--text);
+        }
+
+        .about-content h2 span {
+            background: var(--gradient-primary);
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+            background-clip: text;
+        }
+
+        .about-content p {
+            color: var(--text-muted);
+            line-height: 1.8;
+            font-size: 1.05rem;
+            margin-bottom: 1.25rem;
+        }
+
+        .about-stats {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 1.5rem;
+            margin-top: 2rem;
+        }
+
+        .about-stat-card {
+            background: var(--light);
+            border-radius: 16px;
+            padding: 1.5rem;
+            border: 1px solid var(--border);
+            transition: all 0.4s ease;
+            position: relative;
+            overflow: hidden;
+        }
+
+        .about-stat-card::before {
+            content: '';
+            position: absolute;
+            top: 0;
+            left: 0;
+            right: 0;
+            height: 3px;
+            background: var(--gradient-primary);
+            transform: scaleX(0);
+            transition: transform 0.4s ease;
+            transform-origin: left;
+        }
+
+        .about-stat-card:hover::before { transform: scaleX(1); }
+
+        .about-stat-card:hover {
+            transform: translateY(-4px);
+            box-shadow: var(--shadow-md);
+        }
+
+        .about-stat-number {
+            font-size: 2rem;
+            font-weight: 800;
+            background: var(--gradient-primary);
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+            background-clip: text;
+        }
+
+        .about-stat-label {
+            font-size: 0.85rem;
+            color: var(--text-muted);
+            font-weight: 500;
+            margin-top: 0.25rem;
+        }
+
+        .about-visual {
+            position: relative;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+        }
+
+        .about-glow-card {
+            background: rgba(255,255,255,0.7);
+            backdrop-filter: blur(20px);
+            -webkit-backdrop-filter: blur(20px);
+            border-radius: 24px;
+            padding: 2.5rem;
+            border: 1px solid rgba(79,70,229,0.1);
+            box-shadow: var(--shadow-xl);
+            width: 100%;
+            position: relative;
+        }
+
+        .about-glow-card::after {
+            content: '';
+            position: absolute;
+            inset: -2px;
+            border-radius: 26px;
+            background: linear-gradient(135deg, rgba(79,70,229,0.1), rgba(6,182,212,0.1), rgba(79,70,229,0.1));
+            z-index: -1;
+            animation: glowRotate 6s ease-in-out infinite;
+        }
+
+        @keyframes glowRotate {
+            0%, 100% { opacity: 0.5; }
+            50% { opacity: 1; }
+        }
+
+        .about-tech-grid {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 1rem;
+        }
+
+        .about-tech-item {
+            display: flex;
+            align-items: center;
+            gap: 0.75rem;
+            padding: 0.75rem 1rem;
+            border-radius: 12px;
+            background: var(--light);
+            border: 1px solid var(--border);
+            transition: all 0.3s ease;
+        }
+
+        .about-tech-item:hover {
+            border-color: var(--primary-light);
+            transform: translateX(4px);
+        }
+
+        .about-tech-item i {
+            font-size: 1.1rem;
+            color: var(--primary);
+            width: 24px;
+            text-align: center;
+        }
+
+        .about-tech-item span {
+            font-size: 0.9rem;
+            font-weight: 600;
+            color: var(--text);
+        }
+
+        /* ─── WHY ATTENDRIX SECTION ─── */
+        .why-section {
+            padding: 6rem 0;
+            background: var(--dark);
+            position: relative;
+            overflow: hidden;
+        }
+
+        .why-section::before {
+            content: '';
+            position: absolute;
+            top: -50%;
+            left: -20%;
+            width: 600px;
+            height: 600px;
+            background: radial-gradient(circle, rgba(79,70,229,0.1) 0%, transparent 70%);
+            pointer-events: none;
+        }
+
+        .why-section::after {
+            content: '';
+            position: absolute;
+            bottom: -30%;
+            right: -10%;
+            width: 500px;
+            height: 500px;
+            background: radial-gradient(circle, rgba(6,182,212,0.08) 0%, transparent 70%);
+            pointer-events: none;
+        }
+
+        .why-container {
+            max-width: 1200px;
+            margin: 0 auto;
+            padding: 0 2rem;
+            position: relative;
+            z-index: 1;
+        }
+
+        .why-section .section-title {
+            -webkit-text-fill-color: transparent;
+        }
+
+        .why-section .section-subtitle {
+            color: rgba(255,255,255,0.6);
+        }
+
+        .why-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(280px, 1fr));
+            gap: 1.5rem;
+            margin-top: 3rem;
+        }
+
+        .why-card {
+            background: rgba(255,255,255,0.04);
+            backdrop-filter: blur(12px);
+            -webkit-backdrop-filter: blur(12px);
+            border-radius: 20px;
+            padding: 2rem;
+            border: 1px solid rgba(255,255,255,0.06);
+            transition: all 0.4s cubic-bezier(0.4, 0, 0.2, 1);
+            position: relative;
+            overflow: hidden;
+        }
+
+        .why-card::before {
+            content: '';
+            position: absolute;
+            inset: 0;
+            background: radial-gradient(circle at var(--mouse-x, 50%) var(--mouse-y, 50%), rgba(79,70,229,0.1), transparent 60%);
+            opacity: 0;
+            transition: opacity 0.4s ease;
+            pointer-events: none;
+        }
+
+        .why-card:hover::before { opacity: 1; }
+
+        .why-card:hover {
+            transform: translateY(-6px);
+            border-color: rgba(79,70,229,0.3);
+            box-shadow: 0 20px 60px rgba(0,0,0,0.3);
+        }
+
+        .why-card-icon {
+            width: 52px;
+            height: 52px;
+            border-radius: 14px;
+            background: rgba(79,70,229,0.15);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            margin-bottom: 1.25rem;
+            transition: all 0.4s ease;
+            border: 1px solid rgba(79,70,229,0.1);
+        }
+
+        .why-card:hover .why-card-icon {
+            background: var(--gradient-primary);
+            box-shadow: 0 8px 24px rgba(79,70,229,0.3);
+            transform: scale(1.05);
+        }
+
+        .why-card-icon i {
+            font-size: 1.3rem;
+            color: var(--primary-light);
+            transition: all 0.4s ease;
+        }
+
+        .why-card:hover .why-card-icon i { color: #fff; }
+
+        .why-card h3 {
+            font-size: 1.1rem;
+            font-weight: 700;
+            color: #fff;
+            margin-bottom: 0.75rem;
+        }
+
+        .why-card p {
+            color: rgba(255,255,255,0.55);
+            line-height: 1.7;
+            font-size: 0.9rem;
+        }
+
+        .why-card .card-glow {
+            position: absolute;
+            top: -50%;
+            right: -50%;
+            width: 100%;
+            height: 100%;
+            background: radial-gradient(circle, rgba(79,70,229,0.06), transparent 70%);
+            pointer-events: none;
+            transition: all 0.4s ease;
+        }
+
+        .why-card:hover .card-glow {
+            opacity: 0.5;
+            transform: scale(1.2);
+        }
+
+        .why-compare {
+            margin-top: 4rem;
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 2rem;
+        }
+
+        .why-compare-card {
+            border-radius: 20px;
+            padding: 2rem;
+            position: relative;
+            overflow: hidden;
+        }
+
+        .why-compare-card.traditional {
+            background: rgba(255,255,255,0.03);
+            border: 1px solid rgba(255,255,255,0.06);
+        }
+
+        .why-compare-card.attendrix-compare {
+            background: rgba(79,70,229,0.08);
+            border: 1px solid rgba(79,70,229,0.2);
+        }
+
+        .why-compare-card h4 {
+            font-size: 1rem;
+            font-weight: 700;
+            margin-bottom: 1.25rem;
+            display: flex;
+            align-items: center;
+            gap: 0.5rem;
+        }
+
+        .why-compare-card.traditional h4 { color: rgba(255,255,255,0.4); }
+        .why-compare-card.attendrix-compare h4 { color: var(--primary-light); }
+
+        .why-compare-list {
+            list-style: none;
+            padding: 0;
+            margin: 0;
+        }
+
+        .why-compare-list li {
+            padding: 0.6rem 0;
+            border-bottom: 1px solid rgba(255,255,255,0.05);
+            color: rgba(255,255,255,0.6);
+            font-size: 0.9rem;
+            display: flex;
+            align-items: center;
+            gap: 0.6rem;
+        }
+
+        .why-compare-list li:last-child { border-bottom: none; }
+
+        .why-compare-list li i.fa-times { color: rgba(239,68,68,0.6); font-size: 0.8rem; }
+        .why-compare-list li i.fa-check { color: rgba(16,185,129,0.8); font-size: 0.8rem; }
+
+        .why-stats-row {
+            display: grid;
+            grid-template-columns: repeat(4, 1fr);
+            gap: 1.5rem;
+            margin-top: 4rem;
+        }
+
+        .why-stat-item {
+            text-align: center;
+            padding: 1.5rem;
+            border-radius: 16px;
+            background: rgba(255,255,255,0.03);
+            border: 1px solid rgba(255,255,255,0.06);
+            transition: all 0.3s ease;
+        }
+
+        .why-stat-item:hover {
+            background: rgba(255,255,255,0.06);
+            transform: translateY(-3px);
+        }
+
+        .why-stat-number {
+            font-size: 2.2rem;
+            font-weight: 800;
+            background: var(--gradient-primary);
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+            background-clip: text;
+        }
+
+        .why-stat-label {
+            color: rgba(255,255,255,0.5);
+            font-size: 0.8rem;
+            font-weight: 500;
+            margin-top: 0.3rem;
+            text-transform: uppercase;
+            letter-spacing: 1px;
+        }
+
+        /* ─── HOW IT WORKS SECTION ─── */
+        .how-section {
+            padding: 6rem 0;
+            background: var(--light);
+            position: relative;
+            overflow: hidden;
+        }
+
+        .how-container {
+            max-width: 1200px;
+            margin: 0 auto;
+            padding: 0 2rem;
+            position: relative;
+            z-index: 1;
+        }
+
+        .how-timeline {
+            position: relative;
+            margin-top: 3rem;
+            padding-left: 3rem;
+        }
+
+        .how-timeline::before {
+            content: '';
+            position: absolute;
+            left: 14px;
+            top: 0;
+            bottom: 0;
+            width: 2px;
+            background: linear-gradient(180deg, var(--primary), var(--accent), var(--primary));
+            animation: timelinePulse 3s ease-in-out infinite;
+        }
+
+        @keyframes timelinePulse {
+            0%, 100% { opacity: 0.6; }
+            50% { opacity: 1; }
+        }
+
+        .how-step {
+            position: relative;
+            margin-bottom: 2.5rem;
+            padding-left: 2rem;
+            opacity: 0;
+            transform: translateY(30px);
+            transition: all 0.6s ease;
+        }
+
+        .how-step.visible {
+            opacity: 1;
+            transform: translateY(0);
+        }
+
+        .how-step:last-child { margin-bottom: 0; }
+
+        .how-step-dot {
+            position: absolute;
+            left: -2.35rem;
+            top: 0.25rem;
+            width: 30px;
+            height: 30px;
+            border-radius: 50%;
+            background: var(--gradient-primary);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 0.75rem;
+            font-weight: 800;
+            color: #fff;
+            z-index: 2;
+            box-shadow: 0 0 20px rgba(79,70,229,0.3);
+            animation: dotPulse 2s ease-in-out infinite;
+        }
+
+        @keyframes dotPulse {
+            0%, 100% { box-shadow: 0 0 20px rgba(79,70,229,0.3); }
+            50% { box-shadow: 0 0 35px rgba(79,70,229,0.5); }
+        }
+
+        .how-step-content {
+            background: #fff;
+            border-radius: 16px;
+            padding: 1.5rem 2rem;
+            border: 1px solid var(--border);
+            transition: all 0.4s ease;
+            position: relative;
+        }
+
+        .how-step-content::before {
+            content: '';
+            position: absolute;
+            top: 0;
+            left: 0;
+            right: 0;
+            height: 3px;
+            background: var(--gradient-primary);
+            border-radius: 16px 16px 0 0;
+            transform: scaleX(0);
+            transition: transform 0.4s ease;
+            transform-origin: left;
+        }
+
+        .how-step-content:hover::before { transform: scaleX(1); }
+
+        .how-step-content:hover {
+            transform: translateX(6px);
+            box-shadow: var(--shadow-lg);
+            border-color: transparent;
+        }
+
+        .how-step-header {
+            display: flex;
+            align-items: center;
+            gap: 0.75rem;
+            margin-bottom: 0.5rem;
+        }
+
+        .how-step-header i {
+            font-size: 1.2rem;
+            color: var(--primary);
+        }
+
+        .how-step-header h3 {
+            font-size: 1.1rem;
+            font-weight: 700;
+            color: var(--text);
+        }
+
+        .how-step-content p {
+            color: var(--text-muted);
+            font-size: 0.9rem;
+            line-height: 1.6;
+            margin: 0;
+        }
+
+        .how-connection-nodes {
+            display: flex;
+            justify-content: center;
+            gap: 0.5rem;
+            margin-top: 3rem;
+            flex-wrap: wrap;
+        }
+
+        .how-node {
+            width: 12px;
+            height: 12px;
+            border-radius: 50%;
+            background: var(--primary-light);
+            opacity: 0.3;
+            animation: nodePulse 2s ease-in-out infinite;
+        }
+
+        .how-node:nth-child(2) { animation-delay: 0.3s; }
+        .how-node:nth-child(3) { animation-delay: 0.6s; }
+        .how-node:nth-child(4) { animation-delay: 0.9s; }
+        .how-node:nth-child(5) { animation-delay: 1.2s; }
+        .how-node:nth-child(6) { animation-delay: 1.5s; }
+        .how-node:nth-child(7) { animation-delay: 1.8s; }
+        .how-node:nth-child(8) { animation-delay: 2.1s; }
+
+        @keyframes nodePulse {
+            0%, 100% { opacity: 0.3; transform: scale(1); }
+            50% { opacity: 1; transform: scale(1.5); }
+        }
+
+        /* ─── SECTION REVEAL ANIMATIONS ─── */
+        .reveal-section {
+            opacity: 0;
+            transform: translateY(40px);
+            transition: opacity 0.8s ease, transform 0.8s ease;
+        }
+
+        .reveal-section.visible {
+            opacity: 1;
+            transform: translateY(0);
+        }
+
         /* ─── CONTACT SECTION ─── */
         .contact-section {
             padding: 5rem 0;
@@ -658,7 +1306,7 @@
         
         /* ─── FOOTER ─── */
         .footer {
-            background: var(--gradient-primary);
+            background: var(--dark);
             color: #fff;
             padding: 3rem 0;
             text-align: center;
@@ -688,23 +1336,124 @@
         }
         
         /* ─── RESPONSIVE ─── */
+        .hero-content {
+            max-width: 100%;
+            overflow: hidden;
+        }
+        .hero-content h1 {
+            font-size: clamp(1.75rem, 5vw, 3.5rem);
+            overflow-wrap: break-word;
+            word-break: break-word;
+            max-width: 100%;
+        }
+        .hero-tagline {
+            overflow-wrap: break-word;
+            word-break: break-word;
+            max-width: 100%;
+            white-space: normal;
+        }
+        .hero-subtitle {
+            overflow-wrap: break-word;
+            word-break: break-word;
+            max-width: 100%;
+        }
+        .hero-description {
+            overflow-wrap: break-word;
+            word-break: break-word;
+            max-width: 100%;
+        }
+        .section-title {
+            font-size: clamp(1.75rem, 4vw, 2.5rem);
+        }
+        .hero-visual { max-width: 100%; }
+        .dashboard-mockup {
+            max-width: 100%;
+            width: 100%;
+        }
+        .dashboard-header {
+            max-width: 100%;
+        }
+        .dashboard-content {
+            overflow: hidden;
+            max-width: 100%;
+        }
+        .stats-grid {
+            max-width: 100%;
+        }
+        .stat-card {
+            max-width: 100%;
+        }
+        .chart-area {
+            max-width: 100%;
+        }
+        .contact-item {
+            min-width: 240px;
+        }
+        .features-grid {
+            grid-template-columns: repeat(auto-fit, minmax(280px, 1fr));
+        }
+        .hero-container {
+            max-width: 100%;
+        }
+        .features-container {
+            max-width: 100%;
+        }
+        .contact-container {
+            max-width: 100%;
+        }
+        .about-container { max-width: 100%; }
+        .why-container { max-width: 100%; }
+        .how-container { max-width: 100%; }
+        .about-content h2 { font-size: clamp(1.75rem, 4vw, 2.5rem); }
+        .about-stat-number { font-size: clamp(1.5rem, 3vw, 2rem); }
+        .why-stat-number { font-size: clamp(1.5rem, 3vw, 2.2rem); }
+        
+        @media (max-width: 991px) {
+            .hero-section {
+                padding: 6rem 0 3rem;
+                min-height: auto;
+            }
+        }
+        
         @media (max-width: 768px) {
-            .navbar .container { padding: 0 1rem; }
+            body { padding-top: 0; }
+            .navbar { overflow: visible !important; }
+            .navbar .container { padding: 0 1rem !important; }
             
-            .mobile-menu-toggle { display: flex; }
+            .navbar-brand {
+                flex-shrink: 1;
+                min-width: 0;
+                overflow: hidden;
+                font-size: 1.2rem;
+                gap: 0.4rem;
+            }
+            .navbar-brand .brand-icon {
+                flex-shrink: 0;
+            }
+            .navbar-brand .brand-text {
+                overflow: hidden;
+                text-overflow: ellipsis;
+                white-space: nowrap;
+            }
+            .navbar-brand .brand-badge {
+                flex-shrink: 0;
+            }
+            .mobile-menu-toggle { display: flex; flex-shrink: 0; }
             
-            .navbar-end { gap: 0; }
+            .navbar-end { gap: 0; flex-shrink: 0; margin-left: auto; }
             
             .navbar-nav {
                 position: fixed;
                 top: 72px;
-                left: 1rem;
-                right: 1rem;
+                left: 0;
+                right: 0;
+                z-index: 1001;
                 background: rgba(15, 23, 42, 0.98);
                 backdrop-filter: blur(20px);
                 -webkit-backdrop-filter: blur(20px);
                 flex-direction: column;
                 padding: 1.5rem;
+                margin: 0 1rem;
                 border-radius: 16px;
                 border: 1px solid rgba(255,255,255,0.08);
                 box-shadow: 0 20px 60px rgba(0,0,0,0.5);
@@ -716,9 +1465,11 @@
             }
             
             .navbar-nav.active {
+                display: flex;
                 transform: translateY(0);
                 opacity: 1;
                 visibility: visible;
+                z-index: 1001;
             }
             
             .nav-link {
@@ -736,22 +1487,134 @@
             
             .hero-container {
                 grid-template-columns: 1fr;
-                gap: 2rem;
+                gap: 1.5rem;
                 padding: 0 1.25rem;
             }
             
-            .hero-content h1 { font-size: 2.5rem; }
+            .hero-section { padding-top: 7rem; }
+            .hero-content h1 { font-size: clamp(2rem, 6vw, 2.5rem); }
             .hero-visual { order: -1; }
+            .hero-subtitle { font-size: 1rem; }
+            .hero-description { font-size: 0.95rem; }
             .features-grid { grid-template-columns: 1fr; }
+            .features-section { padding: 3rem 0; }
             .contact-info { flex-direction: column; align-items: center; }
+            .contact-item { min-width: 100%; }
+            .contact-section { padding: 3rem 0; }
+            .footer { padding: 2rem 0; }
             .footer-links { flex-direction: column; gap: 1rem; }
+            .section-header { margin-bottom: 2.5rem; }
+            .features-container { padding: 0 1.25rem; }
+            .contact-container { padding: 0 1.25rem; }
+            .about-section { padding: 4rem 0; }
+            .about-grid { grid-template-columns: 1fr; gap: 2.5rem; }
+            .about-container { padding: 0 1.25rem; }
+            .why-section { padding: 4rem 0; }
+            .why-container { padding: 0 1.25rem; }
+            .why-grid { grid-template-columns: 1fr 1fr; }
+            .why-compare { grid-template-columns: 1fr; gap: 1.5rem; }
+            .why-stats-row { grid-template-columns: repeat(2, 1fr); gap: 1rem; }
+            .how-section { padding: 4rem 0; }
+            .how-container { padding: 0 1.25rem; }
+            .how-timeline { padding-left: 2.5rem; }
+            .how-step { padding-left: 1.5rem; }
+            .stats-grid { grid-template-columns: 1fr 1fr; }
+            .stat-value { font-size: 1.3rem; }
+        }
+        
+        @media (max-width: 576px) {
+            .navbar .container { padding: 0 0.75rem !important; }
+            .hero-section { padding: 6.5rem 0 2rem; }
+            .hero-container { padding: 0 1rem; }
+            .hero-buttons { flex-direction: column; }
+            .btn-hero { width: 100%; justify-content: center; }
+            .dashboard-mockup { border-radius: 12px; }
+            .dashboard-header { padding: 0.75rem 1rem; }
+            .dashboard-content { padding: 1rem; }
+            .stat-card { padding: 0.75rem 1rem; }
+            .chart-area { height: 90px; }
+            .chart-bar { width: 10px; }
+            .features-container { padding: 0 1rem; }
+            .contact-container { padding: 0 1rem; }
+            .feature-card { padding: 1.5rem; }
+            .contact-item { min-width: 100%; padding: 1.5rem; }
+            .about-container { padding: 0 1rem; }
+            .about-stats { grid-template-columns: 1fr; gap: 1rem; }
+            .about-tech-grid { grid-template-columns: 1fr; }
+            .why-container { padding: 0 1rem; }
+            .why-grid { grid-template-columns: 1fr; }
+            .why-stats-row { grid-template-columns: 1fr 1fr; gap: 0.75rem; }
+            .why-compare-card { padding: 1.5rem; }
+            .how-container { padding: 0 1rem; }
+            .how-step-content { padding: 1.25rem 1.5rem; }
         }
         
         @media (max-width: 480px) {
-            .hero-content h1 { font-size: 2rem; }
-            .hero-buttons { flex-direction: column; }
-            .btn-hero { width: 100%; justify-content: center; }
-            .section-title { font-size: 2rem; }
+            .navbar-brand {
+                font-size: 1.1rem;
+                gap: 0.4rem;
+            }
+            .navbar-brand .brand-icon {
+                width: 30px;
+                height: 30px;
+                font-size: 0.9rem;
+            }
+            .navbar-brand .brand-badge {
+                font-size: 0.5rem;
+                padding: 1px 6px;
+            }
+            .hero-content h1 { font-size: clamp(1.5rem, 7vw, 2rem); }
+            .hero-description { font-size: 0.9rem; margin-bottom: 1.5rem; }
+            .hero-buttons { gap: 0.75rem; }
+            .btn-hero { padding: 0.75rem 1.5rem; font-size: 0.9rem; }
+            .section-title { font-size: clamp(1.4rem, 6vw, 2rem); }
+            .section-subtitle { font-size: 0.95rem; }
+            .feature-title { font-size: 1rem; }
+            .feature-description { font-size: 0.85rem; }
+            .stats-grid { gap: 0.5rem; }
+            .stat-value { font-size: 1.1rem; }
+            .stat-label { font-size: 0.6rem; }
+            .chart-area { height: 70px; }
+            .about-content h2 { font-size: 1.6rem; }
+            .about-content p { font-size: 0.95rem; }
+            .why-stat-number { font-size: 1.6rem; }
+            .why-stat-item { padding: 1rem; }
+            .how-step-header h3 { font-size: 1rem; }
+            .how-step-content p { font-size: 0.85rem; }
+        }
+        
+        @media (max-width: 360px) {
+            .navbar { height: 60px !important; min-height: 60px !important; }
+            .navbar .container { padding: 0 0.5rem !important; }
+            .navbar-nav { top: 60px; margin: 0 0.5rem; padding: 1rem; }
+            .hero-section { padding: 5.5rem 0 1.5rem; }
+            .hero-container { padding: 0 0.75rem; gap: 1.5rem; }
+            .hero-content h1 { font-size: clamp(1.3rem, 8vw, 1.5rem); }
+            .hero-tagline { font-size: 0.7rem; padding: 0.3rem 0.75rem; }
+            .hero-description { font-size: 0.85rem; }
+            .features-container { padding: 0 0.75rem; }
+            .contact-container { padding: 0 0.75rem; }
+            .feature-card { padding: 1.25rem; }
+            .feature-icon { width: 44px; height: 44px; }
+            .feature-icon i { font-size: 1.1rem; }
+            .stats-grid { grid-template-columns: 1fr; }
+            .chart-area { height: 60px; }
+            .chart-bars { gap: 0.3rem; }
+            .chart-bar { width: 8px; }
+            .contact-item { padding: 1.25rem; }
+            .footer { padding: 1.5rem 0; }
+            .footer-links a { font-size: 0.8rem; }
+            .about-section { padding: 3rem 0; }
+            .about-container { padding: 0 0.75rem; }
+            .why-section { padding: 3rem 0; }
+            .why-container { padding: 0 0.75rem; }
+            .why-stats-row { grid-template-columns: 1fr 1fr; gap: 0.5rem; }
+            .why-stat-item { padding: 0.75rem; }
+            .how-section { padding: 3rem 0; }
+            .how-container { padding: 0 0.75rem; }
+            .how-timeline { padding-left: 2rem; }
+            .how-step { padding-left: 1rem; margin-bottom: 1.5rem; }
+            .how-step-dot { width: 24px; height: 24px; font-size: 0.65rem; left: -1.85rem; }
         }
     </style>
 </head>
@@ -774,6 +1637,9 @@
                 
                 <div class="navbar-nav" id="navbarNav">
                     <a href="#home" class="nav-link">Home</a>
+                    <a href="#about" class="nav-link">About</a>
+                    <a href="#why-attendix" class="nav-link">Why Attendrix</a>
+                    <a href="#how-it-works" class="nav-link">How It Works</a>
                     <a href="#features" class="nav-link">Features</a>
                     <a href="#contact" class="nav-link">Contact</a>
                     <a href="/login" class="btn-login-nav">Log In</a>
@@ -807,7 +1673,7 @@
                         <i class="fas fa-rocket"></i>
                         Get Started Free
                     </a>
-                    <a href="#contact" class="btn-hero btn-outline-hero">
+                    <a href="/request-demo" class="btn-hero btn-outline-hero">
                         <i class="fas fa-play-circle"></i>
                         Request Demo
                     </a>
@@ -846,6 +1712,338 @@
                         </div>
                     </div>
                 </div>
+            </div>
+        </div>
+    </section>
+
+    <!-- About Section -->
+    <section class="about-section reveal-section" id="about">
+        <div class="about-container">
+            <div class="about-grid">
+                <div class="about-content">
+                    <div class="about-tagline">
+                        <i class="fas fa-network-wired"></i>
+                        Next-Gen Infrastructure
+                    </div>
+                    <h2>Smart Infrastructure for<br><span>Modern Universities</span></h2>
+                    <p>
+                        Attendrix is a distributed intelligent attendance infrastructure built on advanced networking principles. 
+                        It operates as a multi-node synchronization engine that connects classrooms, departments, and entire 
+                        institutions through a secure, real-time communication mesh.
+                    </p>
+                    <p>
+                        Powered by distributed system architecture, Attendrix ensures that attendance data is synchronized 
+                        across all nodes — even in offline environments — through LAN-based peer-to-peer communication 
+                        and intelligent cloud reconciliation.
+                    </p>
+                    <div class="about-stats">
+                        <div class="about-stat-card">
+                            <div class="about-stat-number" data-count="99.9">99.9%</div>
+                            <div class="about-stat-label">System Uptime</div>
+                        </div>
+                        <div class="about-stat-card">
+                            <div class="about-stat-number" data-count="10">10K+</div>
+                            <div class="about-stat-label">Active Students</div>
+                        </div>
+                        <div class="about-stat-card">
+                            <div class="about-stat-number" data-count="100">100+</div>
+                            <div class="about-stat-label">Institutions</div>
+                        </div>
+                        <div class="about-stat-card">
+                            <div class="about-stat-number" data-count="24">24/7</div>
+                            <div class="about-stat-label">Real-Time Sync</div>
+                        </div>
+                    </div>
+                </div>
+                <div class="about-visual">
+                    <div class="about-glow-card">
+                        <div class="about-tech-grid">
+                            <div class="about-tech-item">
+                                <i class="fas fa-server"></i>
+                                <span>Distributed Nodes</span>
+                            </div>
+                            <div class="about-tech-item">
+                                <i class="fas fa-shield-alt"></i>
+                                <span>Anti-Proxy Security</span>
+                            </div>
+                            <div class="about-tech-item">
+                                <i class="fas fa-sync-alt"></i>
+                                <span>LAN Sync</span>
+                            </div>
+                            <div class="about-tech-item">
+                                <i class="fas fa-cloud"></i>
+                                <span>Cloud Connectivity</span>
+                            </div>
+                            <div class="about-tech-item">
+                                <i class="fas fa-wifi"></i>
+                                <span>Offline-First</span>
+                            </div>
+                            <div class="about-tech-item">
+                                <i class="fas fa-chart-pie"></i>
+                                <span>Smart Analytics</span>
+                            </div>
+                            <div class="about-tech-item">
+                                <i class="fas fa-network-wired"></i>
+                                <span>Node Communication</span>
+                            </div>
+                            <div class="about-tech-item">
+                                <i class="fas fa-brain"></i>
+                                <span>AI Monitoring</span>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </section>
+
+    <!-- Why Attendrix Section -->
+    <section class="why-section reveal-section" id="why-attendix">
+        <div class="why-container">
+            <div class="section-header">
+                <h2 class="section-title">Why Attendrix?</h2>
+                <p class="section-subtitle">
+                    Built for the intelligent university — where networking meets attendance intelligence
+                </p>
+            </div>
+            
+            <div class="why-grid">
+                <div class="why-card">
+                    <div class="card-glow"></div>
+                    <div class="why-card-icon">
+                        <i class="fas fa-project-diagram"></i>
+                    </div>
+                    <h3>Distributed Network Nodes</h3>
+                    <p>Each classroom operates as an independent node in a distributed mesh, synchronizing attendance data across the entire institutional network without a single point of failure.</p>
+                </div>
+                <div class="why-card">
+                    <div class="card-glow"></div>
+                    <div class="why-card-icon">
+                        <i class="fas fa-fingerprint"></i>
+                    </div>
+                    <h3>Smart Attendance Verification</h3>
+                    <p>Multi-factor verification combining device fingerprinting, location intelligence, and behavioral patterns to ensure every attendance record is authentic.</p>
+                </div>
+                <div class="why-card">
+                    <div class="card-glow"></div>
+                    <div class="why-card-icon">
+                        <i class="fas fa-brain"></i>
+                    </div>
+                    <h3>Intelligent Analytics Engine</h3>
+                    <p>Predictive analytics that identify attendance patterns, at-risk students, and institutional trends through machine learning algorithms.</p>
+                </div>
+                <div class="why-card">
+                    <div class="card-glow"></div>
+                    <div class="why-card-icon">
+                        <i class="fas fa-satellite-dish"></i>
+                    </div>
+                    <h3>Offline Synchronization</h3>
+                    <p>Offline-first architecture ensures attendance recording continues even without internet connectivity, with automatic sync when the network is restored.</p>
+                </div>
+                <div class="why-card">
+                    <div class="card-glow"></div>
+                    <div class="why-card-icon">
+                        <i class="fas fa-lock"></i>
+                    </div>
+                    <h3>Secure Cloud Integration</h3>
+                    <p>End-to-end encrypted cloud infrastructure with VPN-secured institutional communication channels for maximum data protection.</p>
+                </div>
+                <div class="why-card">
+                    <div class="card-glow"></div>
+                    <div class="why-card-icon">
+                        <i class="fas fa-eye"></i>
+                    </div>
+                    <h3>Real-Time Monitoring</h3>
+                    <p>Live dashboard providing instant visibility into attendance across all departments, courses, and sessions with sub-second updates.</p>
+                </div>
+                <div class="why-card">
+                    <div class="card-glow"></div>
+                    <div class="why-card-icon">
+                        <i class="fas fa-chart-bar"></i>
+                    </div>
+                    <h3>Institutional Insights</h3>
+                    <p>Comprehensive analytics dashboards that transform raw attendance data into actionable institutional intelligence.</p>
+                </div>
+                <div class="why-card">
+                    <div class="card-glow"></div>
+                    <div class="why-card-icon">
+                        <i class="fas fa-sliders-h"></i>
+                    </div>
+                    <h3>Smart Lecturer Controls</h3>
+                    <p>Intuitive control panels for lecturers to manage sessions, verify attendees, and monitor participation in real-time.</p>
+                </div>
+            </div>
+
+            <div class="why-compare">
+                <div class="why-compare-card traditional">
+                    <h4><i class="fas fa-times-circle" style="color:rgba(239,68,68,0.6);"></i> Traditional Systems</h4>
+                    <ul class="why-compare-list">
+                        <li><i class="fas fa-times"></i> Paper-based manual recording</li>
+                        <li><i class="fas fa-times"></i> No real-time synchronization</li>
+                        <li><i class="fas fa-times"></i> Vulnerable to proxy attendance</li>
+                        <li><i class="fas fa-times"></i> No offline capability</li>
+                        <li><i class="fas fa-times"></i> Limited or no analytics</li>
+                        <li><i class="fas fa-times"></i> No distributed architecture</li>
+                        <li><i class="fas fa-times"></i> No anti-proxy intelligence</li>
+                    </ul>
+                </div>
+                <div class="why-compare-card attendrix-compare">
+                    <h4><i class="fas fa-check-circle" style="color:rgba(16,185,129,0.8);"></i> Attendrix System</h4>
+                    <ul class="why-compare-list">
+                        <li><i class="fas fa-check"></i> Digital multi-node recording</li>
+                        <li><i class="fas fa-check"></i> Real-time distributed sync</li>
+                        <li><i class="fas fa-check"></i> AI-powered anti-proxy security</li>
+                        <li><i class="fas fa-check"></i> Offline-first architecture</li>
+                        <li><i class="fas fa-check"></i> Intelligent predictive analytics</li>
+                        <li><i class="fas fa-check"></i> Distributed mesh networking</li>
+                        <li><i class="fas fa-check"></i> Smart attendance intelligence</li>
+                    </ul>
+                </div>
+            </div>
+
+            <div class="why-stats-row">
+                <div class="why-stat-item">
+                    <div class="why-stat-number" data-count="99">99%</div>
+                    <div class="why-stat-label">Accuracy Rate</div>
+                </div>
+                <div class="why-stat-item">
+                    <div class="why-stat-number" data-count="0">0</div>
+                    <div class="why-stat-label">Proxy Cases</div>
+                </div>
+                <div class="why-stat-item">
+                    <div class="why-stat-number" data-count="24">24/7</div>
+                    <div class="why-stat-label">Monitoring</div>
+                </div>
+                <div class="why-stat-item">
+                    <div class="why-stat-number" data-count="10">10ms</div>
+                    <div class="why-stat-label">Sync Latency</div>
+                </div>
+            </div>
+        </div>
+    </section>
+
+    <!-- How It Works Section -->
+    <section class="how-section reveal-section" id="how-it-works">
+        <div class="how-container">
+            <div class="section-header">
+                <h2 class="section-title">How It Works</h2>
+                <p class="section-subtitle">
+                    From institution setup to real-time monitoring — the intelligent attendance workflow
+                </p>
+            </div>
+            
+            <div class="how-timeline">
+                <div class="how-step">
+                    <div class="how-step-dot">1</div>
+                    <div class="how-step-content">
+                        <div class="how-step-header">
+                            <i class="fas fa-university"></i>
+                            <h3>Institution Setup</h3>
+                        </div>
+                        <p>Register your institution and configure your distributed network infrastructure. Define departments, courses, and classroom nodes.</p>
+                    </div>
+                </div>
+                <div class="how-step">
+                    <div class="how-step-dot">2</div>
+                    <div class="how-step-content">
+                        <div class="how-step-header">
+                            <i class="fas fa-users-cog"></i>
+                            <h3>User &amp; Role Management</h3>
+                        </div>
+                        <p>Create and manage users with role-based access. Assign lecturers, administrators, and students with granular permissions across the network.</p>
+                    </div>
+                </div>
+                <div class="how-step">
+                    <div class="how-step-dot">3</div>
+                    <div class="how-step-content">
+                        <div class="how-step-header">
+                            <i class="fas fa-calendar-alt"></i>
+                            <h3>Smart Schedule Creation</h3>
+                        </div>
+                        <p>Design intelligent class schedules with automated session generation. Define recurrence patterns, room assignments, and lecturer allocations.</p>
+                    </div>
+                </div>
+                <div class="how-step">
+                    <div class="how-step-dot">4</div>
+                    <div class="how-step-content">
+                        <div class="how-step-header">
+                            <i class="fas fa-play-circle"></i>
+                            <h3>Session Initialization</h3>
+                        </div>
+                        <p>Lecturers initialize attendance sessions with one click. The system activates the classroom node and prepares for real-time data collection.</p>
+                    </div>
+                </div>
+                <div class="how-step">
+                    <div class="how-step-dot">5</div>
+                    <div class="how-step-content">
+                        <div class="how-step-header">
+                            <i class="fas fa-users"></i>
+                            <h3>Real-Time Attendance Tracking</h3>
+                        </div>
+                        <p>Students mark attendance through verified devices. The system captures each entry with device fingerprints, location data, and timestamps.</p>
+                    </div>
+                </div>
+                <div class="how-step">
+                    <div class="how-step-dot">6</div>
+                    <div class="how-step-content">
+                        <div class="how-step-header">
+                            <i class="fas fa-sync-alt"></i>
+                            <h3>Distributed Synchronization</h3>
+                        </div>
+                        <p>Each classroom node synchronizes with the distributed network. Attendance data propagates across all nodes through peer-to-peer communication.</p>
+                    </div>
+                </div>
+                <div class="how-step">
+                    <div class="how-step-dot">7</div>
+                    <div class="how-step-content">
+                        <div class="how-step-header">
+                            <i class="fas fa-shield-alt"></i>
+                            <h3>Secure Validation &amp; Anti-Proxy Checks</h3>
+                        </div>
+                        <p>AI algorithms validate each attendance record, cross-referencing device fingerprints, location history, and behavioral patterns to prevent proxy attendance.</p>
+                    </div>
+                </div>
+                <div class="how-step">
+                    <div class="how-step-dot">8</div>
+                    <div class="how-step-content">
+                        <div class="how-step-header">
+                            <i class="fas fa-cloud-upload-alt"></i>
+                            <h3>Cloud + LAN Sync</h3>
+                        </div>
+                        <p>Data synchronizes across both local network and cloud infrastructure. Offline sessions automatically reconcile when connectivity is restored.</p>
+                    </div>
+                </div>
+                <div class="how-step">
+                    <div class="how-step-dot">9</div>
+                    <div class="how-step-content">
+                        <div class="how-step-header">
+                            <i class="fas fa-chart-line"></i>
+                            <h3>Analytics &amp; Reporting</h3>
+                        </div>
+                        <p>Comprehensive analytics engine processes attendance data in real-time, generating insights, trends, and predictive reports for institutional decision-making.</p>
+                    </div>
+                </div>
+                <div class="how-step">
+                    <div class="how-step-dot">10</div>
+                    <div class="how-step-content">
+                        <div class="how-step-header">
+                            <i class="fas fa-tachometer-alt"></i>
+                            <h3>Institutional Monitoring Dashboard</h3>
+                        </div>
+                        <p>Centralized dashboard provides real-time visibility into attendance across the entire institution with live metrics, alerts, and actionable intelligence.</p>
+                    </div>
+                </div>
+            </div>
+
+            <div class="how-connection-nodes">
+                <div class="how-node"></div>
+                <div class="how-node"></div>
+                <div class="how-node"></div>
+                <div class="how-node"></div>
+                <div class="how-node"></div>
+                <div class="how-node"></div>
+                <div class="how-node"></div>
+                <div class="how-node"></div>
             </div>
         </div>
     </section>
@@ -1034,28 +2232,103 @@
             });
         });
         
-        // Animate elements on scroll
-        const observerOptions = {
-            threshold: 0.1,
-            rootMargin: '0px 0px -50px 0px'
-        };
-        
-        const observer = new IntersectionObserver((entries) => {
+        // Reveal sections on scroll
+        const revealObserver = new IntersectionObserver((entries) => {
             entries.forEach(entry => {
                 if (entry.isIntersecting) {
-                    entry.target.style.opacity = '1';
-                    entry.target.style.transform = 'translateY(0)';
+                    entry.target.classList.add('visible');
                 }
             });
-        }, observerOptions);
+        }, { threshold: 0.1, rootMargin: '0px 0px -50px 0px' });
         
-        // Observe feature cards
-        document.querySelectorAll('.feature-card').forEach(card => {
-            card.style.opacity = '0';
-            card.style.transform = 'translateY(30px)';
-            card.style.transition = 'opacity 0.6s ease, transform 0.6s ease';
-            observer.observe(card);
+        document.querySelectorAll('.reveal-section').forEach(section => {
+            revealObserver.observe(section);
+        });
+        
+        // Animate how-it-works steps on scroll
+        const stepObserver = new IntersectionObserver((entries) => {
+            entries.forEach(entry => {
+                if (entry.isIntersecting) {
+                    entry.target.classList.add('visible');
+                }
+            });
+        }, { threshold: 0.15 });
+        
+        document.querySelectorAll('.how-step').forEach((step, index) => {
+            step.style.transitionDelay = (index * 0.1) + 's';
+            stepObserver.observe(step);
+        });
+        
+        // Animated counters
+        function animateCounters() {
+            document.querySelectorAll('.about-stat-number, .why-stat-number').forEach(el => {
+                const text = el.textContent.trim();
+                const num = parseFloat(text);
+                if (isNaN(num)) return;
+                const suffix = text.replace(/[\d.]/g, '');
+                const duration = 2000;
+                const start = performance.now();
+                function update(current) {
+                    const progress = Math.min((current - start) / duration, 1);
+                    const eased = 1 - Math.pow(1 - progress, 3);
+                    const currentNum = eased * num;
+                    if (progress < 1) {
+                        el.textContent = (text.includes('.') ? currentNum.toFixed(1) : Math.round(currentNum)) + suffix;
+                        requestAnimationFrame(update);
+                    } else {
+                        el.textContent = text;
+                    }
+                }
+                requestAnimationFrame(update);
+            });
+        }
+        
+        const counterObserver = new IntersectionObserver((entries) => {
+            entries.forEach(entry => {
+                if (entry.isIntersecting) {
+                    animateCounters();
+                    counterObserver.disconnect();
+                }
+            });
+        }, { threshold: 0.3 });
+        
+        document.querySelectorAll('.about-stats, .why-stats-row').forEach(el => {
+            counterObserver.observe(el);
+        });
+        
+        // Active nav link highlighting
+        function updateActiveNav() {
+            const sections = document.querySelectorAll('section[id]');
+            const navLinks = document.querySelectorAll('.navbar-nav .nav-link');
+            let current = '';
+            sections.forEach(section => {
+                const top = section.offsetTop - 150;
+                if (window.scrollY >= top) {
+                    current = section.getAttribute('id');
+                }
+            });
+            navLinks.forEach(link => {
+                link.classList.remove('active');
+                if (link.getAttribute('href') === '#' + current) {
+                    link.classList.add('active');
+                }
+            });
+        }
+        
+        window.addEventListener('scroll', updateActiveNav);
+        window.addEventListener('load', updateActiveNav);
+        
+        // Why card mouse tracking for gradient effect
+        document.querySelectorAll('.why-card').forEach(card => {
+            card.addEventListener('mousemove', function(e) {
+                const rect = this.getBoundingClientRect();
+                const x = ((e.clientX - rect.left) / rect.width) * 100;
+                const y = ((e.clientY - rect.top) / rect.height) * 100;
+                this.style.setProperty('--mouse-x', x + '%');
+                this.style.setProperty('--mouse-y', y + '%');
+            });
         });
     </script>
+<script src="/static/js/responsive.js"></script>
 </body>
 </html>

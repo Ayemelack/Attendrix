@@ -7,6 +7,7 @@
     <link rel="manifest" href="/static/manifest.json">
     <link rel="icon" type="image/x-icon" href="/static/images/favicon.ico">
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <link rel="stylesheet" href="/static/css/responsive.css">
     <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.0/dist/chart.umd.min.js"></script>
     <script src="https://cdn.jsdelivr.net/npm/@vladmandic/face-api/dist/face-api.js"></script>
     <script src="/static/js/biometric-capture.js"></script>
@@ -273,20 +274,29 @@
             .sidebar-overlay.show { display: block; }
             .sidebar-toggle { display: block; }
             .main { margin-left: 0; }
-            .content { padding: 14px; }
+            .content { padding: 8px; }
             .stats-grid { grid-template-columns: repeat(2, 1fr); }
             .grid-2col { grid-template-columns: 1fr; }
             .course-grid { grid-template-columns: 1fr; }
             .notif-panel { width: 100%; right: -100%; }
+            .drawer-panel { width: 100vw; right: -100vw; }
             .code-input-group { max-width: 100%; }
             .network-bar { gap: 10px; font-size: .62rem; }
             .topbar-name { display: none; }
             .checks-grid { grid-template-columns: 1fr; }
+            
+            .card { border-radius: 0; border-left: none; border-right: none; margin-left: -8px; margin-right: -8px; }
+            .card-header, .card-body { padding-left: 12px; padding-right: 12px; }
+            
+            input[type="text"], input[type="password"], input[type="email"], select { font-size: 16px !important; min-height: 44px; }
+            .btn { min-height: 44px; display: inline-flex; align-items: center; justify-content: center; }
+            .qa-btn { min-height: 40px; padding: 0.4rem 0.75rem; }
         }
         @media (max-width: 480px) {
             .stats-grid { grid-template-columns: 1fr 1fr; gap: 8px; }
             .stat-card { padding: 12px; }
             .stat-value { font-size: 1.2rem; }
+            .code-input-group { flex-direction: column; }
         }
 
         /* ── TOPOLOGY ── */
@@ -1772,5 +1782,6 @@
     }
 </script>
 
+<script src="/static/js/responsive.js"></script>
 </body>
 </html>

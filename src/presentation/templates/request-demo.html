@@ -1,0 +1,2647 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Request Demo — Attendrix</title>
+    <link rel="icon" type="image/svg+xml" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 32 32'%3E%3Crect width='32' height='32' rx='6' fill='%234F46E5'/%3E%3Ctext x='16' y='22' text-anchor='middle' fill='white' font-size='20' font-family='Arial' font-weight='bold'%3EA%3C/text%3E%3C/svg%3E">
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet" crossorigin="anonymous">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css" crossorigin="anonymous">
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800;900&display=swap" rel="stylesheet" crossorigin="anonymous">
+    <style>
+        :root {
+            --primary: #4F46E5;
+            --primary-dark: #3730A3;
+            --primary-light: #818CF8;
+            --accent: #06B6D4;
+            --dark: #0F172A;
+            --light: #F8FAFC;
+            --text: #1E293B;
+            --text-muted: #64748B;
+            --border: #E2E8F0;
+            --gradient-primary: linear-gradient(135deg, #4F46E5 0%, #7C3AED 100%);
+            --gradient-hero: linear-gradient(160deg, #0F172A 0%, #1E293B 50%, #0F172A 100%);
+            --shadow-sm: 0 1px 3px rgba(0,0,0,0.1);
+            --shadow-md: 0 4px 20px rgba(0,0,0,0.15);
+            --shadow-lg: 0 10px 40px rgba(0,0,0,0.2);
+            --shadow-xl: 0 20px 60px rgba(0,0,0,0.25);
+            --shadow-glow: 0 0 40px rgba(79,70,229,0.15);
+        }
+
+        html { scroll-behavior: smooth; overflow-x: hidden; width: 100%; }
+        * { margin: 0; padding: 0; box-sizing: border-box; }
+
+        body {
+            font-family: 'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
+            background: var(--dark);
+            color: #fff;
+            line-height: 1.6;
+            overflow-x: hidden;
+            width: 100%;
+            max-width: 100vw;
+            position: relative;
+        }
+
+        /* ─── CURSOR GLOW ─── */
+        #cursorGlow {
+            position: fixed;
+            width: 500px;
+            height: 500px;
+            border-radius: 50%;
+            background: radial-gradient(circle, rgba(79,70,229,0.06) 0%, transparent 70%);
+            pointer-events: none;
+            z-index: 0;
+            transform: translate(-50%, -50%);
+            transition: opacity 0.3s ease;
+        }
+
+        /* ─── AMBIENT PARTICLES ─── */
+        .particle {
+            position: fixed;
+            width: 4px;
+            height: 4px;
+            background: rgba(129,140,248,0.3);
+            border-radius: 50%;
+            pointer-events: none;
+            z-index: 0;
+        }
+
+        /* ─── NAVBAR ─── */
+        .navbar {
+            position: fixed;
+            top: 0;
+            left: 0;
+            right: 0;
+            z-index: 1000;
+            background: rgba(15,23,42,0.8);
+            backdrop-filter: blur(20px);
+            -webkit-backdrop-filter: blur(20px);
+            border-bottom: 1px solid rgba(255,255,255,0.06);
+            padding: 0;
+            height: 72px;
+            display: flex;
+            align-items: center;
+            transition: all 0.4s ease;
+        }
+
+        .navbar.scrolled {
+            background: rgba(15,23,42,0.95);
+            box-shadow: 0 4px 30px rgba(0,0,0,0.3);
+        }
+
+        .navbar .container {
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            height: 100%;
+        }
+
+        .navbar-brand {
+            display: flex;
+            align-items: center;
+            gap: 0.6rem;
+            font-weight: 800;
+            font-size: 1.3rem;
+            color: #fff;
+            text-decoration: none;
+        }
+
+        .navbar-brand .brand-icon {
+            width: 34px;
+            height: 34px;
+            background: var(--gradient-primary);
+            border-radius: 10px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 1rem;
+            color: #fff;
+            box-shadow: 0 4px 12px rgba(79,70,229,0.4);
+        }
+
+        .navbar-brand .brand-text {
+            background: linear-gradient(135deg, #fff 60%, rgba(255,255,255,0.7));
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+            background-clip: text;
+        }
+
+        .navbar-links {
+            display: flex;
+            align-items: center;
+            gap: 2rem;
+        }
+
+        .navbar-links a {
+            color: rgba(255,255,255,0.6);
+            text-decoration: none;
+            font-size: 0.85rem;
+            font-weight: 500;
+            transition: color 0.3s ease;
+            position: relative;
+        }
+
+        .navbar-links a:hover { color: #fff; }
+
+        .btn-nav {
+            background: var(--gradient-primary);
+            color: #fff;
+            padding: 0.5rem 1.4rem;
+            border-radius: 10px;
+            text-decoration: none;
+            font-weight: 600;
+            font-size: 0.85rem;
+            transition: all 0.3s ease;
+            border: none;
+            box-shadow: 0 4px 14px rgba(79,70,229,0.35);
+        }
+
+        .btn-nav:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 6px 20px rgba(79,70,229,0.5);
+            color: #fff;
+        }
+
+        .mobile-toggle {
+            display: none;
+            background: none;
+            border: none;
+            font-size: 1.3rem;
+            color: #fff;
+            cursor: pointer;
+            padding: 0.4rem;
+        }
+
+        /* ─── HERO ─── */
+        .hero {
+            position: relative;
+            min-height: 100vh;
+            display: flex;
+            align-items: center;
+            padding: 8rem 0 4rem;
+            background: var(--gradient-hero);
+            overflow: hidden;
+        }
+
+        .hero-grid-bg {
+            position: absolute;
+            inset: 0;
+            background-image:
+                linear-gradient(rgba(79,70,229,0.03) 1px, transparent 1px),
+                linear-gradient(90deg, rgba(79,70,229,0.03) 1px, transparent 1px);
+            background-size: 60px 60px;
+            pointer-events: none;
+        }
+
+        .hero-glow-1 {
+            position: absolute;
+            top: -20%;
+            left: -10%;
+            width: 600px;
+            height: 600px;
+            background: radial-gradient(circle, rgba(79,70,229,0.12) 0%, transparent 60%);
+            pointer-events: none;
+        }
+
+        .hero-glow-2 {
+            position: absolute;
+            bottom: -30%;
+            right: -10%;
+            width: 500px;
+            height: 500px;
+            background: radial-gradient(circle, rgba(6,182,212,0.08) 0%, transparent 60%);
+            pointer-events: none;
+        }
+
+        .hero-container {
+            max-width: 1200px;
+            margin: 0 auto;
+            padding: 0 2rem;
+            display: grid;
+            grid-template-columns: 1fr 1.1fr;
+            gap: 4rem;
+            align-items: center;
+            position: relative;
+            z-index: 1;
+            width: 100%;
+        }
+
+        .hero-badge {
+            display: inline-flex;
+            align-items: center;
+            gap: 0.5rem;
+            font-size: 0.7rem;
+            font-weight: 700;
+            text-transform: uppercase;
+            letter-spacing: 1.5px;
+            color: var(--primary-light);
+            background: rgba(79,70,229,0.12);
+            padding: 0.4rem 0.9rem;
+            border-radius: 20px;
+            border: 1px solid rgba(79,70,229,0.15);
+            margin-bottom: 1.5rem;
+        }
+
+        .hero-badge .live-dot {
+            width: 6px;
+            height: 6px;
+            background: #10B981;
+            border-radius: 50%;
+            animation: pulse 2s infinite;
+        }
+
+        @keyframes pulse { 0%,100% { opacity:1; } 50% { opacity:0.4; } }
+
+        .hero h1 {
+            font-size: clamp(2.5rem, 5vw, 4rem);
+            font-weight: 900;
+            line-height: 1.08;
+            letter-spacing: -1px;
+            margin-bottom: 1.25rem;
+        }
+
+        .hero h1 .gradient-text {
+            background: var(--gradient-primary);
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+            background-clip: text;
+            background-size: 200% 200%;
+            animation: gradientShift 4s ease infinite;
+        }
+
+        @keyframes gradientShift {
+            0%,100% { background-position: 0% 50%; }
+            50% { background-position: 100% 50%; }
+        }
+
+        .hero p {
+            font-size: 1.1rem;
+            color: rgba(255,255,255,0.55);
+            max-width: 520px;
+            line-height: 1.7;
+            margin-bottom: 2rem;
+        }
+
+        .hero-buttons {
+            display: flex;
+            gap: 1rem;
+            flex-wrap: wrap;
+        }
+
+        .btn-primary {
+            background: var(--gradient-primary);
+            color: #fff;
+            padding: 0.9rem 2rem;
+            border-radius: 12px;
+            text-decoration: none;
+            font-weight: 600;
+            font-size: 0.95rem;
+            transition: all 0.3s cubic-bezier(0.4,0,0.2,1);
+            display: inline-flex;
+            align-items: center;
+            gap: 0.5rem;
+            border: none;
+            cursor: pointer;
+            box-shadow: 0 4px 20px rgba(79,70,229,0.4);
+            position: relative;
+            overflow: hidden;
+        }
+
+        .btn-primary::before {
+            content: '';
+            position: absolute;
+            inset: 0;
+            background: linear-gradient(135deg, transparent 30%, rgba(255,255,255,0.1) 50%, transparent 70%);
+            transform: translateX(-100%);
+            transition: transform 0.6s ease;
+        }
+
+        .btn-primary:hover::before { transform: translateX(100%); }
+        .btn-primary:hover { transform: translateY(-3px); box-shadow: 0 8px 30px rgba(79,70,229,0.5); }
+
+        .btn-secondary {
+            background: rgba(255,255,255,0.05);
+            color: #fff;
+            padding: 0.9rem 2rem;
+            border-radius: 12px;
+            text-decoration: none;
+            font-weight: 600;
+            font-size: 0.95rem;
+            transition: all 0.3s ease;
+            display: inline-flex;
+            align-items: center;
+            gap: 0.5rem;
+            border: 1px solid rgba(255,255,255,0.1);
+        }
+
+        .btn-secondary:hover {
+            background: rgba(255,255,255,0.08);
+            border-color: rgba(255,255,255,0.2);
+            transform: translateY(-3px);
+        }
+
+        .hero-stats {
+            display: flex;
+            gap: 2rem;
+            margin-top: 2.5rem;
+            padding-top: 2rem;
+            border-top: 1px solid rgba(255,255,255,0.06);
+        }
+
+        .hero-stat h3 {
+            font-size: 1.5rem;
+            font-weight: 800;
+        }
+
+        .hero-stat p {
+            font-size: 0.8rem;
+            color: rgba(255,255,255,0.4);
+            margin: 0;
+        }
+
+        /* ─── LIVE DASHBOARD ─── */
+        .dashboard-preview {
+            position: relative;
+            animation: floatPreview 4s ease-in-out infinite;
+        }
+
+        @keyframes floatPreview {
+            0%,100% { transform: translateY(0); }
+            50% { transform: translateY(-12px); }
+        }
+
+        .dashboard-card {
+            background: rgba(255,255,255,0.04);
+            backdrop-filter: blur(24px);
+            -webkit-backdrop-filter: blur(24px);
+            border-radius: 24px;
+            border: 1px solid rgba(255,255,255,0.08);
+            overflow: hidden;
+            box-shadow: 0 30px 80px rgba(0,0,0,0.4);
+            position: relative;
+        }
+
+        .dashboard-card::before {
+            content: '';
+            position: absolute;
+            inset: 0;
+            background: radial-gradient(ellipse at top right, rgba(79,70,229,0.06), transparent 60%);
+            pointer-events: none;
+        }
+
+        .dash-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            padding: 1rem 1.25rem;
+            border-bottom: 1px solid rgba(255,255,255,0.06);
+        }
+
+        .dash-header-left {
+            display: flex;
+            align-items: center;
+            gap: 0.75rem;
+        }
+
+        .dash-header-left .dash-dot {
+            width: 10px; height: 10px; border-radius: 50%;
+        }
+
+        .dash-header-left .dash-dot.red { background: #EF4444; }
+        .dash-header-left .dash-dot.yellow { background: #F59E0B; }
+        .dash-header-left .dash-dot.green { background: #10B981; }
+
+        .dash-header-title {
+            font-size: 0.75rem;
+            font-weight: 600;
+            color: rgba(255,255,255,0.5);
+            letter-spacing: 0.5px;
+        }
+
+        .dash-header-right {
+            display: flex;
+            align-items: center;
+            gap: 0.75rem;
+        }
+
+        .dash-status {
+            display: flex;
+            align-items: center;
+            gap: 0.35rem;
+            font-size: 0.65rem;
+            font-weight: 600;
+            color: #10B981;
+            background: rgba(16,185,129,0.1);
+            padding: 0.25rem 0.6rem;
+            border-radius: 6px;
+        }
+
+        .dash-status .pulse-dot {
+            width: 5px; height: 5px; border-radius: 50%;
+            background: #10B981;
+            animation: pulse 1.5s infinite;
+        }
+
+        .dash-body {
+            padding: 1.25rem;
+        }
+
+        .dash-grid {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 0.75rem;
+            margin-bottom: 1rem;
+        }
+
+        .dash-metric {
+            background: rgba(255,255,255,0.03);
+            border-radius: 12px;
+            padding: 1rem;
+            border: 1px solid rgba(255,255,255,0.04);
+            transition: all 0.3s ease;
+        }
+
+        .dash-metric:hover {
+            background: rgba(255,255,255,0.05);
+            transform: translateY(-2px);
+        }
+
+        .dash-metric-label {
+            font-size: 0.65rem;
+            color: rgba(255,255,255,0.4);
+            font-weight: 600;
+            text-transform: uppercase;
+            letter-spacing: 0.5px;
+            margin-bottom: 0.4rem;
+        }
+
+        .dash-metric-value {
+            font-size: 1.5rem;
+            font-weight: 800;
+        }
+
+        .dash-metric-value.green { color: #10B981; }
+        .dash-metric-value.blue { color: var(--primary-light); }
+        .dash-metric-value.yellow { color: #F59E0B; }
+        .dash-metric-value.pink { color: #EC4899; }
+
+        .dash-metric-change {
+            font-size: 0.7rem;
+            color: #10B981;
+            font-weight: 600;
+            margin-top: 0.2rem;
+        }
+
+        .dash-metric-change.negative { color: #EF4444; }
+
+        .dash-chart {
+            background: rgba(255,255,255,0.02);
+            border-radius: 12px;
+            padding: 1rem;
+            border: 1px solid rgba(255,255,255,0.04);
+            margin-bottom: 0.75rem;
+        }
+
+        .dash-chart-title {
+            font-size: 0.7rem;
+            color: rgba(255,255,255,0.4);
+            font-weight: 600;
+            margin-bottom: 0.75rem;
+        }
+
+        .dash-bars {
+            display: flex;
+            align-items: flex-end;
+            gap: 0.4rem;
+            height: 50px;
+        }
+
+        .dash-bar {
+            flex: 1;
+            border-radius: 3px;
+            background: var(--gradient-primary);
+            opacity: 0.7;
+            transition: all 0.3s ease;
+            position: relative;
+        }
+
+        .dash-bar:hover {
+            opacity: 1;
+            transform: scaleY(1.05);
+            transform-origin: bottom;
+        }
+
+        .dash-bar:nth-child(1) { height: 60%; }
+        .dash-bar:nth-child(2) { height: 80%; }
+        .dash-bar:nth-child(3) { height: 45%; }
+        .dash-bar:nth-child(4) { height: 90%; }
+        .dash-bar:nth-child(5) { height: 70%; }
+        .dash-bar:nth-child(6) { height: 85%; }
+        .dash-bar:nth-child(7) { height: 55%; }
+
+        .dash-row {
+            display: flex;
+            gap: 0.75rem;
+        }
+
+        .dash-row > * { flex: 1; }
+
+        .dash-feed {
+            background: rgba(255,255,255,0.02);
+            border-radius: 12px;
+            padding: 0.75rem;
+            border: 1px solid rgba(255,255,255,0.04);
+        }
+
+        .dash-feed-item {
+            display: flex;
+            align-items: center;
+            gap: 0.6rem;
+            padding: 0.4rem 0;
+            border-bottom: 1px solid rgba(255,255,255,0.03);
+            font-size: 0.75rem;
+        }
+
+        .dash-feed-item:last-child { border-bottom: none; }
+
+        .dash-feed-icon {
+            width: 22px;
+            height: 22px;
+            border-radius: 6px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 0.6rem;
+            flex-shrink: 0;
+        }
+
+        .dash-feed-icon.green { background: rgba(16,185,129,0.15); color: #10B981; }
+        .dash-feed-icon.blue { background: rgba(79,70,229,0.15); color: var(--primary-light); }
+        .dash-feed-icon.yellow { background: rgba(245,158,11,0.15); color: #F59E0B; }
+        .dash-feed-icon.red { background: rgba(239,68,68,0.15); color: #EF4444; }
+        .dash-feed-icon.purple { background: rgba(139,92,246,0.15); color: #8B5CF6; }
+
+        .dash-feed-text {
+            flex: 1;
+            color: rgba(255,255,255,0.6);
+        }
+
+        .dash-feed-text strong { color: rgba(255,255,255,0.85); }
+
+        .dash-feed-time {
+            font-size: 0.65rem;
+            color: rgba(255,255,255,0.3);
+        }
+
+        .dash-chips {
+            display: flex;
+            gap: 0.4rem;
+            flex-wrap: wrap;
+            margin-top: 0.75rem;
+        }
+
+        .dash-chip {
+            font-size: 0.6rem;
+            font-weight: 600;
+            padding: 0.2rem 0.55rem;
+            border-radius: 6px;
+        }
+
+        .dash-chip.green { background: rgba(16,185,129,0.12); color: #10B981; }
+        .dash-chip.yellow { background: rgba(245,158,11,0.12); color: #F59E0B; }
+        .dash-chip.red { background: rgba(239,68,68,0.12); color: #EF4444; }
+        .dash-chip.blue { background: rgba(79,70,229,0.12); color: var(--primary-light); }
+        .dash-chip.purple { background: rgba(139,92,246,0.12); color: #8B5CF6; }
+
+        .dash-alert {
+            display: flex;
+            align-items: center;
+            gap: 0.5rem;
+            background: rgba(239,68,68,0.08);
+            border: 1px solid rgba(239,68,68,0.12);
+            border-radius: 8px;
+            padding: 0.5rem 0.75rem;
+            margin-top: 0.75rem;
+            font-size: 0.7rem;
+        }
+
+        .dash-alert i { color: #EF4444; font-size: 0.75rem; }
+        .dash-alert span { color: rgba(255,255,255,0.6); }
+        .dash-alert strong { color: #EF4444; }
+
+        /* Floating card over dashboard */
+        .dash-float-card {
+            position: absolute;
+            top: 15%;
+            right: -8%;
+            background: rgba(15,23,42,0.9);
+            backdrop-filter: blur(16px);
+            border-radius: 16px;
+            padding: 1rem 1.25rem;
+            border: 1px solid rgba(255,255,255,0.08);
+            box-shadow: 0 20px 50px rgba(0,0,0,0.4);
+            animation: floatCard 5s ease-in-out infinite;
+            z-index: 2;
+        }
+
+        .dash-float-card-2 {
+            position: absolute;
+            bottom: 20%;
+            left: -10%;
+            background: rgba(15,23,42,0.9);
+            backdrop-filter: blur(16px);
+            border-radius: 16px;
+            padding: 0.8rem 1.1rem;
+            border: 1px solid rgba(255,255,255,0.08);
+            box-shadow: 0 20px 50px rgba(0,0,0,0.4);
+            animation: floatCard 6s ease-in-out infinite;
+            animation-delay: -2s;
+            z-index: 2;
+        }
+
+        @keyframes floatCard {
+            0%,100% { transform: translateY(0) rotate(0deg); }
+            50% { transform: translateY(-8px) rotate(1deg); }
+        }
+
+        .dash-float-title {
+            font-size: 0.65rem;
+            font-weight: 600;
+            color: rgba(255,255,255,0.4);
+            margin-bottom: 0.3rem;
+        }
+
+        .dash-float-value {
+            font-size: 0.85rem;
+            font-weight: 700;
+            color: #fff;
+        }
+
+        .dash-float-value .highlight { color: #10B981; }
+
+        .dash-float-icon {
+            width: 28px;
+            height: 28px;
+            border-radius: 8px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 0.7rem;
+            margin-bottom: 0.4rem;
+        }
+
+        .dash-float-icon.green-bg { background: rgba(16,185,129,0.15); color: #10B981; }
+        .dash-float-icon.blue-bg { background: rgba(79,70,229,0.15); color: var(--primary-light); }
+
+        /* ─── TRUST SECTION ─── */
+        .trust-section {
+            padding: 5rem 0;
+            background: var(--dark);
+            position: relative;
+        }
+
+        .trust-container {
+            max-width: 1200px;
+            margin: 0 auto;
+            padding: 0 2rem;
+        }
+
+        .trust-header {
+            text-align: center;
+            margin-bottom: 3rem;
+        }
+
+        .trust-header h2 {
+            font-size: 2rem;
+            font-weight: 800;
+            margin-bottom: 0.75rem;
+        }
+
+        .trust-header p {
+            color: rgba(255,255,255,0.5);
+            font-size: 1rem;
+            max-width: 500px;
+            margin: 0 auto;
+        }
+
+        .trust-stats {
+            display: grid;
+            grid-template-columns: repeat(4, 1fr);
+            gap: 1.5rem;
+            margin-bottom: 3rem;
+        }
+
+        .trust-stat {
+            text-align: center;
+            padding: 2rem;
+            background: rgba(255,255,255,0.02);
+            border-radius: 20px;
+            border: 1px solid rgba(255,255,255,0.04);
+            transition: all 0.3s ease;
+        }
+
+        .trust-stat:hover {
+            background: rgba(255,255,255,0.04);
+            transform: translateY(-4px);
+            border-color: rgba(79,70,229,0.15);
+        }
+
+        .trust-stat-number {
+            font-size: 2.5rem;
+            font-weight: 900;
+            background: var(--gradient-primary);
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+            background-clip: text;
+        }
+
+        .trust-stat-label {
+            color: rgba(255,255,255,0.5);
+            font-size: 0.8rem;
+            font-weight: 500;
+            margin-top: 0.3rem;
+        }
+
+        .trust-testimonials {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 1.5rem;
+        }
+
+        .trust-testimonial {
+            background: rgba(255,255,255,0.02);
+            border-radius: 20px;
+            padding: 2rem;
+            border: 1px solid rgba(255,255,255,0.04);
+            transition: all 0.3s ease;
+            position: relative;
+        }
+
+        .trust-testimonial:hover {
+            border-color: rgba(79,70,229,0.15);
+            transform: translateY(-3px);
+            box-shadow: var(--shadow-glow);
+        }
+
+        .trust-testimonial .quote {
+            color: rgba(255,255,255,0.6);
+            font-size: 0.9rem;
+            line-height: 1.7;
+            margin-bottom: 1.25rem;
+            font-style: italic;
+        }
+
+        .trust-testimonial .author {
+            display: flex;
+            align-items: center;
+            gap: 0.75rem;
+        }
+
+        .trust-testimonial .author-avatar {
+            width: 40px;
+            height: 40px;
+            border-radius: 50%;
+            background: var(--gradient-primary);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-weight: 700;
+            font-size: 0.85rem;
+            color: #fff;
+        }
+
+        .trust-testimonial .author-info h4 {
+            font-size: 0.85rem;
+            font-weight: 700;
+        }
+
+        .trust-testimonial .author-info p {
+            font-size: 0.75rem;
+            color: rgba(255,255,255,0.4);
+        }
+
+        .trust-logos {
+            display: flex;
+            justify-content: center;
+            gap: 3rem;
+            flex-wrap: wrap;
+            margin-top: 3rem;
+            opacity: 0.4;
+        }
+
+        .trust-logos span {
+            font-size: 0.9rem;
+            font-weight: 700;
+            color: rgba(255,255,255,0.3);
+            letter-spacing: 1px;
+        }
+
+        /* ─── WHY ATTENDRIX ─── */
+        .why-premium {
+            padding: 6rem 0;
+            background: var(--light);
+            position: relative;
+        }
+
+        .why-premium-container {
+            max-width: 1200px;
+            margin: 0 auto;
+            padding: 0 2rem;
+        }
+
+        .why-premium-header {
+            text-align: center;
+            margin-bottom: 4rem;
+        }
+
+        .why-premium-header h2 {
+            font-size: 2.5rem;
+            font-weight: 800;
+            color: var(--text);
+            margin-bottom: 0.75rem;
+        }
+
+        .why-premium-header h2 span {
+            background: var(--gradient-primary);
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+            background-clip: text;
+        }
+
+        .why-premium-header p {
+            color: var(--text-muted);
+            font-size: 1.05rem;
+            max-width: 550px;
+            margin: 0 auto;
+        }
+
+        .why-feature {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 3rem;
+            align-items: center;
+            margin-bottom: 5rem;
+        }
+
+        .why-feature:last-child { margin-bottom: 0; }
+        .why-feature.reverse { direction: rtl; }
+        .why-feature.reverse > * { direction: ltr; }
+
+        .why-feature-content h3 {
+            font-size: 1.5rem;
+            font-weight: 800;
+            color: var(--text);
+            margin-bottom: 0.75rem;
+        }
+
+        .why-feature-content p {
+            color: var(--text-muted);
+            line-height: 1.7;
+            font-size: 0.95rem;
+        }
+
+        .why-feature-content .feature-tag {
+            display: inline-block;
+            font-size: 0.65rem;
+            font-weight: 700;
+            text-transform: uppercase;
+            letter-spacing: 1.5px;
+            color: var(--primary);
+            background: rgba(79,70,229,0.08);
+            padding: 0.3rem 0.7rem;
+            border-radius: 20px;
+            border: 1px solid rgba(79,70,229,0.1);
+            margin-bottom: 1rem;
+        }
+
+        .why-feature-visual {
+            position: relative;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+        }
+
+        .why-feature-card {
+            background: #fff;
+            border-radius: 20px;
+            padding: 2rem;
+            border: 1px solid var(--border);
+            box-shadow: var(--shadow-xl);
+            width: 100%;
+            transition: all 0.4s ease;
+        }
+
+        .why-feature-card:hover {
+            transform: translateY(-6px);
+            box-shadow: 0 30px 80px rgba(0,0,0,0.12);
+        }
+
+        .why-feature-card .card-icon-big {
+            width: 60px;
+            height: 60px;
+            border-radius: 16px;
+            background: linear-gradient(135deg, #EEF2FF 0%, #E0E7FF 100%);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 1.4rem;
+            color: var(--primary);
+            margin-bottom: 1rem;
+            transition: all 0.4s ease;
+        }
+
+        .why-feature-card:hover .card-icon-big {
+            background: var(--gradient-primary);
+            color: #fff;
+            box-shadow: 0 8px 24px rgba(79,70,229,0.3);
+        }
+
+        .why-feature-card h4 {
+            font-size: 1rem;
+            font-weight: 700;
+            color: var(--text);
+            margin-bottom: 0.5rem;
+        }
+
+        .why-feature-card p {
+            font-size: 0.85rem;
+            color: var(--text-muted);
+            line-height: 1.6;
+            margin: 0;
+        }
+
+        .why-feature-list {
+            list-style: none;
+            margin-top: 1.25rem;
+        }
+
+        .why-feature-list li {
+            display: flex;
+            align-items: center;
+            gap: 0.5rem;
+            font-size: 0.85rem;
+            color: var(--text);
+            padding: 0.4rem 0;
+        }
+
+        .why-feature-list li i {
+            color: var(--primary);
+            font-size: 0.75rem;
+        }
+
+        .why-network-viz {
+            display: grid;
+            grid-template-columns: repeat(3, 1fr);
+            gap: 0.75rem;
+        }
+
+        .why-network-node {
+            background: var(--light);
+            border-radius: 12px;
+            padding: 1rem;
+            text-align: center;
+            border: 1px solid var(--border);
+            transition: all 0.3s ease;
+        }
+
+        .why-network-node:hover {
+            border-color: var(--primary-light);
+            transform: translateY(-3px);
+            box-shadow: var(--shadow-md);
+        }
+
+        .why-network-node i {
+            font-size: 1.2rem;
+            color: var(--primary);
+            margin-bottom: 0.3rem;
+        }
+
+        .why-network-node span {
+            display: block;
+            font-size: 0.7rem;
+            font-weight: 600;
+            color: var(--text);
+        }
+
+        .why-network-node .node-status {
+            display: inline-block;
+            width: 6px;
+            height: 6px;
+            border-radius: 50%;
+            margin-top: 0.3rem;
+        }
+
+        .why-network-node .node-status.online { background: #10B981; box-shadow: 0 0 8px rgba(16,185,129,0.4); }
+        .why-network-node .node-status.syncing { background: #F59E0B; box-shadow: 0 0 8px rgba(245,158,11,0.4); animation: pulse 1s infinite; }
+
+        /* ─── HOW IT WORKS ─── */
+        .how-premium {
+            padding: 6rem 0;
+            background: var(--dark);
+            position: relative;
+        }
+
+        .how-premium-container {
+            max-width: 1200px;
+            margin: 0 auto;
+            padding: 0 2rem;
+        }
+
+        .how-premium-header {
+            text-align: center;
+            margin-bottom: 4rem;
+        }
+
+        .how-premium-header h2 {
+            font-size: 2.5rem;
+            font-weight: 800;
+            color: #fff;
+            margin-bottom: 0.75rem;
+        }
+
+        .how-premium-header p {
+            color: rgba(255,255,255,0.5);
+            font-size: 1.05rem;
+            max-width: 550px;
+            margin: 0 auto;
+        }
+
+        .how-steps {
+            display: grid;
+            grid-template-columns: repeat(3, 1fr);
+            gap: 1.5rem;
+            position: relative;
+        }
+
+        .how-steps::before {
+            content: '';
+            position: absolute;
+            top: 3rem;
+            left: 10%;
+            right: 10%;
+            height: 2px;
+            background: linear-gradient(90deg, var(--primary), var(--accent), var(--primary));
+            opacity: 0.15;
+        }
+
+        .how-step-card {
+            background: rgba(255,255,255,0.02);
+            border-radius: 20px;
+            padding: 2rem;
+            border: 1px solid rgba(255,255,255,0.04);
+            transition: all 0.4s ease;
+            position: relative;
+            text-align: center;
+        }
+
+        .how-step-card:hover {
+            border-color: rgba(79,70,229,0.2);
+            transform: translateY(-6px);
+            box-shadow: 0 20px 60px rgba(0,0,0,0.3);
+            background: rgba(255,255,255,0.04);
+        }
+
+        .how-step-number {
+            width: 44px;
+            height: 44px;
+            border-radius: 50%;
+            background: var(--gradient-primary);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 0.9rem;
+            font-weight: 800;
+            color: #fff;
+            margin: 0 auto 1.25rem;
+            box-shadow: 0 0 30px rgba(79,70,229,0.3);
+            position: relative;
+            z-index: 2;
+        }
+
+        .how-step-card h3 {
+            font-size: 1rem;
+            font-weight: 700;
+            color: #fff;
+            margin-bottom: 0.5rem;
+        }
+
+        .how-step-card p {
+            font-size: 0.85rem;
+            color: rgba(255,255,255,0.5);
+            line-height: 1.6;
+            margin: 0;
+        }
+
+        .how-step-card .step-icon {
+            font-size: 1.5rem;
+            color: var(--primary-light);
+            margin-bottom: 0.75rem;
+        }
+
+        /* ─── FORM SECTION ─── */
+        .form-section {
+            padding: 6rem 0;
+            background: var(--light);
+            position: relative;
+            overflow: hidden;
+        }
+
+        .form-section::before {
+            content: '';
+            position: absolute;
+            top: -50%;
+            right: -20%;
+            width: 600px;
+            height: 600px;
+            background: radial-gradient(circle, rgba(79,70,229,0.05) 0%, transparent 60%);
+            pointer-events: none;
+        }
+
+        .form-container {
+            max-width: 1200px;
+            margin: 0 auto;
+            padding: 0 2rem;
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 4rem;
+            align-items: center;
+            position: relative;
+        }
+
+        .form-left h2 {
+            font-size: 2.5rem;
+            font-weight: 800;
+            color: var(--text);
+            margin-bottom: 1rem;
+        }
+
+        .form-left h2 span {
+            background: var(--gradient-primary);
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+            background-clip: text;
+        }
+
+        .form-left p {
+            color: var(--text-muted);
+            font-size: 1rem;
+            line-height: 1.7;
+            margin-bottom: 1.5rem;
+        }
+
+        .form-left .benefits {
+            list-style: none;
+        }
+
+        .form-left .benefits li {
+            display: flex;
+            align-items: center;
+            gap: 0.6rem;
+            padding: 0.5rem 0;
+            font-size: 0.9rem;
+            color: var(--text);
+        }
+
+        .form-left .benefits li i {
+            color: #10B981;
+            font-size: 0.8rem;
+            width: 18px;
+        }
+
+        .form-card {
+            background: #fff;
+            border-radius: 24px;
+            padding: 2.5rem;
+            border: 1px solid var(--border);
+            box-shadow: var(--shadow-xl);
+            position: relative;
+        }
+
+        .form-card::before {
+            content: '';
+            position: absolute;
+            inset: -1px;
+            border-radius: 25px;
+            background: linear-gradient(135deg, rgba(79,70,229,0.1), transparent, rgba(79,70,229,0.1));
+            z-index: -1;
+        }
+
+        .form-card h3 {
+            font-size: 1.25rem;
+            font-weight: 700;
+            color: var(--text);
+            margin-bottom: 0.5rem;
+        }
+
+        .form-card .form-sub {
+            font-size: 0.85rem;
+            color: var(--text-muted);
+            margin-bottom: 1.5rem;
+        }
+
+        .form-group {
+            margin-bottom: 1.25rem;
+            position: relative;
+        }
+
+        .form-group label {
+            display: block;
+            font-size: 0.75rem;
+            font-weight: 600;
+            color: var(--text);
+            margin-bottom: 0.4rem;
+            text-transform: uppercase;
+            letter-spacing: 0.5px;
+        }
+
+        .form-group input,
+        .form-group select {
+            width: 100%;
+            padding: 0.8rem 1rem;
+            border-radius: 12px;
+            border: 1.5px solid var(--border);
+            font-family: 'Inter', sans-serif;
+            font-size: 0.9rem;
+            color: var(--text);
+            background: var(--light);
+            transition: all 0.3s ease;
+            outline: none;
+        }
+
+        .form-group input:focus,
+        .form-group select:focus {
+            border-color: var(--primary);
+            box-shadow: 0 0 0 3px rgba(79,70,229,0.1);
+            background: #fff;
+        }
+
+        .form-group input::placeholder {
+            color: var(--text-muted);
+            font-weight: 400;
+            font-size: 0.85rem;
+        }
+
+        .form-group select {
+            cursor: pointer;
+            appearance: none;
+            background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='12' height='8'%3E%3Cpath d='M1 1l5 5 5-5' stroke='%2364748B' stroke-width='1.5' fill='none'/%3E%3C/svg%3E");
+            background-repeat: no-repeat;
+            background-position: right 1rem center;
+        }
+
+        .form-group .error-msg {
+            font-size: 0.75rem;
+            color: #EF4444;
+            margin-top: 0.3rem;
+            display: none;
+        }
+
+        .form-group.error input {
+            border-color: #EF4444;
+            box-shadow: 0 0 0 3px rgba(239,68,68,0.1);
+        }
+
+        .form-group.error .error-msg { display: block; }
+
+        .form-group.success input {
+            border-color: #10B981;
+            box-shadow: 0 0 0 3px rgba(16,185,129,0.1);
+        }
+
+        .btn-submit {
+            width: 100%;
+            padding: 0.9rem;
+            border-radius: 12px;
+            background: var(--gradient-primary);
+            color: #fff;
+            font-weight: 700;
+            font-size: 0.95rem;
+            border: none;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            box-shadow: 0 4px 20px rgba(79,70,229,0.3);
+            font-family: 'Inter', sans-serif;
+            position: relative;
+            overflow: hidden;
+        }
+
+        .btn-submit::before {
+            content: '';
+            position: absolute;
+            inset: 0;
+            background: linear-gradient(135deg, transparent 30%, rgba(255,255,255,0.1) 50%, transparent 70%);
+            transform: translateX(-100%);
+            transition: transform 0.6s ease;
+        }
+
+        .btn-submit:hover::before { transform: translateX(100%); }
+        .btn-submit:hover { transform: translateY(-2px); box-shadow: 0 8px 30px rgba(79,70,229,0.4); }
+
+        .btn-submit.loading {
+            pointer-events: none;
+            opacity: 0.7;
+        }
+
+        .btn-submit:disabled {
+            opacity: 0.5;
+            cursor: not-allowed;
+            transform: none;
+            pointer-events: none;
+        }
+
+        .btn-submit .spinner {
+            display: none;
+            width: 18px;
+            height: 18px;
+            border: 2px solid rgba(255,255,255,0.3);
+            border-top-color: #fff;
+            border-radius: 50%;
+            animation: spin 0.6s linear infinite;
+            margin: 0 auto;
+        }
+
+        .btn-submit.loading .spinner { display: block; }
+        .btn-submit.loading .btn-text { display: none; }
+
+        @keyframes spin { to { transform: rotate(360deg); } }
+
+        .form-footer-text {
+            text-align: center;
+            margin-top: 1rem;
+            font-size: 0.75rem;
+            color: var(--text-muted);
+        }
+
+        .form-footer-text a {
+            color: var(--primary);
+            text-decoration: none;
+        }
+
+        .form-success {
+            display: none;
+            text-align: center;
+            padding: 0.5rem 0.25rem;
+        }
+
+        .form-success.show { display: block; animation: successFadeIn 0.5s ease forwards; }
+
+        @keyframes successFadeIn { from { opacity: 0; transform: translateY(10px); } to { opacity: 1; transform: translateY(0); } }
+
+        /* Animated checkmark ring */
+        .success-check {
+            position: relative;
+            width: 72px;
+            height: 72px;
+            margin: 0 auto 1.25rem;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+        }
+
+        .success-check i {
+            font-size: 1.75rem;
+            color: #10B981;
+            position: relative;
+            z-index: 1;
+            animation: successPop 0.4s cubic-bezier(0.34,1.56,0.64,1) 0.1s both;
+        }
+
+        .success-check-ring {
+            position: absolute;
+            inset: 0;
+            border-radius: 50%;
+            border: 3px solid #10B981;
+            animation: successRing 0.6s ease-out 0.1s both;
+        }
+
+        @keyframes successPop { 0% { transform: scale(0); opacity: 0; } 100% { transform: scale(1); opacity: 1; } }
+        @keyframes successRing { 0% { transform: scale(0.3); opacity: 0; } 50% { opacity: 1; } 100% { transform: scale(1.15); opacity: 0; } }
+
+        .form-success h4 {
+            font-size: 1.35rem;
+            font-weight: 800;
+            color: var(--text);
+            margin-bottom: 0.4rem;
+        }
+
+        .form-success .success-lead {
+            font-size: 0.88rem;
+            color: var(--text-muted);
+            line-height: 1.6;
+            margin-bottom: 1.5rem;
+        }
+
+        .form-success .success-lead span { color: var(--primary); font-weight: 600; }
+
+        /* Timeline */
+        .success-timeline {
+            text-align: left;
+            margin: 0 auto 1.5rem;
+            max-width: 340px;
+        }
+
+        .tl-step {
+            display: flex;
+            gap: 0.85rem;
+            padding-bottom: 1.1rem;
+            position: relative;
+        }
+
+        .tl-step:not(:last-child)::after {
+            content: '';
+            position: absolute;
+            left: 15px;
+            top: 32px;
+            bottom: 0;
+            width: 1.5px;
+            background: linear-gradient(to bottom, var(--primary-alpha, rgba(79,70,229,0.25)), transparent);
+        }
+
+        .tl-dot {
+            width: 32px;
+            height: 32px;
+            min-width: 32px;
+            border-radius: 50%;
+            background: linear-gradient(135deg, var(--primary), #6366F1);
+            color: #fff;
+            font-size: 0.75rem;
+            font-weight: 700;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            flex-shrink: 0;
+        }
+
+        .tl-body { display: flex; flex-direction: column; gap: 0.15rem; padding-top: 0.25rem; }
+
+        .tl-title {
+            font-size: 0.83rem;
+            font-weight: 600;
+            color: var(--text);
+        }
+
+        .tl-desc {
+            font-size: 0.78rem;
+            color: var(--text-muted);
+            line-height: 1.4;
+        }
+
+        /* Primary CTA row */
+        .success-cta-row {
+            margin-bottom: 1rem;
+        }
+
+        .success-btn {
+            display: inline-flex;
+            align-items: center;
+            gap: 0.5rem;
+            padding: 0.85rem 2rem;
+            border-radius: 12px;
+            background: var(--gradient-primary);
+            color: #fff;
+            font-weight: 700;
+            font-size: 0.9rem;
+            border: none;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            box-shadow: 0 4px 20px rgba(79,70,229,0.3);
+            text-decoration: none;
+        }
+
+        .success-btn:hover { transform: translateY(-2px); box-shadow: 0 8px 30px rgba(79,70,229,0.4); }
+
+        /* Secondary links */
+        .success-links {
+            display: flex;
+            flex-wrap: wrap;
+            justify-content: center;
+            gap: 0.75rem 1.25rem;
+            margin-bottom: 1.25rem;
+        }
+
+        .sl-link {
+            display: inline-flex;
+            align-items: center;
+            gap: 0.4rem;
+            font-size: 0.8rem;
+            color: var(--text-muted);
+            text-decoration: none;
+            transition: color 0.2s ease;
+        }
+
+        .sl-link i { font-size: 0.85rem; color: var(--primary); }
+        .sl-link:hover { color: var(--primary); }
+
+        /* Trust bar */
+        .success-trust {
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            gap: 0.45rem;
+            font-size: 0.75rem;
+            color: var(--text-muted);
+            padding-top: 1rem;
+            border-top: 1px solid var(--border);
+        }
+
+        .success-trust i { color: #10B981; font-size: 0.8rem; }
+
+        /* ─── FINAL CTA ─── */
+        .cta-final {
+            padding: 6rem 0;
+            background: var(--gradient-hero);
+            position: relative;
+            overflow: hidden;
+            text-align: center;
+        }
+
+        .cta-final-glow {
+            position: absolute;
+            top: -30%;
+            left: 50%;
+            transform: translateX(-50%);
+            width: 700px;
+            height: 700px;
+            background: radial-gradient(circle, rgba(79,70,229,0.1) 0%, transparent 60%);
+            pointer-events: none;
+        }
+
+        .cta-final-container {
+            max-width: 700px;
+            margin: 0 auto;
+            padding: 0 2rem;
+            position: relative;
+            z-index: 1;
+        }
+
+        .cta-final h2 {
+            font-size: clamp(2rem, 4vw, 3rem);
+            font-weight: 900;
+            line-height: 1.1;
+            margin-bottom: 1rem;
+        }
+
+        .cta-final p {
+            color: rgba(255,255,255,0.55);
+            font-size: 1.05rem;
+            line-height: 1.7;
+            margin-bottom: 2rem;
+        }
+
+        .cta-final .btn-group {
+            display: flex;
+            gap: 1rem;
+            justify-content: center;
+            flex-wrap: wrap;
+        }
+
+        .cta-final .microcopy {
+            margin-top: 1.5rem;
+            font-size: 0.75rem;
+            color: rgba(255,255,255,0.35);
+        }
+
+        .cta-final .microcopy i {
+            color: #10B981;
+            margin-right: 0.3rem;
+        }
+
+        .cta-final-elements {
+            display: flex;
+            justify-content: center;
+            gap: 2rem;
+            margin-top: 3rem;
+            flex-wrap: wrap;
+        }
+
+        .cta-final-element {
+            display: flex;
+            align-items: center;
+            gap: 0.5rem;
+            font-size: 0.8rem;
+            color: rgba(255,255,255,0.45);
+        }
+
+        .cta-final-element i {
+            color: var(--primary-light);
+        }
+
+        /* ─── FOOTER ─── */
+        .footer {
+            padding: 3rem 0;
+            background: var(--dark);
+            text-align: center;
+            border-top: 1px solid rgba(255,255,255,0.04);
+        }
+
+        .footer-container {
+            max-width: 1200px;
+            margin: 0 auto;
+            padding: 0 2rem;
+        }
+
+        .footer-links {
+            display: flex;
+            justify-content: center;
+            gap: 2rem;
+            margin-bottom: 1.5rem;
+            flex-wrap: wrap;
+        }
+
+        .footer-links a {
+            color: rgba(255,255,255,0.5);
+            text-decoration: none;
+            font-size: 0.85rem;
+            transition: color 0.3s ease;
+        }
+
+        .footer-links a:hover { color: #fff; }
+
+        .footer-copyright {
+            color: rgba(255,255,255,0.25);
+            font-size: 0.8rem;
+        }
+
+        /* ─── REVEAL ANIMATIONS ─── */
+        .reveal {
+            opacity: 0;
+            transform: translateY(40px);
+            transition: opacity 0.8s ease, transform 0.8s ease;
+        }
+
+        .reveal.visible {
+            opacity: 1;
+            transform: translateY(0);
+        }
+
+        .reveal-delay-1 { transition-delay: 0.1s; }
+        .reveal-delay-2 { transition-delay: 0.2s; }
+        .reveal-delay-3 { transition-delay: 0.3s; }
+        .reveal-delay-4 { transition-delay: 0.4s; }
+
+        /* ─── RESPONSIVE ─── */
+        @media (max-width: 1024px) {
+            .hero-container { gap: 3rem; }
+            .dash-float-card { right: -4%; }
+            .dash-float-card-2 { left: -6%; }
+        }
+
+        @media (max-width: 991px) {
+            .hero { padding: 7rem 0 3rem; min-height: auto; }
+            .hero-container { grid-template-columns: 1fr; gap: 3rem; }
+            .hero p { max-width: 100%; }
+            .dashboard-preview { max-width: 500px; margin: 0 auto; }
+            .dash-float-card { right: 0; top: 10%; }
+            .dash-float-card-2 { left: 0; bottom: 15%; }
+            .trust-stats { grid-template-columns: repeat(2, 1fr); }
+            .how-steps { grid-template-columns: 1fr 1fr; }
+            .how-steps::before { display: none; }
+            .why-feature { grid-template-columns: 1fr; gap: 2rem; }
+            .why-feature.reverse { direction: ltr; }
+            .form-container { grid-template-columns: 1fr; gap: 2rem; }
+            .form-left { text-align: center; }
+            .form-left .benefits { max-width: 400px; margin: 0 auto; }
+        }
+
+        @media (max-width: 768px) {
+            .navbar-links { display: none; }
+            .mobile-toggle { display: flex; }
+            .navbar-links.open {
+                display: flex;
+                flex-direction: column;
+                position: fixed;
+                top: 72px;
+                left: 0;
+                right: 0;
+                background: rgba(15,23,42,0.98);
+                backdrop-filter: blur(20px);
+                padding: 1.5rem;
+                gap: 1rem;
+                border-bottom: 1px solid rgba(255,255,255,0.06);
+                align-items: stretch;
+                text-align: center;
+            }
+            .hero h1 { font-size: 2.5rem; }
+            .hero-stats { gap: 1.5rem; flex-wrap: wrap; }
+            .trust-testimonials { grid-template-columns: 1fr; }
+            .why-premium-header h2 { font-size: 2rem; }
+            .how-steps { grid-template-columns: 1fr; }
+            .form-card { padding: 1.5rem; }
+            .cta-final h2 { font-size: 2rem; }
+        }
+
+        @media (max-width: 576px) {
+            .hero { padding: 6rem 0 2rem; }
+            .hero-container { padding: 0 1rem; }
+            .hero h1 { font-size: 2rem; }
+            .hero p { font-size: 0.95rem; }
+            .hero-buttons { flex-direction: column; }
+            .btn-primary, .btn-secondary { width: 100%; justify-content: center; }
+            .hero-stats { flex-direction: column; gap: 1rem; }
+            .trust-stats { grid-template-columns: 1fr 1fr; gap: 0.75rem; }
+            .trust-stat { padding: 1.25rem; }
+            .trust-stat-number { font-size: 1.8rem; }
+            .why-premium { padding: 4rem 0; }
+            .why-premium-container { padding: 0 1rem; }
+            .why-premium-header h2 { font-size: 1.6rem; }
+            .why-feature { margin-bottom: 3rem; }
+            .how-premium { padding: 4rem 0; }
+            .how-premium-container { padding: 0 1rem; }
+            .form-section { padding: 4rem 0; }
+            .form-container { padding: 0 1rem; }
+            .cta-final { padding: 4rem 0; }
+            .cta-final h2 { font-size: 1.6rem; }
+            .dashboard-card { border-radius: 16px; }
+            .dash-body { padding: 1rem; }
+            .dash-grid { gap: 0.5rem; }
+            .dash-metric { padding: 0.75rem; }
+            .dash-metric-value { font-size: 1.2rem; }
+        }
+
+        @media (max-width: 380px) {
+            .hero h1 { font-size: 1.75rem; }
+            .trust-stats { grid-template-columns: 1fr; }
+            .form-card { padding: 1.25rem; }
+        }
+    </style>
+</head>
+<body>
+    <!-- Cursor Glow -->
+    <div id="cursorGlow"></div>
+
+    <!-- Navbar -->
+    <nav class="navbar" id="navbar">
+        <div class="container">
+            <a href="/" class="navbar-brand">
+                <div class="brand-icon"><i class="fas fa-graduation-cap"></i></div>
+                <span class="brand-text">Attendrix</span>
+            </a>
+            <div class="navbar-links" id="navLinks">
+                <a href="#features">Features</a>
+                <a href="#how-it-works">How It Works</a>
+                <a href="#contact">Contact</a>
+                <a href="/login" style="color:rgba(255,255,255,0.7);">Log In</a>
+                <a href="/signup" class="btn-nav">Get Started</a>
+            </div>
+            <button class="mobile-toggle" id="mobileToggle" aria-label="Toggle navigation">
+                <i class="fas fa-bars"></i>
+            </button>
+        </div>
+    </nav>
+
+    <!-- Hero -->
+    <section class="hero" id="hero">
+        <div class="hero-grid-bg"></div>
+        <div class="hero-glow-1"></div>
+        <div class="hero-glow-2"></div>
+        <div class="hero-container">
+            <div class="hero-content">
+                <div class="hero-badge">
+                    <div class="live-dot"></div>
+                    Live Demo Available
+                </div>
+                <h1>
+                    Intelligent Attendance<br>
+                    <span class="gradient-text">for Modern Universities</span>
+                </h1>
+                <p>
+                    See how Attendrix transforms attendance tracking with AI-powered anti-proxy security, 
+                    distributed synchronization, and real-time analytics — purpose-built for campus infrastructure.
+                </p>
+                <div class="hero-buttons">
+                    <a href="#form" class="btn-primary">
+                        <i class="fas fa-calendar-check"></i> Request Demo
+                    </a>
+                    <a href="#features" class="btn-secondary">
+                        <i class="fas fa-play-circle"></i> Explore Platform
+                    </a>
+                </div>
+                <div class="hero-stats reveal reveal-delay-3">
+                    <div class="hero-stat">
+                        <h3 class="gradient-text">99.9%</h3>
+                        <p>Uptime Guarantee</p>
+                    </div>
+                    <div class="hero-stat">
+                        <h3 class="gradient-text">500+</h3>
+                        <p>Institutions</p>
+                    </div>
+                    <div class="hero-stat">
+                        <h3 class="gradient-text">1M+</h3>
+                        <p>Records Processed</p>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Live Dashboard Preview -->
+            <div class="dashboard-preview">
+                <div class="dashboard-card">
+                    <div class="dash-header">
+                        <div class="dash-header-left">
+                            <div class="dash-dot red"></div>
+                            <div class="dash-dot yellow"></div>
+                            <div class="dash-dot green"></div>
+                            <span class="dash-header-title">Attendrix Live Monitor</span>
+                        </div>
+                        <div class="dash-header-right">
+                            <div class="dash-status">
+                                <div class="pulse-dot"></div>
+                                Live Sync
+                            </div>
+                        </div>
+                    </div>
+                    <div class="dash-body">
+                        <div class="dash-grid">
+                            <div class="dash-metric">
+                                <div class="dash-metric-label">Today's Attendance</div>
+                                <div class="dash-metric-value green">94.2%</div>
+                                <div class="dash-metric-change"><i class="fas fa-arrow-up"></i> +2.4%</div>
+                            </div>
+                            <div class="dash-metric">
+                                <div class="dash-metric-label">Active Sessions</div>
+                                <div class="dash-metric-value blue">18</div>
+                                <div class="dash-metric-change"><i class="fas fa-arrow-up"></i> +3</div>
+                            </div>
+                            <div class="dash-metric">
+                                <div class="dash-metric-label">Verified Students</div>
+                                <div class="dash-metric-value yellow">1,247</div>
+                                <div class="dash-metric-change"><i class="fas fa-arrow-up"></i> +12 today</div>
+                            </div>
+                            <div class="dash-metric">
+                                <div class="dash-metric-label">Anti-Proxy Alerts</div>
+                                <div class="dash-metric-value pink">0</div>
+                                <div class="dash-metric-change negative"><i class="fas fa-shield-alt"></i> All Clear</div>
+                            </div>
+                        </div>
+
+                        <div class="dash-chart">
+                            <div class="dash-chart-title">Attendance Trends This Week</div>
+                            <div class="dash-bars">
+                                <div class="dash-bar"></div>
+                                <div class="dash-bar"></div>
+                                <div class="dash-bar"></div>
+                                <div class="dash-bar"></div>
+                                <div class="dash-bar"></div>
+                                <div class="dash-bar"></div>
+                                <div class="dash-bar"></div>
+                            </div>
+                        </div>
+
+                        <div class="dash-row">
+                            <div class="dash-feed">
+                                <div class="dash-feed-item">
+                                    <div class="dash-feed-icon green"><i class="fas fa-check"></i></div>
+                                    <div class="dash-feed-text"><strong>John Doe</strong> — Present</div>
+                                    <div class="dash-feed-time">2m ago</div>
+                                </div>
+                                <div class="dash-feed-item">
+                                    <div class="dash-feed-icon yellow"><i class="fas fa-clock"></i></div>
+                                    <div class="dash-feed-text"><strong>Jane Smith</strong> — Late</div>
+                                    <div class="dash-feed-time">5m ago</div>
+                                </div>
+                                <div class="dash-feed-item">
+                                    <div class="dash-feed-icon red"><i class="fas fa-times"></i></div>
+                                    <div class="dash-feed-text"><strong>Mark Wilson</strong> — Absent</div>
+                                    <div class="dash-feed-time">8m ago</div>
+                                </div>
+                                <div class="dash-feed-item">
+                                    <div class="dash-feed-icon blue"><i class="fas fa-check"></i></div>
+                                    <div class="dash-feed-text"><strong>Sarah Lee</strong> — Verified</div>
+                                    <div class="dash-feed-time">12m ago</div>
+                                </div>
+                                <div class="dash-feed-item">
+                                    <div class="dash-feed-icon purple"><i class="fas fa-fingerprint"></i></div>
+                                    <div class="dash-feed-text"><strong>Anti-Proxy</strong> — Scan Complete</div>
+                                    <div class="dash-feed-time">15m ago</div>
+                                </div>
+                            </div>
+                        </div>
+
+                        <div class="dash-chips">
+                            <span class="dash-chip green">Present</span>
+                            <span class="dash-chip yellow">Late</span>
+                            <span class="dash-chip red">Absent</span>
+                            <span class="dash-chip blue">Excused</span>
+                            <span class="dash-chip purple">On Leave</span>
+                        </div>
+
+                        <div class="dash-alert">
+                            <i class="fas fa-shield-alt"></i>
+                            <span><strong>Anti-Proxy Shield</strong> — All verifications passed. No threats detected.</span>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="dash-float-card">
+                    <div class="dash-float-icon green-bg"><i class="fas fa-users"></i></div>
+                    <div class="dash-float-title">Live Students</div>
+                    <div class="dash-float-value"><span class="highlight">247</span> currently active</div>
+                </div>
+
+                <div class="dash-float-card-2">
+                    <div class="dash-float-icon blue-bg"><i class="fas fa-sync-alt"></i></div>
+                    <div class="dash-float-title">Sync Status</div>
+                    <div class="dash-float-value"><span class="highlight">All nodes</span> synchronized</div>
+                </div>
+            </div>
+        </div>
+    </section>
+
+    <!-- Trust Section -->
+    <section class="trust-section reveal" id="trust">
+        <div class="trust-container">
+            <div class="trust-header">
+                <h2>Trusted by Leading Institutions</h2>
+                <p>Empowering universities and schools across the globe with intelligent attendance infrastructure</p>
+            </div>
+            <div class="trust-stats">
+                <div class="trust-stat">
+                    <div class="trust-stat-number">99.9%</div>
+                    <div class="trust-stat-label">Uptime Guarantee</div>
+                </div>
+                <div class="trust-stat">
+                    <div class="trust-stat-number">500+</div>
+                    <div class="trust-stat-label">Institutions</div>
+                </div>
+                <div class="trust-stat">
+                    <div class="trust-stat-number">1M+</div>
+                    <div class="trust-stat-label">Attendance Records</div>
+                </div>
+                <div class="trust-stat">
+                    <div class="trust-stat-number">50K+</div>
+                    <div class="trust-stat-label">Active Students</div>
+                </div>
+            </div>
+            <div class="trust-testimonials">
+                <div class="trust-testimonial">
+                    <div class="quote">"Attendrix transformed how we manage attendance across our 12 campuses. The distributed sync is revolutionary."</div>
+                    <div class="author">
+                        <div class="author-avatar">DK</div>
+                        <div class="author-info">
+                            <h4>Dr. Kwame Asante</h4>
+                            <p>Vice Chancellor, University of Technology</p>
+                        </div>
+                    </div>
+                </div>
+                <div class="trust-testimonial">
+                    <div class="quote">"The anti-proxy system alone saved us thousands of hours. Finally, a system built for real institutional needs."</div>
+                    <div class="author">
+                        <div class="author-avatar">SM</div>
+                        <div class="author-info">
+                            <h4>Prof. Sarah Mensah</h4>
+                            <p>Dean of ICT, Metropolitan University</p>
+                        </div>
+                    </div>
+                </div>
+            </div>
+            <div class="trust-logos">
+                <span>University of Tech</span>
+                <span>Metropolitan Univ</span>
+                <span>State College</span>
+                <span>Global Campus</span>
+                <span>EduTrust</span>
+            </div>
+        </div>
+    </section>
+
+    <!-- Why Attendrix -->
+    <section class="why-premium reveal" id="features">
+        <div class="why-premium-container">
+            <div class="why-premium-header">
+                <h2>Built for the <span>Intelligent Campus</span></h2>
+                <p>Every feature designed around distributed systems, security, and real-time intelligence</p>
+            </div>
+
+            <div class="why-feature">
+                <div class="why-feature-content">
+                    <div class="feature-tag">Security</div>
+                    <h3>AI-Powered Anti-Proxy Intelligence</h3>
+                    <p>Our multi-factor verification engine combines device fingerprinting, behavioral analysis, location intelligence, and real-time validation to eliminate proxy attendance completely.</p>
+                    <ul class="why-feature-list">
+                        <li><i class="fas fa-check-circle"></i> Device fingerprinting &amp; behavioral patterns</li>
+                        <li><i class="fas fa-check-circle"></i> Real-time location verification</li>
+                        <li><i class="fas fa-check-circle"></i> AI anomaly detection</li>
+                        <li><i class="fas fa-check-circle"></i> Instant threat alerts</li>
+                    </ul>
+                </div>
+                <div class="why-feature-visual">
+                    <div class="why-feature-card">
+                        <div class="card-icon-big"><i class="fas fa-shield-alt"></i></div>
+                        <h4>Anti-Proxy Shield Active</h4>
+                        <p>Continuous monitoring across all connected classroom nodes. Zero proxy incidents reported this month.</p>
+                        <div style="margin-top:1rem;display:flex;gap:0.5rem;flex-wrap:wrap;">
+                            <span style="font-size:0.7rem;padding:0.25rem 0.6rem;border-radius:6px;background:rgba(16,185,129,0.1);color:#10B981;font-weight:600;">98.7% Detection</span>
+                            <span style="font-size:0.7rem;padding:0.25rem 0.6rem;border-radius:6px;background:rgba(79,70,229,0.1);color:var(--primary-light);font-weight:600;">Real-Time</span>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <div class="why-feature reverse">
+                <div class="why-feature-content">
+                    <div class="feature-tag">Architecture</div>
+                    <h3>Distributed Offline-First Sync</h3>
+                    <p>Every classroom operates as an independent node. Attendance data synchronizes across LAN and cloud — even during network outages — with automatic reconciliation.</p>
+                    <ul class="why-feature-list">
+                        <li><i class="fas fa-check-circle"></i> Peer-to-peer classroom mesh</li>
+                        <li><i class="fas fa-check-circle"></i> Offline-first data collection</li>
+                        <li><i class="fas fa-check-circle"></i> Auto-sync on reconnect</li>
+                        <li><i class="fas fa-check-circle"></i> Zero data loss guarantee</li>
+                    </ul>
+                </div>
+                <div class="why-feature-visual">
+                    <div class="why-network-viz">
+                        <div class="why-network-node"><i class="fas fa-server"></i><span>Main Server</span><div class="node-status online"></div></div>
+                        <div class="why-network-node"><i class="fas fa-wifi"></i><span>Node A</span><div class="node-status online"></div></div>
+                        <div class="why-network-node"><i class="fas fa-wifi"></i><span>Node B</span><div class="node-status online"></div></div>
+                        <div class="why-network-node"><i class="fas fa-wifi"></i><span>Node C</span><div class="node-status syncing"></div></div>
+                        <div class="why-network-node"><i class="fas fa-wifi"></i><span>Node D</span><div class="node-status online"></div></div>
+                        <div class="why-network-node"><i class="fas fa-wifi"></i><span>Node E</span><div class="node-status online"></div></div>
+                    </div>
+                </div>
+            </div>
+
+            <div class="why-feature">
+                <div class="why-feature-content">
+                    <div class="feature-tag">Analytics</div>
+                    <h3>Real-Time Analytics &amp; Reporting</h3>
+                    <p>Transform attendance data into actionable institutional insights with predictive analytics, trend forecasting, and automated reporting.</p>
+                    <ul class="why-feature-list">
+                        <li><i class="fas fa-check-circle"></i> Live attendance dashboards</li>
+                        <li><i class="fas fa-check-circle"></i> Predictive student insights</li>
+                        <li><i class="fas fa-check-circle"></i> Automated report generation</li>
+                        <li><i class="fas fa-check-circle"></i> Cross-campus comparisons</li>
+                    </ul>
+                </div>
+                <div class="why-feature-visual">
+                    <div class="why-feature-card" style="text-align:center;">
+                        <div style="display:flex;justify-content:space-around;margin-bottom:1.5rem;">
+                            <div>
+                                <div style="font-size:1.8rem;font-weight:800;color:var(--primary);">94%</div>
+                                <div style="font-size:0.7rem;color:var(--text-muted);">Overall</div>
+                            </div>
+                            <div>
+                                <div style="font-size:1.8rem;font-weight:800;color:#10B981;">89%</div>
+                                <div style="font-size:0.7rem;color:var(--text-muted);">Engagement</div>
+                            </div>
+                            <div>
+                                <div style="font-size:1.8rem;font-weight:800;color:#F59E0B;">72%</div>
+                                <div style="font-size:0.7rem;color:var(--text-muted);">Retention</div>
+                            </div>
+                        </div>
+                        <h4>This Month's Insights</h4>
+                        <p style="font-size:0.8rem;">Attendance up 12% since implementing distributed sync across all departments.</p>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </section>
+
+    <!-- How It Works -->
+    <section class="how-premium reveal" id="how-it-works">
+        <div class="how-premium-container">
+            <div class="how-premium-header">
+                <h2>How Attendrix Works</h2>
+                <p>From institution setup to real-time monitoring — a seamless intelligent workflow</p>
+            </div>
+            <div class="how-steps">
+                <div class="how-step-card">
+                    <div class="how-step-number">1</div>
+                    <div class="step-icon"><i class="fas fa-university"></i></div>
+                    <h3>Institution Setup</h3>
+                    <p>Register your institution and configure departments, courses, and classroom nodes in minutes.</p>
+                </div>
+                <div class="how-step-card">
+                    <div class="how-step-number">2</div>
+                    <div class="step-icon"><i class="fas fa-users-cog"></i></div>
+                    <h3>User Onboarding</h3>
+                    <p>Create roles for administrators, lecturers, and students with granular permissions.</p>
+                </div>
+                <div class="how-step-card">
+                    <div class="how-step-number">3</div>
+                    <div class="step-icon"><i class="fas fa-calendar-alt"></i></div>
+                    <h3>Schedule Creation</h3>
+                    <p>Design intelligent class schedules with automated session generation and recurrence.</p>
+                </div>
+                <div class="how-step-card">
+                    <div class="how-step-number">4</div>
+                    <div class="step-icon"><i class="fas fa-play-circle"></i></div>
+                    <h3>Session Activation</h3>
+                    <p>Lecturers initialize attendance sessions with one click — the classroom node goes live instantly.</p>
+                </div>
+                <div class="how-step-card">
+                    <div class="how-step-number">5</div>
+                    <div class="step-icon"><i class="fas fa-sync-alt"></i></div>
+                    <h3>Real-Time Sync</h3>
+                    <p>Attendance data propagates across all nodes through distributed peer-to-peer synchronization.</p>
+                </div>
+                <div class="how-step-card">
+                    <div class="how-step-number">6</div>
+                    <div class="step-icon"><i class="fas fa-chart-line"></i></div>
+                    <h3>Analytics &amp; Reports</h3>
+                    <p>Comprehensive analytics engine generates insights, trends, and reports in real-time.</p>
+                </div>
+            </div>
+        </div>
+    </section>
+
+    <!-- Request Demo Form -->
+    <section class="form-section reveal" id="form">
+        <div class="form-container">
+            <div class="form-left">
+                <h2>Ready to Transform<br><span>Your Institution?</span></h2>
+                <p>Fill out the form and our team will reach out within 24 hours with a personalized demo tailored to your institution's needs.</p>
+                <ul class="benefits">
+                    <li><i class="fas fa-check"></i> Personalized walkthrough of your campus setup</li>
+                    <li><i class="fas fa-check"></i> Live Q&amp;A with our technical team</li>
+                    <li><i class="fas fa-check"></i> Custom deployment plan for your institution</li>
+                    <li><i class="fas fa-check"></i> No commitment required — explore freely</li>
+                </ul>
+            </div>
+            <div class="form-card" id="formCard">
+                <form id="demoForm" novalidate action="/api/request-demo" method="POST">
+                    <div class="form-success" id="formSuccess">
+                        <div class="success-check">
+                            <div class="success-check-ring"></div>
+                            <i class="fas fa-check"></i>
+                        </div>
+                        <h4>You're on the list!</h4>
+                        <p class="success-lead">Thanks, <span id="successName">there</span>! We'll reach out within 24 hours to schedule your personalized demo.</p>
+
+                        <div class="success-timeline">
+                            <div class="tl-step">
+                                <div class="tl-dot">1</div>
+                                <div class="tl-body">
+                                    <span class="tl-title">We review your request</span>
+                                    <span class="tl-desc">Our team learns about your institution's needs</span>
+                                </div>
+                            </div>
+                            <div class="tl-step">
+                                <div class="tl-dot">2</div>
+                                <div class="tl-body">
+                                    <span class="tl-title">Calendar invite arrives</span>
+                                    <span class="tl-desc">Pick a time that works best for your team</span>
+                                </div>
+                            </div>
+                            <div class="tl-step">
+                                <div class="tl-dot">3</div>
+                                <div class="tl-body">
+                                    <span class="tl-title">Live personalized demo</span>
+                                    <span class="tl-desc">A walkthrough of Attendrix built for your campus</span>
+                                </div>
+                            </div>
+                        </div>
+
+                        <div class="success-cta-row">
+                            <a href="/schedule-demo" class="btn-primary success-btn" id="scheduleDemoBtn">
+                                <i class="fas fa-calendar-check"></i> Schedule My Demo
+                            </a>
+                        </div>
+
+                        <div class="success-links">
+                            <a href="/product-overview" class="sl-link"><i class="fas fa-play-circle"></i> Watch product overview</a>
+                            <a href="/brochure" class="sl-link"><i class="fas fa-file-pdf"></i> Download brochure</a>
+                            <a href="/#features" class="sl-link"><i class="fas fa-star"></i> Explore features</a>
+                        </div>
+
+                        <div class="success-trust">
+                            <i class="fas fa-shield-alt"></i>
+                            <span>Your information is protected. We never share your data.</span>
+                        </div>
+                    </div>
+                    <div id="formFields">
+                        <h3>Request a Demo</h3>
+                        <p class="form-sub">Fill in your details and we'll get back to you shortly</p>
+                        
+                        <!-- Honeypot: invisible to users, traps bots -->
+                        <div style="position:absolute;left:-9999px;opacity:0;height:0;overflow:hidden;" aria-hidden="true">
+                            <label for="website">Website</label>
+                            <input type="text" id="website" name="website" tabindex="-1" autocomplete="off">
+                        </div>
+                        
+                        <!-- Timestamp & CSRF: hidden -->
+                        <input type="hidden" id="formTimestamp" name="formTimestamp" value="">
+                        <input type="hidden" id="csrfToken" name="csrfToken" value="">
+                        
+                        <div class="form-group">
+                            <label for="fullName">Full Name</label>
+                            <input type="text" id="fullName" name="fullName" placeholder="Dr. John Smith" required autocomplete="name">
+                            <div class="error-msg">Enter a valid full name (letters only)</div>
+                        </div>
+                        <div class="form-group">
+                            <label for="institution">Institution / Company</label>
+                            <input type="text" id="institution" name="institution" placeholder="University of Technology" required autocomplete="organization">
+                            <div class="error-msg">Enter a valid institution or company name</div>
+                        </div>
+                        <div class="form-group">
+                            <label for="email">Email Address</label>
+                            <input type="email" id="email" name="email" placeholder="john@university.edu" required autocomplete="email">
+                            <div class="error-msg">Enter a valid professional email address</div>
+                        </div>
+                        <div class="form-group">
+                            <label for="phone">Phone Number</label>
+                            <input type="tel" id="phone" name="phone" placeholder="+1 (234) 567-890" required autocomplete="tel">
+                            <div class="error-msg">Enter a valid phone number</div>
+                        </div>
+                        <div class="form-group">
+                            <label for="size">Institution Size</label>
+                            <select id="size" name="size" required>
+                                <option value="">Select size...</option>
+                                <option value="<500">Less than 500 students</option>
+                                <option value="500-2000">500 — 2,000 students</option>
+                                <option value="2000-5000">2,000 — 5,000 students</option>
+                                <option value="5000-10000">5,000 — 10,000 students</option>
+                                <option value="10000+">10,000+ students</option>
+                            </select>
+                            <div class="error-msg">Please select your institution size</div>
+                        </div>
+                        <div class="form-group general-error" id="generalError" style="display:none;">
+                            <div class="error-msg" style="display:block;text-align:center;">
+                                Request could not be processed. Please try again.
+                            </div>
+                        </div>
+                        <button type="submit" class="btn-submit" id="submitBtn" disabled>
+                            <span class="btn-text"><i class="fas fa-paper-plane"></i> Request Demo</span>
+                            <div class="spinner"></div>
+                        </button>
+                        <div class="form-footer-text">
+                            No spam. Your data is protected by <a href="#">our privacy policy</a>.
+                        </div>
+                    </div>
+                </form>
+            </div>
+        </div>
+    </section>
+
+    <!-- Final CTA -->
+    <section class="cta-final reveal">
+        <div class="cta-final-glow"></div>
+        <div class="cta-final-container">
+            <h2>Transform Attendance Tracking<br>into a <span class="gradient-text">Smarter Experience</span></h2>
+            <p>Join 500+ institutions already using Attendrix to secure, synchronize, and simplify attendance across their campuses.</p>
+            <div class="btn-group">
+                <a href="#form" class="btn-primary"><i class="fas fa-calendar-check"></i> Request Demo</a>
+                <a href="/trial-gate" class="btn-secondary"><i class="fas fa-rocket"></i> Start Free Trial</a>
+            </div>
+            <div class="microcopy">
+                <i class="fas fa-check-circle"></i> No credit card required &nbsp;·&nbsp; 
+                <i class="fas fa-check-circle"></i> Full access for 14 days &nbsp;·&nbsp; 
+                <i class="fas fa-check-circle"></i> Cancel anytime
+            </div>
+            <div class="cta-final-elements">
+                <div class="cta-final-element"><i class="fas fa-shield-alt"></i> SOC 2 Compliant</div>
+                <div class="cta-final-element"><i class="fas fa-lock"></i> End-to-End Encryption</div>
+                <div class="cta-final-element"><i class="fas fa-globe"></i> Global Infrastructure</div>
+                <div class="cta-final-element"><i class="fas fa-headset"></i> 24/7 Support</div>
+            </div>
+        </div>
+    </section>
+
+    <!-- Footer -->
+    <footer class="footer">
+        <div class="footer-container">
+            <div class="footer-links">
+                <a href="/">Home</a>
+                <a href="#features">Features</a>
+                <a href="#how-it-works">How It Works</a>
+                <a href="#contact">Contact</a>
+                <a href="/login">Log In</a>
+                <a href="/signup">Sign Up</a>
+            </div>
+            <div class="footer-copyright">&copy; 2025 Attendrix. All rights reserved.</div>
+        </div>
+    </footer>
+
+    <script>
+        // Mobile toggle
+        const mobileToggle = document.getElementById('mobileToggle');
+        const navLinks = document.getElementById('navLinks');
+        if (mobileToggle && navLinks) {
+            mobileToggle.addEventListener('click', () => {
+                navLinks.classList.toggle('open');
+                const icon = mobileToggle.querySelector('i');
+                if (icon) {
+                    icon.classList.toggle('fa-bars');
+                    icon.classList.toggle('fa-times');
+                }
+            });
+            document.addEventListener('click', (e) => {
+                if (!mobileToggle.contains(e.target) && !navLinks.contains(e.target)) {
+                    navLinks.classList.remove('open');
+                    const icon = mobileToggle.querySelector('i');
+                    if (icon) { icon.classList.add('fa-bars'); icon.classList.remove('fa-times'); }
+                }
+            });
+        }
+
+        // Navbar scroll
+        window.addEventListener('scroll', () => {
+            document.querySelector('.navbar').classList.toggle('scrolled', window.scrollY > 50);
+        });
+
+        // Cursor glow
+        const cursorGlow = document.getElementById('cursorGlow');
+        if (cursorGlow) {
+            document.addEventListener('mousemove', (e) => {
+                cursorGlow.style.left = e.clientX + 'px';
+                cursorGlow.style.top = e.clientY + 'px';
+            });
+            document.addEventListener('mouseleave', () => { cursorGlow.style.opacity = '0'; });
+            document.addEventListener('mouseenter', () => { cursorGlow.style.opacity = '1'; });
+        }
+
+        // Ambient particles
+        (function() {
+            const count = 30;
+            for (let i = 0; i < count; i++) {
+                const p = document.createElement('div');
+                p.className = 'particle';
+                p.style.left = Math.random() * 100 + 'vw';
+                p.style.top = Math.random() * 100 + 'vh';
+                p.style.width = (2 + Math.random() * 3) + 'px';
+                p.style.height = p.style.width;
+                p.style.animation = `floatParticle ${10 + Math.random() * 20}s linear infinite`;
+                p.style.animationDelay = -(Math.random() * 20) + 's';
+                document.body.appendChild(p);
+            }
+        })();
+
+        // Particle floating animation injected
+        const particleStyle = document.createElement('style');
+        particleStyle.textContent = `@keyframes floatParticle { 0% { transform: translateY(0) translateX(0); opacity:0; } 10% { opacity:0.5; } 90% { opacity:0.5; } 100% { transform: translateY(-100vh) translateX(${30 - Math.random() * 60}px); opacity:0; } }`;
+        document.head.appendChild(particleStyle);
+
+        // Reveal observer
+        const revealObserver = new IntersectionObserver((entries) => {
+            entries.forEach(entry => {
+                if (entry.isIntersecting) {
+                    entry.target.classList.add('visible');
+                }
+            });
+        }, { threshold: 0.1, rootMargin: '0px 0px -50px 0px' });
+        document.querySelectorAll('.reveal').forEach(el => revealObserver.observe(el));
+
+        // Smooth scroll
+        document.querySelectorAll('a[href^="#"]').forEach(anchor => {
+            anchor.addEventListener('click', function(e) {
+                e.preventDefault();
+                const href = this.getAttribute('href');
+                if (!href || href === '#') return;
+                const target = document.querySelector(href);
+                if (target) {
+                    if (navLinks) navLinks.classList.remove('open');
+                    const icon = mobileToggle?.querySelector('i');
+                    if (icon) { icon.classList.add('fa-bars'); icon.classList.remove('fa-times'); }
+                    target.scrollIntoView({ behavior: 'smooth', block: 'start' });
+                    history.replaceState(null, '', href);
+                }
+            });
+        });
+
+        // ===== SECURE FORM HANDLING =====
+        // Disposable email domains blocklist
+        const DISPOSABLE_DOMAINS = new Set([
+            'mailinator.com','guerrillamail.com','tempmail.com','throwaway.email',
+            'yopmail.com','sharklasers.com','temp-mail.org','0-mail.com',
+            'trashmail.com','10minutemail.com','maildrop.cc','getnada.com',
+            'burnermail.io','spam4.me','mailmetrash.com','mailexpire.com',
+            'discard.email','mytemp.email','tempinbox.com','fakeinbox.com',
+            'emailondeck.com','mail.tm','tempr.email','moakt.com',
+            'dispostable.com','mailnator.com','tempmail.net','spambox.us'
+        ]);
+
+        const form = document.getElementById('demoForm');
+        const submitBtn = document.getElementById('submitBtn');
+        const formFields = document.getElementById('formFields');
+        const formSuccess = document.getElementById('formSuccess');
+        const generalError = document.getElementById('generalError');
+        let isSubmitting = false;
+        let submitCooldown = false;
+
+        // CSRF: generate and set token
+        function getCSRFToken() {
+            let token = sessionStorage.getItem('csrfToken');
+            if (!token) {
+                const arr = new Uint8Array(32);
+                crypto.getRandomValues(arr);
+                token = Array.from(arr, b => b.toString(16).padStart(2,'0')).join('');
+                sessionStorage.setItem('csrfToken', token);
+            }
+            return token;
+        }
+
+        // Field validators
+        const validators = {
+            fullName: function(v) {
+                const trimmed = v.trim();
+                if (trimmed.length < 2) return false;
+                const words = trimmed.split(/\s+/).filter(w => w.length > 0);
+                if (words.length < 2) return false;
+                if (/[^a-zA-Z\s'.-]/.test(trimmed)) return false;
+                return true;
+            },
+            institution: function(v) {
+                const trimmed = v.trim();
+                if (trimmed.length < 3) return false;
+                if (/^\d+$/.test(trimmed)) return false;
+                if (/[^a-zA-Z0-9\s.&'-]/.test(trimmed)) return false;
+                return true;
+            },
+            email: function(v) {
+                const trimmed = v.trim().toLowerCase();
+                if (!/^[^\s@]+@[^\s@]+\.[^\s@]{2,}$/.test(trimmed)) return false;
+                if (trimmed.length > 254) return false;
+                const domain = trimmed.split('@')[1];
+                if (DISPOSABLE_DOMAINS.has(domain)) return false;
+                return true;
+            },
+            phone: function(v) {
+                const cleaned = v.replace(/[\s\-\(\)\.]/g, '');
+                if (cleaned.length < 7 || cleaned.length > 15) return false;
+                if (/[^+\d]/.test(cleaned)) return false;
+                return true;
+            },
+            size: function(v) {
+                const allowed = ['<500','500-2000','2000-5000','5000-10000','10000+'];
+                return allowed.includes(v);
+            }
+        };
+
+        function sanitize(str) {
+            const div = document.createElement('div');
+            div.appendChild(document.createTextNode(str));
+            return div.innerHTML.replace(/<script[\s\S]*?>[\s\S]*?<\/script>/gi, '')
+                               .replace(/<[^>]*>/g, '');
+        }
+
+        function validateField(id) {
+            const input = document.getElementById(id);
+            const group = input.closest('.form-group');
+            if (!group) return true;
+            group.classList.remove('error', 'success');
+            const val = input.type === 'select' ? input.value : input.value;
+            const fn = validators[id];
+            if (!fn) return true;
+            const ok = fn(val);
+            if (ok) {
+                group.classList.add('success');
+            } else {
+                group.classList.add('error');
+            }
+            return ok;
+        }
+
+        function checkFormValid(showErrors) {
+            const ids = ['fullName','institution','email','phone','size'];
+            let allValid = true;
+            ids.forEach(function(id) {
+                if (showErrors) {
+                    if (!validateField(id)) allValid = false;
+                } else {
+                    const input = document.getElementById(id);
+                    const fn = validators[id];
+                    if (!fn || !fn(input.type === 'select' ? input.value : input.value)) allValid = false;
+                }
+            });
+            submitBtn.disabled = !allValid || isSubmitting || submitCooldown;
+            return allValid;
+        }
+
+        // Real-time validation
+        form.querySelectorAll('input, select').forEach(function(el) {
+            el.addEventListener('input', function() {
+                validateField(this.id);
+                checkFormValid(true);
+            });
+            el.addEventListener('blur', function() {
+                validateField(this.id);
+                checkFormValid(true);
+            });
+        });
+
+        // Form submission
+        form.addEventListener('submit', function(e) {
+            e.preventDefault();
+
+            // Honeypot check
+            const website = document.getElementById('website');
+            if (website && website.value.trim() !== '') {
+                generalError.style.display = 'none';
+                return;
+            }
+
+            // Timestamp check
+            const tsField = document.getElementById('formTimestamp');
+            const ts = parseInt(tsField.value, 10);
+            const age = Date.now() - ts;
+            if (isNaN(ts) || age < 2000) {
+                generalError.style.display = 'none';
+                return;
+            }
+
+            // Rate limit: block rapid resubmit
+            if (isSubmitting || submitCooldown) return;
+
+            // Final validation
+            if (!checkFormValid(true)) return;
+
+            // Double-submit lock
+            isSubmitting = true;
+            submitBtn.disabled = true;
+            submitBtn.classList.add('loading');
+
+            const fullName = sanitize(document.getElementById('fullName').value.trim());
+            const institution = sanitize(document.getElementById('institution').value.trim());
+            const email = document.getElementById('email').value.trim().toLowerCase();
+            const phone = document.getElementById('phone').value.trim();
+            const size = document.getElementById('size').value;
+            const token = getCSRFToken();
+            const tsData = ts;
+
+            // Set CSRF + timestamp on hidden fields
+            document.getElementById('csrfToken').value = token;
+            document.getElementById('formTimestamp').value = tsData;
+
+            const payload = { fullName, institution, email, phone, size, csrfToken: token, formTimestamp: tsData };
+
+            fetch('/api/request-demo', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify(payload)
+            })
+            .then(function(r) {
+                return r.json().then(function(data) {
+                    return { status: r.status, data: data };
+                });
+            })
+            .then(function(resp) {
+                if (resp.status === 200 && resp.data.success) {
+                    formFields.style.display = 'none';
+                    formSuccess.classList.add('show');
+                    generalError.style.display = 'none';
+                    var firstName = fullName.split(' ')[0];
+                    document.getElementById('successName').textContent = firstName;
+                } else {
+                    throw new Error(resp.data.message || 'Server error');
+                }
+            })
+            .catch(function(err) {
+                generalError.style.display = 'block';
+                generalError.querySelector('.error-msg').textContent =
+                    'Request could not be processed. Please try again.';
+                submitBtn.classList.remove('loading');
+                isSubmitting = false;
+                submitBtn.disabled = false;
+                checkFormValid(true);
+            })
+            .finally(function() {
+                submitBtn.classList.remove('loading');
+                isSubmitting = false;
+                submitCooldown = true;
+                setTimeout(function() { submitCooldown = false; checkFormValid(true); }, 3000);
+            });
+        });
+
+        // Init hidden fields
+        document.getElementById('formTimestamp').value = Date.now();
+        document.getElementById('csrfToken').value = getCSRFToken();
+        // Set initial button state (disabled) without showing errors
+        checkFormValid(false);
+
+        // Re-arm timestamp periodically
+        setInterval(function() {
+            document.getElementById('formTimestamp').value = Date.now();
+        }, 10000);
+
+        // Animated counters for trust stats
+        function animateCounter(el) {
+            const text = el.textContent.trim();
+            const num = parseFloat(text);
+            if (isNaN(num)) return;
+            const suffix = text.replace(/[\d.]/g, '');
+            const duration = 2000;
+            const start = performance.now();
+            function update(current) {
+                const progress = Math.min((current - start) / duration, 1);
+                const eased = 1 - Math.pow(1 - progress, 3);
+                if (progress < 1) {
+                    el.textContent = (text.includes('.') ? (eased * num).toFixed(1) : Math.round(eased * num)) + suffix;
+                    requestAnimationFrame(update);
+                } else {
+                    el.textContent = text;
+                }
+            }
+            requestAnimationFrame(update);
+        }
+
+        const counterObs = new IntersectionObserver((entries) => {
+            entries.forEach(entry => {
+                if (entry.isIntersecting) {
+                    entry.target.querySelectorAll('.trust-stat-number').forEach(el => animateCounter(el));
+                    counterObs.unobserve(entry.target);
+                }
+            });
+        }, { threshold: 0.3 });
+        document.querySelectorAll('.trust-stats').forEach(el => counterObs.observe(el));
+    </script>
+</body>
+</html>

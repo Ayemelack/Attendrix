@@ -1,0 +1,540 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>System Command Center — Attendrix</title>
+    <link rel="icon" type="image/svg+xml" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 32 32'%3E%3Crect width='32' height='32' rx='6' fill='%234F46E5'/%3E%3Ctext x='16' y='22' text-anchor='middle' fill='white' font-size='20' font-family='Arial' font-weight='bold'%3EA%3C/text%3E%3C/svg%3E">
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet" crossorigin="anonymous">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css" crossorigin="anonymous">
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800;900&display=swap" rel="stylesheet" crossorigin="anonymous">
+    <style>
+        :root {
+            --bg-primary: #0B0E17; --bg-secondary: #111827; --bg-card: #1A1F2E;
+            --bg-hover: #242B3D; --border: #2A3142; --text-primary: #F1F5F9;
+            --text-secondary: #94A3B8; --text-muted: #64748B;
+            --primary: #4F46E5; --primary-dark: #3730A3; --primary-light: #818CF8;
+            --success: #10B981; --warning: #F59E0B; --danger: #EF4444; --info: #06B6D4;
+            --accent: #8B5CF6; --accent-pink: #EC4899;
+            --gradient-primary: linear-gradient(135deg, #4F46E5 0%, #7C3AED 100%);
+            --shadow-card: 0 4px 24px rgba(0,0,0,0.3);
+        }
+        html { overflow-x: hidden; }
+        * { margin: 0; padding: 0; box-sizing: border-box; }
+        body {
+            font-family: 'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
+            background: var(--bg-primary); color: var(--text-primary);
+            overflow-x: hidden; min-height: 100vh;
+        }
+        ::-webkit-scrollbar { width: 6px; height: 6px; }
+        ::-webkit-scrollbar-track { background: var(--bg-primary); }
+        ::-webkit-scrollbar-thumb { background: var(--border); border-radius: 3px; }
+        ::-webkit-scrollbar-thumb:hover { background: var(--text-muted); }
+
+        /* ── Layout ── */
+        .app-layout { display: flex; min-height: 100vh; }
+        .sidebar {
+            width: 240px; background: var(--bg-secondary); border-right: 1px solid var(--border);
+            display: flex; flex-direction: column; position: fixed; top: 0; left: 0; bottom: 0; z-index: 100;
+        }
+        .sidebar-brand { padding: 1.25rem 1.25rem; border-bottom: 1px solid var(--border); display: flex; align-items: center; gap: 0.6rem; }
+        .sidebar-brand .brand-icon { width: 32px; height: 32px; background: var(--gradient-primary); border-radius: 8px; display: flex; align-items: center; justify-content: center; font-size: 0.9rem; color: #fff; }
+        .sidebar-brand span { font-weight: 800; font-size: 0.95rem; }
+        .sidebar-brand .badge { font-size: 0.55rem; background: rgba(239,68,68,0.2); color: var(--danger); padding: 0.15rem 0.4rem; border-radius: 4px; font-weight: 700; letter-spacing: 0.5px; margin-left: auto; }
+        .sidebar-nav { flex: 1; padding: 0.75rem; overflow-y: auto; }
+        .nav-item {
+            display: flex; align-items: center; gap: 0.65rem; padding: 0.65rem 0.85rem;
+            border-radius: 8px; color: var(--text-secondary); text-decoration: none; font-size: 0.8rem;
+            font-weight: 500; cursor: pointer; transition: all 0.15s ease; margin-bottom: 0.15rem;
+            border: none; background: none; width: 100%; text-align: left; font-family: 'Inter', sans-serif;
+        }
+        .nav-item:hover { background: var(--bg-hover); color: var(--text-primary); }
+        .nav-item.active { background: rgba(79,70,229,0.15); color: var(--primary-light); }
+        .nav-item i { width: 18px; text-align: center; font-size: 0.85rem; }
+        .nav-section-label { font-size: 0.6rem; text-transform: uppercase; letter-spacing: 1px; color: var(--text-muted); padding: 0.75rem 0.85rem 0.35rem; font-weight: 700; }
+
+        .main-content { margin-left: 240px; flex: 1; padding: 1.5rem; }
+
+        /* ── Top Bar ── */
+        .topbar { display: flex; align-items: center; justify-content: space-between; margin-bottom: 1.5rem; }
+        .topbar h1 { font-size: 1.2rem; font-weight: 800; }
+        .topbar h1 span { color: var(--text-muted); font-weight: 400; }
+        .topbar-right { display: flex; align-items: center; gap: 1rem; }
+        .live-indicator { display: flex; align-items: center; gap: 0.4rem; font-size: 0.72rem; color: var(--success); font-weight: 600; }
+        .live-dot { width: 7px; height: 7px; border-radius: 50%; background: var(--success); animation: pulse 1.5s ease-in-out infinite; }
+        @keyframes pulse { 0%, 100% { opacity: 1; } 50% { opacity: 0.3; } }
+        .auto-refresh-btn { font-size: 0.72rem; color: var(--text-muted); background: var(--bg-card); border: 1px solid var(--border); padding: 0.35rem 0.75rem; border-radius: 6px; cursor: pointer; font-family: 'Inter', sans-serif; transition: all 0.15s ease; }
+        .auto-refresh-btn:hover { border-color: var(--text-muted); color: var(--text-primary); }
+        .auto-refresh-btn.active { border-color: var(--primary); color: var(--primary-light); }
+
+        /* ── Stats Cards ── */
+        .stats-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(180px, 1fr)); gap: 0.85rem; margin-bottom: 1.5rem; }
+        .stat-card {
+            background: var(--bg-card); border: 1px solid var(--border); border-radius: 12px;
+            padding: 1rem 1.15rem; transition: all 0.2s ease;
+        }
+        .stat-card:hover { border-color: rgba(79,70,229,0.3); transform: translateY(-1px); }
+        .stat-card .stat-label { font-size: 0.65rem; text-transform: uppercase; letter-spacing: 0.5px; color: var(--text-muted); font-weight: 600; }
+        .stat-card .stat-value { font-size: 1.5rem; font-weight: 800; margin-top: 0.2rem; line-height: 1.2; }
+        .stat-card .stat-sub { font-size: 0.7rem; color: var(--text-secondary); margin-top: 0.2rem; }
+        .stat-card .stat-icon { float: right; font-size: 1.3rem; opacity: 0.15; }
+
+        /* ── Tab Content ── */
+        .tab-content { display: none; }
+        .tab-content.active { display: block; animation: fadeIn 0.3s ease; }
+        @keyframes fadeIn { from { opacity: 0; transform: translateY(8px); } to { opacity: 1; transform: translateY(0); } }
+
+        /* ── Section Headers ── */
+        .section-header { display: flex; align-items: center; justify-content: space-between; margin-bottom: 1rem; }
+        .section-header h2 { font-size: 1rem; font-weight: 700; }
+        .section-header .badge-count { font-size: 0.65rem; background: var(--bg-hover); color: var(--text-secondary); padding: 0.2rem 0.5rem; border-radius: 100px; font-weight: 600; }
+        .section-header select, .section-header input {
+            background: var(--bg-card); border: 1px solid var(--border); border-radius: 6px; color: var(--text-primary);
+            padding: 0.4rem 0.7rem; font-size: 0.75rem; font-family: 'Inter', sans-serif;
+        }
+        .section-header select:focus, .section-header input:focus { outline: none; border-color: var(--primary); }
+
+        /* ── Tables ── */
+        .table-wrap { overflow-x: auto; background: var(--bg-card); border: 1px solid var(--border); border-radius: 12px; }
+        table { width: 100%; border-collapse: collapse; font-size: 0.78rem; }
+        th { text-align: left; padding: 0.7rem 1rem; font-size: 0.65rem; text-transform: uppercase; letter-spacing: 0.5px; color: var(--text-muted); font-weight: 700; border-bottom: 1px solid var(--border); background: var(--bg-secondary); }
+        td { padding: 0.6rem 1rem; border-bottom: 1px solid rgba(42,49,66,0.5); color: var(--text-secondary); }
+        tr:hover td { background: var(--bg-hover); }
+        .status-badge { display: inline-flex; align-items: center; gap: 0.3rem; padding: 0.15rem 0.5rem; border-radius: 100px; font-size: 0.65rem; font-weight: 600; }
+        .status-badge.active { background: rgba(16,185,129,0.12); color: var(--success); }
+        .status-badge.inactive { background: rgba(239,68,68,0.12); color: var(--danger); }
+        .status-badge.high { background: rgba(239,68,68,0.12); color: var(--danger); }
+        .status-badge.medium { background: rgba(245,158,11,0.12); color: var(--warning); }
+        .status-badge.low { background: rgba(6,182,212,0.12); color: var(--info); }
+        .status-dot { width: 6px; height: 6px; border-radius: 50%; display: inline-block; }
+        .status-dot.online { background: var(--success); }
+        .status-dot.offline { background: var(--danger); }
+        .status-dot.warning { background: var(--warning); }
+
+        .btn-action {
+            padding: 0.3rem 0.6rem; border-radius: 6px; border: 1px solid var(--border);
+            background: transparent; color: var(--text-secondary); font-size: 0.7rem;
+            cursor: pointer; transition: all 0.15s ease; font-family: 'Inter', sans-serif;
+        }
+        .btn-action:hover { border-color: var(--primary); color: var(--primary-light); }
+        .btn-action.danger:hover { border-color: var(--danger); color: var(--danger); }
+
+        /* ── Activity Feed ── */
+        .feed-list { max-height: 500px; overflow-y: auto; }
+        .feed-item { display: flex; align-items: flex-start; gap: 0.75rem; padding: 0.6rem 0; border-bottom: 1px solid rgba(42,49,66,0.3); }
+        .feed-item:last-child { border-bottom: none; }
+        .feed-icon { width: 28px; height: 28px; border-radius: 6px; display: flex; align-items: center; justify-content: center; font-size: 0.65rem; flex-shrink: 0; }
+        .feed-icon.info { background: rgba(6,182,212,0.12); color: var(--info); }
+        .feed-icon.warning { background: rgba(245,158,11,0.12); color: var(--warning); }
+        .feed-icon.danger { background: rgba(239,68,68,0.12); color: var(--danger); }
+        .feed-icon.success { background: rgba(16,185,129,0.12); color: var(--success); }
+        .feed-content { flex: 1; min-width: 0; }
+        .feed-content .feed-title { font-size: 0.78rem; font-weight: 600; color: var(--text-primary); }
+        .feed-content .feed-desc { font-size: 0.7rem; color: var(--text-muted); margin-top: 0.1rem; }
+        .feed-content .feed-meta { font-size: 0.62rem; color: var(--text-muted); margin-top: 0.15rem; }
+        .feed-loading { text-align: center; padding: 2rem; color: var(--text-muted); font-size: 0.8rem; }
+
+        /* ── Security Grid ── */
+        .security-summary { display: grid; grid-template-columns: repeat(3, 1fr); gap: 0.85rem; margin-bottom: 1.25rem; }
+        .security-card { background: var(--bg-card); border: 1px solid var(--border); border-radius: 12px; padding: 1rem; text-align: center; }
+        .security-card .sc-value { font-size: 1.4rem; font-weight: 800; }
+        .security-card .sc-label { font-size: 0.65rem; color: var(--text-muted); margin-top: 0.15rem; text-transform: uppercase; letter-spacing: 0.5px; }
+
+        .risk-bar { width: 100%; height: 4px; background: var(--border); border-radius: 2px; margin-top: 0.4rem; }
+        .risk-bar-fill { height: 100%; border-radius: 2px; transition: width 0.5s ease; }
+
+        /* ── Two-column ── */
+        .two-col { display: grid; grid-template-columns: 1fr 1fr; gap: 1rem; margin-bottom: 1.5rem; }
+
+        /* ── Loading/Empty ── */
+        .loading-state { text-align: center; padding: 3rem; color: var(--text-muted); }
+        .loading-state .spinner { width: 32px; height: 32px; border: 3px solid var(--border); border-top-color: var(--primary); border-radius: 50%; animation: spin 0.7s linear infinite; margin: 0 auto 0.75rem; }
+        @keyframes spin { to { transform: rotate(360deg); } }
+        .empty-state { text-align: center; padding: 3rem; color: var(--text-muted); font-size: 0.85rem; }
+        .empty-state i { font-size: 2rem; margin-bottom: 0.75rem; opacity: 0.3; }
+
+        @media (max-width: 1024px) {
+            .stats-grid { grid-template-columns: repeat(3, 1fr); }
+            .two-col { grid-template-columns: 1fr; }
+            .security-summary { grid-template-columns: 1fr 1fr; }
+        }
+        @media (max-width: 768px) {
+            .sidebar { width: 56px; }
+            .sidebar-brand span, .sidebar-brand .badge, .nav-item span, .nav-section-label { display: none; }
+            .sidebar-brand { justify-content: center; padding: 1rem 0; }
+            .nav-item { justify-content: center; padding: 0.65rem; }
+            .main-content { margin-left: 56px; padding: 1rem; }
+            .stats-grid { grid-template-columns: repeat(2, 1fr); }
+            .security-summary { grid-template-columns: 1fr; }
+        }
+    </style>
+</head>
+<body>
+<div class="app-layout">
+    <!-- Sidebar -->
+    <aside class="sidebar">
+        <div class="sidebar-brand">
+            <div class="brand-icon"><i class="fas fa-shield-halved"></i></div>
+            <span>Command Center</span>
+            <div class="badge">SECURE</div>
+        </div>
+        <nav class="sidebar-nav">
+            <div class="nav-section-label">System</div>
+            <button class="nav-item active" data-tab="overview"><i class="fas fa-lg fa-gauge-high"></i><span>Overview</span></button>
+            <button class="nav-item" data-tab="institutions"><i class="fas fa-lg fa-building-columns"></i><span>Institutions</span></button>
+            <button class="nav-item" data-tab="users"><i class="fas fa-lg fa-users"></i><span>Users</span></button>
+            <button class="nav-item" data-tab="attendance"><i class="fas fa-lg fa-clipboard-check"></i><span>Attendance</span></button>
+            <div class="nav-section-label">Security</div>
+            <button class="nav-item" data-tab="security"><i class="fas fa-lg fa-shield"></i><span>Security Center</span></button>
+            <button class="nav-item" data-tab="suspicious"><i class="fas fa-lg fa-triangle-exclamation"></i><span>Suspicious Activity</span></button>
+            <div class="nav-section-label">Monitor</div>
+            <button class="nav-item" data-tab="activity"><i class="fas fa-lg fa-rss"></i><span>Activity Feed</span></button>
+            <button class="nav-item" data-tab="audit"><i class="fas fa-lg fa-list"></i><span>Audit Logs</span></button>
+            <div class="nav-section-label" style="margin-top:1rem;">System</div>
+            <button class="nav-item" onclick="window.location.href='/institutional-admin/dashboard'" title="Exit to standard dashboard"><i class="fas fa-lg fa-right-from-bracket"></i><span>Exit</span></button>
+        </nav>
+    </aside>
+
+    <!-- Main Content -->
+    <div class="main-content">
+        <div class="topbar">
+            <h1 id="pageTitle">System <span>Overview</span></h1>
+            <div class="topbar-right">
+                <div class="live-indicator"><div class="live-dot"></div> LIVE</div>
+                <button class="auto-refresh-btn" id="refreshBtn" onclick="refreshAll()"><i class="fas fa-rotate"></i> Refresh</button>
+            </div>
+        </div>
+
+        <!-- ── Tab: Overview ── -->
+        <div class="tab-content active" id="tab-overview">
+            <div class="stats-grid" id="overviewStats">
+                <div class="loading-state" style="grid-column:1/-1;"><div class="spinner"></div>Loading system overview...</div>
+            </div>
+            <div class="two-col">
+                <div>
+                    <div class="section-header"><h2>Activity Feed</h2></div>
+                    <div class="table-wrap"><div class="feed-list" id="overviewFeed"><div class="feed-loading"><i class="fas fa-circle-notch fa-spin"></i> Loading...</div></div></div>
+                </div>
+                <div>
+                    <div class="section-header"><h2>Security Events</h2></div>
+                    <div class="table-wrap"><div class="feed-list" id="overviewSecurity"><div class="feed-loading"><i class="fas fa-circle-notch fa-spin"></i> Loading...</div></div></div>
+                </div>
+            </div>
+        </div>
+
+        <!-- ── Tab: Institutions ── -->
+        <div class="tab-content" id="tab-institutions">
+            <div class="section-header"><h2>All Institutions</h2><span class="badge-count" id="instCount">0</span></div>
+            <div class="table-wrap"><table><thead><tr><th>Name</th><th>Code</th><th>Status</th><th>Admins</th><th>Lecturers</th><th>Students</th><th>Attendance Rate</th><th>Suspicious</th><th>Actions</th></tr></thead><tbody id="instTableBody"><tr><td colspan="9" class="loading-state"><div class="spinner"></div></td></tr></tbody></table></div>
+        </div>
+
+        <!-- ── Tab: Users ── -->
+        <div class="tab-content" id="tab-users">
+            <div class="section-header">
+                <h2>System Users</h2>
+                <div style="display:flex;gap:0.5rem;">
+                    <select id="userRoleFilter" onchange="loadUsers()"><option value="">All Roles</option><option value="super_admin">Super Admin</option><option value="institutional_admin">Institutional Admin</option><option value="lecturer">Lecturer</option><option value="student">Student</option></select>
+                    <input type="text" id="userSearch" placeholder="Search..." oninput="loadUsers()" style="width:160px;">
+                    <span class="badge-count" id="userCount">0</span>
+                </div>
+            </div>
+            <div class="table-wrap"><table><thead><tr><th>Name</th><th>Email</th><th>Role</th><th>Institution</th><th>Status</th><th>Verified</th><th>Last Login</th><th>Actions</th></tr></thead><tbody id="userTableBody"><tr><td colspan="8" class="loading-state"><div class="spinner"></div></td></tr></tbody></table></div>
+        </div>
+
+        <!-- ── Tab: Attendance ── -->
+        <div class="tab-content" id="tab-attendance">
+            <div class="stats-grid" id="attendanceStats">
+                <div class="loading-state" style="grid-column:1/-1;"><div class="spinner"></div>Loading attendance data...</div>
+            </div>
+            <div class="section-header"><h2>Attendance by Status</h2></div>
+            <div class="table-wrap"><table><thead><tr><th>Metric</th><th>Value</th></tr></thead><tbody id="attendanceDetail"><tr><td colspan="2" class="loading-state"><div class="spinner"></div></td></tr></tbody></table></div>
+        </div>
+
+        <!-- ── Tab: Security Center ── -->
+        <div class="tab-content" id="tab-security">
+            <div class="security-summary" id="securitySummary">
+                <div class="loading-state" style="grid-column:1/-1;"><div class="spinner"></div></div>
+            </div>
+            <div class="section-header"><h2>Security Event Log</h2><select id="riskFilter" onchange="loadSecurity()"><option value="0">All Risk Levels</option><option value="7">High Risk (7+)</option><option value="4">Medium Risk (4+)</option></select></div>
+            <div class="table-wrap"><table><thead><tr><th>Event Type</th><th>Description</th><th>Institution</th><th>Risk</th><th>Status</th><th>IP</th><th>Time</th></tr></thead><tbody id="securityTableBody"><tr><td colspan="7" class="loading-state"><div class="spinner"></div></td></tr></tbody></table></div>
+        </div>
+
+        <!-- ── Tab: Suspicious Activity ── -->
+        <div class="tab-content" id="tab-suspicious">
+            <div class="section-header"><h2>Suspicious Attendance Records</h2><span class="badge-count" id="suspiciousCount">0</span></div>
+            <div class="table-wrap"><table><thead><tr><th>Student</th><th>Email</th><th>Institution</th><th>Status</th><th>Reason</th><th>IP</th><th>Time</th></tr></thead><tbody id="suspiciousTableBody"><tr><td colspan="7" class="loading-state"><div class="spinner"></div></td></tr></tbody></table></div>
+        </div>
+
+        <!-- ── Tab: Activity Feed ── -->
+        <div class="tab-content" id="tab-activity">
+            <div class="section-header"><h2>Real-Time System Activity</h2><span class="badge-count" id="activityCount">0</span></div>
+            <div class="table-wrap"><div class="feed-list" id="activityFeedList"><div class="feed-loading"><i class="fas fa-circle-notch fa-spin"></i> Loading activity feed...</div></div></div>
+        </div>
+
+        <!-- ── Tab: Audit Logs ── -->
+        <div class="tab-content" id="tab-audit">
+            <div class="section-header"><h2>System Audit Logs</h2><select id="auditActionFilter" onchange="loadAudit()"><option value="">All Actions</option><option value="API_ACCESS">API Access</option><option value="LOGIN">Login</option><option value="CREATE">Create</option><option value="UPDATE">Update</option><option value="DELETE">Delete</option></select></div>
+            <div class="table-wrap"><table><thead><tr><th>Action</th><th>Resource</th><th>Institution</th><th>User</th><th>IP</th><th>Timestamp</th></tr></thead><tbody id="auditTableBody"><tr><td colspan="6" class="loading-state"><div class="spinner"></div></td></tr></tbody></table></div>
+        </div>
+    </div>
+</div>
+
+<script>
+    var API_BASE = '/api/super-admin';
+    var currentTab = 'overview';
+    var refreshInterval = null;
+    var REFRESH_MS = 15000;
+
+    // ── Tab Navigation ──
+    document.querySelectorAll('.nav-item[data-tab]').forEach(function(btn) {
+        btn.addEventListener('click', function() {
+            document.querySelectorAll('.nav-item').forEach(function(b) { b.classList.remove('active'); });
+            this.classList.add('active');
+            document.querySelectorAll('.tab-content').forEach(function(t) { t.classList.remove('active'); });
+            var tab = this.getAttribute('data-tab');
+            document.getElementById('tab-' + tab).classList.add('active');
+            document.getElementById('pageTitle').innerHTML = this.querySelector('span').textContent + ' <span>Command Center</span>';
+            currentTab = tab;
+            loadTab(tab);
+        });
+    });
+
+    function loadTab(tab) {
+        var fns = {
+            overview: loadOverview,
+            institutions: loadInstitutions,
+            users: loadUsers,
+            attendance: loadAttendance,
+            security: loadSecurity,
+            suspicious: loadSuspicious,
+            activity: loadActivity,
+            audit: loadAudit
+        };
+        if (fns[tab]) fns[tab]();
+    }
+
+    // ── Refresh ──
+    function refreshAll() { loadTab(currentTab); }
+
+    // ── Formatting Helpers ──
+    function fmtTime(t) { if (!t) return '—'; try { var d = new Date(t); return d.toLocaleString(); } catch(e) { return t; } }
+    function fmtDate(t) { if (!t) return '—'; try { var d = new Date(t); return d.toLocaleDateString(); } catch(e) { return t; } }
+    function esc(s) { if (!s) return '—'; var d = document.createElement('div'); d.textContent = s; return d.innerHTML; }
+
+    function riskColor(s) {
+        var n = parseInt(s) || 0;
+        if (n >= 7) return 'danger';
+        if (n >= 4) return 'medium';
+        return 'low';
+    }
+    function riskPct(s) { return Math.min(parseInt(s) || 0, 10) * 10; }
+
+    // ═══════════════════════ OVERVIEW ═══════════════════════
+    function loadOverview() {
+        fetch(API_BASE + '/overview').then(function(r) { return r.json(); }).then(function(d) {
+            if (!d.success) return;
+            var o = d.data;
+            document.getElementById('overviewStats').innerHTML =
+                '<div class="stat-card"><div class="stat-icon"><i class="fas fa-building-columns"></i></div><div class="stat-label">Institutions</div><div class="stat-value">' + (o.total_institutions || 0) + '</div><div class="stat-sub">Active across system</div></div>' +
+                '<div class="stat-card"><div class="stat-icon"><i class="fas fa-user-graduate"></i></div><div class="stat-label">Students</div><div class="stat-value">' + (o.total_students || 0) + '</div><div class="stat-sub">' + (o.total_lecturers || 0) + ' lecturers · ' + (o.total_admins || 0) + ' admins</div></div>' +
+                '<div class="stat-card"><div class="stat-icon"><i class="fas fa-clipboard-check"></i></div><div class="stat-label">Attendance Records</div><div class="stat-value">' + (o.total_attendance_records || 0).toLocaleString() + '</div><div class="stat-sub">' + (o.today_records || 0) + ' today · ' + (o.today_attendance_rate || 0) + '% rate</div></div>' +
+                '<div class="stat-card"><div class="stat-icon"><i class="fas fa-triangle-exclamation"></i></div><div class="stat-label">Suspicious</div><div class="stat-value" style="color:' + ((o.suspicious_records || 0) > 0 ? 'var(--warning)' : 'var(--success)') + '">' + (o.suspicious_records || 0) + '</div><div class="stat-sub">Flagged records</div></div>' +
+                '<div class="stat-card"><div class="stat-icon"><i class="fas fa-shield"></i></div><div class="stat-label">Security Events</div><div class="stat-value" style="color:' + ((o.unresolved_alerts || 0) > 0 ? 'var(--danger)' : 'var(--success)') + '">' + (o.security_events || 0) + '</div><div class="stat-sub">' + (o.unresolved_alerts || 0) + ' unresolved · ' + (o.high_risk_events || 0) + ' high risk</div></div>' +
+                '<div class="stat-card"><div class="stat-icon"><i class="fas fa-calendar-check"></i></div><div class="stat-label">Demo Bookings</div><div class="stat-value">' + (o.demo_bookings || 0) + '</div><div class="stat-sub">Onboarding pipeline</div></div>';
+
+            loadOverviewFeed();
+            loadOverviewSecurity();
+        });
+    }
+
+    function loadOverviewFeed() {
+        fetch(API_BASE + '/activity-feed').then(function(r) { return r.json(); }).then(function(d) {
+            var el = document.getElementById('overviewFeed');
+            if (!d.success || !d.data.length) { el.innerHTML = '<div class="empty-state"><i class="fas fa-rss"></i><br>No recent activity</div>'; return; }
+            el.innerHTML = d.data.slice(0, 8).map(function(a) {
+                var icon = 'info'; if (a.action.includes('LOGIN')) icon = 'success'; if (a.action.includes('DELETE')) icon = 'danger'; if (a.action.includes('SECURITY')) icon = 'warning';
+                return '<div class="feed-item"><div class="feed-icon ' + icon + '"><i class="fas ' + (icon==='info'?'fa-circle-info':icon==='success'?'fa-right-to-bracket':icon==='danger'?'fa-trash':'fa-exclamation') + '"></i></div><div class="feed-content"><div class="feed-title">' + esc(a.action) + '</div><div class="feed-desc">' + esc(a.resource_type) + (a.institution_name ? ' · ' + esc(a.institution_name) : '') + '</div><div class="feed-meta">' + fmtTime(a.timestamp) + (a.ip_address ? ' · ' + esc(a.ip_address) : '') + '</div></div></div>';
+            }).join('');
+        });
+    }
+
+    function loadOverviewSecurity() {
+        fetch(API_BASE + '/security-events?min_risk=4').then(function(r) { return r.json(); }).then(function(d) {
+            var el = document.getElementById('overviewSecurity');
+            if (!d.success || !d.data.length) { el.innerHTML = '<div class="empty-state"><i class="fas fa-shield-check"></i><br>No security events</div>'; return; }
+            el.innerHTML = d.data.slice(0, 8).map(function(e) {
+                var cls = riskColor(e.risk_score);
+                return '<div class="feed-item"><div class="feed-icon ' + cls + '"><i class="fas fa-bolt"></i></div><div class="feed-content"><div class="feed-title">' + esc(e.event_type) + '</div><div class="feed-desc">' + esc(e.description || '') + (e.institution_name ? ' · ' + esc(e.institution_name) : '') + '</div><div class="feed-meta">Risk: ' + (e.risk_score || 0) + '/10 · ' + fmtTime(e.created_at) + '</div></div></div>';
+            }).join('');
+        });
+    }
+
+    // ═══════════════════════ INSTITUTIONS ═══════════════════════
+    function loadInstitutions() {
+        fetch(API_BASE + '/institutions').then(function(r) { return r.json(); }).then(function(d) {
+            var el = document.getElementById('instTableBody');
+            if (!d.success) { el.innerHTML = '<tr><td colspan="9" class="empty-state">Failed to load</td></tr>'; return; }
+            document.getElementById('instCount').textContent = d.data.length;
+            if (!d.data.length) { el.innerHTML = '<tr><td colspan="9" class="empty-state"><i class="fas fa-building-columns"></i><br>No institutions found</td></tr>'; return; }
+            el.innerHTML = d.data.map(function(i) {
+                return '<tr><td><strong>' + esc(i.name) + '</strong></td><td>' + esc(i.code) + '</td>' +
+                    '<td><span class="status-badge ' + (i.is_active ? 'active' : 'inactive') + '"><span class="status-dot ' + (i.is_active ? 'online' : 'offline') + '"></span>' + (i.is_active ? 'Active' : 'Inactive') + '</span></td>' +
+                    '<td>' + (i.total_admins || 0) + '</td><td>' + (i.total_lecturers || 0) + '</td><td>' + (i.total_students || 0) + '</td>' +
+                    '<td>' + (i.attendance_rate || 0) + '%</td>' +
+                    '<td>' + (i.suspicious_records || 0) + '</td>' +
+                    '<td><button class="btn-action" onclick="toggleInstitution(\'' + esc(i.id) + '\')"><i class="fas ' + (i.is_active ? 'fa-pause' : 'fa-play') + '"></i> ' + (i.is_active ? 'Deactivate' : 'Activate') + '</button></td></tr>';
+            }).join('');
+        });
+    }
+
+    function toggleInstitution(id) {
+        if (!confirm('Toggle this institution\'s status?')) return;
+        fetch(API_BASE + '/institution/' + id + '/toggle-status', { method: 'POST' }).then(function(r) { return r.json(); }).then(function(d) {
+            if (d.success) loadInstitutions();
+            else alert('Failed: ' + (d.error || 'Unknown'));
+        });
+    }
+
+    // ═══════════════════════ USERS ═══════════════════════
+    function loadUsers() {
+        var role = document.getElementById('userRoleFilter').value;
+        var search = document.getElementById('userSearch').value;
+        var url = API_BASE + '/users?';
+        if (role) url += 'role=' + encodeURIComponent(role) + '&';
+        if (search) url += 'search=' + encodeURIComponent(search) + '&';
+        fetch(url).then(function(r) { return r.json(); }).then(function(d) {
+            var el = document.getElementById('userTableBody');
+            if (!d.success) { el.innerHTML = '<tr><td colspan="8" class="empty-state">Failed to load</td></tr>'; return; }
+            document.getElementById('userCount').textContent = d.data.length;
+            if (!d.data.length) { el.innerHTML = '<tr><td colspan="8" class="empty-state"><i class="fas fa-users"></i><br>No users found</td></tr>'; return; }
+            el.innerHTML = d.data.map(function(u) {
+                return '<tr><td><strong>' + esc(u.full_name || u.email) + '</strong></td><td>' + esc(u.email) + '</td>' +
+                    '<td><span class="status-badge ' + (u.role === 'super_admin' ? 'high' : u.role === 'institutional_admin' ? 'medium' : 'low') + '">' + esc(u.role || '').replace(/_/g, ' ') + '</span></td>' +
+                    '<td>' + esc(u.institution_name) + '</td>' +
+                    '<td><span class="status-badge ' + (u.is_active ? 'active' : 'inactive') + '">' + (u.is_active ? 'Active' : 'Inactive') + '</span></td>' +
+                    '<td>' + (u.email_verified ? '<i class="fas fa-check-circle" style="color:var(--success)"></i>' : '<i class="fas fa-times-circle" style="color:var(--text-muted)"></i>') + '</td>' +
+                    '<td style="font-size:0.7rem;">' + fmtTime(u.last_login) + '</td>' +
+                    '<td><button class="btn-action" onclick="toggleUser(\'' + esc(u.id) + '\')"><i class="fas ' + (u.is_active ? 'fa-ban' : 'fa-check') + '"></i> ' + (u.is_active ? 'Suspend' : 'Activate') + '</button></td></tr>';
+            }).join('');
+        });
+    }
+
+    function toggleUser(id) {
+        if (!confirm('Toggle this user\'s active status?')) return;
+        fetch(API_BASE + '/user/' + id + '/toggle-status', { method: 'POST' }).then(function(r) { return r.json(); }).then(function(d) {
+            if (d.success) loadUsers();
+            else alert('Failed: ' + (d.error || 'Unknown'));
+        });
+    }
+
+    // ═══════════════════════ ATTENDANCE ═══════════════════════
+    function loadAttendance() {
+        fetch(API_BASE + '/attendance/overview').then(function(r) { return r.json(); }).then(function(d) {
+            if (!d.success) return;
+            var o = d.data;
+            document.getElementById('attendanceStats').innerHTML =
+                '<div class="stat-card"><div class="stat-icon"><i class="fas fa-chart-simple"></i></div><div class="stat-label">Attendance Rate</div><div class="stat-value" style="color:' + (o.attendance_rate >= 80 ? 'var(--success)' : o.attendance_rate >= 60 ? 'var(--warning)' : 'var(--danger)') + '">' + (o.attendance_rate || 0) + '%</div><div class="stat-sub">Overall system average</div></div>' +
+                '<div class="stat-card"><div class="stat-icon"><i class="fas fa-clock"></i></div><div class="stat-label">Active Sessions</div><div class="stat-value">' + (o.active_sessions || 0) + '</div><div class="stat-sub">' + (o.total_sessions || 0) + ' total sessions</div></div>' +
+                '<div class="stat-card"><div class="stat-icon"><i class="fas fa-user-graduate"></i></div><div class="stat-label">Students Tracked</div><div class="stat-value">' + (o.students_with_attendance || 0) + '</div><div class="stat-sub">of ' + (o.enrolled_students || 0) + ' enrolled</div></div>' +
+                '<div class="stat-card"><div class="stat-icon"><i class="fas fa-record-vinyl"></i></div><div class="stat-label">Avg Per Session</div><div class="stat-value">' + (o.avg_records_per_session || 0) + '</div><div class="stat-sub">Records per session</div></div>';
+
+            document.getElementById('attendanceDetail').innerHTML =
+                '<tr><td><strong>Total Records</strong></td><td>' + (o.total_records || 0).toLocaleString() + '</td></tr>' +
+                '<tr><td><span style="color:var(--success)">●</span> Present</td><td>' + (o.present || 0).toLocaleString() + '</td></tr>' +
+                '<tr><td><span style="color:var(--warning)">●</span> Late</td><td>' + (o.late || 0).toLocaleString() + '</td></tr>' +
+                '<tr><td><span style="color:var(--danger)">●</span> Absent</td><td>' + (o.absent || 0).toLocaleString() + '</td></tr>' +
+                '<tr><td><span style="color:var(--info)">●</span> Excused</td><td>' + (o.excused || 0).toLocaleString() + '</td></tr>' +
+                '<tr><td><span style="color:var(--danger)">⚠</span> Suspicious</td><td>' + (o.suspicious_records || 0) + '</td></tr>';
+        });
+    }
+
+    // ═══════════════════════ SECURITY ═══════════════════════
+    function loadSecurity() {
+        var minRisk = document.getElementById('riskFilter').value || '0';
+        fetch(API_BASE + '/security-events?min_risk=' + minRisk).then(function(r) { return r.json(); }).then(function(d) {
+            if (!d.success) return;
+            var data = d.data || [];
+
+            var high = data.filter(function(e) { return (e.risk_score || 0) >= 7; }).length;
+            var unresolved = data.filter(function(e) { return !e.is_resolved; }).length;
+            document.getElementById('securitySummary').innerHTML =
+                '<div class="security-card"><div class="sc-value" style="color:var(--danger)">' + (data.length || 0) + '</div><div class="sc-label">Total Events</div></div>' +
+                '<div class="security-card"><div class="sc-value" style="color:var(--danger)">' + high + '</div><div class="sc-label">High Risk</div></div>' +
+                '<div class="security-card"><div class="sc-value" style="color:var(--warning)">' + unresolved + '</div><div class="sc-label">Unresolved</div></div>';
+
+            var el = document.getElementById('securityTableBody');
+            if (!data.length) { el.innerHTML = '<tr><td colspan="7" class="empty-state"><i class="fas fa-shield-check"></i><br>No security events at this risk level</td></tr>'; return; }
+            el.innerHTML = data.map(function(e) {
+                return '<tr><td><strong>' + esc(e.event_type) + '</strong></td><td>' + esc(e.description || '') + '</td><td>' + esc(e.institution_name || '—') + '</td>' +
+                    '<td><div class="risk-bar"><div class="risk-bar-fill" style="width:' + riskPct(e.risk_score) + '%;background:var(--' + riskColor(e.risk_score) + ')"></div></div><span style="font-size:0.65rem;">' + (e.risk_score || 0) + '/10</span></td>' +
+                    '<td><span class="status-badge ' + (e.is_resolved ? 'active' : 'high') + '">' + (e.is_resolved ? 'Resolved' : 'Open') + '</span></td>' +
+                    '<td style="font-size:0.7rem;">' + esc(e.ip_address || '—') + '</td><td style="font-size:0.7rem;">' + fmtTime(e.created_at) + '</td></tr>';
+            }).join('');
+        });
+    }
+
+    // ═══════════════════════ SUSPICIOUS ═══════════════════════
+    function loadSuspicious() {
+        fetch(API_BASE + '/suspicious-activity').then(function(r) { return r.json(); }).then(function(d) {
+            var el = document.getElementById('suspiciousTableBody');
+            if (!d.success) { el.innerHTML = '<tr><td colspan="7" class="empty-state">Failed to load</td></tr>'; return; }
+            var data = d.data || [];
+            document.getElementById('suspiciousCount').textContent = data.length;
+            if (!data.length) { el.innerHTML = '<tr><td colspan="7" class="empty-state"><i class="fas fa-check-circle" style="color:var(--success)"></i><br>No suspicious activity detected</td></tr>'; return; }
+            el.innerHTML = data.map(function(r) {
+                return '<tr><td><strong>' + esc(r.student_name || 'Unknown') + '</strong></td><td>' + esc(r.student_email || '') + '</td>' +
+                    '<td>' + esc(r.institution_name || '—') + '</td>' +
+                    '<td><span class="status-badge ' + (r.status === 'present' ? 'active' : 'inactive') + '">' + esc(r.status) + '</span></td>' +
+                    '<td style="color:var(--warning)">' + esc(r.suspicion_reason || '—') + '</td>' +
+                    '<td style="font-size:0.7rem;">' + esc(r.ip_address || '—') + '</td><td style="font-size:0.7rem;">' + fmtTime(r.marked_at || r.created_at) + '</td></tr>';
+            }).join('');
+        });
+    }
+
+    // ═══════════════════════ ACTIVITY ═══════════════════════
+    function loadActivity() {
+        fetch(API_BASE + '/activity-feed').then(function(r) { return r.json(); }).then(function(d) {
+            var el = document.getElementById('activityFeedList');
+            if (!d.success) { el.innerHTML = '<div class="empty-state">Failed to load</div>'; return; }
+            var data = d.data || [];
+            document.getElementById('activityCount').textContent = data.length;
+            if (!data.length) { el.innerHTML = '<div class="empty-state"><i class="fas fa-rss"></i><br>No activity recorded</div>'; return; }
+            el.innerHTML = data.map(function(a) {
+                var icon = 'info';
+                if (a.action && a.action.includes('LOGIN')) icon = 'success';
+                else if (a.action && (a.action.includes('DELETE') || a.action.includes('SECURITY'))) icon = 'danger';
+                else if (a.action && a.action.includes('CREATE')) icon = 'success';
+                else if (a.action && a.action.includes('UPDATE')) icon = 'warning';
+                var actionStr = a.action || 'Unknown';
+                var resourceStr = a.resource_type || 'system';
+                return '<div class="feed-item"><div class="feed-icon ' + icon + '"><i class="fas ' + (icon==='info'?'fa-circle-info':icon==='success'?'fa-right-to-bracket':icon==='danger'?'fa-trash':'fa-pen') + '"></i></div><div class="feed-content"><div class="feed-title">' + esc(actionStr.replace(/_/g,' ')) + '</div><div class="feed-desc">' + esc(resourceStr) + (a.institution_name ? ' · ' + esc(a.institution_name) : '') + '</div><div class="feed-meta">' + fmtTime(a.timestamp) + (a.ip_address ? ' · IP: ' + esc(a.ip_address) : '') + '</div></div></div>';
+            }).join('');
+        });
+    }
+
+    // ═══════════════════════ AUDIT ═══════════════════════
+    function loadAudit() {
+        var action = document.getElementById('auditActionFilter').value;
+        var url = API_BASE + '/audit-logs';
+        if (action) url += '?action=' + encodeURIComponent(action);
+        fetch(url).then(function(r) { return r.json(); }).then(function(d) {
+            var el = document.getElementById('auditTableBody');
+            if (!d.success) { el.innerHTML = '<tr><td colspan="6" class="empty-state">Failed to load</td></tr>'; return; }
+            var data = d.data || [];
+            if (!data.length) { el.innerHTML = '<tr><td colspan="6" class="empty-state"><i class="fas fa-list"></i><br>No audit logs found</td></tr>'; return; }
+            el.innerHTML = data.map(function(l) {
+                return '<tr><td><strong>' + esc((l.action || '').replace(/_/g,' ')) + '</strong></td><td>' + esc(l.resource_type || '—') + '</td><td>' + esc(l.institution_name || '—') + '</td><td style="font-size:0.7rem;">' + esc(l.user_id || '').substring(0,12) + '...</td><td style="font-size:0.7rem;">' + esc(l.ip_address || '—') + '</td><td style="font-size:0.7rem;">' + fmtTime(l.timestamp) + '</td></tr>';
+            }).join('');
+        });
+    }
+
+    // ═══════════════════════ AUTO-REFRESH ═══════════════════════
+    setInterval(function() {
+        if (document.visibilityState !== 'hidden') loadTab(currentTab);
+    }, REFRESH_MS);
+
+    // ═══════════════════════ INIT ═══════════════════════
+    loadOverview();
+</script>
+</body>
+</html>

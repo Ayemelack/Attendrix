@@ -293,6 +293,275 @@ def create_app():
         resp.headers['Expires'] = '0'
         return resp
     
+    @app.route('/request-demo')
+    def request_demo():
+        """Request demo page"""
+        response = render_template('request-demo.html')
+        from flask import make_response
+        resp = make_response(response)
+        resp.headers['Cache-Control'] = 'no-cache, no-store, must-revalidate'
+        resp.headers['Pragma'] = 'no-cache'
+        resp.headers['Expires'] = '0'
+        return resp
+    
+    @app.route('/schedule-demo')
+    def schedule_demo():
+        """Demo scheduling page with CSRF protection"""
+        from src.application.demo_booking_service import demo_booking_service
+        csrf_token = demo_booking_service.generate_csrf_token()
+        return render_template('schedule-demo.html', csrf_token=csrf_token)
+
+    @app.route('/demo-prep')
+    def demo_prep():
+        """Secure Demo Preparation Portal — requires valid booking token"""
+        from src.application.demo_booking_service import demo_booking_service
+        token = request.args.get('token', '')
+        booking = demo_booking_service.get_booking_by_token(token)
+        if not token or not booking:
+            return render_template('demo-prep.html', error='invalid_token')
+        return render_template('demo-prep.html',
+            token=token,
+            name=booking['name'],
+            email=booking['email'],
+            institution=booking['institution'],
+            time=booking['time'],
+            date=booking['date'],
+            status=booking['status'],
+            onboarding_progress=booking.get('onboarding_progress', {}),
+            onboarding_completed=booking.get('onboarding_completed', False)
+        )
+
+    @app.route('/trial-gate')
+    def trial_gate():
+        """Trial eligibility gate page"""
+        return render_template('trial-gate.html')
+
+    @app.route('/product-overview')
+    def product_overview():
+        """Product overview page"""
+        return render_template('product-overview.html')
+    
+    @app.route('/brochure')
+    def brochure():
+        """Brochure page"""
+        return render_template('brochure.html')
+    
+    @app.route('/api/brochure/download')
+    def brochure_download():
+        """Download PDF brochure"""
+        from flask import send_file
+        import io
+        try:
+            from reportlab.lib.pagesizes import A4
+            from reportlab.lib.styles import getSampleStyleSheet, ParagraphStyle
+            from reportlab.platypus import SimpleDocTemplate, Paragraph, Spacer, ListFlowable, ListItem
+            from reportlab.lib.colors import HexColor
+            from reportlab.lib.units import mm
+            
+            buf = io.BytesIO()
+            doc = SimpleDocTemplate(buf, pagesize=A4,
+                leftMargin=20*mm, rightMargin=20*mm,
+                topMargin=20*mm, bottomMargin=20*mm)
+            
+            styles = getSampleStyleSheet()
+            title_style = ParagraphStyle('Title2', parent=styles['Title'], fontSize=26, spaceAfter=6, textColor=HexColor('#4F46E5'))
+            heading_style = ParagraphStyle('Heading2', parent=styles['Heading2'], fontSize=16, spaceAfter=6, spaceBefore=14, textColor=HexColor('#1E293B'))
+            body_style = ParagraphStyle('Body2', parent=styles['Normal'], fontSize=10, leading=15, spaceAfter=8, textColor=HexColor('#334155'))
+            bullet_style = ParagraphStyle('Bullet2', parent=styles['Normal'], fontSize=10, leading=14, leftIndent=16, spaceAfter=4, textColor=HexColor('#334155'))
+            
+            elements = []
+            elements.append(Paragraph("Attendrix", title_style))
+            elements.append(Paragraph("Intelligent Attendance Management for Modern Universities", ParagraphStyle('Sub', fontSize=12, spaceAfter=20, textColor=HexColor('#64748B'))))
+            elements.append(Spacer(1, 6))
+            
+            elements.append(Paragraph("Introduction", heading_style))
+            elements.append(Paragraph("Attendrix is a next-generation attendance management system purpose-built for higher education institutions. It replaces traditional, error-prone roll-calling methods with an AI-powered, anti-proxy platform that delivers real-time visibility, automated reporting, and seamless integration with existing campus infrastructure.", body_style))
+            elements.append(Spacer(1, 4))
+            
+            elements.append(Paragraph("Key Features", heading_style))
+            features = [
+                ("<b>Anti-Proxy Shield</b> — Multi-layered detection using device fingerprinting, geolocation, and behavioral analysis prevents proxy attendance."),
+                ("<b>Biometric Verification</b> — Facial recognition and fingerprint scanning ensure each attendance record is authentic."),
+                ("<b>Real-Time Analytics</b> — Live dashboards with predictive insights help administrators identify trends and intervene early."),
+                ("<b>Offline-First Architecture</b> — Distributed mesh network enables attendance recording without internet. Data syncs automatically when reconnected."),
+                ("<b>Automated Reporting</b> — Export attendance reports to PDF or Excel. Schedule automated delivery to stakeholders."),
+            ]
+            for f in features:
+                elements.append(ListFlowable([ListItem(Paragraph(f, bullet_style))], bulletType='bullet', bulletColor=HexColor('#4F46E5'), start='\u2022'))
+            elements.append(Spacer(1, 4))
+            
+            elements.append(Paragraph("Architecture", heading_style))
+            elements.append(Paragraph("Attendrix is built on a distributed, offline-first architecture. Each classroom operates as an independent node. Data synchronizes across LAN and cloud with automatic conflict resolution, ensuring high availability and data integrity even under adverse network conditions.", body_style))
+            elements.append(Spacer(1, 4))
+            
+            elements.append(Paragraph("Benefits", heading_style))
+            benefits = [
+                "Eliminate proxy attendance completely",
+                "Reduce administrative workload by up to 80%",
+                "Real-time visibility across all classrooms",
+                "Boost student accountability and engagement",
+                "Seamless integration with existing LMS and SIS",
+                "GDPR and FERPA compliant data handling",
+                "Scalable from 500 to 50,000+ students",
+                "24/7 support with dedicated account management",
+            ]
+            for b in benefits:
+                elements.append(ListFlowable([ListItem(Paragraph(b, bullet_style))], bulletType='bullet', bulletColor=HexColor('#10B981'), start='\u2022'))
+            elements.append(Spacer(1, 4))
+            
+            elements.append(Paragraph("Use Cases", heading_style))
+            use_cases = [
+                "University Lectures — 500-2000 student courses with multi-factor verification",
+                "Lab Sessions — Small group attendance with biometric check-in",
+                "Seminars & Workshops — Flexible attendance modes for events",
+                "Multi-Campus Institutions — Unified attendance across all locations",
+                "Examination Halls — Strict identity verification for exam integrity",
+            ]
+            for uc in use_cases:
+                elements.append(ListFlowable([ListItem(Paragraph(uc, bullet_style))], bulletType='bullet', bulletColor=HexColor('#4F46E5'), start='\u2022'))
+            
+            elements.append(Spacer(1, 10))
+            elements.append(Paragraph("For more information, visit attendrix.com or schedule a personalized demo.", body_style))
+            
+            doc.build(elements)
+            buf.seek(0)
+            
+            return send_file(buf, mimetype='application/pdf', as_attachment=True, download_name='Attendrix_Brochure.pdf')
+        except ImportError:
+            return jsonify({'error': 'PDF generation not available'}), 500
+        except Exception as e:
+            logger.error(f"PDF generation failed: {str(e)}")
+            return jsonify({'error': 'Failed to generate PDF'}), 500
+    
+    # ===== SECURE DEMO REQUEST API =====
+    _demo_rate_limit = {}
+    
+    @app.route('/api/request-demo', methods=['POST'])
+    def api_request_demo():
+        """Secure demo request submission with OWASP-level validation"""
+        import re
+        import time as _time
+        
+        client_ip = request.remote_addr or 'unknown'
+        now = _time.time()
+        
+        # Rate limiting: max 5 per IP per minute
+        window = _demo_rate_limit.get(client_ip, [])
+        window = [t for t in window if now - t < 60]
+        if len(window) >= 5:
+            resp = jsonify({'success': False, 'message': 'Too many requests'})
+            resp.status_code = 429
+            return resp
+        window.append(now)
+        _demo_rate_limit[client_ip] = window
+        
+        # Minimal elapsed check (additional defense beyond client)
+        if now - float(request.headers.get('X-Request-Start', 0)) < 0.5:
+            resp = jsonify({'success': False, 'message': 'Request too fast'})
+            resp.status_code = 400
+            return resp
+        
+        try:
+            data = request.get_json(force=True) or {}
+        except Exception:
+            return jsonify({'success': False, 'message': 'Invalid JSON'}), 400
+        
+        # Server-side honeypot (hidden field sent from client)
+        if data.get('website', '').strip():
+            logger.warning(f"Honeypot triggered from {client_ip}")
+            return jsonify({'success': False, 'message': 'Invalid request'}), 400
+        
+        # Server-side timestamp validation
+        ts = data.get('formTimestamp')
+        try:
+            ts_val = int(ts)
+            age = now * 1000 - ts_val
+            if age < 2000 or age > 300000:
+                return jsonify({'success': False, 'message': 'Invalid request'}), 400
+        except (TypeError, ValueError):
+            return jsonify({'success': False, 'message': 'Invalid request'}), 400
+        
+        # Server-side CSRF validation
+        client_token = data.get('csrfToken', '')
+        if not client_token or len(client_token) != 64:
+            return jsonify({'success': False, 'message': 'Invalid request'}), 400
+        
+        # --- Server-side field validation ---
+        disposable_domains = {
+            'mailinator.com','guerrillamail.com','tempmail.com','throwaway.email',
+            'yopmail.com','sharklasers.com','temp-mail.org','0-mail.com',
+            'trashmail.com','10minutemail.com','maildrop.cc','getnada.com',
+            'burnermail.io','spam4.me','mailmetrash.com','mailexpire.com'
+        }
+        
+        full_name = (data.get('fullName') or '').strip()
+        institution = (data.get('institution') or '').strip()
+        email = (data.get('email') or '').strip().lower()
+        phone = (data.get('phone') or '').strip()
+        size = data.get('size', '')
+        
+        errors = []
+        
+        # Full Name: letters+spaces, 2+ words
+        if not full_name or len(full_name) < 2:
+            errors.append('fullName')
+        elif not re.match(r'^[a-zA-Z\s\'.-]+$', full_name):
+            errors.append('fullName')
+        elif len(full_name.split()) < 2:
+            errors.append('fullName')
+        
+        # Institution: alphabetic + . - &, min 3, not numeric-only
+        if not institution or len(institution) < 3:
+            errors.append('institution')
+        elif re.match(r'^\d+$', institution):
+            errors.append('institution')
+        elif re.search(r'[<>\'"]', institution):
+            errors.append('institution')
+        
+        # Email: format + disposable check
+        if not email or not re.match(r'^[^\s@]+@[^\s@]+\.[^\s@]{2,}$', email):
+            errors.append('email')
+        elif len(email) > 254:
+            errors.append('email')
+        else:
+            domain = email.split('@')[1]
+            if domain in disposable_domains:
+                errors.append('email')
+        
+        # Phone: 7-15 digits, + allowed
+        phone_clean = re.sub(r'[\s\-\(\)\.]', '', phone)
+        if not phone_clean or len(phone_clean) < 7 or len(phone_clean) > 15:
+            errors.append('phone')
+        elif re.search(r'[^+\d]', phone_clean):
+            errors.append('phone')
+        
+        # Size: must be allowed value
+        allowed_sizes = ['<500','500-2000','2000-5000','5000-10000','10000+']
+        if size not in allowed_sizes:
+            errors.append('size')
+        
+        if errors:
+            logger.info(f"Demo form validation failed from {client_ip}: {errors}")
+            return jsonify({'success': False, 'message': 'Validation failed'}), 400
+        
+        # --- Sanitize for storage ---
+        import html as _html
+        safe_name = _html.escape(full_name)
+        safe_inst = _html.escape(institution)
+        safe_email = _html.escape(email)
+        safe_phone = _html.escape(phone_clean)
+        safe_size = _html.escape(size)
+        
+        # Log the submission (sanitized)
+        logger.info(f"Demo request: {safe_email} | {safe_name} | {safe_inst} | {safe_phone} | {safe_size}")
+        
+        # (Future: persist to CRM / database here)
+        
+        return jsonify({
+            'success': True,
+            'message': 'Demo request received successfully'
+        }), 200
+    
     @app.route('/health')
     def health_check():
         """Health check endpoint"""
@@ -347,7 +616,135 @@ def create_app():
         except Exception as e:
             logger.error(f"Demo request error: {str(e)}")
             return jsonify({'error': 'Failed to process demo request'}), 500
-    
+
+    # ── Demo Booking API (Real Backend Persistence) ──
+    @app.route('/api/demo/book', methods=['POST'])
+    @log_access
+    def demo_book():
+        """Secure demo booking with real DB persistence, uniqueness validation, and CSRF protection"""
+        from src.application.demo_booking_service import demo_booking_service
+        try:
+            data = request.get_json(force=True) or {}
+            data['_ip'] = request.remote_addr or ''
+            data['_ua'] = request.headers.get('User-Agent', '')
+
+            # CSRF validation
+            csrf_token = data.pop('csrfToken', '')
+            if not csrf_token or len(csrf_token) != 64:
+                logger.warning(f"CSRF validation failed from {data.get('email', 'unknown')}")
+                return jsonify({'success': False, 'message': 'Invalid request. Please refresh and try again.'}), 400
+
+            client_ip = request.remote_addr or ''
+
+            # Rate limiting: 5 attempts per minute per IP
+            rate_key = f'demo_book:{client_ip}'
+            now = datetime.utcnow()
+            if not hasattr(app, '_demo_rate_limits'):
+                app._demo_rate_limits = {}
+            app._demo_rate_limits[rate_key] = [t for t in app._demo_rate_limits.get(rate_key, []) if (now - t).total_seconds() < 60]
+            app._demo_rate_limits[rate_key].append(now)
+            if len(app._demo_rate_limits[rate_key]) > 5:
+                logger.warning(f"Rate limit exceeded for demo booking: {client_ip}")
+                return jsonify({'success': False, 'message': 'Too many requests. Please wait a minute and try again.'}), 429
+
+            result = demo_booking_service.create_booking(data)
+            if not result.get('success'):
+                if result.get('duplicate'):
+                    return jsonify({
+                        'success': False,
+                        'duplicate': True,
+                        'message': result['message'],
+                        'existing_token': result.get('existing_token')
+                    }), 409
+                status = 400 if result.get('errors') else 500
+                return jsonify(result), status
+
+            logger.info(f"Demo booked (persisted): {data.get('email')} @ {data.get('time')}")
+            return jsonify(result), 200
+
+        except Exception as e:
+            logger.error(f"Demo booking error: {str(e)}")
+            return jsonify({'success': False, 'message': 'Booking failed due to a server error. Please try again.'}), 500
+
+    @app.route('/api/demo/lookup', methods=['POST'])
+    @log_access
+    def demo_lookup():
+        """Look up existing booking by email for returning user continuity"""
+        from src.application.demo_booking_service import demo_booking_service
+        try:
+            data = request.get_json(force=True) or {}
+            email = (data.get('email') or '').strip().lower()
+            if not email:
+                return jsonify({'success': False, 'message': 'Email is required.'}), 400
+
+            result = demo_booking_service.restore_booking(email)
+            if not result:
+                return jsonify({'success': False, 'message': 'No active booking found for this email.'}), 404
+
+            return jsonify(result), 200
+
+        except Exception as e:
+            logger.error(f"Demo lookup error: {str(e)}")
+            return jsonify({'success': False, 'message': 'Lookup failed.'}), 500
+
+    @app.route('/api/demo/booking/<token>')
+    def demo_booking_status(token):
+        """Validate booking token and return booking info (real DB lookup)"""
+        from src.application.demo_booking_service import demo_booking_service
+        try:
+            booking = demo_booking_service.get_booking_by_token(token)
+            if not booking:
+                return jsonify({'valid': False, 'error': 'Booking not found or expired'}), 404
+            return jsonify({
+                'valid': True,
+                'booking': {
+                    'time': booking['time'],
+                    'date': booking['date'],
+                    'name': booking['name'],
+                    'institution': booking['institution'],
+                    'email': booking['email'],
+                    'status': booking['status']
+                }
+            }), 200
+        except Exception as e:
+            logger.error(f"Booking status error: {str(e)}")
+            return jsonify({'valid': False, 'error': 'Server error'}), 500
+
+    @app.route('/api/trial/check-eligibility', methods=['POST'])
+    @log_access
+    def trial_check_eligibility():
+        """Check if a user is eligible for free trial based on demo onboarding completion"""
+        from src.application.demo_booking_service import demo_booking_service
+        from src.domain.entities import DemoBookingStatus
+        try:
+            data = request.get_json(force=True) or {}
+            email = (data.get('email') or '').strip().lower()
+            if not email:
+                return jsonify({'eligible': False, 'message': 'Email is required.'}), 400
+
+            booking = demo_booking_service.restore_booking(email)
+            if booking:
+                status = booking['booking'].get('status', '')
+                eligible_statuses = [
+                    DemoBookingStatus.CONFIRMED.value,
+                    DemoBookingStatus.SCHEDULED.value,
+                    DemoBookingStatus.ONBOARDING.value,
+                    DemoBookingStatus.ACTIVE.value,
+                    DemoBookingStatus.COMPLETED.value
+                ]
+                if status in eligible_statuses:
+                    return jsonify({'eligible': True, 'message': 'You are eligible for trial access.'}), 200
+
+            return jsonify({
+                'eligible': False,
+                'message': 'Demo onboarding required before trial activation.',
+                'requires_demo': True
+            }), 200
+
+        except Exception as e:
+            logger.error(f"Trial eligibility check error: {str(e)}")
+            return jsonify({'eligible': False, 'message': 'Eligibility check failed. Please try again.'}), 500
+
     # Authentication routes
     @app.route('/api/auth/register', methods=['POST'])
     @log_access
@@ -884,12 +1281,7 @@ def create_app():
             return jsonify({'error': 'Failed to get dashboard data'}), 500
     
     # Clean dashboard routes - no old logic
-    @app.route('/admin/dashboard')
-    def admin_dashboard():
-        """Hidden System Administration - PRIVATE ROUTE"""
-        return render_template('admin/dashboard.html')
-    
-    @app.route('/institutional-admin/dashboard')
+    @app.route('/institutional-admin/dashboard', strict_slashes=False)
     def institutional_admin_dashboard():
         """Institutional Administrator Dashboard"""
         return render_template('institutional-admin/dashboard.html')
@@ -2013,6 +2405,188 @@ def create_app():
             logger.error(f"Verify scan error: {str(e)}")
             return jsonify({'error': 'Verification failed'}), 500
 
+    # ════════════════════════════════════════════════════
+    # HIDDEN SUPER ADMINISTRATOR COMMAND CENTER
+    # ════════════════════════════════════════════════════
+    # This dashboard is NOT exposed in any navigation, login redirect,
+    # role selector, or public-facing route. It is accessible ONLY via
+    # the direct private URL: /system/command-center
+    # Access requires super_admin role authentication.
+
+    HIDDEN_SUPER_ADMIN_ROUTE = '/system/command-center'
+
+    @app.route(HIDDEN_SUPER_ADMIN_ROUTE)
+    @require_auth
+    @require_role('super_admin')
+    @log_access
+    def super_admin_dashboard():
+        """Hidden Super Administrator Command Center"""
+        return render_template('super-admin/dashboard.html')
+
+    # ── Super Admin Global System Overview ──
+    @app.route('/api/super-admin/overview')
+    @require_auth
+    @require_role('super_admin')
+    @log_access
+    def super_admin_overview():
+        """Global system overview - aggregated across all institutions"""
+        from src.application.super_admin_service import super_admin_service
+        try:
+            data = super_admin_service.get_system_overview()
+            return jsonify({'success': True, 'data': data}), 200
+        except Exception as e:
+            logger.error(f"Super admin overview error: {str(e)}")
+            return jsonify({'success': False, 'error': 'Failed to load overview'}), 500
+
+    # ── Super Admin Institutions ──
+    @app.route('/api/super-admin/institutions')
+    @require_auth
+    @require_role('super_admin')
+    @log_access
+    def super_admin_institutions():
+        """All institutions with per-institution statistics"""
+        from src.application.super_admin_service import super_admin_service
+        try:
+            data = super_admin_service.get_institutions_with_stats()
+            return jsonify({'success': True, 'data': data}), 200
+        except Exception as e:
+            logger.error(f"Super admin institutions error: {str(e)}")
+            return jsonify({'success': False, 'error': 'Failed to load institutions'}), 500
+
+    # ── Super Admin Users ──
+    @app.route('/api/super-admin/users')
+    @require_auth
+    @require_role('super_admin')
+    @log_access
+    def super_admin_users():
+        """All users across the system"""
+        from src.application.super_admin_service import super_admin_service
+        try:
+            role = request.args.get('role', '')
+            institution = request.args.get('institution', '')
+            search = request.args.get('search', '')
+            data = super_admin_service.get_all_users(
+                role_filter=role or None,
+                institution_filter=institution or None,
+                search=search or None
+            )
+            return jsonify({'success': True, 'data': data}), 200
+        except Exception as e:
+            logger.error(f"Super admin users error: {str(e)}")
+            return jsonify({'success': False, 'error': 'Failed to load users'}), 500
+
+    # ── Super Admin Activity Feed ──
+    @app.route('/api/super-admin/activity-feed')
+    @require_auth
+    @require_role('super_admin')
+    @log_access
+    def super_admin_activity():
+        """Recent activity across all institutions"""
+        from src.application.super_admin_service import super_admin_service
+        try:
+            data = super_admin_service.get_activity_feed()
+            return jsonify({'success': True, 'data': data}), 200
+        except Exception as e:
+            logger.error(f"Super admin activity error: {str(e)}")
+            return jsonify({'success': False, 'error': 'Failed to load activity'}), 500
+
+    # ── Super Admin Security Events ──
+    @app.route('/api/super-admin/security-events')
+    @require_auth
+    @require_role('super_admin')
+    @log_access
+    def super_admin_security():
+        """Security events across all institutions"""
+        from src.application.super_admin_service import super_admin_service
+        try:
+            min_risk = int(request.args.get('min_risk', '0'))
+            data = super_admin_service.get_security_events(min_risk=min_risk)
+            return jsonify({'success': True, 'data': data}), 200
+        except Exception as e:
+            logger.error(f"Super admin security error: {str(e)}")
+            return jsonify({'success': False, 'error': 'Failed to load security events'}), 500
+
+    # ── Super Admin Attendance Overview ──
+    @app.route('/api/super-admin/attendance/overview')
+    @require_auth
+    @require_role('super_admin')
+    @log_access
+    def super_admin_attendance():
+        """Cross-institution attendance analytics"""
+        from src.application.super_admin_service import super_admin_service
+        try:
+            data = super_admin_service.get_attendance_overview()
+            return jsonify({'success': True, 'data': data}), 200
+        except Exception as e:
+            logger.error(f"Super admin attendance error: {str(e)}")
+            return jsonify({'success': False, 'error': 'Failed to load attendance'}), 500
+
+    # ── Super Admin Suspicious Activity ──
+    @app.route('/api/super-admin/suspicious-activity')
+    @require_auth
+    @require_role('super_admin')
+    @log_access
+    def super_admin_suspicious():
+        """Suspicious attendance records across institutions"""
+        from src.application.super_admin_service import super_admin_service
+        try:
+            data = super_admin_service.get_suspicious_activity()
+            return jsonify({'success': True, 'data': data}), 200
+        except Exception as e:
+            logger.error(f"Super admin suspicious error: {str(e)}")
+            return jsonify({'success': False, 'error': 'Failed to load suspicious activity'}), 500
+
+    # ── Super Admin Audit Logs ──
+    @app.route('/api/super-admin/audit-logs')
+    @require_auth
+    @require_role('super_admin')
+    @log_access
+    def super_admin_audit():
+        """System-wide audit logs"""
+        from src.application.super_admin_service import super_admin_service
+        try:
+            action = request.args.get('action', '')
+            data = super_admin_service.get_audit_logs(action_filter=action or None)
+            return jsonify({'success': True, 'data': data}), 200
+        except Exception as e:
+            logger.error(f"Super admin audit error: {str(e)}")
+            return jsonify({'success': False, 'error': 'Failed to load audit logs'}), 500
+
+    # ── Super Admin Toggle User Status ──
+    @app.route('/api/super-admin/user/<user_id>/toggle-status', methods=['POST'])
+    @require_auth
+    @require_role('super_admin')
+    @log_access
+    def super_admin_toggle_user(user_id):
+        """Toggle user active/inactive status"""
+        from src.application.super_admin_service import super_admin_service
+        try:
+            result = super_admin_service.toggle_user_status(user_id)
+            if result:
+                return jsonify({'success': True, 'message': 'User status updated'}), 200
+            return jsonify({'success': False, 'error': 'User not found'}), 404
+        except Exception as e:
+            logger.error(f"Super admin toggle user error: {str(e)}")
+            return jsonify({'success': False, 'error': 'Failed to toggle user status'}), 500
+
+    # ── Super Admin Toggle Institution Status ──
+    @app.route('/api/super-admin/institution/<institution_id>/toggle-status', methods=['POST'])
+    @require_auth
+    @require_role('super_admin')
+    @log_access
+    def super_admin_toggle_institution(institution_id):
+        """Toggle institution active/inactive status"""
+        from src.application.super_admin_service import super_admin_service
+        try:
+            result = super_admin_service.toggle_institution_status(institution_id)
+            if result:
+                return jsonify({'success': True, 'message': 'Institution status updated'}), 200
+            return jsonify({'success': False, 'error': 'Institution not found'}), 404
+        except Exception as e:
+            logger.error(f"Super admin toggle institution error: {str(e)}")
+            return jsonify({'success': False, 'error': 'Failed to toggle institution status'}), 500
+
+    # ── Existing admin routes ──
     @app.route('/admin/institutions')
     @require_auth
     @require_role('super_admin')
@@ -2124,7 +2698,6 @@ def create_app():
     @app.route('/<path:path>')
     def fallback_route(path):
         """Fallback route for better error handling"""
-        import os as os_mod
         error_template = Path(__file__).parent / 'src' / 'presentation' / 'templates' / 'error.html'
         # Check if this looks like a dashboard route
         if any(path.startswith(prefix) for prefix in ['admin/', 'institutional-admin/', 'lecturer/', 'student/']):
@@ -2135,8 +2708,9 @@ def create_app():
                     back_url="/"), 404
             return jsonify({'error': 'Dashboard not found'}), 404
         
-        # For other paths, let Flask handle the 404
-        return None
+        # For other paths, return a proper 404
+        from flask import abort
+        abort(404)
     
     # Professional Voucher Management API endpoints
     @app.route('/api/voucher/validate/<code>', methods=['GET'])

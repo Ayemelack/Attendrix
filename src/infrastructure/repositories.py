@@ -6,7 +6,8 @@ from src.domain.entities import (
     Institution, Department, User, UserProfile, Course, CourseEnrollment,
     Schedule, ClassSession, AttendanceSession, AttendanceRecord, LeaveRequest,
     AuditLog, SecurityLog, DeviceFingerprint, Notification, SystemConfiguration,
-    UserRole, AttendanceStatus, LeaveStatus, SessionStatus
+    UserRole, AttendanceStatus, LeaveStatus, SessionStatus, DemoBooking,
+    DemoBookingStatus
 )
 from src.infrastructure.firebase_service import firebase_service
 
@@ -489,6 +490,72 @@ class SystemConfigurationRepository(BaseRepository):
         return self.list_all()
 
 
+class DemoBookingRepository(BaseRepository):
+    """Repository for DemoBooking entities"""
+
+    def __init__(self):
+        super().__init__('demo_bookings')
+
+    def get_by_email(self, email: str) -> Optional[Dict[str, Any]]:
+        """Get booking by email"""
+        bookings = self.get_by_field('email', email)
+        if bookings:
+            bookings.sort(key=lambda b: b.get('created_at', ''), reverse=True)
+        return bookings[0] if bookings else None
+
+    def get_by_token(self, token: str) -> Optional[Dict[str, Any]]:
+        """Get booking by booking token"""
+        bookings = self.get_by_field('booking_token', token)
+        return bookings[0] if bookings else None
+
+    def get_active_by_email(self, email: str) -> Optional[Dict[str, Any]]:
+        """Get non-expired, non-cancelled booking by email"""
+        bookings = self.get_by_field('email', email)
+        active = [b for b in bookings
+                  if b.get('status') not in (
+                      DemoBookingStatus.CANCELLED.value,
+                      DemoBookingStatus.EXPIRED.value
+                  )]
+        if active:
+            active.sort(key=lambda b: b.get('created_at', ''), reverse=True)
+        return active[0] if active else None
+
+    def update_status(self, token: str, status: str) -> bool:
+        """Update booking status by token"""
+        booking = self.get_by_token(token)
+        if not booking:
+            return False
+        return self.update(booking['id'], {'status': status, 'updated_at': datetime.utcnow().isoformat()})
+
+    def to_dict(self, entity: DemoBooking) -> Dict[str, Any]:
+        """Convert DemoBooking entity to dict for storage"""
+        return {
+            'id': entity.id,
+            'email': entity.email,
+            'full_name': entity.full_name,
+            'phone': entity.phone,
+            'institution': entity.institution,
+            'institution_type': entity.institution_type,
+            'number_of_students': entity.number_of_students,
+            'preferred_date': entity.preferred_date,
+            'preferred_time': entity.preferred_time,
+            'status': entity.status,
+            'booking_token': entity.booking_token,
+            'csrf_token': entity.csrf_token,
+            'session_token': entity.session_token,
+            'meeting_url': entity.meeting_url,
+            'meeting_provider': entity.meeting_provider,
+            'onboarding_progress': entity.onboarding_progress,
+            'onboarding_completed': entity.onboarding_completed,
+            'metadata': entity.metadata,
+            'created_at': entity.created_at.isoformat() if entity.created_at else None,
+            'updated_at': entity.updated_at.isoformat() if entity.updated_at else None,
+            'expires_at': entity.expires_at.isoformat() if entity.expires_at else None,
+            'confirmed_at': entity.confirmed_at.isoformat() if entity.confirmed_at else None,
+            'scheduled_at': entity.scheduled_at.isoformat() if entity.scheduled_at else None
+        }
+
+
 # Repository instances
 institution_repo = InstitutionRepository()
 department_repo = DepartmentRepository()
@@ -506,3 +573,4 @@ security_log_repo = SecurityLogRepository()
 device_fingerprint_repo = DeviceFingerprintRepository()
 notification_repo = NotificationRepository()
 system_config_repo = SystemConfigurationRepository()
+demo_booking_repo = DemoBookingRepository()
