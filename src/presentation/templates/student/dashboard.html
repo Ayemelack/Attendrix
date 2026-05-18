@@ -5,7 +5,7 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Attendrix Student</title>
     <link rel="manifest" href="/static/manifest.json">
-    <link rel="icon" type="image/x-icon" href="/static/images/favicon.ico">
+    <link rel="icon" type="image/svg+xml" href="/static/images/favicon.svg">
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
     <link rel="stylesheet" href="/static/css/responsive.css">
     <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.0/dist/chart.umd.min.js"></script>
@@ -61,6 +61,7 @@
         .sidebar { position: fixed; top: 0; left: 0; width: var(--sidebar-w); height: 100vh; background: var(--bg-sidebar); border-right: 1px solid var(--border); display: flex; flex-direction: column; z-index: 1000; transition: transform .25s cubic-bezier(.4,0,.2,1); }
         .sidebar-brand { display: flex; align-items: center; gap: 10px; padding: 18px 16px; font-size: .95rem; font-weight: 700; background: linear-gradient(135deg,var(--accent),#a78bfa); -webkit-background-clip: text; -webkit-text-fill-color: transparent; border-bottom: 1px solid var(--border); }
         .sidebar-brand i { -webkit-text-fill-color: var(--accent); font-size: 1.1rem; }
+        .sidebar-brand svg { color: var(--accent); width: 1.1rem; height: 1.1rem; }
         .sidebar-nav { flex: 1; padding: 8px 0; overflow-y: auto; }
         .sidebar-nav a { display: flex; align-items: center; gap: 10px; padding: 10px 16px; color: var(--text-secondary); font-size: .78rem; font-weight: 500; transition: all .15s; border-left: 2px solid transparent; text-decoration: none; }
         .sidebar-nav a i { width: 16px; text-align: center; font-size: .82rem; flex-shrink: 0; }
@@ -368,7 +369,7 @@
 
     <!-- ═══ SIDEBAR ═══ -->
     <aside class="sidebar" id="sidebar">
-        <div class="sidebar-brand"><i class="fas fa-graduation-cap"></i> Attendrix</div>
+        <div class="sidebar-brand"><svg viewBox="0 0 24 24" width="1em" height="1em" fill="none" style="display:inline-block;vertical-align:-.125em"><path d="M12 6.5L3.5 21" stroke="currentColor" stroke-width="2.2" stroke-linecap="round"/><path d="M12 6.5L20.5 21" stroke="currentColor" stroke-width="2.2" stroke-linecap="round"/><path d="M5 14.5L11 14.5" stroke="currentColor" stroke-width="2" stroke-linecap="round"/><path d="M13 14.5L19 14.5" stroke="currentColor" stroke-width="2" stroke-linecap="round"/><path d="M9.5 9.5Q12 6.2 14.5 9.5" stroke="currentColor" stroke-width="1.2" stroke-linecap="round" fill="none" opacity=".6"/><circle cx="12" cy="3.5" r="3" fill="currentColor"/><circle cx="3.5" cy="21" r="2.5" fill="currentColor"/><circle cx="20.5" cy="21" r="2.5" fill="currentColor"/></svg> Attendrix</div>
         <nav class="sidebar-nav">
             <a class="active" data-section="overview"><i class="fas fa-th-large"></i> <span data-i18n="overview">Overview</span></a>
             <a data-section="mark-attendance"><i class="fas fa-qrcode"></i> <span data-i18n="mark_attendance">Mark Attendance</span> <span class="badge-dot green" id="liveBadge" style="display:none;"></span></a>
@@ -467,7 +468,7 @@
                 </div>
 
                 <div class="card">
-                    <div class="card-header"><i class="fas fa-graduation-cap" style="color:var(--success);font-size:.7rem;"></i> <span data-i18n="course_overview">Course Overview</span> <span style="font-size:.68rem;color:var(--text-dim);font-weight:400;" id="courseCount"></span></div>
+                    <div class="card-header"><i class="fas fa-book" style="color:var(--success);font-size:.7rem;"></i> <span data-i18n="course_overview">Course Overview</span> <span style="font-size:.68rem;color:var(--text-dim);font-weight:400;" id="courseCount"></span></div>
                     <div class="card-body" id="courseMiniList"><div class="empty-muted" data-i18n="no_courses">No courses</div></div>
                 </div>
 

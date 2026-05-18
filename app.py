@@ -1,4 +1,4 @@
-from flask import Flask, request, jsonify, render_template
+from flask import Flask, request, jsonify, render_template, redirect
 from flask_cors import CORS
 import os
 from datetime import datetime, timedelta
@@ -3006,7 +3006,7 @@ def create_app():
 
     @app.route('/favicon.ico')
     def favicon():
-        return '', 204
+        return redirect('/static/images/favicon.svg')
 
     @app.route('/system/bootstrap', methods=['POST'])
     def bootstrap():

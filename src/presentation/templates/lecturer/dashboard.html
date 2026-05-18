@@ -4,7 +4,7 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Lecturer Dashboard - Attendrix</title>
-    <link rel="icon" type="image/x-icon" href="/static/images/favicon.ico">
+    <link rel="icon" type="image/svg+xml" href="/static/images/favicon.svg">
     <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
     <link rel="stylesheet" href="/static/css/responsive.css">
@@ -28,6 +28,7 @@
         .content { flex: 1; padding: 20px 24px; max-width: 1440px; width: 100%; margin: 0 auto; }
         .sidebar-brand { display: flex; align-items: center; gap: 10px; padding: 16px 18px; border-bottom: 1px solid var(--border-color); font-size: 1.05rem; font-weight: 700; color: var(--text-primary); }
         .sidebar-brand i { color: var(--accent); font-size: 1.2rem; }
+        .sidebar-brand svg { color: var(--accent); width: 1.2rem; height: 1.2rem; }
         .sidebar-nav { flex: 1; padding: 10px 8px; overflow-y: auto; }
         .sidebar-label { font-size: 0.55rem; text-transform: uppercase; letter-spacing: 1.2px; color: var(--text-dim); padding: 14px 12px 4px; }
         .sidebar-nav a { display: flex; align-items: center; gap: 10px; padding: 9px 12px; border-radius: 7px; color: var(--text-secondary); text-decoration: none; font-size: 0.78rem; font-weight: 500; transition: all 0.12s; cursor: pointer; }
@@ -247,7 +248,7 @@
 
     <!-- ═══ SIDEBAR ═══ -->
     <div class="sidebar" id="sidebar">
-        <div class="sidebar-brand"><i class="fas fa-graduation-cap"></i><span>Attendrix</span></div>
+        <div class="sidebar-brand"><svg viewBox="0 0 24 24" width="1em" height="1em" fill="none" style="display:inline-block;vertical-align:-.125em"><path d="M12 6.5L3.5 21" stroke="currentColor" stroke-width="2.2" stroke-linecap="round"/><path d="M12 6.5L20.5 21" stroke="currentColor" stroke-width="2.2" stroke-linecap="round"/><path d="M5 14.5L11 14.5" stroke="currentColor" stroke-width="2" stroke-linecap="round"/><path d="M13 14.5L19 14.5" stroke="currentColor" stroke-width="2" stroke-linecap="round"/><path d="M9.5 9.5Q12 6.2 14.5 9.5" stroke="currentColor" stroke-width="1.2" stroke-linecap="round" fill="none" opacity=".6"/><circle cx="12" cy="3.5" r="3" fill="currentColor"/><circle cx="3.5" cy="21" r="2.5" fill="currentColor"/><circle cx="20.5" cy="21" r="2.5" fill="currentColor"/></svg><span>Attendrix</span></div>
         <nav class="sidebar-nav">
             <div class="sidebar-label" data-i18n="menu">Menu</div>
             <a class="active" data-section="overview"><i class="fas fa-th-large"></i> <span data-i18n="overview">Overview</span></a>

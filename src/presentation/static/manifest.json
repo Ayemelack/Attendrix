@@ -5,7 +5,7 @@
   "start_url": "/login",
   "display": "standalone",
   "background_color": "#0A0F1E",
-  "theme_color": "#4F46E5",
+  "theme_color": "#2563EB",
   "orientation": "any",
   "categories": ["education", "productivity"],
   "lang": "en",
@@ -22,6 +22,12 @@
       "sizes": "512x512",
       "type": "image/png",
       "purpose": "any maskable"
+    },
+    {
+      "src": "/static/images/favicon.svg",
+      "sizes": "16x16 24x24 32x32",
+      "type": "image/svg+xml",
+      "purpose": "any"
     }
   ],
   "screenshots": [],
