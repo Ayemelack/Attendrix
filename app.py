@@ -2586,6 +2586,148 @@ def create_app():
             logger.error(f"Super admin toggle institution error: {str(e)}")
             return jsonify({'success': False, 'error': 'Failed to toggle institution status'}), 500
 
+    # ── Super Admin System Health ──
+    @app.route('/api/super-admin/system-health')
+    @require_auth
+    @require_role('super_admin')
+    @log_access
+    def super_admin_health():
+        from src.application.super_admin_service import super_admin_service
+        try:
+            data = super_admin_service.get_system_health()
+            return jsonify({'success': True, 'data': data}), 200
+        except Exception as e:
+            logger.error(f"Super admin health error: {str(e)}")
+            return jsonify({'success': False, 'error': 'Failed to load system health'}), 500
+
+    # ── Super Admin Security Analytics ──
+    @app.route('/api/super-admin/security-analytics')
+    @require_auth
+    @require_role('super_admin')
+    @log_access
+    def super_admin_security_analytics():
+        from src.application.super_admin_service import super_admin_service
+        try:
+            data = super_admin_service.get_security_analytics()
+            return jsonify({'success': True, 'data': data}), 200
+        except Exception as e:
+            logger.error(f"Super admin security analytics error: {str(e)}")
+            return jsonify({'success': False, 'error': 'Failed to load security analytics'}), 500
+
+    # ── Super Admin Attendance Analytics ──
+    @app.route('/api/super-admin/attendance-analytics')
+    @require_auth
+    @require_role('super_admin')
+    @log_access
+    def super_admin_attendance_analytics():
+        from src.application.super_admin_service import super_admin_service
+        try:
+            data = super_admin_service.get_attendance_analytics()
+            return jsonify({'success': True, 'data': data}), 200
+        except Exception as e:
+            logger.error(f"Super admin attendance analytics error: {str(e)}")
+            return jsonify({'success': False, 'error': 'Failed to load attendance analytics'}), 500
+
+    # ── Super Admin Demo Bookings ──
+    @app.route('/api/super-admin/demo-bookings')
+    @require_auth
+    @require_role('super_admin')
+    @log_access
+    def super_admin_demo_bookings():
+        from src.application.super_admin_service import super_admin_service
+        try:
+            data = super_admin_service.get_demo_bookings()
+            return jsonify({'success': True, 'data': data}), 200
+        except Exception as e:
+            logger.error(f"Super admin demo bookings error: {str(e)}")
+            return jsonify({'success': False, 'error': 'Failed to load demo bookings'}), 500
+
+    # ── Super Admin Notifications Summary ──
+    @app.route('/api/super-admin/notifications-summary')
+    @require_auth
+    @require_role('super_admin')
+    @log_access
+    def super_admin_notifications():
+        from src.application.super_admin_service import super_admin_service
+        try:
+            data = super_admin_service.get_notifications_summary()
+            return jsonify({'success': True, 'data': data}), 200
+        except Exception as e:
+            logger.error(f"Super admin notifications error: {str(e)}")
+            return jsonify({'success': False, 'error': 'Failed to load notifications'}), 500
+
+    # ── Super Admin Resolve Security Event ──
+    @app.route('/api/super-admin/security-events/<event_id>/resolve', methods=['POST'])
+    @require_auth
+    @require_role('super_admin')
+    @log_access
+    def super_admin_resolve_security(event_id):
+        from src.application.super_admin_service import super_admin_service
+        try:
+            result = super_admin_service.resolve_security_event(event_id)
+            if result:
+                return jsonify({'success': True, 'message': 'Event resolved'}), 200
+            return jsonify({'success': False, 'error': 'Event not found'}), 404
+        except Exception as e:
+            logger.error(f"Super admin resolve security error: {str(e)}")
+            return jsonify({'success': False, 'error': 'Failed to resolve event'}), 500
+
+    # ── Super Admin Anti-Proxy Intelligence ──
+    @app.route('/api/super-admin/anti-proxy-intelligence')
+    @require_auth
+    @require_role('super_admin')
+    @log_access
+    def super_admin_anti_proxy():
+        from src.application.super_admin_service import super_admin_service
+        try:
+            data = super_admin_service.get_anti_proxy_intelligence()
+            return jsonify({'success': True, 'data': data}), 200
+        except Exception as e:
+            logger.error(f"Super admin anti-proxy error: {str(e)}")
+            return jsonify({'success': False, 'error': 'Failed to load anti-proxy intelligence'}), 500
+
+    # ── Super Admin Network Infrastructure ──
+    @app.route('/api/super-admin/network-infrastructure')
+    @require_auth
+    @require_role('super_admin')
+    @log_access
+    def super_admin_network():
+        from src.application.super_admin_service import super_admin_service
+        try:
+            data = super_admin_service.get_network_infrastructure()
+            return jsonify({'success': True, 'data': data}), 200
+        except Exception as e:
+            logger.error(f"Super admin network error: {str(e)}")
+            return jsonify({'success': False, 'error': 'Failed to load network infrastructure'}), 500
+
+    # ── Super Admin Role Governance ──
+    @app.route('/api/super-admin/role-governance')
+    @require_auth
+    @require_role('super_admin')
+    @log_access
+    def super_admin_role_governance():
+        from src.application.super_admin_service import super_admin_service
+        try:
+            data = super_admin_service.get_role_governance()
+            return jsonify({'success': True, 'data': data}), 200
+        except Exception as e:
+            logger.error(f"Super admin role governance error: {str(e)}")
+            return jsonify({'success': False, 'error': 'Failed to load role governance'}), 500
+
+    # ── Super Admin AI Risk Intelligence ──
+    @app.route('/api/super-admin/ai-risk-intelligence')
+    @require_auth
+    @require_role('super_admin')
+    @log_access
+    def super_admin_ai_risk():
+        from src.application.super_admin_service import super_admin_service
+        try:
+            data = super_admin_service.get_ai_risk_intelligence()
+            return jsonify({'success': True, 'data': data}), 200
+        except Exception as e:
+            logger.error(f"Super admin AI risk error: {str(e)}")
+            return jsonify({'success': False, 'error': 'Failed to load AI risk intelligence'}), 500
+
     # ── Existing admin routes ──
     @app.route('/admin/institutions')
     @require_auth

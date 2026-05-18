@@ -1,540 +1,1157 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>System Command Center — Attendrix</title>
-    <link rel="icon" type="image/svg+xml" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 32 32'%3E%3Crect width='32' height='32' rx='6' fill='%234F46E5'/%3E%3Ctext x='16' y='22' text-anchor='middle' fill='white' font-size='20' font-family='Arial' font-weight='bold'%3EA%3C/text%3E%3C/svg%3E">
-    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet" crossorigin="anonymous">
-    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css" crossorigin="anonymous">
-    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800;900&display=swap" rel="stylesheet" crossorigin="anonymous">
-    <style>
-        :root {
-            --bg-primary: #0B0E17; --bg-secondary: #111827; --bg-card: #1A1F2E;
-            --bg-hover: #242B3D; --border: #2A3142; --text-primary: #F1F5F9;
-            --text-secondary: #94A3B8; --text-muted: #64748B;
-            --primary: #4F46E5; --primary-dark: #3730A3; --primary-light: #818CF8;
-            --success: #10B981; --warning: #F59E0B; --danger: #EF4444; --info: #06B6D4;
-            --accent: #8B5CF6; --accent-pink: #EC4899;
-            --gradient-primary: linear-gradient(135deg, #4F46E5 0%, #7C3AED 100%);
-            --shadow-card: 0 4px 24px rgba(0,0,0,0.3);
-        }
-        html { overflow-x: hidden; }
-        * { margin: 0; padding: 0; box-sizing: border-box; }
-        body {
-            font-family: 'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
-            background: var(--bg-primary); color: var(--text-primary);
-            overflow-x: hidden; min-height: 100vh;
-        }
-        ::-webkit-scrollbar { width: 6px; height: 6px; }
-        ::-webkit-scrollbar-track { background: var(--bg-primary); }
-        ::-webkit-scrollbar-thumb { background: var(--border); border-radius: 3px; }
-        ::-webkit-scrollbar-thumb:hover { background: var(--text-muted); }
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>System Command Center — Attendrix</title>
+<link rel="icon" type="image/svg+xml" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 32 32'%3E%3Crect width='32' height='32' rx='6' fill='%234F46E5'/%3E%3Ctext x='16' y='22' text-anchor='middle' fill='white' font-size='20' font-family='Arial' font-weight='bold'%3EA%3C/text%3E%3C/svg%3E">
+<link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
+<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800;900&display=swap" rel="stylesheet">
+<style>
+:root {
+  --bg-primary: #0B0E17; --bg-secondary: #111827; --bg-card: #1A1F2E;
+  --bg-hover: #242B3D; --border: #2A3142; --text-primary: #F1F5F9;
+  --text-secondary: #94A3B8; --text-muted: #64748B;
+  --primary: #4F46E5; --primary-dark: #3730A3; --primary-light: #818CF8;
+  --success: #10B981; --warning: #F59E0B; --danger: #EF4444; --info: #06B6D4;
+  --accent: #8B5CF6; --accent-pink: #EC4899; --amber: #F59E0B; --cyan: #22D3EE;
+  --gradient-primary: linear-gradient(135deg, #4F46E5 0%, #7C3AED 100%);
+  --gradient-success: linear-gradient(135deg, #059669 0%, #10B981 100%);
+  --gradient-warning: linear-gradient(135deg, #D97706 0%, #F59E0B 100%);
+  --gradient-danger: linear-gradient(135deg, #DC2626 0%, #EF4444 100%);
+  --gradient-info: linear-gradient(135deg, #0284C7 0%, #06B6D4 100%);
+  --shadow-card: 0 4px 24px rgba(0,0,0,0.3);
+  --glow-primary: 0 0 20px rgba(79,70,229,0.15);
+  --glow-success: 0 0 20px rgba(16,185,129,0.15);
+  --glow-danger: 0 0 20px rgba(239,68,68,0.15);
+}
+html { overflow-x: hidden; }
+* { margin: 0; padding: 0; box-sizing: border-box; }
+body {
+  font-family: 'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
+  background: var(--bg-primary); color: var(--text-primary);
+  overflow-x: hidden; min-height: 100vh;
+}
+::-webkit-scrollbar { width: 6px; height: 6px; }
+::-webkit-scrollbar-track { background: var(--bg-primary); }
+::-webkit-scrollbar-thumb { background: var(--border); border-radius: 3px; }
+::-webkit-scrollbar-thumb:hover { background: var(--text-muted); }
 
-        /* ── Layout ── */
-        .app-layout { display: flex; min-height: 100vh; }
-        .sidebar {
-            width: 240px; background: var(--bg-secondary); border-right: 1px solid var(--border);
-            display: flex; flex-direction: column; position: fixed; top: 0; left: 0; bottom: 0; z-index: 100;
-        }
-        .sidebar-brand { padding: 1.25rem 1.25rem; border-bottom: 1px solid var(--border); display: flex; align-items: center; gap: 0.6rem; }
-        .sidebar-brand .brand-icon { width: 32px; height: 32px; background: var(--gradient-primary); border-radius: 8px; display: flex; align-items: center; justify-content: center; font-size: 0.9rem; color: #fff; }
-        .sidebar-brand span { font-weight: 800; font-size: 0.95rem; }
-        .sidebar-brand .badge { font-size: 0.55rem; background: rgba(239,68,68,0.2); color: var(--danger); padding: 0.15rem 0.4rem; border-radius: 4px; font-weight: 700; letter-spacing: 0.5px; margin-left: auto; }
-        .sidebar-nav { flex: 1; padding: 0.75rem; overflow-y: auto; }
-        .nav-item {
-            display: flex; align-items: center; gap: 0.65rem; padding: 0.65rem 0.85rem;
-            border-radius: 8px; color: var(--text-secondary); text-decoration: none; font-size: 0.8rem;
-            font-weight: 500; cursor: pointer; transition: all 0.15s ease; margin-bottom: 0.15rem;
-            border: none; background: none; width: 100%; text-align: left; font-family: 'Inter', sans-serif;
-        }
-        .nav-item:hover { background: var(--bg-hover); color: var(--text-primary); }
-        .nav-item.active { background: rgba(79,70,229,0.15); color: var(--primary-light); }
-        .nav-item i { width: 18px; text-align: center; font-size: 0.85rem; }
-        .nav-section-label { font-size: 0.6rem; text-transform: uppercase; letter-spacing: 1px; color: var(--text-muted); padding: 0.75rem 0.85rem 0.35rem; font-weight: 700; }
+.app-layout { display: flex; min-height: 100vh; }
+.sidebar {
+  width: 240px; background: var(--bg-secondary); border-right: 1px solid var(--border);
+  display: flex; flex-direction: column; position: fixed; top: 0; left: 0; bottom: 0; z-index: 100;
+}
+.sidebar-brand { padding: 1.25rem 1.25rem; border-bottom: 1px solid var(--border); display: flex; align-items: center; gap: 0.6rem; }
+.sidebar-brand .brand-icon { width: 32px; height: 32px; background: var(--gradient-primary); border-radius: 8px; display: flex; align-items: center; justify-content: center; font-size: 0.9rem; color: #fff; }
+.sidebar-brand span { font-weight: 800; font-size: 0.95rem; }
+.sidebar-brand .badge { font-size: 0.55rem; background: rgba(239,68,68,0.2); color: var(--danger); padding: 0.15rem 0.4rem; border-radius: 4px; font-weight: 700; letter-spacing: 0.5px; margin-left: auto; }
+.sidebar-nav { flex: 1; padding: 0.75rem; overflow-y: auto; }
+.nav-item {
+  display: flex; align-items: center; gap: 0.65rem; padding: 0.65rem 0.85rem;
+  border-radius: 8px; color: var(--text-secondary); text-decoration: none; font-size: 0.8rem;
+  font-weight: 500; cursor: pointer; transition: all 0.15s ease; margin-bottom: 0.15rem;
+  border: none; background: none; width: 100%; text-align: left; font-family: 'Inter', sans-serif;
+}
+.nav-item:hover { background: var(--bg-hover); color: var(--text-primary); }
+.nav-item.active { background: rgba(79,70,229,0.15); color: var(--primary-light); }
+.nav-item .nav-badge { margin-left: auto; font-size: 0.55rem; background: rgba(239,68,68,0.15); color: var(--danger); padding: 0.1rem 0.35rem; border-radius: 100px; font-weight: 700; }
+.nav-item i { width: 18px; text-align: center; font-size: 0.85rem; }
+.nav-section-label { font-size: 0.6rem; text-transform: uppercase; letter-spacing: 1px; color: var(--text-muted); padding: 0.75rem 0.85rem 0.35rem; font-weight: 700; }
 
-        .main-content { margin-left: 240px; flex: 1; padding: 1.5rem; }
+.main-content { margin-left: 240px; flex: 1; padding: 1.5rem; }
 
-        /* ── Top Bar ── */
-        .topbar { display: flex; align-items: center; justify-content: space-between; margin-bottom: 1.5rem; }
-        .topbar h1 { font-size: 1.2rem; font-weight: 800; }
-        .topbar h1 span { color: var(--text-muted); font-weight: 400; }
-        .topbar-right { display: flex; align-items: center; gap: 1rem; }
-        .live-indicator { display: flex; align-items: center; gap: 0.4rem; font-size: 0.72rem; color: var(--success); font-weight: 600; }
-        .live-dot { width: 7px; height: 7px; border-radius: 50%; background: var(--success); animation: pulse 1.5s ease-in-out infinite; }
-        @keyframes pulse { 0%, 100% { opacity: 1; } 50% { opacity: 0.3; } }
-        .auto-refresh-btn { font-size: 0.72rem; color: var(--text-muted); background: var(--bg-card); border: 1px solid var(--border); padding: 0.35rem 0.75rem; border-radius: 6px; cursor: pointer; font-family: 'Inter', sans-serif; transition: all 0.15s ease; }
-        .auto-refresh-btn:hover { border-color: var(--text-muted); color: var(--text-primary); }
-        .auto-refresh-btn.active { border-color: var(--primary); color: var(--primary-light); }
+.topbar { display: flex; align-items: center; justify-content: space-between; margin-bottom: 1.5rem; flex-wrap: wrap; gap: 0.5rem; }
+.topbar h1 { font-size: 1.2rem; font-weight: 800; }
+.topbar h1 span { color: var(--text-muted); font-weight: 400; }
+.topbar-right { display: flex; align-items: center; gap: 0.75rem; flex-wrap: wrap; }
+.live-indicator { display: flex; align-items: center; gap: 0.4rem; font-size: 0.72rem; color: var(--success); font-weight: 600; }
+.live-dot { width: 7px; height: 7px; border-radius: 50%; background: var(--success); animation: pulse 1.5s ease-in-out infinite; }
+@keyframes pulse { 0%, 100% { opacity: 1; } 50% { opacity: 0.3; } }
+.auto-refresh-btn { font-size: 0.72rem; color: var(--text-muted); background: var(--bg-card); border: 1px solid var(--border); padding: 0.35rem 0.75rem; border-radius: 6px; cursor: pointer; font-family: 'Inter', sans-serif; transition: all 0.15s ease; }
+.auto-refresh-btn:hover { border-color: var(--text-muted); color: var(--text-primary); }
+.auto-refresh-btn.active { border-color: var(--primary); color: var(--primary-light); }
 
-        /* ── Stats Cards ── */
-        .stats-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(180px, 1fr)); gap: 0.85rem; margin-bottom: 1.5rem; }
-        .stat-card {
-            background: var(--bg-card); border: 1px solid var(--border); border-radius: 12px;
-            padding: 1rem 1.15rem; transition: all 0.2s ease;
-        }
-        .stat-card:hover { border-color: rgba(79,70,229,0.3); transform: translateY(-1px); }
-        .stat-card .stat-label { font-size: 0.65rem; text-transform: uppercase; letter-spacing: 0.5px; color: var(--text-muted); font-weight: 600; }
-        .stat-card .stat-value { font-size: 1.5rem; font-weight: 800; margin-top: 0.2rem; line-height: 1.2; }
-        .stat-card .stat-sub { font-size: 0.7rem; color: var(--text-secondary); margin-top: 0.2rem; }
-        .stat-card .stat-icon { float: right; font-size: 1.3rem; opacity: 0.15; }
+.stats-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(160px, 1fr)); gap: 0.85rem; margin-bottom: 1.25rem; }
+.stat-card {
+  background: var(--bg-card); border: 1px solid var(--border); border-radius: 12px;
+  padding: 1rem 1.15rem; transition: all 0.2s ease;
+}
+.stat-card:hover { border-color: rgba(79,70,229,0.3); transform: translateY(-1px); }
+.stat-card .stat-label { font-size: 0.65rem; text-transform: uppercase; letter-spacing: 0.5px; color: var(--text-muted); font-weight: 600; }
+.stat-card .stat-value { font-size: 1.5rem; font-weight: 800; margin-top: 0.2rem; line-height: 1.2; }
+.stat-card .stat-sub { font-size: 0.7rem; color: var(--text-secondary); margin-top: 0.2rem; }
+.stat-card .stat-icon { float: right; font-size: 1.3rem; opacity: 0.15; }
 
-        /* ── Tab Content ── */
-        .tab-content { display: none; }
-        .tab-content.active { display: block; animation: fadeIn 0.3s ease; }
-        @keyframes fadeIn { from { opacity: 0; transform: translateY(8px); } to { opacity: 1; transform: translateY(0); } }
+.tab-content { display: none; }
+.tab-content.active { display: block; animation: fadeIn 0.3s ease; }
+@keyframes fadeIn { from { opacity: 0; transform: translateY(8px); } to { opacity: 1; transform: translateY(0); } }
 
-        /* ── Section Headers ── */
-        .section-header { display: flex; align-items: center; justify-content: space-between; margin-bottom: 1rem; }
-        .section-header h2 { font-size: 1rem; font-weight: 700; }
-        .section-header .badge-count { font-size: 0.65rem; background: var(--bg-hover); color: var(--text-secondary); padding: 0.2rem 0.5rem; border-radius: 100px; font-weight: 600; }
-        .section-header select, .section-header input {
-            background: var(--bg-card); border: 1px solid var(--border); border-radius: 6px; color: var(--text-primary);
-            padding: 0.4rem 0.7rem; font-size: 0.75rem; font-family: 'Inter', sans-serif;
-        }
-        .section-header select:focus, .section-header input:focus { outline: none; border-color: var(--primary); }
+.section-header { display: flex; align-items: center; justify-content: space-between; margin-bottom: 1rem; flex-wrap: wrap; gap: 0.5rem; }
+.section-header h2 { font-size: 1rem; font-weight: 700; }
+.section-header .badge-count { font-size: 0.65rem; background: var(--bg-hover); color: var(--text-secondary); padding: 0.2rem 0.5rem; border-radius: 100px; font-weight: 600; }
+.section-header select, .section-header input {
+  background: var(--bg-card); border: 1px solid var(--border); border-radius: 6px; color: var(--text-primary);
+  padding: 0.4rem 0.7rem; font-size: 0.75rem; font-family: 'Inter', sans-serif;
+}
+.section-header select:focus, .section-header input:focus { outline: none; border-color: var(--primary); }
 
-        /* ── Tables ── */
-        .table-wrap { overflow-x: auto; background: var(--bg-card); border: 1px solid var(--border); border-radius: 12px; }
-        table { width: 100%; border-collapse: collapse; font-size: 0.78rem; }
-        th { text-align: left; padding: 0.7rem 1rem; font-size: 0.65rem; text-transform: uppercase; letter-spacing: 0.5px; color: var(--text-muted); font-weight: 700; border-bottom: 1px solid var(--border); background: var(--bg-secondary); }
-        td { padding: 0.6rem 1rem; border-bottom: 1px solid rgba(42,49,66,0.5); color: var(--text-secondary); }
-        tr:hover td { background: var(--bg-hover); }
-        .status-badge { display: inline-flex; align-items: center; gap: 0.3rem; padding: 0.15rem 0.5rem; border-radius: 100px; font-size: 0.65rem; font-weight: 600; }
-        .status-badge.active { background: rgba(16,185,129,0.12); color: var(--success); }
-        .status-badge.inactive { background: rgba(239,68,68,0.12); color: var(--danger); }
-        .status-badge.high { background: rgba(239,68,68,0.12); color: var(--danger); }
-        .status-badge.medium { background: rgba(245,158,11,0.12); color: var(--warning); }
-        .status-badge.low { background: rgba(6,182,212,0.12); color: var(--info); }
-        .status-dot { width: 6px; height: 6px; border-radius: 50%; display: inline-block; }
-        .status-dot.online { background: var(--success); }
-        .status-dot.offline { background: var(--danger); }
-        .status-dot.warning { background: var(--warning); }
+.table-wrap { overflow-x: auto; background: var(--bg-card); border: 1px solid var(--border); border-radius: 12px; }
+table { width: 100%; border-collapse: collapse; font-size: 0.78rem; }
+th { text-align: left; padding: 0.7rem 1rem; font-size: 0.65rem; text-transform: uppercase; letter-spacing: 0.5px; color: var(--text-muted); font-weight: 700; border-bottom: 1px solid var(--border); background: var(--bg-secondary); }
+td { padding: 0.6rem 1rem; border-bottom: 1px solid rgba(42,49,66,0.5); color: var(--text-secondary); }
+tr:hover td { background: var(--bg-hover); }
 
-        .btn-action {
-            padding: 0.3rem 0.6rem; border-radius: 6px; border: 1px solid var(--border);
-            background: transparent; color: var(--text-secondary); font-size: 0.7rem;
-            cursor: pointer; transition: all 0.15s ease; font-family: 'Inter', sans-serif;
-        }
-        .btn-action:hover { border-color: var(--primary); color: var(--primary-light); }
-        .btn-action.danger:hover { border-color: var(--danger); color: var(--danger); }
+.status-badge { display: inline-flex; align-items: center; gap: 0.3rem; padding: 0.15rem 0.5rem; border-radius: 100px; font-size: 0.65rem; font-weight: 600; }
+.status-badge.active { background: rgba(16,185,129,0.12); color: var(--success); }
+.status-badge.inactive { background: rgba(239,68,68,0.12); color: var(--danger); }
+.status-badge.pending { background: rgba(245,158,11,0.12); color: var(--warning); }
+.status-badge.high { background: rgba(239,68,68,0.12); color: var(--danger); }
+.status-badge.medium { background: rgba(245,158,11,0.12); color: var(--warning); }
+.status-badge.low { background: rgba(6,182,212,0.12); color: var(--info); }
+.status-dot { width: 6px; height: 6px; border-radius: 50%; display: inline-block; }
+.status-dot.online { background: var(--success); box-shadow: 0 0 6px rgba(16,185,129,0.5); }
+.status-dot.offline { background: var(--danger); box-shadow: 0 0 6px rgba(239,68,68,0.5); }
+.status-dot.warning { background: var(--warning); }
 
-        /* ── Activity Feed ── */
-        .feed-list { max-height: 500px; overflow-y: auto; }
-        .feed-item { display: flex; align-items: flex-start; gap: 0.75rem; padding: 0.6rem 0; border-bottom: 1px solid rgba(42,49,66,0.3); }
-        .feed-item:last-child { border-bottom: none; }
-        .feed-icon { width: 28px; height: 28px; border-radius: 6px; display: flex; align-items: center; justify-content: center; font-size: 0.65rem; flex-shrink: 0; }
-        .feed-icon.info { background: rgba(6,182,212,0.12); color: var(--info); }
-        .feed-icon.warning { background: rgba(245,158,11,0.12); color: var(--warning); }
-        .feed-icon.danger { background: rgba(239,68,68,0.12); color: var(--danger); }
-        .feed-icon.success { background: rgba(16,185,129,0.12); color: var(--success); }
-        .feed-content { flex: 1; min-width: 0; }
-        .feed-content .feed-title { font-size: 0.78rem; font-weight: 600; color: var(--text-primary); }
-        .feed-content .feed-desc { font-size: 0.7rem; color: var(--text-muted); margin-top: 0.1rem; }
-        .feed-content .feed-meta { font-size: 0.62rem; color: var(--text-muted); margin-top: 0.15rem; }
-        .feed-loading { text-align: center; padding: 2rem; color: var(--text-muted); font-size: 0.8rem; }
+.btn-action {
+  padding: 0.3rem 0.6rem; border-radius: 6px; border: 1px solid var(--border);
+  background: transparent; color: var(--text-secondary); font-size: 0.7rem;
+  cursor: pointer; transition: all 0.15s ease; font-family: 'Inter', sans-serif;
+}
+.btn-action:hover { border-color: var(--primary); color: var(--primary-light); }
+.btn-action.danger:hover { border-color: var(--danger); color: var(--danger); }
+.btn-action.success:hover { border-color: var(--success); color: var(--success); }
 
-        /* ── Security Grid ── */
-        .security-summary { display: grid; grid-template-columns: repeat(3, 1fr); gap: 0.85rem; margin-bottom: 1.25rem; }
-        .security-card { background: var(--bg-card); border: 1px solid var(--border); border-radius: 12px; padding: 1rem; text-align: center; }
-        .security-card .sc-value { font-size: 1.4rem; font-weight: 800; }
-        .security-card .sc-label { font-size: 0.65rem; color: var(--text-muted); margin-top: 0.15rem; text-transform: uppercase; letter-spacing: 0.5px; }
+.feed-list { max-height: 500px; overflow-y: auto; }
+.table-card-view { display: none; }
+.table-card-view .card-row { display: flex; flex-direction: column; padding: 0.6rem; border-bottom: 1px solid rgba(42,49,66,0.5); }
+.table-card-view .card-row:last-child { border-bottom: none; }
+.table-card-view .card-field { display: flex; justify-content: space-between; padding: 0.15rem 0; font-size: 0.72rem; }
+.table-card-view .card-field .field-label { color: var(--text-muted); font-weight: 600; text-transform: uppercase; font-size: 0.55rem; letter-spacing: 0.3px; }
+.table-card-view .card-field .field-value { color: var(--text-secondary); text-align: right; max-width: 60%; word-break: break-word; }
+.feed-item { display: flex; align-items: flex-start; gap: 0.75rem; padding: 0.6rem 0; border-bottom: 1px solid rgba(42,49,66,0.3); }
+.feed-item:last-child { border-bottom: none; }
+.feed-icon { width: 28px; height: 28px; border-radius: 6px; display: flex; align-items: center; justify-content: center; font-size: 0.65rem; flex-shrink: 0; }
+.feed-icon.info { background: rgba(6,182,212,0.12); color: var(--info); }
+.feed-icon.warning { background: rgba(245,158,11,0.12); color: var(--warning); }
+.feed-icon.danger { background: rgba(239,68,68,0.12); color: var(--danger); }
+.feed-icon.success { background: rgba(16,185,129,0.12); color: var(--success); }
+.feed-icon.primary { background: rgba(79,70,229,0.12); color: var(--primary-light); }
+.feed-content { flex: 1; min-width: 0; }
+.feed-content .feed-title { font-size: 0.78rem; font-weight: 600; color: var(--text-primary); }
+.feed-content .feed-desc { font-size: 0.7rem; color: var(--text-muted); margin-top: 0.1rem; }
+.feed-content .feed-meta { font-size: 0.62rem; color: var(--text-muted); margin-top: 0.15rem; }
 
-        .risk-bar { width: 100%; height: 4px; background: var(--border); border-radius: 2px; margin-top: 0.4rem; }
-        .risk-bar-fill { height: 100%; border-radius: 2px; transition: width 0.5s ease; }
+.loading-state { text-align: center; padding: 3rem; color: var(--text-muted); }
+.loading-state .spinner { width: 32px; height: 32px; border: 3px solid var(--border); border-top-color: var(--primary); border-radius: 50%; animation: spin 0.7s linear infinite; margin: 0 auto 0.75rem; }
+@keyframes spin { to { transform: rotate(360deg); } }
 
-        /* ── Two-column ── */
-        .two-col { display: grid; grid-template-columns: 1fr 1fr; gap: 1rem; margin-bottom: 1.5rem; }
+.empty-state { text-align: center; padding: 3rem; color: var(--text-muted); font-size: 0.85rem; }
+.empty-state i { font-size: 2rem; margin-bottom: 0.75rem; opacity: 0.3; }
+.empty-state .empty-title { font-size: 1rem; font-weight: 600; color: var(--text-secondary); margin-bottom: 0.25rem; }
+.empty-state .empty-desc { font-size: 0.78rem; color: var(--text-muted); max-width: 400px; margin: 0 auto; }
 
-        /* ── Loading/Empty ── */
-        .loading-state { text-align: center; padding: 3rem; color: var(--text-muted); }
-        .loading-state .spinner { width: 32px; height: 32px; border: 3px solid var(--border); border-top-color: var(--primary); border-radius: 50%; animation: spin 0.7s linear infinite; margin: 0 auto 0.75rem; }
-        @keyframes spin { to { transform: rotate(360deg); } }
-        .empty-state { text-align: center; padding: 3rem; color: var(--text-muted); font-size: 0.85rem; }
-        .empty-state i { font-size: 2rem; margin-bottom: 0.75rem; opacity: 0.3; }
+.error-state { text-align: center; padding: 3rem; color: var(--danger); }
+.error-state i { font-size: 2rem; margin-bottom: 0.75rem; }
+.error-state .retry-btn { margin-top: 0.75rem; }
 
-        @media (max-width: 1024px) {
-            .stats-grid { grid-template-columns: repeat(3, 1fr); }
-            .two-col { grid-template-columns: 1fr; }
-            .security-summary { grid-template-columns: 1fr 1fr; }
-        }
-        @media (max-width: 768px) {
-            .sidebar { width: 56px; }
-            .sidebar-brand span, .sidebar-brand .badge, .nav-item span, .nav-section-label { display: none; }
-            .sidebar-brand { justify-content: center; padding: 1rem 0; }
-            .nav-item { justify-content: center; padding: 0.65rem; }
-            .main-content { margin-left: 56px; padding: 1rem; }
-            .stats-grid { grid-template-columns: repeat(2, 1fr); }
-            .security-summary { grid-template-columns: 1fr; }
-        }
-    </style>
+.skeleton { background: linear-gradient(90deg, var(--bg-card) 25%, var(--bg-hover) 50%, var(--bg-card) 75%); background-size: 200% 100%; animation: shimmer 1.5s infinite; border-radius: 6px; }
+@keyframes shimmer { 0% { background-position: 200% 0; } 100% { background-position: -200% 0; } }
+.skeleton-line { height: 14px; margin-bottom: 8px; width: 100%; }
+.skeleton-line.w60 { width: 60%; }
+.skeleton-line.w40 { width: 40%; }
+.skeleton-line.w80 { width: 80%; }
+.skeleton-card { height: 80px; border-radius: 12px; }
+.skeleton-row { height: 40px; margin-bottom: 4px; border-radius: 6px; }
+
+.security-summary { display: grid; grid-template-columns: repeat(auto-fill, minmax(150px, 1fr)); gap: 0.85rem; margin-bottom: 1.25rem; }
+.security-card { background: var(--bg-card); border: 1px solid var(--border); border-radius: 12px; padding: 1rem; text-align: center; }
+.security-card .sc-value { font-size: 1.4rem; font-weight: 800; }
+.security-card .sc-label { font-size: 0.65rem; color: var(--text-muted); margin-top: 0.15rem; text-transform: uppercase; letter-spacing: 0.5px; }
+
+.risk-bar { width: 100%; height: 4px; background: var(--border); border-radius: 2px; margin-top: 0.4rem; }
+.risk-bar-fill { height: 100%; border-radius: 2px; transition: width 0.5s ease; }
+
+.two-col { display: grid; grid-template-columns: 1fr 1fr; gap: 1rem; margin-bottom: 1.5rem; }
+.three-col { display: grid; grid-template-columns: 1fr 1fr 1fr; gap: 1rem; margin-bottom: 1.5rem; }
+.four-col { display: grid; grid-template-columns: 1fr 1fr 1fr 1fr; gap: 1rem; margin-bottom: 1.5rem; }
+.health-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(160px, 1fr)); gap: 0.85rem; margin-bottom: 1.25rem; }
+.health-card { background: var(--bg-card); border: 1px solid var(--border); border-radius: 12px; padding: 1rem; text-align: center; }
+.health-card .hc-value { font-size: 1.1rem; font-weight: 800; }
+.health-card .hc-label { font-size: 0.6rem; color: var(--text-muted); margin-top: 0.15rem; text-transform: uppercase; letter-spacing: 0.5px; }
+.health-card .hc-icon { font-size: 1.5rem; margin-bottom: 0.3rem; }
+
+.node-card { background: var(--bg-card); border: 1px solid var(--border); border-radius: 10px; padding: 0.85rem; display: flex; align-items: center; gap: 0.75rem; transition: all 0.15s ease; }
+.node-card:hover { border-color: rgba(79,70,229,0.3); }
+.node-card .node-status { width: 10px; height: 10px; border-radius: 50%; flex-shrink: 0; }
+.node-card .node-name { font-weight: 600; font-size: 0.85rem; }
+.node-card .node-meta { font-size: 0.65rem; color: var(--text-muted); }
+
+.risk-indicator { display: inline-flex; align-items: center; gap: 0.4rem; padding: 0.2rem 0.6rem; border-radius: 100px; font-size: 0.7rem; font-weight: 600; }
+.risk-indicator.critical { background: rgba(239,68,68,0.15); color: var(--danger); }
+.risk-indicator.high { background: rgba(245,158,11,0.15); color: var(--warning); }
+.risk-indicator.moderate { background: rgba(6,182,212,0.15); color: var(--info); }
+.risk-indicator.low { background: rgba(16,185,129,0.15); color: var(--success); }
+
+.threat-level { width: 100%; height: 6px; border-radius: 3px; margin: 0.5rem 0; }
+.threat-level-fill { height: 100%; border-radius: 3px; transition: width 0.5s ease; background: var(--gradient-danger); }
+
+.gov-role-card { background: var(--bg-card); border: 1px solid var(--border); border-radius: 10px; padding: 1rem; text-align: center; }
+.gov-role-card .gov-count { font-size: 1.6rem; font-weight: 800; }
+.gov-role-card .gov-label { font-size: 0.65rem; color: var(--text-muted); text-transform: uppercase; letter-spacing: 0.5px; margin-top: 0.15rem; }
+.gov-role-card .gov-icon { font-size: 1.2rem; margin-bottom: 0.3rem; }
+
+.alert-card { background: var(--bg-card); border: 1px solid var(--border); border-left: 3px solid var(--danger); border-radius: 8px; padding: 0.85rem; margin-bottom: 0.5rem; display: flex; align-items: flex-start; gap: 0.75rem; }
+.alert-card .alert-icon { font-size: 1rem; color: var(--danger); flex-shrink: 0; margin-top: 0.1rem; }
+.alert-card .alert-content { flex: 1; }
+.alert-card .alert-title { font-size: 0.8rem; font-weight: 600; }
+.alert-card .alert-desc { font-size: 0.7rem; color: var(--text-muted); }
+.alert-card .alert-meta { font-size: 0.62rem; color: var(--text-muted); margin-top: 0.2rem; }
+
+.recommendation-card { background: var(--bg-card); border: 1px solid var(--border); border-left: 3px solid var(--accent); border-radius: 8px; padding: 0.85rem; margin-bottom: 0.5rem; }
+.recommendation-card .rec-text { font-size: 0.78rem; color: var(--text-secondary); }
+
+.sidebar-overlay { display: none; position: fixed; inset: 0; background: rgba(0,0,0,0.5); z-index: 99; }
+.menu-toggle { display: none; background: none; border: 1px solid var(--border); color: var(--text-secondary); font-size: 1.1rem; padding: 0.4rem 0.6rem; border-radius: 6px; cursor: pointer; font-family: 'Inter', sans-serif; }
+
+/* ── Laptops / medium screens ── */
+@media (max-width: 1200px) {
+  .stats-grid { grid-template-columns: repeat(3, 1fr); }
+  .four-col { grid-template-columns: repeat(3, 1fr); }
+}
+
+/* ── Tablets landscape ── */
+@media (max-width: 1024px) {
+  .sidebar { width: 220px; }
+  .main-content { margin-left: 220px; }
+  .stats-grid { grid-template-columns: repeat(3, 1fr); gap: 0.7rem; }
+  .four-col { grid-template-columns: 1fr 1fr; }
+  .three-col { grid-template-columns: 1fr 1fr; }
+  .two-col { grid-template-columns: 1fr; }
+  .security-summary { grid-template-columns: repeat(3, 1fr); }
+  .node-card { padding: 0.7rem; }
+  table { font-size: 0.72rem; }
+  th, td { padding: 0.5rem 0.7rem; }
+}
+
+/* ── Tablets portrait / large phones ── */
+@media (max-width: 768px) {
+  .menu-toggle { display: inline-flex; align-items: center; }
+  .sidebar-overlay.active { display: block; }
+  .sidebar { width: 260px; transform: translateX(-100%); transition: transform 0.25s ease; }
+  .sidebar.open { transform: translateX(0); }
+  .main-content { margin-left: 0; padding: 1rem; }
+  .stats-grid { grid-template-columns: repeat(2, 1fr); gap: 0.65rem; }
+  .stat-card { padding: 0.8rem; }
+  .stat-card .stat-label { font-size: 0.58rem; }
+  .stat-card .stat-value { font-size: 1.2rem; }
+  .stat-card .stat-sub { font-size: 0.62rem; }
+  .stat-card .stat-icon { font-size: 1.1rem; }
+  .four-col { grid-template-columns: 1fr 1fr; gap: 0.65rem; }
+  .three-col { grid-template-columns: 1fr; }
+  .health-grid { grid-template-columns: repeat(2, 1fr); gap: 0.65rem; }
+  .health-card { padding: 0.75rem; }
+  .health-card .hc-value { font-size: 1rem; }
+  .health-card .hc-icon { font-size: 1.2rem; }
+  .security-summary { grid-template-columns: 1fr 1fr; gap: 0.65rem; }
+  .security-card { padding: 0.75rem; }
+  .security-card .sc-value { font-size: 1.15rem; }
+  .section-header { flex-direction: column; align-items: flex-start; gap: 0.35rem; }
+  .section-header h2 { font-size: 0.88rem; }
+  .section-header select, .section-header input { width: 100%; max-width: 100%; font-size: 0.72rem; padding: 0.35rem 0.5rem; }
+  .section-header .badge-count { font-size: 0.58rem; }
+  .topbar { margin-bottom: 0.75rem; gap: 0.4rem; }
+  .topbar h1 { font-size: 0.95rem; }
+  .topbar-right { gap: 0.5rem; }
+  .topbar-right .auto-refresh-btn { font-size: 0.62rem; padding: 0.2rem 0.45rem; }
+  .loading-state, .empty-state, .error-state { padding: 1.5rem; }
+  .loading-state .spinner { width: 26px; height: 26px; border-width: 2px; }
+  .empty-state { font-size: 0.78rem; }
+  .empty-state i { font-size: 1.4rem; margin-bottom: 0.5rem; }
+  .empty-state .empty-title { font-size: 0.88rem; }
+  .empty-state .empty-desc { font-size: 0.7rem; max-width: 100%; }
+  .table-wrap { border-radius: 8px; }
+  table { font-size: 0.7rem; }
+  th, td { padding: 0.45rem 0.5rem; }
+  th { font-size: 0.55rem; letter-spacing: 0.4px; }
+  td { font-size: 0.68rem; }
+  .gov-role-card { padding: 0.75rem; }
+  .gov-role-card .gov-count { font-size: 1.2rem; }
+  .gov-role-card .gov-label { font-size: 0.58rem; }
+  .gov-role-card .gov-icon { font-size: 1rem; }
+  .status-badge { font-size: 0.6rem; padding: 0.12rem 0.4rem; }
+  .status-dot { width: 5px; height: 5px; }
+  .btn-action { font-size: 0.62rem; padding: 0.2rem 0.45rem; }
+  .feed-list { max-height: 380px; }
+  .feed-item { padding: 0.45rem 0; gap: 0.5rem; }
+  .feed-icon { width: 22px; height: 22px; font-size: 0.5rem; }
+  .feed-content .feed-title { font-size: 0.72rem; }
+  .feed-content .feed-desc { font-size: 0.62rem; }
+  .feed-content .feed-meta { font-size: 0.55rem; }
+  .skeleton-card { height: 65px; }
+  .skeleton-row { height: 32px; }
+  .risk-bar { height: 3px; }
+  .risk-indicator { font-size: 0.62rem; padding: 0.15rem 0.45rem; }
+  .recommendation-card { padding: 0.65rem; }
+  .recommendation-card .rec-text { font-size: 0.7rem; }
+  .alert-card { padding: 0.65rem; gap: 0.5rem; }
+  .alert-card .alert-title { font-size: 0.72rem; }
+  .alert-card .alert-desc { font-size: 0.62rem; }
+  .sidebar-brand { padding: 0.85rem 1rem; }
+  .sidebar-brand .brand-icon { width: 28px; height: 28px; font-size: 0.8rem; }
+  .sidebar-brand span { font-size: 0.85rem; }
+  .sidebar-nav { padding: 0.5rem; }
+  .nav-item { gap: 0.5rem; padding: 0.55rem 0.7rem; font-size: 0.75rem; }
+  .nav-item i { width: 16px; font-size: 0.78rem; }
+  .nav-section-label { font-size: 0.55rem; padding: 0.5rem 0.7rem 0.25rem; }
+  .nav-item .nav-badge { font-size: 0.5rem; padding: 0.08rem 0.3rem; }
+  .live-indicator { font-size: 0.65rem; }
+  .live-dot { width: 6px; height: 6px; }
+  .node-card { padding: 0.6rem; gap: 0.55rem; }
+  .node-card .node-name { font-size: 0.78rem; }
+  .node-card .node-meta { font-size: 0.6rem; }
+  .gov-rule-card .gov-count { font-size: 1.2rem; }
+}
+
+/* ── Small phones (425px and below) ── */
+@media (max-width: 640px) {
+  .stats-grid { grid-template-columns: repeat(2, 1fr); gap: 0.5rem; }
+  .stat-card { padding: 0.65rem; }
+  .stat-card .stat-label { font-size: 0.5rem; letter-spacing: 0.3px; }
+  .stat-card .stat-value { font-size: 1.05rem; }
+  .stat-card .stat-sub { font-size: 0.58rem; }
+  .stat-card .stat-icon { font-size: 0.95rem; }
+  .stat-card .stat-icon { float: right; }
+  .four-col { grid-template-columns: 1fr 1fr; gap: 0.5rem; }
+  .health-grid { gap: 0.5rem; }
+  .health-card { padding: 0.6rem; }
+  .health-card .hc-value { font-size: 0.88rem; }
+  .health-card .hc-label { font-size: 0.52rem; }
+  .health-card .hc-icon { font-size: 1.1rem; margin-bottom: 0.2rem; }
+  .security-summary { gap: 0.5rem; }
+  .security-card { padding: 0.65rem; }
+  .security-card .sc-value { font-size: 1rem; }
+  .security-card .sc-label { font-size: 0.55rem; }
+  .main-content { padding: 0.75rem; }
+  table { font-size: 0.62rem; }
+  th, td { padding: 0.35rem 0.4rem; }
+  th { font-size: 0.5rem; letter-spacing: 0.3px; }
+  td { font-size: 0.62rem; }
+  .topbar h1 { font-size: 0.85rem; }
+  .section-header h2 { font-size: 0.8rem; }
+  .section-header .badge-count { font-size: 0.52rem; padding: 0.15rem 0.35rem; }
+  .gov-role-card { padding: 0.55rem; }
+  .gov-role-card .gov-count { font-size: 1.05rem; }
+  .gov-role-card .gov-label { font-size: 0.5rem; }
+  .gov-role-card .gov-icon { font-size: 0.88rem; margin-bottom: 0.2rem; }
+  .skeleton-card { height: 55px; }
+  .skeleton-row { height: 28px; }
+  .auto-refresh-btn { font-size: 0.58rem; padding: 0.18rem 0.4rem; }
+  .gov-role-card .gov-count { font-size: 1.05rem; }
+  .node-card { padding: 0.5rem; gap: 0.45rem; }
+  .node-card .node-status { width: 8px; height: 8px; }
+  .node-card .node-name { font-size: 0.72rem; }
+  .node-card .node-meta { font-size: 0.55rem; }
+  .recommendation-card { padding: 0.55rem; }
+  .recommendation-card .rec-text { font-size: 0.65rem; }
+  .alert-card { padding: 0.55rem; }
+  .alert-card .alert-icon { font-size: 0.88rem; }
+  .alert-card .alert-title { font-size: 0.68rem; }
+  .alert-card .alert-desc { font-size: 0.58rem; }
+  .alert-card .alert-meta { font-size: 0.52rem; }
+  .nav-item { padding: 0.5rem 0.6rem; font-size: 0.7rem; }
+  .feed-list { max-height: 320px; }
+  .empty-state { padding: 1.25rem; }
+}
+
+/* ── Very small phones (375px) ── */
+@media (max-width: 480px) {
+  .stats-grid { grid-template-columns: 1fr 1fr; gap: 0.45rem; }
+  .stat-card { padding: 0.55rem; }
+  .stat-card .stat-value { font-size: 0.95rem; margin-top: 0.1rem; }
+  .stat-card .stat-label { font-size: 0.48rem; }
+  .stat-card .stat-sub { font-size: 0.55rem; }
+  .stat-card .stat-icon { font-size: 0.85rem; opacity: 0.1; }
+  .four-col { grid-template-columns: 1fr 1fr; gap: 0.45rem; }
+  .main-content { padding: 0.55rem; }
+  table { font-size: 0.58rem; }
+  th, td { padding: 0.28rem 0.3rem; }
+  th { font-size: 0.45rem; letter-spacing: 0.2px; }
+  td { font-size: 0.58rem; }
+  .topbar { flex-direction: row; flex-wrap: wrap; gap: 0.3rem; }
+  .topbar h1 { font-size: 0.78rem; }
+  .topbar-right { gap: 0.3rem; }
+  .live-indicator { font-size: 0.58rem; }
+  .live-dot { width: 5px; height: 5px; }
+  .auto-refresh-btn { font-size: 0.52rem; padding: 0.15rem 0.35rem; }
+  .status-badge { font-size: 0.52rem; padding: 0.08rem 0.3rem; gap: 0.2rem; }
+  .status-dot { width: 4px; height: 4px; }
+  .btn-action { font-size: 0.55rem; padding: 0.15rem 0.35rem; }
+  .gov-role-card { padding: 0.45rem; }
+  .gov-role-card .gov-count { font-size: 0.92rem; }
+  .gov-role-card .gov-label { font-size: 0.45rem; letter-spacing: 0.3px; }
+  .gov-role-card .gov-icon { font-size: 0.78rem; }
+  .health-grid { gap: 0.45rem; }
+  .health-card { padding: 0.5rem; }
+  .health-card .hc-value { font-size: 0.8rem; }
+  .health-card .hc-label { font-size: 0.48rem; }
+  .health-card .hc-icon { font-size: 0.95rem; }
+  .security-summary { gap: 0.45rem; }
+  .security-card { padding: 0.55rem; }
+  .security-card .sc-value { font-size: 0.92rem; }
+  .security-card .sc-label { font-size: 0.5rem; }
+  .section-header h2 { font-size: 0.72rem; }
+  .section-header .badge-count { font-size: 0.48rem; padding: 0.1rem 0.3rem; }
+  .section-header select, .section-header input { font-size: 0.62rem; padding: 0.28rem 0.4rem; }
+  .table-wrap { border-radius: 6px; }
+  .loading-state, .empty-state, .error-state { padding: 1rem; }
+  .loading-state .spinner { width: 22px; height: 22px; border-width: 2px; }
+  .empty-state { font-size: 0.72rem; }
+  .empty-state i { font-size: 1.2rem; margin-bottom: 0.35rem; }
+  .empty-state .empty-title { font-size: 0.78rem; }
+  .empty-state .empty-desc { font-size: 0.62rem; }
+  .error-state i { font-size: 1.2rem; }
+  .feed-item { padding: 0.35rem 0; gap: 0.4rem; }
+  .feed-icon { width: 20px; height: 20px; font-size: 0.45rem; }
+  .feed-content .feed-title { font-size: 0.65rem; }
+  .feed-content .feed-desc { font-size: 0.55rem; }
+  .feed-content .feed-meta { font-size: 0.5rem; }
+  .skeleton-card { height: 48px; border-radius: 8px; }
+  .skeleton-row { height: 24px; }
+  .recommendation-card { padding: 0.45rem; }
+  .recommendation-card .rec-text { font-size: 0.6rem; }
+  .alert-card { padding: 0.45rem; gap: 0.4rem; }
+  .alert-card .alert-title { font-size: 0.62rem; }
+  .alert-card .alert-desc { font-size: 0.55rem; }
+  .nav-item { padding: 0.45rem 0.5rem; font-size: 0.65rem; gap: 0.4rem; }
+  .nav-item i { width: 14px; font-size: 0.7rem; }
+  .feed-list { max-height: 280px; }
+  .risk-bar { height: 2px; }
+  .risk-indicator { font-size: 0.55rem; padding: 0.1rem 0.35rem; }
+  .sidebar-brand { padding: 0.7rem 0.85rem; }
+  .sidebar-brand .brand-icon { width: 24px; height: 24px; font-size: 0.7rem; }
+  .sidebar-brand span { font-size: 0.78rem; }
+  .sidebar-nav { padding: 0.4rem; }
+  .nav-section-label { font-size: 0.5rem; padding: 0.4rem 0.6rem 0.2rem; }
+  .node-card { padding: 0.45rem; gap: 0.4rem; }
+}
+
+/* ── Smallest phones (320px) ── */
+@media (max-width: 380px) {
+  .stats-grid { grid-template-columns: 1fr; gap: 0.4rem; }
+  .stat-card { padding: 0.5rem; }
+  .stat-card .stat-value { font-size: 0.88rem; }
+  .stat-card .stat-label { font-size: 0.45rem; }
+  .stat-card .stat-sub { font-size: 0.5rem; }
+  .four-col { grid-template-columns: 1fr; gap: 0.4rem; }
+  .main-content { padding: 0.4rem; }
+  .topbar { flex-direction: column; align-items: stretch; }
+  .topbar h1 { font-size: 0.72rem; }
+  .topbar-right { justify-content: flex-end; }
+  table { font-size: 0.55rem; }
+  th, td { padding: 0.22rem 0.25rem; }
+  th { font-size: 0.42rem; }
+  td { font-size: 0.55rem; }
+  .health-grid { grid-template-columns: 1fr 1fr; gap: 0.4rem; }
+  .health-card { padding: 0.45rem; }
+  .health-card .hc-value { font-size: 0.75rem; }
+  .health-card .hc-label { font-size: 0.45rem; }
+  .security-summary { grid-template-columns: 1fr 1fr; gap: 0.4rem; }
+  .security-card { padding: 0.5rem; }
+  .security-card .sc-value { font-size: 0.85rem; }
+  .gov-role-card { padding: 0.4rem; }
+  .gov-role-card .gov-count { font-size: 0.85rem; }
+  .section-header select, .section-header input { font-size: 0.58rem; padding: 0.25rem 0.35rem; }
+  .menu-toggle { font-size: 0.95rem; padding: 0.3rem 0.5rem; }
+  .sidebar { width: 100%; }
+  .skeleton-card { height: 42px; }
+  .feed-list { max-height: 250px; }
+  .nav-item { padding: 0.4rem 0.45rem; font-size: 0.6rem; gap: 0.35rem; }
+}
+
+/* ── Desktop safety ── */
+@media (min-width: 769px) {
+  .sidebar { transform: none !important; }
+}
+</style>
 </head>
 <body>
 <div class="app-layout">
-    <!-- Sidebar -->
-    <aside class="sidebar">
-        <div class="sidebar-brand">
-            <div class="brand-icon"><i class="fas fa-shield-halved"></i></div>
-            <span>Command Center</span>
-            <div class="badge">SECURE</div>
-        </div>
-        <nav class="sidebar-nav">
-            <div class="nav-section-label">System</div>
-            <button class="nav-item active" data-tab="overview"><i class="fas fa-lg fa-gauge-high"></i><span>Overview</span></button>
-            <button class="nav-item" data-tab="institutions"><i class="fas fa-lg fa-building-columns"></i><span>Institutions</span></button>
-            <button class="nav-item" data-tab="users"><i class="fas fa-lg fa-users"></i><span>Users</span></button>
-            <button class="nav-item" data-tab="attendance"><i class="fas fa-lg fa-clipboard-check"></i><span>Attendance</span></button>
-            <div class="nav-section-label">Security</div>
-            <button class="nav-item" data-tab="security"><i class="fas fa-lg fa-shield"></i><span>Security Center</span></button>
-            <button class="nav-item" data-tab="suspicious"><i class="fas fa-lg fa-triangle-exclamation"></i><span>Suspicious Activity</span></button>
-            <div class="nav-section-label">Monitor</div>
-            <button class="nav-item" data-tab="activity"><i class="fas fa-lg fa-rss"></i><span>Activity Feed</span></button>
-            <button class="nav-item" data-tab="audit"><i class="fas fa-lg fa-list"></i><span>Audit Logs</span></button>
-            <div class="nav-section-label" style="margin-top:1rem;">System</div>
-            <button class="nav-item" onclick="window.location.href='/institutional-admin/dashboard'" title="Exit to standard dashboard"><i class="fas fa-lg fa-right-from-bracket"></i><span>Exit</span></button>
-        </nav>
-    </aside>
-
-    <!-- Main Content -->
-    <div class="main-content">
-        <div class="topbar">
-            <h1 id="pageTitle">System <span>Overview</span></h1>
-            <div class="topbar-right">
-                <div class="live-indicator"><div class="live-dot"></div> LIVE</div>
-                <button class="auto-refresh-btn" id="refreshBtn" onclick="refreshAll()"><i class="fas fa-rotate"></i> Refresh</button>
-            </div>
-        </div>
-
-        <!-- ── Tab: Overview ── -->
-        <div class="tab-content active" id="tab-overview">
-            <div class="stats-grid" id="overviewStats">
-                <div class="loading-state" style="grid-column:1/-1;"><div class="spinner"></div>Loading system overview...</div>
-            </div>
-            <div class="two-col">
-                <div>
-                    <div class="section-header"><h2>Activity Feed</h2></div>
-                    <div class="table-wrap"><div class="feed-list" id="overviewFeed"><div class="feed-loading"><i class="fas fa-circle-notch fa-spin"></i> Loading...</div></div></div>
-                </div>
-                <div>
-                    <div class="section-header"><h2>Security Events</h2></div>
-                    <div class="table-wrap"><div class="feed-list" id="overviewSecurity"><div class="feed-loading"><i class="fas fa-circle-notch fa-spin"></i> Loading...</div></div></div>
-                </div>
-            </div>
-        </div>
-
-        <!-- ── Tab: Institutions ── -->
-        <div class="tab-content" id="tab-institutions">
-            <div class="section-header"><h2>All Institutions</h2><span class="badge-count" id="instCount">0</span></div>
-            <div class="table-wrap"><table><thead><tr><th>Name</th><th>Code</th><th>Status</th><th>Admins</th><th>Lecturers</th><th>Students</th><th>Attendance Rate</th><th>Suspicious</th><th>Actions</th></tr></thead><tbody id="instTableBody"><tr><td colspan="9" class="loading-state"><div class="spinner"></div></td></tr></tbody></table></div>
-        </div>
-
-        <!-- ── Tab: Users ── -->
-        <div class="tab-content" id="tab-users">
-            <div class="section-header">
-                <h2>System Users</h2>
-                <div style="display:flex;gap:0.5rem;">
-                    <select id="userRoleFilter" onchange="loadUsers()"><option value="">All Roles</option><option value="super_admin">Super Admin</option><option value="institutional_admin">Institutional Admin</option><option value="lecturer">Lecturer</option><option value="student">Student</option></select>
-                    <input type="text" id="userSearch" placeholder="Search..." oninput="loadUsers()" style="width:160px;">
-                    <span class="badge-count" id="userCount">0</span>
-                </div>
-            </div>
-            <div class="table-wrap"><table><thead><tr><th>Name</th><th>Email</th><th>Role</th><th>Institution</th><th>Status</th><th>Verified</th><th>Last Login</th><th>Actions</th></tr></thead><tbody id="userTableBody"><tr><td colspan="8" class="loading-state"><div class="spinner"></div></td></tr></tbody></table></div>
-        </div>
-
-        <!-- ── Tab: Attendance ── -->
-        <div class="tab-content" id="tab-attendance">
-            <div class="stats-grid" id="attendanceStats">
-                <div class="loading-state" style="grid-column:1/-1;"><div class="spinner"></div>Loading attendance data...</div>
-            </div>
-            <div class="section-header"><h2>Attendance by Status</h2></div>
-            <div class="table-wrap"><table><thead><tr><th>Metric</th><th>Value</th></tr></thead><tbody id="attendanceDetail"><tr><td colspan="2" class="loading-state"><div class="spinner"></div></td></tr></tbody></table></div>
-        </div>
-
-        <!-- ── Tab: Security Center ── -->
-        <div class="tab-content" id="tab-security">
-            <div class="security-summary" id="securitySummary">
-                <div class="loading-state" style="grid-column:1/-1;"><div class="spinner"></div></div>
-            </div>
-            <div class="section-header"><h2>Security Event Log</h2><select id="riskFilter" onchange="loadSecurity()"><option value="0">All Risk Levels</option><option value="7">High Risk (7+)</option><option value="4">Medium Risk (4+)</option></select></div>
-            <div class="table-wrap"><table><thead><tr><th>Event Type</th><th>Description</th><th>Institution</th><th>Risk</th><th>Status</th><th>IP</th><th>Time</th></tr></thead><tbody id="securityTableBody"><tr><td colspan="7" class="loading-state"><div class="spinner"></div></td></tr></tbody></table></div>
-        </div>
-
-        <!-- ── Tab: Suspicious Activity ── -->
-        <div class="tab-content" id="tab-suspicious">
-            <div class="section-header"><h2>Suspicious Attendance Records</h2><span class="badge-count" id="suspiciousCount">0</span></div>
-            <div class="table-wrap"><table><thead><tr><th>Student</th><th>Email</th><th>Institution</th><th>Status</th><th>Reason</th><th>IP</th><th>Time</th></tr></thead><tbody id="suspiciousTableBody"><tr><td colspan="7" class="loading-state"><div class="spinner"></div></td></tr></tbody></table></div>
-        </div>
-
-        <!-- ── Tab: Activity Feed ── -->
-        <div class="tab-content" id="tab-activity">
-            <div class="section-header"><h2>Real-Time System Activity</h2><span class="badge-count" id="activityCount">0</span></div>
-            <div class="table-wrap"><div class="feed-list" id="activityFeedList"><div class="feed-loading"><i class="fas fa-circle-notch fa-spin"></i> Loading activity feed...</div></div></div>
-        </div>
-
-        <!-- ── Tab: Audit Logs ── -->
-        <div class="tab-content" id="tab-audit">
-            <div class="section-header"><h2>System Audit Logs</h2><select id="auditActionFilter" onchange="loadAudit()"><option value="">All Actions</option><option value="API_ACCESS">API Access</option><option value="LOGIN">Login</option><option value="CREATE">Create</option><option value="UPDATE">Update</option><option value="DELETE">Delete</option></select></div>
-            <div class="table-wrap"><table><thead><tr><th>Action</th><th>Resource</th><th>Institution</th><th>User</th><th>IP</th><th>Timestamp</th></tr></thead><tbody id="auditTableBody"><tr><td colspan="6" class="loading-state"><div class="spinner"></div></td></tr></tbody></table></div>
-        </div>
+  <aside class="sidebar">
+    <div class="sidebar-brand">
+      <div class="brand-icon"><i class="fas fa-shield-halved"></i></div>
+      <span>Command Center</span>
+      <div class="badge">v1</div>
     </div>
+    <nav class="sidebar-nav">
+      <div class="nav-section-label">Command</div>
+      <button class="nav-item active" data-tab="overview"><i class="fas fa-lg fa-gauge-high"></i><span>Overview</span></button>
+
+      <div class="nav-section-label">Governance</div>
+      <button class="nav-item" data-tab="institutions"><i class="fas fa-lg fa-building-columns"></i><span>Institutions</span></button>
+      <button class="nav-item" data-tab="users"><i class="fas fa-lg fa-users-gear"></i><span>Users</span></button>
+      <button class="nav-item" data-tab="governance"><i class="fas fa-lg fa-scale-balanced"></i><span>Role Governance</span></button>
+
+      <div class="nav-section-label">Monitoring</div>
+      <button class="nav-item" data-tab="attendance"><i class="fas fa-lg fa-clipboard-check"></i><span>Attendance</span></button>
+      <button class="nav-item" data-tab="network"><i class="fas fa-lg fa-network-wired"></i><span>Network</span></button>
+      <button class="nav-item" data-tab="health"><i class="fas fa-lg fa-heart-pulse"></i><span>Health</span></button>
+
+      <div class="nav-section-label">Security</div>
+      <button class="nav-item" data-tab="security"><i class="fas fa-lg fa-shield-halved"></i><span>SOC</span><span class="nav-badge" id="socBadge">0</span></button>
+      <button class="nav-item" data-tab="anti-proxy"><i class="fas fa-lg fa-user-secret"></i><span>Anti-Proxy</span></button>
+      <button class="nav-item" data-tab="suspicious"><i class="fas fa-lg fa-triangle-exclamation"></i><span>Suspicious</span></button>
+      <button class="nav-item" data-tab="ai-risk"><i class="fas fa-lg fa-brain"></i><span>AI Risk</span></button>
+
+      <div class="nav-section-label">Intelligence</div>
+      <button class="nav-item" data-tab="activity"><i class="fas fa-lg fa-rss"></i><span>Activity</span></button>
+      <button class="nav-item" data-tab="audit"><i class="fas fa-lg fa-list"></i><span>Audit</span></button>
+      <button class="nav-item" data-tab="analytics"><i class="fas fa-lg fa-chart-line"></i><span>Analytics</span></button>
+      <button class="nav-item" data-tab="bookings"><i class="fas fa-lg fa-calendar-check"></i><span>Demo Bookings</span></button>
+
+      <div class="nav-section-label" style="margin-top:1rem;">System</div>
+      <button class="nav-item" onclick="window.location.href='/institutional-admin/dashboard'" title="Exit Command Center"><i class="fas fa-lg fa-right-from-bracket"></i><span>Exit</span></button>
+    </nav>
+  </aside>
+
+  <div class="main-content">
+    <div class="sidebar-overlay" id="sidebarOverlay" onclick="toggleSidebar()"></div>
+    <div class="topbar">
+      <div style="display:flex;align-items:center;gap:0.5rem;">
+        <button class="menu-toggle" id="menuToggle" onclick="toggleSidebar()" title="Toggle sidebar"><i class="fas fa-bars"></i></button>
+        <h1 id="pageTitle">Command <span>Center</span></h1>
+      </div>
+      <div class="topbar-right">
+        <div class="live-indicator"><div class="live-dot"></div> <span id="liveLabel">LIVE</span></div>
+        <button class="auto-refresh-btn" id="refreshBtn" onclick="refreshAll()"><i class="fas fa-rotate"></i> Refresh</button>
+      </div>
+    </div>
+
+    <!-- ═══ OVERVIEW ═══ -->
+    <div class="tab-content active" id="tab-overview">
+      <div class="stats-grid" id="overviewStats"></div>
+      <div class="two-col">
+        <div>
+          <div class="section-header"><h2><i class="fas fa-rss" style="font-size:0.7rem;color:var(--text-muted);margin-right:0.4rem;"></i> Activity Feed</h2><span class="badge-count" id="overviewFeedCount">0</span></div>
+          <div class="table-wrap"><div class="feed-list" id="overviewFeed"></div></div>
+        </div>
+        <div>
+          <div class="section-header"><h2><i class="fas fa-shield" style="font-size:0.7rem;color:var(--text-muted);margin-right:0.4rem;"></i> Security Events</h2><span class="badge-count" id="overviewSecurityCount">0</span></div>
+          <div class="table-wrap"><div class="feed-list" id="overviewSecurity"></div></div>
+        </div>
+      </div>
+    </div>
+
+    <!-- ═══ INSTITUTIONS ═══ -->
+    <div class="tab-content" id="tab-institutions">
+      <div class="section-header"><h2><i class="fas fa-building-columns"></i> All Institutions</h2><span class="badge-count" id="instCount">0</span></div>
+      <div class="table-wrap"><table><thead><tr><th>Name</th><th>Code</th><th>Status</th><th>Admins</th><th>Lecturers</th><th>Students</th><th>Employees</th><th>Attendance</th><th>Security</th><th>Actions</th></tr></thead><tbody id="instTableBody"></tbody></table></div>
+    </div>
+
+    <!-- ═══ USERS ═══ -->
+    <div class="tab-content" id="tab-users">
+      <div class="section-header">
+        <h2><i class="fas fa-users-gear"></i> System Users</h2>
+        <div style="display:flex;gap:0.5rem;flex-wrap:wrap;">
+          <select id="userRoleFilter" onchange="loadUsers()"><option value="">All Roles</option><option value="super_admin">Super Admin</option><option value="institutional_admin">Inst. Admin</option><option value="lecturer">Lecturer</option><option value="student">Student</option><option value="employee">Employee</option></select>
+          <input type="text" id="userSearch" placeholder="Search name or email..." oninput="loadUsers()" style="width:180px;max-width:100%;">
+          <span class="badge-count" id="userCount">0</span>
+        </div>
+      </div>
+      <div class="table-wrap"><table><thead><tr><th>Name</th><th>Email</th><th>Role</th><th>Institution</th><th>Status</th><th>Verified</th><th>Last Login</th><th>Actions</th></tr></thead><tbody id="userTableBody"></tbody></table></div>
+    </div>
+
+    <!-- ═══ ROLE GOVERNANCE ═══ -->
+    <div class="tab-content" id="tab-governance">
+      <div id="governanceContent"></div>
+    </div>
+
+    <!-- ═══ ATTENDANCE ═══ -->
+    <div class="tab-content" id="tab-attendance">
+      <div id="attendanceContent"></div>
+    </div>
+
+    <!-- ═══ NETWORK INFRASTRUCTURE ═══ -->
+    <div class="tab-content" id="tab-network">
+      <div id="networkContent"></div>
+    </div>
+
+    <!-- ═══ SYSTEM HEALTH ═══ -->
+    <div class="tab-content" id="tab-health">
+      <div id="healthContent"></div>
+    </div>
+
+    <!-- ═══ SOC / SECURITY CENTER ═══ -->
+    <div class="tab-content" id="tab-security">
+      <div id="securityContent"></div>
+    </div>
+
+    <!-- ═══ ANTI-PROXY INTELLIGENCE ═══ -->
+    <div class="tab-content" id="tab-anti-proxy">
+      <div id="antiProxyContent"></div>
+    </div>
+
+    <!-- ═══ SUSPICIOUS ACTIVITY ═══ -->
+    <div class="tab-content" id="tab-suspicious">
+      <div class="section-header"><h2><i class="fas fa-triangle-exclamation"></i> Suspicious Attendance</h2><span class="badge-count" id="suspiciousCount">0</span></div>
+      <div class="table-wrap"><table><thead><tr><th>Student</th><th>Email</th><th>Institution</th><th>Status</th><th>Reason</th><th>IP</th><th>Time</th></tr></thead><tbody id="suspiciousTableBody"></tbody></table></div>
+    </div>
+
+    <!-- ═══ AI RISK INTELLIGENCE ═══ -->
+    <div class="tab-content" id="tab-ai-risk">
+      <div id="aiRiskContent"></div>
+    </div>
+
+    <!-- ═══ ACTIVITY FEED ═══ -->
+    <div class="tab-content" id="tab-activity">
+      <div class="section-header"><h2><i class="fas fa-rss"></i> Real-Time Activity</h2><span class="badge-count" id="activityCount">0</span></div>
+      <div class="table-wrap"><div class="feed-list" id="activityFeedList"></div></div>
+    </div>
+
+    <!-- ═══ AUDIT LOGS ═══ -->
+    <div class="tab-content" id="tab-audit">
+      <div class="section-header"><h2><i class="fas fa-list"></i> Audit Logs</h2><select id="auditActionFilter" onchange="loadAudit()"><option value="">All Actions</option><option value="API_ACCESS">API Access</option><option value="LOGIN">Login</option><option value="CREATE">Create</option><option value="UPDATE">Update</option><option value="DELETE">Delete</option></select></div>
+      <div class="table-wrap"><table><thead><tr><th>Action</th><th>Resource</th><th>Institution</th><th>User</th><th>IP</th><th>Timestamp</th></tr></thead><tbody id="auditTableBody"></tbody></table></div>
+    </div>
+
+    <!-- ═══ ANALYTICS ═══ -->
+    <div class="tab-content" id="tab-analytics">
+      <div id="analyticsContent"></div>
+    </div>
+
+    <!-- ═══ DEMO BOOKINGS ═══ -->
+    <div class="tab-content" id="tab-bookings">
+      <div class="section-header"><h2><i class="fas fa-calendar-check"></i> Demo Bookings</h2><span class="badge-count" id="bookingCount">0</span></div>
+      <div class="table-wrap"><table><thead><tr><th>Name</th><th>Email</th><th>Institution</th><th>Type</th><th>Students</th><th>Status</th><th>Date</th><th>Onboarding</th></tr></thead><tbody id="bookingTableBody"></tbody></table></div>
+    </div>
+  </div>
 </div>
 
 <script>
-    var API_BASE = '/api/super-admin';
-    var currentTab = 'overview';
-    var refreshInterval = null;
-    var REFRESH_MS = 15000;
+var API_BASE = '/api/super-admin';
+var currentTab = 'overview';
+var REFRESH_MS = 15000;
+var retryCount = {};
 
-    // ── Tab Navigation ──
-    document.querySelectorAll('.nav-item[data-tab]').forEach(function(btn) {
-        btn.addEventListener('click', function() {
-            document.querySelectorAll('.nav-item').forEach(function(b) { b.classList.remove('active'); });
-            this.classList.add('active');
-            document.querySelectorAll('.tab-content').forEach(function(t) { t.classList.remove('active'); });
-            var tab = this.getAttribute('data-tab');
-            document.getElementById('tab-' + tab).classList.add('active');
-            document.getElementById('pageTitle').innerHTML = this.querySelector('span').textContent + ' <span>Command Center</span>';
-            currentTab = tab;
-            loadTab(tab);
-        });
-    });
+function fmtTime(t) { if (!t) return '\u2014'; try { return new Date(t).toLocaleString(); } catch(e) { return t; } }
+function fmtDate(t) { if (!t) return '\u2014'; try { return new Date(t).toLocaleDateString(); } catch(e) { return t; } }
+function esc(s) { if (!s) return '\u2014'; var d = document.createElement('div'); d.textContent = s; return d.innerHTML; }
+function riskColor(s) { var n = parseInt(s) || 0; if (n >= 7) return 'high'; if (n >= 4) return 'medium'; return 'low'; }
+function riskPct(s) { return Math.min(parseInt(s) || 0, 10) * 10; }
 
-    function loadTab(tab) {
-        var fns = {
-            overview: loadOverview,
-            institutions: loadInstitutions,
-            users: loadUsers,
-            attendance: loadAttendance,
-            security: loadSecurity,
-            suspicious: loadSuspicious,
-            activity: loadActivity,
-            audit: loadAudit
-        };
-        if (fns[tab]) fns[tab]();
+function skeletonCards(n) { return Array(n).fill(0).map(function() { return '<div class="skeleton skeleton-card"></div>'; }).join(''); }
+function skeletonRows(n) { return Array(n).fill(0).map(function() { return '<div class="skeleton skeleton-row"></div>'; }).join(''); }
+function spinner() { return '<div class="loading-state"><div class="spinner"></div></div>'; }
+function emptyState(icon, title, desc) { return '<div class="empty-state"><i class="fas fa-' + icon + '"></i><div class="empty-title">' + title + '</div>' + (desc ? '<div class="empty-desc">' + desc + '</div>' : '') + '</div>'; }
+function errorState(msg) { return '<div class="error-state"><i class="fas fa-triangle-exclamation"></i><div>' + esc(msg || 'Failed to load data') + '</div><button class="btn-action auto-refresh-btn" onclick="loadTab(currentTab)"><i class="fas fa-rotate"></i> Retry</button></div>'; }
+
+function toggleSidebar() {
+  document.getElementById('sidebarOverlay').classList.toggle('active');
+  document.querySelector('.sidebar').classList.toggle('open');
+}
+
+function closeSidebarMobile() {
+  if (window.innerWidth <= 768) {
+    document.getElementById('sidebarOverlay').classList.remove('active');
+    document.querySelector('.sidebar').classList.remove('open');
+  }
+}
+
+function apiFetch(url, cb, key) {
+  var k = key || url;
+  retryCount[k] = (retryCount[k] || 0) + 1;
+  fetch(url).then(function(r) { if (!r.ok) throw new Error('HTTP ' + r.status); return r.json(); }).then(function(d) { retryCount[k] = 0; cb(d); }).catch(function(err) { console.warn('API error:', url, err); if (typeof cb.error === 'function') cb.error(err); });
+}
+
+document.querySelectorAll('.nav-item[data-tab]').forEach(function(btn) {
+  btn.addEventListener('click', function() {
+    document.querySelectorAll('.nav-item').forEach(function(b) { b.classList.remove('active'); });
+    this.classList.add('active');
+    document.querySelectorAll('.tab-content').forEach(function(t) { t.classList.remove('active'); });
+    var tab = this.getAttribute('data-tab');
+    document.getElementById('tab-' + tab).classList.add('active');
+    var spanText = this.querySelector('span') ? this.querySelector('span').textContent : 'Command';
+    document.getElementById('pageTitle').innerHTML = esc(spanText) + ' <span>Command Center</span>';
+    currentTab = tab;
+    loadTab(tab);
+    closeSidebarMobile();
+  });
+});
+
+function loadTab(tab) {
+  var fns = {
+    overview: loadOverview, institutions: loadInstitutions, users: loadUsers,
+    governance: loadGovernance, attendance: loadAttendance, network: loadNetwork,
+    health: loadHealth, security: loadSecurity, 'anti-proxy': loadAntiProxy,
+    suspicious: loadSuspicious, 'ai-risk': loadAiRisk, activity: loadActivity,
+    audit: loadAudit, analytics: loadAnalytics, bookings: loadBookings,
+  };
+  if (fns[tab]) fns[tab]();
+}
+function refreshAll() { loadTab(currentTab); }
+
+
+/* ═══════════════════════════ OVERVIEW ═══════════════════════════ */
+function loadOverview() {
+  var statsEl = document.getElementById('overviewStats');
+  statsEl.innerHTML = skeletonCards(6);
+  apiFetch(API_BASE + '/overview', function(d) {
+    if (!d.success) { statsEl.innerHTML = errorState(); return; }
+    var o = d.data;
+    statsEl.innerHTML =
+      '<div class="stat-card"><div class="stat-icon"><i class="fas fa-building-columns"></i></div><div class="stat-label">Institutions</div><div class="stat-value">' + (o.total_institutions || 0) + '</div><div class="stat-sub">' + (o.active_institutions || 0) + ' active <span style="color:var(--text-muted)">\u00b7</span> ' + (o.pending_institutions || 0) + ' pending</div></div>' +
+      '<div class="stat-card"><div class="stat-icon"><i class="fas fa-user-graduate"></i></div><div class="stat-label">Users</div><div class="stat-value">' + (o.total_users || 0) + '</div><div class="stat-sub">' + (o.total_students || 0) + ' students <span style="color:var(--text-muted)">\u00b7</span> ' + (o.total_lecturers || 0) + ' lecturers</div></div>' +
+      '<div class="stat-card"><div class="stat-icon"><i class="fas fa-clipboard-check"></i></div><div class="stat-label">Attendance Records</div><div class="stat-value">' + (o.total_attendance_records || 0).toLocaleString() + '</div><div class="stat-sub">' + (o.today_records || 0) + ' today <span style="color:var(--text-muted)">\u00b7</span> ' + (o.attendance_completion_rate || 0) + '% rate</div></div>' +
+      '<div class="stat-card"><div class="stat-icon"><i class="fas fa-triangle-exclamation"></i></div><div class="stat-label">Fraud Intelligence</div><div class="stat-value" style="color:' + ((o.suspicious_records || 0) > 0 ? 'var(--warning)' : 'var(--success)') + '">' + (o.suspicious_records || 0) + '</div><div class="stat-sub">' + (o.proxy_flags || 0) + ' proxy flags <span style="color:var(--text-muted)">\u00b7</span> ' + (o.attendance_fraud_probability || 0) + '% fraud prob.</div></div>' +
+      '<div class="stat-card"><div class="stat-icon"><i class="fas fa-shield"></i></div><div class="stat-label">Security Posture</div><div class="stat-value" style="color:' + ((o.unresolved_alerts || 0) > 0 ? 'var(--danger)' : 'var(--success)') + '">' + (o.security_events || 0) + '</div><div class="stat-sub">' + (o.unresolved_alerts || 0) + ' open <span style="color:var(--text-muted)">\u00b7</span> ' + (o.high_risk_events || 0) + ' high risk</div></div>' +
+      '<div class="stat-card"><div class="stat-icon"><i class="fas fa-gauge"></i></div><div class="stat-label">System</div><div class="stat-value">' + (o.active_sessions || 0) + '</div><div class="stat-sub">' + (o.active_security_incidents || 0) + ' active incidents <span style="color:var(--text-muted)">\u00b7</span> ' + (o.system_uptime_hours || 0) + 'h uptime</div></div>';
+    loadOverviewFeed();
+    loadOverviewSecurity();
+  });
+}
+
+function loadOverviewFeed() {
+  var el = document.getElementById('overviewFeed');
+  el.innerHTML = spinner();
+  apiFetch(API_BASE + '/activity-feed', function(d) {
+    if (!d.success || !d.data || !d.data.length) { el.innerHTML = emptyState('rss', 'No Recent Activity', 'System activity will appear here as users interact with the platform.'); var _e=document.getElementById('overviewFeedCount');if(_e)_e.textContent='0'; return; }
+    var _e=document.getElementById('overviewFeedCount');if(_e)_e.textContent=d.data.length;
+    el.innerHTML = d.data.slice(0, 8).map(function(a) {
+      var icon = 'info';
+      if (a.action && a.action.includes('LOGIN')) icon = 'success';
+      else if (a.action && (a.action.includes('DELETE') || a.action.includes('SECURITY'))) icon = 'danger';
+      else if (a.action && a.action.includes('CREATE')) icon = 'success';
+      else if (a.action && a.action.includes('UPDATE')) icon = 'warning';
+      return '<div class="feed-item"><div class="feed-icon ' + icon + '"><i class="fas ' + (icon==='info'?'fa-circle-info':icon==='success'?'fa-right-to-bracket':icon==='danger'?'fa-trash':'fa-pen') + '"></i></div><div class="feed-content"><div class="feed-title">' + esc(a.action) + '</div><div class="feed-desc">' + esc(a.resource_type || 'system') + (a.institution_name ? ' \u00b7 ' + esc(a.institution_name) : '') + '</div><div class="feed-meta">' + fmtTime(a.timestamp) + (a.ip_address ? ' \u00b7 ' + esc(a.ip_address) : '') + '</div></div></div>';
+    }).join('');
+  });
+}
+
+function loadOverviewSecurity() {
+  var el = document.getElementById('overviewSecurity');
+  el.innerHTML = spinner();
+  apiFetch(API_BASE + '/security-events?min_risk=4', function(d) {
+    if (!d.success || !d.data || !d.data.length) { el.innerHTML = emptyState('shield-check', 'No Security Events', 'No medium-to-high risk security events detected.'); var _e=document.getElementById('overviewSecurityCount');if(_e)_e.textContent='0'; return; }
+    var _e=document.getElementById('overviewSecurityCount');if(_e)_e.textContent=d.data.length;
+    el.innerHTML = d.data.slice(0, 8).map(function(e) {
+      var cls = riskColor(e.risk_score);
+      return '<div class="feed-item"><div class="feed-icon ' + cls + '"><i class="fas fa-bolt"></i></div><div class="feed-content"><div class="feed-title">' + esc(e.event_type) + '</div><div class="feed-desc">' + esc(e.description || '') + (e.institution_name ? ' \u00b7 ' + esc(e.institution_name) : '') + '</div><div class="feed-meta">Risk: ' + (e.risk_score || 0) + '/10 \u00b7 ' + fmtTime(e.created_at) + '</div></div></div>';
+    }).join('');
+  });
+}
+
+
+/* ═══════════════════════════ INSTITUTIONS ═══════════════════════════ */
+function loadInstitutions() {
+  var el = document.getElementById('instTableBody');
+  el.innerHTML = '<tr><td colspan="10" class="loading-state"><div class="spinner"></div></td></tr>';
+  apiFetch(API_BASE + '/institutions', function(d) {
+    if (!d.success) { el.innerHTML = '<tr><td colspan="10" class="error-state">Failed to load</td></tr>'; return; }
+    var _e=document.getElementById('instCount');if(_e)_e.textContent=d.data.length;
+    if (!d.data.length) { el.innerHTML = '<tr><td colspan="10" class="empty-state"><i class="fas fa-building-columns"></i><br><div class="empty-title">No Institutions Registered</div><div class="empty-desc">Institutions will appear here once they register on the platform.</div></td></tr>'; return; }
+    el.innerHTML = d.data.map(function(i) {
+      return '<tr><td><strong>' + esc(i.name) + '</strong></td><td>' + esc(i.code) + '</td>' +
+        '<td><span class="status-badge ' + (i.is_active ? 'active' : 'inactive') + '"><span class="status-dot ' + (i.is_active ? 'online' : 'offline') + '"></span>' + (i.is_active ? 'Active' : 'Inactive') + '</span></td>' +
+        '<td>' + (i.total_admins || 0) + '</td><td>' + (i.total_lecturers || 0) + '</td><td>' + (i.total_students || 0) + '</td><td>' + (i.total_employees || 0) + '</td>' +
+        '<td><span style="font-weight:600;color:' + ((i.attendance_rate || 0) >= 70 ? 'var(--success)' : (i.attendance_rate || 0) >= 40 ? 'var(--warning)' : 'var(--danger)') + '">' + (i.attendance_rate || 0) + '%</span></td>' +
+        '<td><span class="status-badge ' + ((i.high_risk_events || 0) > 0 ? 'high' : 'low') + '">' + (i.security_events || 0) + ' events</span></td>' +
+        '<td><button class="btn-action" onclick="toggleInstitution(\'' + esc(i.id) + '\')"><i class="fas ' + (i.is_active ? 'fa-pause' : 'fa-play') + '"></i></button></td></tr>';
+    }).join('');
+  });
+}
+
+function toggleInstitution(id) {
+  if (!confirm('Toggle this institution\'s status?')) return;
+  fetch(API_BASE + '/institution/' + id + '/toggle-status', { method: 'POST' }).then(function(r) { return r.json(); }).then(function(d) { if (d.success) loadInstitutions(); else alert('Failed: ' + (d.error || 'Unknown')); });
+}
+
+
+/* ═══════════════════════════ USERS ═══════════════════════════ */
+function loadUsers() {
+  var role = document.getElementById('userRoleFilter').value;
+  var search = document.getElementById('userSearch').value;
+  var url = API_BASE + '/users?';
+  if (role) url += 'role=' + encodeURIComponent(role) + '&';
+  if (search) url += 'search=' + encodeURIComponent(search) + '&';
+  var el = document.getElementById('userTableBody');
+  el.innerHTML = '<tr><td colspan="8" class="loading-state"><div class="spinner"></div></td></tr>';
+  apiFetch(url, function(d) {
+    if (!d.success) { el.innerHTML = '<tr><td colspan="8" class="error-state">Failed to load</td></tr>'; return; }
+    var _e=document.getElementById('userCount');if(_e)_e.textContent=d.data.length;
+    if (!d.data.length) { el.innerHTML = '<tr><td colspan="8" class="empty-state"><i class="fas fa-users"></i><br><div class="empty-title">No Users Found</div><div class="empty-desc">' + (search || role ? 'No users match the current filters.' : 'No users registered yet.') + '</div></td></tr>'; return; }
+    el.innerHTML = d.data.map(function(u) {
+      return '<tr><td><strong>' + esc(u.full_name || u.email) + '</strong></td><td>' + esc(u.email) + '</td>' +
+        '<td><span class="status-badge ' + (u.role === 'super_admin' ? 'high' : u.role === 'institutional_admin' ? 'medium' : 'low') + '">' + esc(u.role || '').replace(/_/g, ' ') + '</span></td>' +
+        '<td>' + esc(u.institution_name) + '</td>' +
+        '<td><span class="status-badge ' + (u.is_active ? 'active' : 'inactive') + '">' + (u.is_active ? 'Active' : 'Inactive') + '</span></td>' +
+        '<td>' + (u.email_verified ? '<i class="fas fa-check-circle" style="color:var(--success)"></i>' : '<i class="fas fa-times-circle" style="color:var(--text-muted)"></i>') + '</td>' +
+        '<td style="font-size:0.7rem;">' + fmtTime(u.last_login) + '</td>' +
+        '<td><button class="btn-action" onclick="toggleUser(\'' + esc(u.id) + '\')"><i class="fas ' + (u.is_active ? 'fa-ban' : 'fa-check') + '"></i></button></td></tr>';
+    }).join('');
+  });
+}
+
+function toggleUser(id) {
+  if (!confirm('Toggle this user\'s active status?')) return;
+  fetch(API_BASE + '/user/' + id + '/toggle-status', { method: 'POST' }).then(function(r) { return r.json(); }).then(function(d) { if (d.success) loadUsers(); else alert('Failed: ' + (d.error || 'Unknown')); });
+}
+
+
+/* ═══════════════════════════ ROLE GOVERNANCE ═══════════════════════════ */
+function loadGovernance() {
+  var el = document.getElementById('governanceContent');
+  el.innerHTML = spinner();
+  apiFetch(API_BASE + '/role-governance', function(d) {
+    if (!d.success) { el.innerHTML = errorState(); return; }
+    var g = d.data;
+    var roles = g.role_distribution || {};
+    var roleKeys = Object.keys(roles);
+    var roleCards = roleKeys.length ? roleKeys.map(function(r) {
+      var iconMap = { super_admin: 'fa-crown', institutional_admin: 'fa-building-shield', lecturer: 'fa-chalkboard-user', student: 'fa-user-graduate', employee: 'fa-user-tie' };
+      var colorMap = { super_admin: 'var(--danger)', institutional_admin: 'var(--warning)', lecturer: 'var(--info)', student: 'var(--success)', employee: 'var(--accent)' };
+      return '<div class="gov-role-card"><div class="gov-icon" style="color:' + (colorMap[r] || 'var(--text-muted)') + '"><i class="fas ' + (iconMap[r] || 'fa-user') + '"></i></div><div class="gov-count">' + (roles[r] || 0) + '</div><div class="gov-label">' + esc(r.replace(/_/g, ' ')) + '</div></div>';
+    }).join('') : '<div class="empty-state" style="grid-column:1/-1"><i class="fas fa-users"></i><div class="empty-title">No Users Registered</div><div class="empty-desc">User role distribution will appear once users are onboarded.</div></div>';
+
+    el.innerHTML =
+      '<div class="section-header"><h2><i class="fas fa-scale-balanced"></i> Role Distribution</h2><span class="badge-count">' + (g.total_users || 0) + ' total</span></div>' +
+      '<div class="four-col">' + roleCards + '</div>' +
+      '<div class="two-col" style="margin-top:1rem;">' +
+      '<div><div class="section-header"><h2>Account Status</h2></div><div class="table-wrap"><table><thead><tr><th>Metric</th><th>Value</th></tr></thead><tbody>' +
+      '<tr><td>Total Users</td><td><strong>' + (g.total_users || 0) + '</strong></td></tr>' +
+      '<tr><td><span style="color:var(--success)">\u25cf</span> Active</td><td><strong>' + (g.active_users || 0) + '</strong></td></tr>' +
+      '<tr><td><span style="color:var(--danger)">\u25cf</span> Suspended</td><td><strong>' + (g.suspended_users || 0) + '</strong></td></tr>' +
+      '<tr><td><span style="color:var(--info)">\u25cf</span> Verified</td><td><strong>' + (g.verified_users || 0) + '</strong></td></tr>' +
+      '<tr><td><span style="color:var(--warning)">\u25cf</span> Unverified</td><td><strong>' + (g.unverified_users || 0) + '</strong></td></tr>' +
+      '</tbody></table></div></div>' +
+      '<div><div class="section-header"><h2>Security Overview</h2></div><div class="table-wrap">' +
+      emptyState('shield-check', 'Governance Controls Active', 'Role-based access controls and permission boundaries are enforced across all institutions.') +
+      '</div></div></div>';
+  });
+}
+
+
+/* ═══════════════════════════ ATTENDANCE ═══════════════════════════ */
+function loadAttendance() {
+  var el = document.getElementById('attendanceContent');
+  el.innerHTML = spinner();
+  apiFetch(API_BASE + '/attendance/overview', function(d) {
+    if (!d.success) { el.innerHTML = errorState(); return; }
+    var o = d.data;
+    el.innerHTML =
+      '<div class="stats-grid">' +
+      '<div class="stat-card"><div class="stat-icon"><i class="fas fa-chart-simple"></i></div><div class="stat-label">Attendance Rate</div><div class="stat-value" style="color:' + ((o.attendance_rate || 0) >= 80 ? 'var(--success)' : (o.attendance_rate || 0) >= 60 ? 'var(--warning)' : 'var(--danger)') + '">' + (o.attendance_rate || 0) + '%</div><div class="stat-sub">' + (o.total_sessions || 0) + ' total sessions</div></div>' +
+      '<div class="stat-card"><div class="stat-icon"><i class="fas fa-clock"></i></div><div class="stat-label">Active Sessions</div><div class="stat-value">' + (o.active_sessions || 0) + '</div><div class="stat-sub">Currently running</div></div>' +
+      '<div class="stat-card"><div class="stat-icon"><i class="fas fa-user-graduate"></i></div><div class="stat-label">Students Tracked</div><div class="stat-value">' + (o.students_with_attendance || 0) + '</div><div class="stat-sub">of ' + (o.enrolled_students || 0) + ' enrolled</div></div>' +
+      '<div class="stat-card"><div class="stat-icon"><i class="fas fa-record-vinyl"></i></div><div class="stat-label">Avg Per Session</div><div class="stat-value">' + (o.avg_records_per_session || 0) + '</div><div class="stat-sub">Records per session</div></div>' +
+      '</div>' +
+      '<div class="section-header"><h2>Attendance Breakdown</h2></div>' +
+      '<div class="table-wrap"><table><thead><tr><th>Metric</th><th>Value</th></tr></thead><tbody>' +
+      (o.total_records > 0 ?
+      '<tr><td><strong>Total Records</strong></td><td>' + (o.total_records || 0).toLocaleString() + '</td></tr>' +
+      '<tr><td><span style="color:var(--success)">\u25cf</span> Present</td><td>' + (o.present || 0).toLocaleString() + '</td></tr>' +
+      '<tr><td><span style="color:var(--warning)">\u25cf</span> Late</td><td>' + (o.late || 0).toLocaleString() + '</td></tr>' +
+      '<tr><td><span style="color:var(--danger)">\u25cf</span> Absent</td><td>' + (o.absent || 0).toLocaleString() + '</td></tr>' +
+      '<tr><td><span style="color:var(--info)">\u25cf</span> Excused</td><td>' + (o.excused || 0).toLocaleString() + '</td></tr>' +
+      '<tr><td><span style="color:var(--danger)">\u26a0</span> Suspicious</td><td>' + (o.suspicious_records || 0) + '</td></tr>'
+      : '<tr><td colspan="2" class="empty-state"><i class="fas fa-clipboard-check"></i><br><div class="empty-title">No Attendance Data</div><div class="empty-desc">Attendance records will appear here once sessions are created and students start marking attendance.</div></td></tr>') +
+      '</tbody></table></div>';
+  });
+}
+
+
+/* ═══════════════════════════ NETWORK ═══════════════════════════ */
+function loadNetwork() {
+  var el = document.getElementById('networkContent');
+  el.innerHTML = spinner();
+  apiFetch(API_BASE + '/network-infrastructure', function(d) {
+    if (!d.success) { el.innerHTML = errorState(); return; }
+    var n = d.data;
+    var nodes = n.institutions || [];
+    el.innerHTML =
+      '<div class="section-header"><h2><i class="fas fa-network-wired"></i> Distributed Network Topology</h2><span class="badge-count">' + (n.total_nodes || 0) + ' nodes</span></div>' +
+      '<div class="stats-grid">' +
+      '<div class="stat-card"><div class="stat-icon"><i class="fas fa-server"></i></div><div class="stat-label">Total Nodes</div><div class="stat-value">' + (n.total_nodes || 0) + '</div><div class="stat-sub">Institutional endpoints</div></div>' +
+      '<div class="stat-card"><div class="stat-icon"><i class="fas fa-wifi"></i></div><div class="stat-label">Online</div><div class="stat-value" style="color:var(--success)">' + (n.online_nodes || 0) + '</div><div class="stat-sub">' + (n.offline_nodes || 0) + ' offline</div></div>' +
+      '<div class="stat-card"><div class="stat-icon"><i class="fas fa-clock-rotate-left"></i></div><div class="stat-label">Sync Latency</div><div class="stat-value" style="color:' + ((n.sync_latency_ms || 0) > 30 ? 'var(--warning)' : 'var(--success)') + '">' + (n.sync_latency_ms || 0) + 'ms</div><div class="stat-sub">MQTT sync</div></div>' +
+      '<div class="stat-card"><div class="stat-icon"><i class="fas fa-tower-broadcast"></i></div><div class="stat-label">MQTT Broker</div><div class="stat-value" style="color:var(--success);font-size:1rem;"><span class="status-dot online" style="margin-right:0.3rem;"></span>' + esc(n.mqtt_status || 'connected') + '</div><div class="stat-sub">Message queue</div></div>' +
+      '</div>' +
+      '<div class="section-header"><h2>Node Status</h2><span class="badge-count">' + nodes.length + '</span></div>' +
+      '<div style="display:grid;grid-template-columns:repeat(auto-fill,minmax(280px,1fr));gap:0.65rem;">' +
+      (nodes.length ? nodes.map(function(node) {
+        return '<div class="node-card"><div class="node-status" style="background:' + (node.is_active ? 'var(--success)' : 'var(--danger)') + ';box-shadow:0 0 8px ' + (node.is_active ? 'rgba(16,185,129,0.4)' : 'rgba(239,68,68,0.4)') + '"></div><div><div class="node-name">' + esc(node.name || 'Unknown') + '</div><div class="node-meta">' + esc(node.code || '') + ' \u00b7 ' + (node.is_active ? 'Online' : 'Offline') + '</div></div></div>';
+      }).join('') : '<div class="empty-state" style="grid-column:1/-1"><i class="fas fa-network-wired"></i><div class="empty-title">No Network Nodes</div><div class="empty-desc">Institutional nodes will appear here as they connect to the distributed network.</div></div>') +
+      '</div>';
+  });
+}
+
+
+/* ═══════════════════════════ SYSTEM HEALTH ═══════════════════════════ */
+function loadHealth() {
+  var el = document.getElementById('healthContent');
+  el.innerHTML = spinner();
+  apiFetch(API_BASE + '/system-health', function(d) {
+    if (!d.success) { el.innerHTML = errorState(); return; }
+    var h = d.data;
+    var statusColor = h.status === 'operational' ? 'var(--success)' : 'var(--warning)';
+    var statusIcon = h.status === 'operational' ? 'fa-check-circle' : 'fa-exclamation-triangle';
+    el.innerHTML =
+      '<div class="section-header"><h2><i class="fas fa-heart-pulse"></i> System Health Dashboard</h2></div>' +
+      '<div class="health-grid">' +
+      '<div class="health-card"><div class="hc-icon" style="color:' + statusColor + '"><i class="fas ' + statusIcon + '"></i></div><div class="hc-value" style="color:' + statusColor + ';text-transform:capitalize;">' + esc(h.status.replace(/_/g, ' ')) + '</div><div class="hc-label">System Status</div></div>' +
+      '<div class="health-card"><div class="hc-icon" style="color:var(--info)"><i class="fas fa-clock"></i></div><div class="hc-value">' + (h.uptime_hours || 0) + 'h</div><div class="hc-label">Uptime</div></div>' +
+      '<div class="health-card"><div class="hc-icon" style="color:var(--success)"><i class="fas fa-building-columns"></i></div><div class="hc-value">' + (h.active_institutions || 0) + '</div><div class="hc-label">Active Institutions</div></div>' +
+      '<div class="health-card"><div class="hc-icon" style="color:var(--primary-light)"><i class="fas fa-users"></i></div><div class="hc-value">' + (h.users_active_today || 0) + '</div><div class="hc-label">Users Today</div></div>' +
+      '<div class="health-card"><div class="hc-icon" style="color:' + ((h.events_last_hour || 0) > 0 ? 'var(--warning)' : 'var(--success)') + '"><i class="fas fa-bolt"></i></div><div class="hc-value">' + (h.events_last_hour || 0) + '</div><div class="hc-label">Events (1h)</div></div>' +
+      '<div class="health-card"><div class="hc-icon" style="color:var(--text-muted)"><i class="fas fa-database"></i></div><div class="hc-value">' + (h.total_users || 0) + '</div><div class="hc-label">Total Users</div></div>' +
+      '<div class="health-card"><div class="hc-icon" style="color:var(--accent)"><i class="fas fa-tower-broadcast"></i></div><div class="hc-value" style="text-transform:capitalize;">' + esc(h.mqtt_health || 'operational') + '</div><div class="hc-label">MQTT</div></div>' +
+      '<div class="health-card"><div class="hc-icon" style="color:var(--info)"><i class="fas fa-arrows-rotate"></i></div><div class="hc-value" style="text-transform:capitalize;">' + esc(h.sync_status || 'synchronized') + '</div><div class="hc-label">Sync Status</div></div>' +
+      '</div>' +
+      '<div class="empty-state"><i class="fas fa-heart-pulse" style="color:var(--success);opacity:1;"></i><div class="empty-title">All Systems ' + (h.status === 'operational' ? 'Operational' : 'Monitored') + '</div><div class="empty-desc">Last checked: ' + fmtTime(h.last_checked) + '</div></div>';
+  });
+}
+
+
+/* ═══════════════════════════ SOC / SECURITY ═══════════════════════════ */
+function loadSecurity() {
+  var el = document.getElementById('securityContent');
+  el.innerHTML = spinner();
+  apiFetch(API_BASE + '/security-events', function(d) {
+    if (!d.success) { el.innerHTML = errorState(); return; }
+    var data = d.data || [];
+    var high = data.filter(function(e) { return (e.risk_score || 0) >= 7; }).length;
+    var unresolved = data.filter(function(e) { return !e.is_resolved; }).length;
+    var _e=document.getElementById('socBadge');if(_e)_e.textContent=unresolved;
+
+    el.innerHTML =
+      '<div class="section-header"><h2><i class="fas fa-shield-halved"></i> Security Operations Center</h2><span class="badge-count">' + data.length + ' events</span></div>' +
+      '<div class="security-summary">' +
+      '<div class="security-card"><div class="sc-value" style="color:var(--' + (data.length > 0 ? 'danger' : 'success') + ')">' + (data.length || 0) + '</div><div class="sc-label">Total Events</div></div>' +
+      '<div class="security-card"><div class="sc-value" style="color:var(--danger)">' + high + '</div><div class="sc-label">High Risk</div></div>' +
+      '<div class="security-card"><div class="sc-value" style="color:var(--warning)">' + unresolved + '</div><div class="sc-label">Unresolved</div></div>' +
+      '</div>' +
+      '<div class="section-header"><h2>Threat Log</h2><select id="riskFilter" onchange="loadSecurityTable()"><option value="0">All Levels</option><option value="7">High (7+)</option><option value="4">Medium (4+)</option></select></div>' +
+      '<div class="table-wrap"><table><thead><tr><th>Event Type</th><th>Description</th><th>Institution</th><th>Risk</th><th>Status</th><th>Actions</th></tr></thead><tbody id="securityTableBody"></tbody></table></div>';
+    loadSecurityTable();
+  });
+}
+
+function loadSecurityTable() {
+  var minRisk = (document.getElementById('riskFilter') || {}).value || '0';
+  var el = document.getElementById('securityTableBody');
+  if (!el) return;
+  el.innerHTML = '<tr><td colspan="6" class="loading-state"><div class="spinner"></div></td></tr>';
+  apiFetch(API_BASE + '/security-events?min_risk=' + minRisk, function(d) {
+    if (!d.success) { el.innerHTML = '<tr><td colspan="6" class="error-state">Failed to load</td></tr>'; return; }
+    var data = d.data || [];
+    if (!data.length) { el.innerHTML = '<tr><td colspan="6" class="empty-state"><i class="fas fa-shield-check" style="color:var(--success)"></i><br><div class="empty-title">No Security Events</div><div class="empty-desc">No events at this risk level. The system is secure.</div></td></tr>'; return; }
+    el.innerHTML = data.map(function(e) {
+      return '<tr><td><strong>' + esc(e.event_type) + '</strong></td><td>' + esc(e.description || '') + '</td><td>' + esc(e.institution_name || '\u2014') + '</td>' +
+        '<td><div class="risk-bar"><div class="risk-bar-fill" style="width:' + riskPct(e.risk_score) + '%;background:var(--' + riskColor(e.risk_score) + ')"></div></div><span style="font-size:0.65rem;">' + (e.risk_score || 0) + '/10</span></td>' +
+        '<td><span class="status-badge ' + (e.is_resolved ? 'active' : 'high') + '">' + (e.is_resolved ? 'Resolved' : 'Open') + '</span></td>' +
+        '<td>' + (e.is_resolved ? '' : '<button class="btn-action success" onclick="resolveSecurity(\'' + esc(e.id) + '\')"><i class="fas fa-check"></i> Resolve</button>') + '</td></tr>';
+    }).join('');
+  });
+}
+
+function resolveSecurity(id) {
+  fetch(API_BASE + '/security-events/' + id + '/resolve', { method: 'POST' }).then(function(r) { return r.json(); }).then(function(d) { if (d.success) loadSecurity(); else alert('Failed: ' + (d.error || 'Unknown')); });
+}
+
+
+/* ═══════════════════════════ ANTI-PROXY INTELLIGENCE ═══════════════════════════ */
+function loadAntiProxy() {
+  var el = document.getElementById('antiProxyContent');
+  el.innerHTML = spinner();
+  apiFetch(API_BASE + '/anti-proxy-intelligence', function(d) {
+    if (!d.success) { el.innerHTML = errorState(); return; }
+    var a = d.data;
+    var reasons = a.reasons || {};
+    var reasonKeys = Object.keys(reasons);
+    el.innerHTML =
+      '<div class="section-header"><h2><i class="fas fa-user-secret"></i> Anti-Proxy Intelligence</h2><span class="badge-count">' + (a.total_suspicious || 0) + ' flagged</span></div>' +
+      '<div class="security-summary">' +
+      '<div class="security-card"><div class="sc-value" style="color:' + ((a.total_suspicious || 0) > 0 ? 'var(--warning)' : 'var(--success)') + '">' + (a.total_suspicious || 0) + '</div><div class="sc-label">Suspicious Records</div></div>' +
+      '<div class="security-card"><div class="sc-value" style="color:' + ((a.proxy_attendance_flags || 0) > 0 ? 'var(--danger)' : 'var(--success)') + '">' + (a.proxy_attendance_flags || 0) + '</div><div class="sc-label">Proxy/VPN Flags</div></div>' +
+      '<div class="security-card"><div class="sc-value" style="color:' + ((a.geolocation_mismatches || 0) > 0 ? 'var(--warning)' : 'var(--success)') + '">' + (a.geolocation_mismatches || 0) + '</div><div class="sc-label">Geo Mismatches</div></div>' +
+      '<div class="security-card"><div class="sc-value" style="color:' + ((a.device_fingerprint_anomalies || 0) > 0 ? 'var(--warning)' : 'var(--success)') + '">' + (a.device_fingerprint_anomalies || 0) + '</div><div class="sc-label">Device Anomalies</div></div>' +
+      '<div class="security-card"><div class="sc-value" style="color:' + ((a.duplicate_attendance_flags || 0) > 0 ? 'var(--danger)' : 'var(--success)') + '">' + (a.duplicate_attendance_flags || 0) + '</div><div class="sc-label">Duplicate Flags</div></div>' +
+      '<div class="security-card"><div class="sc-value" style="color:' + ((a.fraud_probability || 0) > 10 ? 'var(--danger)' : (a.fraud_probability || 0) > 5 ? 'var(--warning)' : 'var(--success)') + '">' + (a.fraud_probability || 0) + '%</div><div class="sc-label">Fraud Probability</div></div>' +
+      '</div>' +
+      '<div class="section-header"><h2>Detection Breakdown</h2></div>' +
+      '<div class="table-wrap"><table><thead><tr><th>Detection Type</th><th>Count</th><th>Severity</th></tr></thead><tbody>' +
+      (reasonKeys.length ? reasonKeys.map(function(k) {
+        var count = reasons[k] || 0;
+        var sev = count > 10 ? 'high' : count > 3 ? 'medium' : 'low';
+        return '<tr><td><strong>' + esc(k.charAt(0).toUpperCase() + k.slice(1)) + '</strong></td><td>' + count + '</td><td><span class="status-badge ' + sev + '">' + sev.charAt(0).toUpperCase() + sev.slice(1) + '</span></td></tr>';
+      }).join('') : '<tr><td colspan="3" class="empty-state"><i class="fas fa-shield-check" style="color:var(--success)"></i><br><div class="empty-title">No Detection Data</div><div class="empty-desc">Anti-proxy intelligence will activate when suspicious patterns are detected across attendance records.</div></td></tr>') +
+      '</tbody></table></div>';
+  });
+}
+
+
+/* ═══════════════════════════ SUSPICIOUS ACTIVITY ═══════════════════════════ */
+function loadSuspicious() {
+  var el = document.getElementById('suspiciousTableBody');
+  el.innerHTML = '<tr><td colspan="7" class="loading-state"><div class="spinner"></div></td></tr>';
+  apiFetch(API_BASE + '/suspicious-activity', function(d) {
+    if (!d.success) { el.innerHTML = '<tr><td colspan="7" class="error-state">Failed to load</td></tr>'; return; }
+    var data = d.data || [];
+    var _e=document.getElementById('suspiciousCount');if(_e)_e.textContent=data.length;
+    if (!data.length) { el.innerHTML = '<tr><td colspan="7" class="empty-state"><i class="fas fa-check-circle" style="color:var(--success)"></i><br><div class="empty-title">No Suspicious Activity</div><div class="empty-desc">All attendance records appear legitimate. Suspicious patterns will be flagged here.</div></td></tr>'; return; }
+    el.innerHTML = data.map(function(r) {
+      return '<tr><td><strong>' + esc(r.student_name || 'Unknown') + '</strong></td><td>' + esc(r.student_email || '') + '</td>' +
+        '<td>' + esc(r.institution_name || '\u2014') + '</td>' +
+        '<td><span class="status-badge ' + (r.status === 'present' ? 'active' : 'inactive') + '">' + esc(r.status) + '</span></td>' +
+        '<td style="color:var(--warning)">' + esc(r.suspicion_reason || '\u2014') + '</td>' +
+        '<td style="font-size:0.7rem;">' + esc(r.ip_address || '\u2014') + '</td><td style="font-size:0.7rem;">' + fmtTime(r.marked_at || r.created_at) + '</td></tr>';
+    }).join('');
+  });
+}
+
+
+/* ═══════════════════════════ AI RISK INTELLIGENCE ═══════════════════════════ */
+function loadAiRisk() {
+  var el = document.getElementById('aiRiskContent');
+  el.innerHTML = spinner();
+  apiFetch(API_BASE + '/ai-risk-intelligence', function(d) {
+    if (!d.success) { el.innerHTML = errorState(); return; }
+    var r = d.data;
+    var riskIndex = r.overall_risk_index || 0;
+    var recs = r.recommendations || [];
+
+    var riskLevel = riskIndex < 3 ? 'low' : riskIndex < 6 ? 'moderate' : riskIndex < 8 ? 'high' : 'critical';
+    var riskLabel = riskLevel.charAt(0).toUpperCase() + riskLevel.slice(1);
+    var riskColorVal = riskLevel === 'low' ? 'var(--success)' : riskLevel === 'moderate' ? 'var(--info)' : riskLevel === 'high' ? 'var(--warning)' : 'var(--danger)';
+
+    var highRiskInsts = r.high_risk_institutions || [];
+
+    el.innerHTML =
+      '<div class="section-header"><h2><i class="fas fa-brain"></i> AI-Powered Risk Intelligence</h2><span class="badge-count" style="background:rgba(' + (riskLevel==='critical'?'239,68,68':riskLevel==='high'?'245,158,11':riskLevel==='moderate'?'6,182,212':'16,185,129') + ',0.15);color:' + riskColorVal + '">' + riskLabel + '</span></div>' +
+      '<div class="stats-grid">' +
+      '<div class="stat-card"><div class="stat-icon"><i class="fas fa-gauge-high"></i></div><div class="stat-label">Overall Risk Index</div><div class="stat-value" style="color:' + riskColorVal + '">' + riskIndex + '/10</div><div class="stat-sub">' + riskLabel + ' risk level</div></div>' +
+      '<div class="stat-card"><div class="stat-icon"><i class="fas fa-timer"></i></div><div class="stat-label">Today\'s Suspicious</div><div class="stat-value" style="color:' + ((r.today_suspicious_count || 0) > 0 ? 'var(--warning)' : 'var(--success)') + '">' + (r.today_suspicious_count || 0) + '</div><div class="stat-sub">Flagged today</div></div>' +
+      '<div class="stat-card"><div class="stat-icon"><i class="fas fa-building-columns"></i></div><div class="stat-label">High-Risk Institutions</div><div class="stat-value" style="color:var(--danger)">' + highRiskInsts.length + '</div><div class="stat-sub">Flagged for review</div></div>' +
+      '<div class="stat-card"><div class="stat-icon"><i class="fas fa-chart-line"></i></div><div class="stat-label">Prediction</div><div class="stat-value" style="font-size:1rem;text-transform:capitalize;color:' + (r.prediction === 'elevated_risk' ? 'var(--warning)' : 'var(--success)') + ';">' + esc((r.prediction || 'stable').replace(/_/g, ' ')) + '</div><div class="stat-sub">AI forecast</div></div>' +
+      '</div>' +
+      (highRiskInsts.length ? '<div class="section-header"><h2>High-Risk Institutions</h2><span class="badge-count">' + highRiskInsts.length + '</span></div><div class="table-wrap"><table><thead><tr><th>Institution</th><th>Risk Score</th><th>Suspicious Records</th><th>Security Events</th></tr></thead><tbody>' + highRiskInsts.map(function(inst) {
+        return '<tr><td><strong>' + esc(inst.name) + '</strong></td><td><span class="risk-indicator ' + (inst.risk_score >= 7 ? 'high' : 'moderate') + '">' + inst.risk_score + '/10</span></td><td>' + (inst.suspicious_records || 0) + '</td><td>' + (inst.security_events || 0) + '</td></tr>';
+      }).join('') + '</tbody></table></div>' : '') +
+      '<div class="section-header" style="margin-top:1rem;"><h2>AI Recommendations</h2></div>' +
+      (recs.length ? recs.map(function(rec) {
+        return '<div class="recommendation-card"><div class="rec-text"><i class="fas fa-lightbulb" style="color:var(--accent);margin-right:0.4rem;"></i>' + esc(rec) + '</div></div>';
+      }).join('') : '<div class="empty-state"><i class="fas fa-lightbulb" style="opacity:0.5;"></i><div class="empty-title">No Recommendations</div><div class="empty-desc">AI risk intelligence will generate recommendations as data patterns emerge.</div></div>');
+  });
+}
+
+
+/* ═══════════════════════════ ACTIVITY ═══════════════════════════ */
+function loadActivity() {
+  var el = document.getElementById('activityFeedList');
+  el.innerHTML = spinner();
+  apiFetch(API_BASE + '/activity-feed', function(d) {
+    if (!d.success) { el.innerHTML = '<div class="error-state">Failed to load</div>'; return; }
+    var data = d.data || [];
+    var _e=document.getElementById('activityCount');if(_e)_e.textContent=data.length;
+    if (!data.length) { el.innerHTML = emptyState('rss', 'No Activity Recorded', 'System activity will appear here as users interact with the platform.'); return; }
+    el.innerHTML = data.map(function(a) {
+      var icon = 'info';
+      if (a.action && a.action.includes('LOGIN')) icon = 'success';
+      else if (a.action && (a.action.includes('DELETE') || a.action.includes('SECURITY'))) icon = 'danger';
+      else if (a.action && a.action.includes('CREATE')) icon = 'success';
+      else if (a.action && a.action.includes('UPDATE')) icon = 'warning';
+      var actionStr = a.action || 'Unknown';
+      return '<div class="feed-item"><div class="feed-icon ' + icon + '"><i class="fas ' + (icon==='info'?'fa-circle-info':icon==='success'?'fa-right-to-bracket':icon==='danger'?'fa-trash':'fa-pen') + '"></i></div><div class="feed-content"><div class="feed-title">' + esc(actionStr.replace(/_/g,' ')) + '</div><div class="feed-desc">' + esc(a.resource_type || 'system') + (a.institution_name ? ' \u00b7 ' + esc(a.institution_name) : '') + '</div><div class="feed-meta">' + fmtTime(a.timestamp) + (a.ip_address ? ' \u00b7 ' + esc(a.ip_address) : '') + '</div></div></div>';
+    }).join('');
+  });
+}
+
+
+/* ═══════════════════════════ AUDIT ═══════════════════════════ */
+function loadAudit() {
+  var action = (document.getElementById('auditActionFilter') || {}).value;
+  var url = API_BASE + '/audit-logs';
+  if (action) url += '?action=' + encodeURIComponent(action);
+  var el = document.getElementById('auditTableBody');
+  el.innerHTML = '<tr><td colspan="6" class="loading-state"><div class="spinner"></div></td></tr>';
+  apiFetch(url, function(d) {
+    if (!d.success) { el.innerHTML = '<tr><td colspan="6" class="error-state">Failed to load</td></tr>'; return; }
+    var data = d.data || [];
+    if (!data.length) { el.innerHTML = '<tr><td colspan="6" class="empty-state"><i class="fas fa-list"></i><br><div class="empty-title">No Audit Logs</div><div class="empty-desc">' + (action ? 'No logs match the selected filter.' : 'Audit logs will appear here as system actions are recorded.') + '</div></td></tr>'; return; }
+    el.innerHTML = data.map(function(l) {
+      return '<tr><td><strong>' + esc((l.action || '').replace(/_/g,' ')) + '</strong></td><td>' + esc(l.resource_type || '\u2014') + '</td><td>' + esc(l.institution_name || '\u2014') + '</td><td style="font-size:0.7rem;">' + esc(l.user_id || '').substring(0,12) + '...</td><td style="font-size:0.7rem;">' + esc(l.ip_address || '\u2014') + '</td><td style="font-size:0.7rem;">' + fmtTime(l.timestamp) + '</td></tr>';
+    }).join('');
+  });
+}
+
+
+/* ═══════════════════════════ ANALYTICS ═══════════════════════════ */
+function loadAnalytics() {
+  var el = document.getElementById('analyticsContent');
+  el.innerHTML = spinner();
+  apiFetch(API_BASE + '/attendance-analytics', function(d) {
+    if (!d.success) { el.innerHTML = errorState(); return; }
+    var a = d.data;
+    var rate = a.overall_rate || 0;
+    var rateColor = rate >= 80 ? 'var(--success)' : rate >= 60 ? 'var(--warning)' : 'var(--danger)';
+
+    var instRows = '';
+    if (a.institution_performance && a.institution_performance.length > 0) {
+      instRows = a.institution_performance.slice(0, 15).map(function(i) {
+        var ir = i.attendance_rate || 0;
+        var ic = ir >= 80 ? 'success' : ir >= 60 ? 'warning' : 'danger';
+        return '<tr><td>' + esc(i.institution_name) + '</td><td>' + (i.total_records || 0) + '</td><td>' + (i.present || 0) + '</td><td>' + (i.absent || 0) + '</td><td>' + (i.late || 0) + '</td><td><div class="risk-bar"><div class="risk-bar-fill" style="width:' + ir + '%;background:var(--' + ic + ')"></div></div><span style="font-size:0.65rem;">' + ir + '%</span></td><td>' + (i.suspicious || 0) + '</td></tr>';
+      }).join('');
+    } else {
+      instRows = '<tr><td colspan="7" class="empty-state"><i class="fas fa-chart-simple"></i><br><div class="empty-title">No Institution Data</div><div class="empty-desc">Performance data will appear once institutions have attendance records.</div></td></tr>';
     }
 
-    // ── Refresh ──
-    function refreshAll() { loadTab(currentTab); }
+    el.innerHTML =
+      '<div class="section-header"><h2><i class="fas fa-chart-line"></i> Attendance Analytics</h2></div>' +
+      '<div class="stats-grid">' +
+      '<div class="stat-card"><div class="stat-icon"><i class="fas fa-chart-pie"></i></div><div class="stat-label">Overall Rate</div><div class="stat-value" style="color:' + rateColor + '">' + rate + '%</div><div class="stat-sub">' + (a.total_records || 0) + ' total records</div></div>' +
+      '<div class="stat-card"><div class="stat-icon"><i class="fas fa-clock"></i></div><div class="stat-label">Today\'s Rate</div><div class="stat-value" style="color:' + ((a.today_rate || 0) >= 80 ? 'var(--success)' : 'var(--warning)') + '">' + (a.today_rate || 0) + '%</div><div class="stat-sub">' + (a.today_records || 0) + ' today</div></div>' +
+      '<div class="stat-card"><div class="stat-icon"><i class="fas fa-triangle-exclamation"></i></div><div class="stat-label">Low Performing</div><div class="stat-value" style="color:' + ((a.low_performing_institutions || []).length > 0 ? 'var(--danger)' : 'var(--success)') + '">' + (a.low_performing_institutions || []).length + '</div><div class="stat-sub">Below 50% rate</div></div>' +
+      '<div class="stat-card"><div class="stat-icon"><i class="fas fa-graduation-cap"></i></div><div class="stat-label">Active Sessions</div><div class="stat-value">' + (a.active_sessions || 0) + '</div><div class="stat-sub">' + (a.total_sessions || 0) + ' total</div></div>' +
+      '</div>' +
+      '<div class="section-header"><h2>Institution Performance Rankings</h2><span class="badge-count">' + (a.institution_performance ? a.institution_performance.length : 0) + '</span></div>' +
+      '<div class="table-wrap"><table><thead><tr><th>Institution</th><th>Records</th><th>Present</th><th>Absent</th><th>Late</th><th>Rate</th><th>Suspicious</th></tr></thead><tbody>' + instRows + '</tbody></table></div>';
+  });
+}
 
-    // ── Formatting Helpers ──
-    function fmtTime(t) { if (!t) return '—'; try { var d = new Date(t); return d.toLocaleString(); } catch(e) { return t; } }
-    function fmtDate(t) { if (!t) return '—'; try { var d = new Date(t); return d.toLocaleDateString(); } catch(e) { return t; } }
-    function esc(s) { if (!s) return '—'; var d = document.createElement('div'); d.textContent = s; return d.innerHTML; }
 
-    function riskColor(s) {
-        var n = parseInt(s) || 0;
-        if (n >= 7) return 'danger';
-        if (n >= 4) return 'medium';
-        return 'low';
-    }
-    function riskPct(s) { return Math.min(parseInt(s) || 0, 10) * 10; }
+/* ═══════════════════════════ DEMO BOOKINGS ═══════════════════════════ */
+function loadBookings() {
+  var el = document.getElementById('bookingTableBody');
+  el.innerHTML = '<tr><td colspan="8" class="loading-state"><div class="spinner"></div></td></tr>';
+  apiFetch(API_BASE + '/demo-bookings', function(d) {
+    if (!d.success) { el.innerHTML = '<tr><td colspan="8" class="error-state">Failed to load</td></tr>'; return; }
+    var data = d.data || [];
+    var _e=document.getElementById('bookingCount');if(_e)_e.textContent=data.length;
+    if (!data.length) { el.innerHTML = '<tr><td colspan="8" class="empty-state"><i class="fas fa-calendar-check"></i><br><div class="empty-title">No Demo Bookings</div><div class="empty-desc">Demo booking requests will appear here when institutions request a demo of the platform.</div></td></tr>'; return; }
+    el.innerHTML = data.map(function(b) {
+      var statusCls = 'pending';
+      if (b.status === 'confirmed' || b.status === 'completed') statusCls = 'active';
+      else if (b.status === 'cancelled' || b.status === 'expired') statusCls = 'inactive';
+      var prog = b.onboarding_progress || 0;
+      return '<tr><td><strong>' + esc(b.full_name) + '</strong></td><td>' + esc(b.email) + '</td><td>' + esc(b.institution) + '</td><td>' + esc(b.institution_type) + '</td><td>' + (b.number_of_students || 0) + '</td>' +
+        '<td><span class="status-badge ' + statusCls + '">' + esc(b.status) + '</span></td>' +
+        '<td style="font-size:0.7rem;">' + (b.preferred_date ? fmtDate(b.preferred_date) : '\u2014') + '</td>' +
+        '<td><div class="risk-bar"><div class="risk-bar-fill" style="width:' + prog + '%;background:var(--' + (prog >= 80 ? 'success' : prog >= 40 ? 'warning' : 'info') + ')"></div></div><span style="font-size:0.65rem;">' + prog + '%</span></td></tr>';
+    }).join('');
+  });
+}
 
-    // ═══════════════════════ OVERVIEW ═══════════════════════
-    function loadOverview() {
-        fetch(API_BASE + '/overview').then(function(r) { return r.json(); }).then(function(d) {
-            if (!d.success) return;
-            var o = d.data;
-            document.getElementById('overviewStats').innerHTML =
-                '<div class="stat-card"><div class="stat-icon"><i class="fas fa-building-columns"></i></div><div class="stat-label">Institutions</div><div class="stat-value">' + (o.total_institutions || 0) + '</div><div class="stat-sub">Active across system</div></div>' +
-                '<div class="stat-card"><div class="stat-icon"><i class="fas fa-user-graduate"></i></div><div class="stat-label">Students</div><div class="stat-value">' + (o.total_students || 0) + '</div><div class="stat-sub">' + (o.total_lecturers || 0) + ' lecturers · ' + (o.total_admins || 0) + ' admins</div></div>' +
-                '<div class="stat-card"><div class="stat-icon"><i class="fas fa-clipboard-check"></i></div><div class="stat-label">Attendance Records</div><div class="stat-value">' + (o.total_attendance_records || 0).toLocaleString() + '</div><div class="stat-sub">' + (o.today_records || 0) + ' today · ' + (o.today_attendance_rate || 0) + '% rate</div></div>' +
-                '<div class="stat-card"><div class="stat-icon"><i class="fas fa-triangle-exclamation"></i></div><div class="stat-label">Suspicious</div><div class="stat-value" style="color:' + ((o.suspicious_records || 0) > 0 ? 'var(--warning)' : 'var(--success)') + '">' + (o.suspicious_records || 0) + '</div><div class="stat-sub">Flagged records</div></div>' +
-                '<div class="stat-card"><div class="stat-icon"><i class="fas fa-shield"></i></div><div class="stat-label">Security Events</div><div class="stat-value" style="color:' + ((o.unresolved_alerts || 0) > 0 ? 'var(--danger)' : 'var(--success)') + '">' + (o.security_events || 0) + '</div><div class="stat-sub">' + (o.unresolved_alerts || 0) + ' unresolved · ' + (o.high_risk_events || 0) + ' high risk</div></div>' +
-                '<div class="stat-card"><div class="stat-icon"><i class="fas fa-calendar-check"></i></div><div class="stat-label">Demo Bookings</div><div class="stat-value">' + (o.demo_bookings || 0) + '</div><div class="stat-sub">Onboarding pipeline</div></div>';
 
-            loadOverviewFeed();
-            loadOverviewSecurity();
-        });
-    }
+/* ═══════════════════════════ AUTO-REFRESH ═══════════════════════════ */
+setInterval(function() {
+  if (document.visibilityState !== 'hidden') loadTab(currentTab);
+}, REFRESH_MS);
 
-    function loadOverviewFeed() {
-        fetch(API_BASE + '/activity-feed').then(function(r) { return r.json(); }).then(function(d) {
-            var el = document.getElementById('overviewFeed');
-            if (!d.success || !d.data.length) { el.innerHTML = '<div class="empty-state"><i class="fas fa-rss"></i><br>No recent activity</div>'; return; }
-            el.innerHTML = d.data.slice(0, 8).map(function(a) {
-                var icon = 'info'; if (a.action.includes('LOGIN')) icon = 'success'; if (a.action.includes('DELETE')) icon = 'danger'; if (a.action.includes('SECURITY')) icon = 'warning';
-                return '<div class="feed-item"><div class="feed-icon ' + icon + '"><i class="fas ' + (icon==='info'?'fa-circle-info':icon==='success'?'fa-right-to-bracket':icon==='danger'?'fa-trash':'fa-exclamation') + '"></i></div><div class="feed-content"><div class="feed-title">' + esc(a.action) + '</div><div class="feed-desc">' + esc(a.resource_type) + (a.institution_name ? ' · ' + esc(a.institution_name) : '') + '</div><div class="feed-meta">' + fmtTime(a.timestamp) + (a.ip_address ? ' · ' + esc(a.ip_address) : '') + '</div></div></div>';
-            }).join('');
-        });
-    }
 
-    function loadOverviewSecurity() {
-        fetch(API_BASE + '/security-events?min_risk=4').then(function(r) { return r.json(); }).then(function(d) {
-            var el = document.getElementById('overviewSecurity');
-            if (!d.success || !d.data.length) { el.innerHTML = '<div class="empty-state"><i class="fas fa-shield-check"></i><br>No security events</div>'; return; }
-            el.innerHTML = d.data.slice(0, 8).map(function(e) {
-                var cls = riskColor(e.risk_score);
-                return '<div class="feed-item"><div class="feed-icon ' + cls + '"><i class="fas fa-bolt"></i></div><div class="feed-content"><div class="feed-title">' + esc(e.event_type) + '</div><div class="feed-desc">' + esc(e.description || '') + (e.institution_name ? ' · ' + esc(e.institution_name) : '') + '</div><div class="feed-meta">Risk: ' + (e.risk_score || 0) + '/10 · ' + fmtTime(e.created_at) + '</div></div></div>';
-            }).join('');
-        });
-    }
-
-    // ═══════════════════════ INSTITUTIONS ═══════════════════════
-    function loadInstitutions() {
-        fetch(API_BASE + '/institutions').then(function(r) { return r.json(); }).then(function(d) {
-            var el = document.getElementById('instTableBody');
-            if (!d.success) { el.innerHTML = '<tr><td colspan="9" class="empty-state">Failed to load</td></tr>'; return; }
-            document.getElementById('instCount').textContent = d.data.length;
-            if (!d.data.length) { el.innerHTML = '<tr><td colspan="9" class="empty-state"><i class="fas fa-building-columns"></i><br>No institutions found</td></tr>'; return; }
-            el.innerHTML = d.data.map(function(i) {
-                return '<tr><td><strong>' + esc(i.name) + '</strong></td><td>' + esc(i.code) + '</td>' +
-                    '<td><span class="status-badge ' + (i.is_active ? 'active' : 'inactive') + '"><span class="status-dot ' + (i.is_active ? 'online' : 'offline') + '"></span>' + (i.is_active ? 'Active' : 'Inactive') + '</span></td>' +
-                    '<td>' + (i.total_admins || 0) + '</td><td>' + (i.total_lecturers || 0) + '</td><td>' + (i.total_students || 0) + '</td>' +
-                    '<td>' + (i.attendance_rate || 0) + '%</td>' +
-                    '<td>' + (i.suspicious_records || 0) + '</td>' +
-                    '<td><button class="btn-action" onclick="toggleInstitution(\'' + esc(i.id) + '\')"><i class="fas ' + (i.is_active ? 'fa-pause' : 'fa-play') + '"></i> ' + (i.is_active ? 'Deactivate' : 'Activate') + '</button></td></tr>';
-            }).join('');
-        });
-    }
-
-    function toggleInstitution(id) {
-        if (!confirm('Toggle this institution\'s status?')) return;
-        fetch(API_BASE + '/institution/' + id + '/toggle-status', { method: 'POST' }).then(function(r) { return r.json(); }).then(function(d) {
-            if (d.success) loadInstitutions();
-            else alert('Failed: ' + (d.error || 'Unknown'));
-        });
-    }
-
-    // ═══════════════════════ USERS ═══════════════════════
-    function loadUsers() {
-        var role = document.getElementById('userRoleFilter').value;
-        var search = document.getElementById('userSearch').value;
-        var url = API_BASE + '/users?';
-        if (role) url += 'role=' + encodeURIComponent(role) + '&';
-        if (search) url += 'search=' + encodeURIComponent(search) + '&';
-        fetch(url).then(function(r) { return r.json(); }).then(function(d) {
-            var el = document.getElementById('userTableBody');
-            if (!d.success) { el.innerHTML = '<tr><td colspan="8" class="empty-state">Failed to load</td></tr>'; return; }
-            document.getElementById('userCount').textContent = d.data.length;
-            if (!d.data.length) { el.innerHTML = '<tr><td colspan="8" class="empty-state"><i class="fas fa-users"></i><br>No users found</td></tr>'; return; }
-            el.innerHTML = d.data.map(function(u) {
-                return '<tr><td><strong>' + esc(u.full_name || u.email) + '</strong></td><td>' + esc(u.email) + '</td>' +
-                    '<td><span class="status-badge ' + (u.role === 'super_admin' ? 'high' : u.role === 'institutional_admin' ? 'medium' : 'low') + '">' + esc(u.role || '').replace(/_/g, ' ') + '</span></td>' +
-                    '<td>' + esc(u.institution_name) + '</td>' +
-                    '<td><span class="status-badge ' + (u.is_active ? 'active' : 'inactive') + '">' + (u.is_active ? 'Active' : 'Inactive') + '</span></td>' +
-                    '<td>' + (u.email_verified ? '<i class="fas fa-check-circle" style="color:var(--success)"></i>' : '<i class="fas fa-times-circle" style="color:var(--text-muted)"></i>') + '</td>' +
-                    '<td style="font-size:0.7rem;">' + fmtTime(u.last_login) + '</td>' +
-                    '<td><button class="btn-action" onclick="toggleUser(\'' + esc(u.id) + '\')"><i class="fas ' + (u.is_active ? 'fa-ban' : 'fa-check') + '"></i> ' + (u.is_active ? 'Suspend' : 'Activate') + '</button></td></tr>';
-            }).join('');
-        });
-    }
-
-    function toggleUser(id) {
-        if (!confirm('Toggle this user\'s active status?')) return;
-        fetch(API_BASE + '/user/' + id + '/toggle-status', { method: 'POST' }).then(function(r) { return r.json(); }).then(function(d) {
-            if (d.success) loadUsers();
-            else alert('Failed: ' + (d.error || 'Unknown'));
-        });
-    }
-
-    // ═══════════════════════ ATTENDANCE ═══════════════════════
-    function loadAttendance() {
-        fetch(API_BASE + '/attendance/overview').then(function(r) { return r.json(); }).then(function(d) {
-            if (!d.success) return;
-            var o = d.data;
-            document.getElementById('attendanceStats').innerHTML =
-                '<div class="stat-card"><div class="stat-icon"><i class="fas fa-chart-simple"></i></div><div class="stat-label">Attendance Rate</div><div class="stat-value" style="color:' + (o.attendance_rate >= 80 ? 'var(--success)' : o.attendance_rate >= 60 ? 'var(--warning)' : 'var(--danger)') + '">' + (o.attendance_rate || 0) + '%</div><div class="stat-sub">Overall system average</div></div>' +
-                '<div class="stat-card"><div class="stat-icon"><i class="fas fa-clock"></i></div><div class="stat-label">Active Sessions</div><div class="stat-value">' + (o.active_sessions || 0) + '</div><div class="stat-sub">' + (o.total_sessions || 0) + ' total sessions</div></div>' +
-                '<div class="stat-card"><div class="stat-icon"><i class="fas fa-user-graduate"></i></div><div class="stat-label">Students Tracked</div><div class="stat-value">' + (o.students_with_attendance || 0) + '</div><div class="stat-sub">of ' + (o.enrolled_students || 0) + ' enrolled</div></div>' +
-                '<div class="stat-card"><div class="stat-icon"><i class="fas fa-record-vinyl"></i></div><div class="stat-label">Avg Per Session</div><div class="stat-value">' + (o.avg_records_per_session || 0) + '</div><div class="stat-sub">Records per session</div></div>';
-
-            document.getElementById('attendanceDetail').innerHTML =
-                '<tr><td><strong>Total Records</strong></td><td>' + (o.total_records || 0).toLocaleString() + '</td></tr>' +
-                '<tr><td><span style="color:var(--success)">●</span> Present</td><td>' + (o.present || 0).toLocaleString() + '</td></tr>' +
-                '<tr><td><span style="color:var(--warning)">●</span> Late</td><td>' + (o.late || 0).toLocaleString() + '</td></tr>' +
-                '<tr><td><span style="color:var(--danger)">●</span> Absent</td><td>' + (o.absent || 0).toLocaleString() + '</td></tr>' +
-                '<tr><td><span style="color:var(--info)">●</span> Excused</td><td>' + (o.excused || 0).toLocaleString() + '</td></tr>' +
-                '<tr><td><span style="color:var(--danger)">⚠</span> Suspicious</td><td>' + (o.suspicious_records || 0) + '</td></tr>';
-        });
-    }
-
-    // ═══════════════════════ SECURITY ═══════════════════════
-    function loadSecurity() {
-        var minRisk = document.getElementById('riskFilter').value || '0';
-        fetch(API_BASE + '/security-events?min_risk=' + minRisk).then(function(r) { return r.json(); }).then(function(d) {
-            if (!d.success) return;
-            var data = d.data || [];
-
-            var high = data.filter(function(e) { return (e.risk_score || 0) >= 7; }).length;
-            var unresolved = data.filter(function(e) { return !e.is_resolved; }).length;
-            document.getElementById('securitySummary').innerHTML =
-                '<div class="security-card"><div class="sc-value" style="color:var(--danger)">' + (data.length || 0) + '</div><div class="sc-label">Total Events</div></div>' +
-                '<div class="security-card"><div class="sc-value" style="color:var(--danger)">' + high + '</div><div class="sc-label">High Risk</div></div>' +
-                '<div class="security-card"><div class="sc-value" style="color:var(--warning)">' + unresolved + '</div><div class="sc-label">Unresolved</div></div>';
-
-            var el = document.getElementById('securityTableBody');
-            if (!data.length) { el.innerHTML = '<tr><td colspan="7" class="empty-state"><i class="fas fa-shield-check"></i><br>No security events at this risk level</td></tr>'; return; }
-            el.innerHTML = data.map(function(e) {
-                return '<tr><td><strong>' + esc(e.event_type) + '</strong></td><td>' + esc(e.description || '') + '</td><td>' + esc(e.institution_name || '—') + '</td>' +
-                    '<td><div class="risk-bar"><div class="risk-bar-fill" style="width:' + riskPct(e.risk_score) + '%;background:var(--' + riskColor(e.risk_score) + ')"></div></div><span style="font-size:0.65rem;">' + (e.risk_score || 0) + '/10</span></td>' +
-                    '<td><span class="status-badge ' + (e.is_resolved ? 'active' : 'high') + '">' + (e.is_resolved ? 'Resolved' : 'Open') + '</span></td>' +
-                    '<td style="font-size:0.7rem;">' + esc(e.ip_address || '—') + '</td><td style="font-size:0.7rem;">' + fmtTime(e.created_at) + '</td></tr>';
-            }).join('');
-        });
-    }
-
-    // ═══════════════════════ SUSPICIOUS ═══════════════════════
-    function loadSuspicious() {
-        fetch(API_BASE + '/suspicious-activity').then(function(r) { return r.json(); }).then(function(d) {
-            var el = document.getElementById('suspiciousTableBody');
-            if (!d.success) { el.innerHTML = '<tr><td colspan="7" class="empty-state">Failed to load</td></tr>'; return; }
-            var data = d.data || [];
-            document.getElementById('suspiciousCount').textContent = data.length;
-            if (!data.length) { el.innerHTML = '<tr><td colspan="7" class="empty-state"><i class="fas fa-check-circle" style="color:var(--success)"></i><br>No suspicious activity detected</td></tr>'; return; }
-            el.innerHTML = data.map(function(r) {
-                return '<tr><td><strong>' + esc(r.student_name || 'Unknown') + '</strong></td><td>' + esc(r.student_email || '') + '</td>' +
-                    '<td>' + esc(r.institution_name || '—') + '</td>' +
-                    '<td><span class="status-badge ' + (r.status === 'present' ? 'active' : 'inactive') + '">' + esc(r.status) + '</span></td>' +
-                    '<td style="color:var(--warning)">' + esc(r.suspicion_reason || '—') + '</td>' +
-                    '<td style="font-size:0.7rem;">' + esc(r.ip_address || '—') + '</td><td style="font-size:0.7rem;">' + fmtTime(r.marked_at || r.created_at) + '</td></tr>';
-            }).join('');
-        });
-    }
-
-    // ═══════════════════════ ACTIVITY ═══════════════════════
-    function loadActivity() {
-        fetch(API_BASE + '/activity-feed').then(function(r) { return r.json(); }).then(function(d) {
-            var el = document.getElementById('activityFeedList');
-            if (!d.success) { el.innerHTML = '<div class="empty-state">Failed to load</div>'; return; }
-            var data = d.data || [];
-            document.getElementById('activityCount').textContent = data.length;
-            if (!data.length) { el.innerHTML = '<div class="empty-state"><i class="fas fa-rss"></i><br>No activity recorded</div>'; return; }
-            el.innerHTML = data.map(function(a) {
-                var icon = 'info';
-                if (a.action && a.action.includes('LOGIN')) icon = 'success';
-                else if (a.action && (a.action.includes('DELETE') || a.action.includes('SECURITY'))) icon = 'danger';
-                else if (a.action && a.action.includes('CREATE')) icon = 'success';
-                else if (a.action && a.action.includes('UPDATE')) icon = 'warning';
-                var actionStr = a.action || 'Unknown';
-                var resourceStr = a.resource_type || 'system';
-                return '<div class="feed-item"><div class="feed-icon ' + icon + '"><i class="fas ' + (icon==='info'?'fa-circle-info':icon==='success'?'fa-right-to-bracket':icon==='danger'?'fa-trash':'fa-pen') + '"></i></div><div class="feed-content"><div class="feed-title">' + esc(actionStr.replace(/_/g,' ')) + '</div><div class="feed-desc">' + esc(resourceStr) + (a.institution_name ? ' · ' + esc(a.institution_name) : '') + '</div><div class="feed-meta">' + fmtTime(a.timestamp) + (a.ip_address ? ' · IP: ' + esc(a.ip_address) : '') + '</div></div></div>';
-            }).join('');
-        });
-    }
-
-    // ═══════════════════════ AUDIT ═══════════════════════
-    function loadAudit() {
-        var action = document.getElementById('auditActionFilter').value;
-        var url = API_BASE + '/audit-logs';
-        if (action) url += '?action=' + encodeURIComponent(action);
-        fetch(url).then(function(r) { return r.json(); }).then(function(d) {
-            var el = document.getElementById('auditTableBody');
-            if (!d.success) { el.innerHTML = '<tr><td colspan="6" class="empty-state">Failed to load</td></tr>'; return; }
-            var data = d.data || [];
-            if (!data.length) { el.innerHTML = '<tr><td colspan="6" class="empty-state"><i class="fas fa-list"></i><br>No audit logs found</td></tr>'; return; }
-            el.innerHTML = data.map(function(l) {
-                return '<tr><td><strong>' + esc((l.action || '').replace(/_/g,' ')) + '</strong></td><td>' + esc(l.resource_type || '—') + '</td><td>' + esc(l.institution_name || '—') + '</td><td style="font-size:0.7rem;">' + esc(l.user_id || '').substring(0,12) + '...</td><td style="font-size:0.7rem;">' + esc(l.ip_address || '—') + '</td><td style="font-size:0.7rem;">' + fmtTime(l.timestamp) + '</td></tr>';
-            }).join('');
-        });
-    }
-
-    // ═══════════════════════ AUTO-REFRESH ═══════════════════════
-    setInterval(function() {
-        if (document.visibilityState !== 'hidden') loadTab(currentTab);
-    }, REFRESH_MS);
-
-    // ═══════════════════════ INIT ═══════════════════════
-    loadOverview();
+/* ═══════════════════════════ INIT ═══════════════════════════ */
+loadOverview();
 </script>
 </body>
 </html>

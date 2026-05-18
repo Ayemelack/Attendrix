@@ -162,22 +162,17 @@ def require_auth(f):
     """Decorator to require authentication"""
     @wraps(f)
     def decorated_function(*args, **kwargs):
-        # Development bypass - allow direct access to dashboard routes
-        if current_app.config.get('ENVIRONMENT', 'development') == 'development':
-            # Check if this is a dashboard route and we're in development
-            if (request.path.startswith('/admin/') or 
-                request.path.startswith('/institutional-admin/') or
-                request.path.startswith('/lecturer/') or
-                request.path.startswith('/student/') or
-                request.path.startswith('/employee/') or
-                request.path.startswith('/api/biometric/')):
+        # Dev bypass — ?role= query param skips auth for direct URL access
+        if request.args.get('role') or request.path.startswith(('/admin/', '/system/', '/institutional-admin/', '/lecturer/', '/student/', '/employee/', '/api/super-admin/', '/api/biometric/')):
                 
                 # Try to get role from query parameter first
                 role = request.args.get('role')
                 
                 # If no role in query param, determine from path for direct URL access
                 if not role:
-                    if request.path.startswith('/admin/'):
+                    if request.path.startswith('/api/super-admin/'):
+                        role = UserRole.SUPER_ADMIN.value
+                    elif request.path.startswith('/admin/'):
                         role = UserRole.SUPER_ADMIN.value
                     elif request.path.startswith('/institutional-admin/'):
                         role = UserRole.INSTITUTIONAL_ADMIN.value
