@@ -293,7 +293,17 @@
                             {{ status|capitalize }}
                         </span>
                     </div>
-                    <p>A confirmation email has been sent to <strong style="color:#fff;">{{ email }}</strong>. Your product specialist will use the details you provided to tailor the session.</p>
+                    {% set email_status = email_status|default('pending') %}
+                    {% if email_status == 'sent' %}
+                    <p><i class="fas fa-check-circle" style="color:#10B981;margin-right:0.3rem;"></i>Confirmation sent to <strong style="color:#fff;">{{ email }}</strong>. Your product specialist will use the details you provided to tailor the session.</p>
+                    {% elif email_status == 'failed' %}
+                    <p><i class="fas fa-exclamation-triangle" style="color:#F59E0B;margin-right:0.3rem;"></i>We could not deliver your confirmation email at this time, but your booking was saved successfully. <strong style="color:#fff;">{{ email }}</strong></p>
+                    {% if email_error %}
+                    <p style="font-size:12px;color:#F59E0B;margin-top:4px;">Reason: {{ email_error }}</p>
+                    {% endif %}
+                    {% else %}
+                    <p>A confirmation email will be delivered to <strong style="color:#fff;">{{ email }}</strong>. Your product specialist will use the details you provided to tailor the session.</p>
+                    {% endif %}
                     <div class="session-countdown" id="countdown">
                         <div class="countdown-block"><div class="num" id="cdDays">--</div><div class="label">Days</div></div>
                         <div style="font-size:1.5rem;color:rgba(255,255,255,0.2);">:</div>

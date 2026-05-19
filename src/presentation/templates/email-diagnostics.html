@@ -1,0 +1,125 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Email Diagnostics — Attendrix</title>
+    <style>
+        * { box-sizing: border-box; margin: 0; padding: 0; }
+        body { font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif; background: #0F172A; color: #E2E8F0; padding: 20px; }
+        .container { max-width: 900px; margin: 0 auto; }
+        h1 { font-size: 24px; font-weight: 700; margin-bottom: 24px; color: #F8FAFC; }
+        h2 { font-size: 16px; font-weight: 600; margin-bottom: 12px; color: #94A3B8; text-transform: uppercase; letter-spacing: 1px; }
+        .card { background: #1E293B; border: 1px solid #334155; border-radius: 12px; padding: 20px; margin-bottom: 20px; }
+        .card.good { border-left: 4px solid #10B981; }
+        .card.bad { border-left: 4px solid #EF4444; }
+        .card.warn { border-left: 4px solid #F59E0B; }
+        .card.info { border-left: 4px solid #3B82F6; }
+        .row { display: flex; justify-content: space-between; padding: 8px 0; border-bottom: 1px solid #334155; }
+        .row:last-child { border-bottom: none; }
+        .label { color: #94A3B8; font-size: 13px; }
+        .value { color: #E2E8F0; font-size: 13px; font-family: 'SF Mono', 'Courier New', monospace; word-break: break-all; max-width: 60%; text-align: right; }
+        .value.ok { color: #10B981; }
+        .value.err { color: #EF4444; }
+        .value.warn { color: #F59E0B; }
+        .badge { display: inline-block; padding: 2px 8px; border-radius: 4px; font-size: 11px; font-weight: 600; }
+        .badge.green { background: rgba(16,185,129,0.15); color: #10B981; }
+        .badge.red { background: rgba(239,68,68,0.15); color: #EF4444; }
+        .badge.yellow { background: rgba(245,158,11,0.15); color: #F59E0B; }
+        .badge.blue { background: rgba(59,130,246,0.15); color: #3B82F6; }
+        .timestamp { font-size: 11px; color: #64748B; margin-top: 16px; }
+        pre { background: #0F172A; border: 1px solid #334155; border-radius: 8px; padding: 16px; font-size: 12px; overflow-x: auto; white-space: pre-wrap; word-break: break-all; color: #A5F3FC; margin-top: 8px; max-height: 400px; overflow-y: auto; }
+        .refresh-btn { display: inline-block; padding: 10px 24px; background: #3B82F6; color: white; border: none; border-radius: 8px; cursor: pointer; font-size: 14px; font-weight: 600; margin-bottom: 20px; }
+        .refresh-btn:hover { background: #2563EB; }
+        .loading { opacity: 0.5; pointer-events: none; }
+        .wc { color: #FBBF24; }
+        .ec { color: #F87171; }
+        .sc { color: #34D399; }
+        .ic { color: #60A5FA; }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:24px;">
+            <h1>&#128200; Email Diagnostics</h1>
+            <button class="refresh-btn" onclick="refresh()">&#8635; Refresh</button>
+        </div>
+
+        <div id="loading" style="text-align:center;padding:40px;color:#64748B;">Loading diagnostics...</div>
+        <div id="content" style="display:none;"></div>
+    </div>
+
+    <script>
+        function refresh() {
+            var c = document.getElementById('content');
+            var l = document.getElementById('loading');
+            l.style.display = 'block';
+            c.style.display = 'none';
+            fetch('/api/email/diagnostics')
+                .then(function(r) { return r.json(); })
+                .then(function(d) { render(d); })
+                .catch(function(err) {
+                    l.innerHTML = '<span class="ec">Failed to load: ' + err.message + '</span>';
+                });
+        }
+
+        function render(d) {
+            var c = document.getElementById('content');
+            var l = document.getElementById('loading');
+            l.style.display = 'none';
+            c.style.display = 'block';
+
+            var html = '<div class="card info"><h2>Overview</h2>';
+            html += '<div class="row"><span class="label">Timestamp</span><span class="value">' + d.timestamp + '</span></div>';
+            html += '<div class="row"><span class="label">Environment</span><span class="value">' + d.environment + '</span></div>';
+            if (d.error) html += '<div class="row"><span class="label">Error</span><span class="value err">' + d.error + '</span></div>';
+            html += '</div>';
+
+            html += '<div class="card"><h2>Environment Variables</h2>';
+            for (var key in d.env_vars) {
+                var val = d.env_vars[key];
+                var cls = val === '(empty)' ? 'warn' : (val.indexOf('***') >= 0 ? 'ok' : '');
+                html += '<div class="row"><span class="label">' + key + '</span><span class="value ' + cls + '">' + val + '</span></div>';
+            }
+            html += '</div>';
+
+            var svc = d.service_state;
+            html += '<div class="card ' + (svc.available ? 'good' : 'bad') + '"><h2>Email Service State</h2>';
+            html += '<div class="row"><span class="label">Provider</span><span class="value">' + svc.provider + '</span></div>';
+            var availLabel = svc.available ? 'Available' : 'Not Available';
+            var availClass = svc.available ? 'ok' : 'err';
+            html += '<div class="row"><span class="label">Available</span><span class="value ' + availClass + '">' + availLabel + '</span></div>';
+            html += '<div class="row"><span class="label">From Address</span><span class="value">' + svc.from_email + '</span></div>';
+            html += '<div class="row"><span class="label">From Name</span><span class="value">' + svc.from_name + '</span></div>';
+            html += '<div class="row"><span class="label">Resend Key Set</span><span class="value ' + (svc.resend_key_set ? 'ok' : 'err') + '">' + svc.resend_key_set + '</span></div>';
+            html += '<div class="row"><span class="label">Email Enabled</span><span class="value">' + svc.email_enabled + '</span></div>';
+            html += '</div>';
+
+            var test = d.send_test || {};
+            var testGood = test.success;
+            html += '<div class="card ' + (testGood ? 'good' : 'bad') + '"><h2>Resend API Test</h2>';
+            html += '<div class="row"><span class="label">Key</span><span class="value">' + (test.key_prefix || '?') + '</span></div>';
+            html += '<div class="row"><span class="label">Key Set</span><span class="value ' + (test.key_set ? 'ok' : 'err') + '">' + test.key_set + '</span></div>';
+            if (test.send_test) {
+                var st = test.send_test;
+                var stClass = st.status_code >= 200 && st.status_code < 300 ? 'ok' : 'err';
+                html += '<div class="row"><span class="label">API Status</span><span class="value ' + stClass + '">' + st.status_code + '</span></div>';
+                html += '<div class="row"><span class="label">From</span><span class="value">' + st.from + '</span></div>';
+                html += '<div class="row"><span class="label">To</span><span class="value">' + st.to + '</span></div>';
+                html += '<div class="row"><span class="label">Success</span><span class="value ' + (test.success ? 'ok' : 'err') + '">' + test.success + '</span></div>';
+                html += '<div style="margin-top:12px;"><span class="label">API Response</span>';
+                html += '<pre>' + JSON.stringify(st.response, null, 2) + '</pre></div>';
+            }
+            if (test.error) {
+                html += '<div class="row"><span class="label err">Error</span><span class="value err">' + test.error + '</span></div>';
+            }
+            html += '</div>';
+
+            html += '<div class="timestamp">Last refreshed: ' + new Date().toLocaleString() + '</div>';
+            c.innerHTML = html;
+        }
+
+        refresh();
+    </script>
+</body>
+</html>

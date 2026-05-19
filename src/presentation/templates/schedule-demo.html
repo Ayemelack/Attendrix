@@ -280,6 +280,9 @@
                         </div>
 
                         <input type="hidden" id="csrfToken" value="{{ csrf_token }}">
+                        <input type="hidden" id="sessionToken" value="{{ session_token or '' }}">
+                        <input type="hidden" id="selectedDate" value="">
+                        <input type="hidden" id="selectedTimezone" value="">
                     </div>
 
                     <!-- Duplicate Booking Banner -->
@@ -336,6 +339,13 @@
                                         <div class="value" id="confirmEmail">jane@institution.edu</div>
                                     </div>
                                 </div>
+                                <div class="detail-item">
+                                    <div class="icon"><i class="fas fa-paper-plane"></i></div>
+                                    <div>
+                                        <div class="label">Email Status</div>
+                                        <div class="value" id="emailStatus" style="font-size:13px;">Checking...</div>
+                                    </div>
+                                </div>
                             </div>
                         </div>
 
@@ -384,7 +394,30 @@
         var slots = document.querySelectorAll('.slot-btn');
         var confirmBtn = document.getElementById('confirmBtn');
         var selectedSlot = null;
-        var selectedDate = document.getElementById('dateLabel');
+        var selectedDateLabel = document.getElementById('dateLabel');
+        var selectedDateValue = document.getElementById('selectedDate');
+        var selectedTimezoneValue = document.getElementById('selectedTimezone');
+
+        var today = new Date();
+        var dateOptions = [
+            { label: 'Tomorrow', date: new Date(today.getFullYear(), today.getMonth(), today.getDate() + 1) },
+            { label: 'Day After', date: new Date(today.getFullYear(), today.getMonth(), today.getDate() + 2) },
+            { label: 'Later This Week', date: new Date(today.getFullYear(), today.getMonth(), today.getDate() + 3) }
+        ];
+
+        function formatDisplayDate(dateObj) {
+            return dateObj.toLocaleDateString(undefined, { weekday: 'short', month: 'short', day: 'numeric' });
+        }
+
+        function formatIsoDate(dateObj) {
+            return dateObj.toISOString().slice(0, 10);
+        }
+
+        function setDateOption(option) {
+            selectedDateLabel.textContent = option.label + ' — ' + formatDisplayDate(option.date);
+            selectedDateValue.value = formatIsoDate(option.date);
+            validateForm();
+        }
 
         slots.forEach(function(btn) {
             btn.addEventListener('click', function() {
@@ -395,8 +428,22 @@
             });
         });
 
-        var dateOptions = ['Tomorrow', 'Day After', 'This Week'];
-        selectedDate.textContent = dateOptions[Math.floor(Math.random() * dateOptions.length)];
+        var timezone = Intl.DateTimeFormat().resolvedOptions().timeZone || 'UTC';
+        var sessionTokenInput = document.getElementById('sessionToken');
+        document.getElementById('selectedTimezone').value = timezone;
+        if (!sessionTokenInput.value) {
+            var storedSession = sessionStorage.getItem('demoSessionToken');
+            if (storedSession) {
+                sessionTokenInput.value = storedSession;
+            }
+        } else {
+            sessionStorage.setItem('demoSessionToken', sessionTokenInput.value);
+        }
+        if (sessionTokenInput.value) {
+            document.cookie = 'demoSessionToken=' + encodeURIComponent(sessionTokenInput.value) + '; path=/; max-age=604800; sameSite=Lax' + (location.protocol === 'https:' ? '; Secure' : '');
+        }
+        var selectedOption = dateOptions[Math.floor(Math.random() * dateOptions.length)];
+        setDateOption(selectedOption);
 
         function validateForm() {
             var name = document.getElementById('fullName').value.trim();
@@ -443,7 +490,9 @@
                     institution: inst,
                     phone: phone,
                     time: selectedSlot,
-                    date: selectedDate.textContent,
+                    date: selectedDateValue.value,
+                    timezone: document.getElementById('selectedTimezone').value,
+                    sessionToken: document.getElementById('sessionToken').value,
                     csrfToken: csrf
                 })
             })
@@ -457,7 +506,11 @@
                     showSuccess(name, email, inst, data);
                 } else if (data._status === 409 || data.duplicate) {
                     document.getElementById('duplicateMsg').textContent = data.message;
-                    document.getElementById('dupPortalBtn').href = '/demo-prep?token=' + data.existing_token;
+                    var dupUrl = '/demo-prep?token=' + data.existing_token;
+                    if (sessionTokenInput.value) {
+                        dupUrl += '&sessionToken=' + encodeURIComponent(sessionTokenInput.value);
+                    }
+                    document.getElementById('dupPortalBtn').href = dupUrl;
                     document.getElementById('bookingForm').style.display = 'none';
                     document.getElementById('duplicateBanner').classList.add('show');
                     btn.disabled = false;
@@ -514,6 +567,13 @@
             });
         }
 
+        function formatBookingDate(dateString) {
+            if (!dateString) return '';
+            var dt = new Date(dateString);
+            if (Number.isNaN(dt.getTime())) return dateString;
+            return dt.toLocaleDateString(undefined, { weekday: 'short', month: 'short', day: 'numeric' });
+        }
+
         function showSuccess(name, email, inst, data) {
             document.getElementById('bookingForm').style.display = 'none';
             document.getElementById('bookingConfirmed').classList.add('show');
@@ -522,13 +582,35 @@
             document.getElementById('dot2').classList.add('active');
 
             document.getElementById('confirmName').textContent = name;
-            document.getElementById('confirmDate').textContent = data.booking.date || selectedDate.textContent;
+            document.getElementById('confirmDate').textContent = formatBookingDate(data.booking.date) || selectedDateLabel.textContent;
             document.getElementById('confirmTime').textContent = formatTime(data.booking.time);
             document.getElementById('confirmInst').textContent = data.booking.institution;
             document.getElementById('confirmEmail').textContent = email;
 
+            var emailStatusEl = document.getElementById('emailStatus');
+            if (emailStatusEl) {
+                var status = data.email_status || 'unknown';
+                var errorMsg = data.email_error || '';
+                if (status === 'sent') {
+                    emailStatusEl.innerHTML = '<span style="color:#10B981;">&#10003; Confirmation email sent to <strong>' + email + '</strong></span>';
+                } else if (status === 'failed') {
+                    emailStatusEl.innerHTML = '<span style="color:#F59E0B;">&#9888; Could not send confirmation email' + (errorMsg ? ': ' + errorMsg : '') + '</span>';
+                } else if (status === 'disabled') {
+                    emailStatusEl.innerHTML = '<span style="color:#94A3B8;">&#9432; Email delivery not configured</span>';
+                } else {
+                    emailStatusEl.innerHTML = '<span style="color:#94A3B8;">&#9432; Confirmation email pending</span>';
+                }
+            }
+
             var portalBtn = document.getElementById('enterPortalBtn');
-            portalBtn.href = '/demo-prep?token=' + data.token;
+            portalBtn.href = '/demo-prep?token=' + data.token + (data.session_token ? '&sessionToken=' + encodeURIComponent(data.session_token) : '');
+            if (data.token) {
+                sessionStorage.setItem('demoBookingToken', data.token);
+            }
+            if (data.session_token) {
+                sessionStorage.setItem('demoSessionToken', data.session_token);
+                sessionTokenInput.value = data.session_token;
+            }
 
             var calBtn = document.getElementById('addCalendarBtn');
             calBtn.addEventListener('click', function(e) {

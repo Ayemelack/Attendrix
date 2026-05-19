@@ -28,6 +28,8 @@ class Config:
     
     # Database configuration
     DATABASE_URL = config('DATABASE_URL', default='sqlite:///attendrix.db')
+    SQLALCHEMY_DATABASE_URI = config('SQLALCHEMY_DATABASE_URI', default=DATABASE_URL)
+    SQLALCHEMY_TRACK_MODIFICATIONS = False
     REDIS_URL = config('REDIS_URL', default='redis://localhost:6379/0')
     
     # Security configuration
@@ -35,12 +37,27 @@ class Config:
     JWT_ACCESS_TOKEN_EXPIRES = config('JWT_ACCESS_TOKEN_EXPIRES', default=3600, cast=int)
     JWT_REFRESH_TOKEN_EXPIRES = config('JWT_REFRESH_TOKEN_EXPIRES', default=86400, cast=int)
     
-    # Email configuration
+    # Email configuration (legacy SMTP)
     MAIL_SERVER = config('MAIL_SERVER', default='smtp.gmail.com')
     MAIL_PORT = config('MAIL_PORT', default=587, cast=int)
     MAIL_USE_TLS = config('MAIL_USE_TLS', default=True, cast=bool)
     MAIL_USERNAME = config('MAIL_USERNAME', default='')
     MAIL_PASSWORD = config('MAIL_PASSWORD', default='')
+
+    # SMTP transactional email configuration
+    SMTP_HOST = config('SMTP_HOST', default='')
+    SMTP_PORT = config('SMTP_PORT', default=587, cast=int)
+    SMTP_USER = config('SMTP_USER', default='')
+    SMTP_PASS = config('SMTP_PASS', default='')
+    SMTP_USE_TLS = config('SMTP_USE_TLS', default=True, cast=bool)
+    MAIL_FROM = config('MAIL_FROM', default='demo@lamela.com')
+    MAIL_FROM_NAME = config('MAIL_FROM_NAME', default='Attendrix')
+
+    # Resend transactional email API (fallback)
+    RESEND_API_KEY = config('RESEND_API_KEY', default='')
+    RESEND_FROM_EMAIL = config('RESEND_FROM_EMAIL', default='demo@lamela.com')
+    RESEND_FROM_NAME = config('RESEND_FROM_NAME', default='Attendrix')
+    EMAIL_ENABLED = config('EMAIL_ENABLED', default=False, cast=bool)
     
     # Rate limiting
     RATELIMIT_STORAGE_URL = config('RATELIMIT_STORAGE_URL', default='redis://localhost:6379/1')
@@ -71,6 +88,15 @@ class Config:
     # Celery configuration
     CELERY_BROKER_URL = config('CELERY_BROKER_URL', default='redis://localhost:6379/3')
     CELERY_RESULT_BACKEND = config('CELERY_RESULT_BACKEND', default='redis://localhost:6379/4')
+    
+    # CAPTCHA configuration
+    TURNSTILE_SECRET_KEY = config('TURNSTILE_SECRET_KEY', default='')
+    RECAPTCHA_SECRET_KEY = config('RECAPTCHA_SECRET_KEY', default='')
+    
+    # Demo and onboarding configuration
+    DEMO_SESSION_EXPIRY_MINUTES = config('DEMO_SESSION_EXPIRY_MINUTES', default=60, cast=int)
+    DEMO_BOOKING_WINDOW_DAYS = config('DEMO_BOOKING_WINDOW_DAYS', default=30, cast=int)
+    DEMO_TRIAL_DURATION_DAYS = config('DEMO_TRIAL_DURATION_DAYS', default=14, cast=int)
     
     # Application URLs
     APPLICATION_ROOT = '/'

@@ -1758,6 +1758,56 @@
             .dash-metric-value { font-size: 1.2rem; }
         }
 
+        .page-exit { opacity: 0.08; transition: opacity 0.18s ease; }
+        .hidden { display: none !important; }
+
+        .privacy-preview-backdrop {
+            position: fixed;
+            inset: 0;
+            z-index: 1200;
+            display: grid;
+            place-items: center;
+            background: rgba(15,23,42,0.88);
+            opacity: 0;
+            pointer-events: none;
+            transition: opacity 0.3s ease;
+        }
+        .privacy-preview-backdrop.visible {
+            opacity: 1;
+            pointer-events: auto;
+        }
+        .privacy-preview-panel {
+            width: min(100%, 720px);
+            position: relative;
+            border-radius: 28px;
+            padding: 2rem;
+            background: rgba(15,23,42,0.96);
+            border: 1px solid rgba(255,255,255,0.12);
+            box-shadow: 0 28px 80px rgba(0,0,0,0.25);
+            transform: translateY(20px);
+            transition: transform 0.3s ease;
+        }
+        .privacy-preview-backdrop.visible .privacy-preview-panel {
+            transform: translateY(0);
+        }
+        .privacy-preview-panel h3 { margin: 0 0 1rem; font-size: 1.55rem; }
+        .privacy-preview-panel p { color: #CBD5E1; line-height: 1.75; margin-bottom: 1.5rem; }
+        .privacy-preview-actions { display: flex; flex-wrap: wrap; gap: 0.85rem; }
+        .privacy-preview-close {
+            position: absolute;
+            top: 18px;
+            right: 18px;
+            width: 44px;
+            height: 44px;
+            border-radius: 50%;
+            display: grid;
+            place-items: center;
+            background: rgba(255,255,255,0.08);
+            color: #E2E8F0;
+            cursor: pointer;
+            border: 1px solid rgba(255,255,255,0.12);
+        }
+
         @media (max-width: 380px) {
             .hero h1 { font-size: 1.75rem; }
             .trust-stats { grid-template-columns: 1fr; }
@@ -2218,9 +2268,10 @@
                             <input type="text" id="website" name="website" tabindex="-1" autocomplete="off">
                         </div>
                         
-                        <!-- Timestamp & CSRF: hidden -->
+                        <!-- Timestamp, CSRF, and onboarding session: hidden -->
                         <input type="hidden" id="formTimestamp" name="formTimestamp" value="">
                         <input type="hidden" id="csrfToken" name="csrfToken" value="">
+                        <input type="hidden" id="sessionToken" name="sessionToken" value="">
                         
                         <div class="form-group">
                             <label for="fullName">Full Name</label>
@@ -2264,7 +2315,7 @@
                             <div class="spinner"></div>
                         </button>
                         <div class="form-footer-text">
-                            No spam. Your data is protected by <a href="#">our privacy policy</a>.
+                            No spam. Your data is protected by <a href="/legal/privacy" id="privacyPolicyLink" class="privacy-link">our privacy policy</a>.
                         </div>
                     </div>
                 </form>
@@ -2310,6 +2361,20 @@
             <div class="footer-copyright">&copy; 2025 Attendrix. All rights reserved.</div>
         </div>
     </footer>
+
+    <div class="privacy-preview-backdrop hidden" id="privacyPreviewBackdrop" aria-hidden="true">
+        <div class="privacy-preview-panel" role="dialog" aria-modal="true" aria-labelledby="previewTitle">
+            <button class="privacy-preview-close" id="privacyPreviewClose" aria-label="Close preview">
+                <i class="fas fa-times"></i>
+            </button>
+            <h3 id="previewTitle">Privacy policy preview</h3>
+            <p>Attendrix protects your data with enterprise-grade privacy, secure onboarding persistence, and transparent use of information. Your demo request is safe, and you can continue your workflow after reviewing the policy.</p>
+            <div class="privacy-preview-actions">
+                <a href="/legal/privacy" class="btn-solid" id="privacyPreviewContinue"><i class="fas fa-file-contract"></i> Read Full Policy</a>
+                <button type="button" class="btn-outline" id="privacyPreviewDismiss">Continue Request</button>
+            </div>
+        </div>
+    </div>
 
     <script>
         // Mobile toggle
@@ -2429,6 +2494,99 @@
             return token;
         }
 
+        function getDemoSessionToken() {
+            let token = sessionStorage.getItem('demoSessionToken');
+            if (!token) {
+                const arr = new Uint8Array(32);
+                crypto.getRandomValues(arr);
+                token = Array.from(arr, b => b.toString(16).padStart(2,'0')).join('');
+                sessionStorage.setItem('demoSessionToken', token);
+            }
+            document.cookie = 'demoSessionToken=' + encodeURIComponent(token) + '; path=/; max-age=604800; sameSite=Lax' + (location.protocol === 'https:' ? '; Secure' : '');
+            return token;
+        }
+
+        function trackAnalyticsEvent(eventName) {
+            try {
+                if (window.dataLayer) {
+                    window.dataLayer.push({ event: eventName });
+                }
+                if (window.gtag) {
+                    window.gtag('event', eventName, { event_category: 'privacy', event_label: 'request_demo' });
+                }
+                if (window.mixpanel) {
+                    window.mixpanel.track(eventName);
+                }
+            } catch (err) {
+                // analytics stub fallback
+            }
+        }
+
+        function loadRequestDemoState() {
+            try {
+                const saved = JSON.parse(localStorage.getItem('attendrixRequestDemoState') || '{}');
+                if (!saved || !saved.timestamp) return null;
+                if (Date.now() - saved.timestamp > 24 * 60 * 60 * 1000) {
+                    localStorage.removeItem('attendrixRequestDemoState');
+                    return null;
+                }
+                return saved.data || null;
+            } catch (err) {
+                return null;
+            }
+        }
+
+        function saveRequestDemoState() {
+            const state = {
+                fullName: document.getElementById('fullName').value.trim(),
+                institution: document.getElementById('institution').value.trim(),
+                email: document.getElementById('email').value.trim(),
+                phone: document.getElementById('phone').value.trim(),
+                size: document.getElementById('size').value
+            };
+            if (Object.values(state).every(v => !v)) {
+                return;
+            }
+            localStorage.setItem('attendrixRequestDemoState', JSON.stringify({ timestamp: Date.now(), data: state }));
+        }
+
+        function restoreRequestDemoState() {
+            const saved = loadRequestDemoState();
+            if (!saved) return;
+            ['fullName', 'institution', 'email', 'phone', 'size'].forEach(id => {
+                const el = document.getElementById(id);
+                if (el && saved[id]) {
+                    el.value = saved[id];
+                }
+            });
+            checkFormValid(false);
+        }
+
+        function clearRequestDemoState() {
+            localStorage.removeItem('attendrixRequestDemoState');
+        }
+
+        function hasRequestDemoProgress() {
+            const state = loadRequestDemoState();
+            return state && Object.values(state).some(v => v && v.length > 0);
+        }
+
+        function openPrivacyPreview() {
+            const preview = document.getElementById('privacyPreviewBackdrop');
+            if (!preview) return;
+            preview.classList.remove('hidden');
+            preview.classList.add('visible');
+            document.body.style.overflow = 'hidden';
+        }
+
+        function closePrivacyPreview() {
+            const preview = document.getElementById('privacyPreviewBackdrop');
+            if (!preview) return;
+            preview.classList.add('hidden');
+            preview.classList.remove('visible');
+            document.body.style.overflow = '';
+        }
+
         // Field validators
         const validators = {
             fullName: function(v) {
@@ -2511,6 +2669,7 @@
             el.addEventListener('input', function() {
                 validateField(this.id);
                 checkFormValid(true);
+                saveRequestDemoState();
             });
             el.addEventListener('blur', function() {
                 validateField(this.id);
@@ -2575,6 +2734,7 @@
             })
             .then(function(resp) {
                 if (resp.status === 200 && resp.data.success) {
+                    clearRequestDemoState();
                     formFields.style.display = 'none';
                     formSuccess.classList.add('show');
                     generalError.style.display = 'none';
@@ -2604,8 +2764,49 @@
         // Init hidden fields
         document.getElementById('formTimestamp').value = Date.now();
         document.getElementById('csrfToken').value = getCSRFToken();
+        var demoSession = getDemoSessionToken();
+        document.getElementById('sessionToken').value = demoSession;
+        var scheduleButton = document.getElementById('scheduleDemoBtn');
+        if (scheduleButton) {
+            scheduleButton.href = '/schedule-demo?sessionToken=' + encodeURIComponent(demoSession);
+        }
         // Set initial button state (disabled) without showing errors
+        restoreRequestDemoState();
         checkFormValid(false);
+
+        const privacyLink = document.getElementById('privacyPolicyLink');
+        if (privacyLink) {
+            privacyLink.addEventListener('click', function(e) {
+                trackAnalyticsEvent('privacy_link_clicked');
+                saveRequestDemoState();
+                if (hasRequestDemoProgress()) {
+                    e.preventDefault();
+                    openPrivacyPreview();
+                    return;
+                }
+                document.body.classList.add('page-exit');
+                setTimeout(() => { window.location.href = this.href; }, 180);
+            });
+        }
+
+        const previewClose = document.getElementById('privacyPreviewClose');
+        const previewDismiss = document.getElementById('privacyPreviewDismiss');
+        if (previewClose) {
+            previewClose.addEventListener('click', function() {
+                closePrivacyPreview();
+            });
+        }
+        if (previewDismiss) {
+            previewDismiss.addEventListener('click', function() {
+                closePrivacyPreview();
+            });
+        }
+
+        window.addEventListener('keydown', function(event) {
+            if (event.key === 'Escape') {
+                closePrivacyPreview();
+            }
+        });
 
         // Re-arm timestamp periodically
         setInterval(function() {

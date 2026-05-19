@@ -508,6 +508,25 @@ class DemoBookingRepository(BaseRepository):
         bookings = self.get_by_field('booking_token', token)
         return bookings[0] if bookings else None
 
+    def get_by_session_token(self, session_token: str) -> Optional[Dict[str, Any]]:
+        """Get booking by onboarding session token"""
+        bookings = self.get_by_field('session_token', session_token)
+        if bookings:
+            bookings.sort(key=lambda b: b.get('created_at', ''), reverse=True)
+        return bookings[0] if bookings else None
+
+    def get_active_by_session_token(self, session_token: str) -> Optional[Dict[str, Any]]:
+        """Get non-expired, non-cancelled booking by session token"""
+        bookings = self.get_by_field('session_token', session_token)
+        active = [b for b in bookings
+                  if b.get('status') not in (
+                      DemoBookingStatus.CANCELLED.value,
+                      DemoBookingStatus.EXPIRED.value
+                  )]
+        if active:
+            active.sort(key=lambda b: b.get('created_at', ''), reverse=True)
+        return active[0] if active else None
+
     def get_active_by_email(self, email: str) -> Optional[Dict[str, Any]]:
         """Get non-expired, non-cancelled booking by email"""
         bookings = self.get_by_field('email', email)

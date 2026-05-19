@@ -10,6 +10,7 @@ from config.settings import get_config
 # Import infrastructure services
 from src.infrastructure.firebase_service import firebase_service
 from src.infrastructure.mqtt_service import mqtt_service
+from src.infrastructure.sqlalchemy_db import init_db
 
 # Import application services
 from src.application.rbac import require_auth, require_role, log_access
@@ -58,6 +59,36 @@ def publish_attendance_event(self, session_id: str, student_id: str, status: str
         },
         qos=1,
     )
+
+
+@celery.task(bind=True, max_retries=3, default_retry_delay=60, acks_late=True)
+def send_demo_confirmation_email(self, to_email: str, to_name: str, institution: str,
+                                  demo_date: str, demo_time: str, timezone: str,
+                                  booking_token: str, portal_url: str = ""):
+    """Send demo confirmation email asynchronously via Celery worker."""
+    from src.infrastructure.email_service import email_service as _email_svc
+    if not _email_svc.is_available:
+        logger.warning("Email service not available for confirmation email to %s", to_email)
+        return {"status": "skipped", "message": "Email service not configured"}
+    try:
+        result = _email_svc.send_demo_confirmation(
+            to_email=to_email,
+            to_name=to_name,
+            institution=institution,
+            demo_date=demo_date,
+            demo_time=demo_time,
+            timezone=timezone,
+            booking_token=booking_token,
+            portal_url=portal_url,
+        )
+        if result.get("status") == "failed":
+            logger.error("Confirmation email failed for %s, retrying...", to_email)
+            raise self.retry(exc=Exception(result.get("message", "Unknown error")))
+        return result
+    except Exception as exc:
+        logger.error("Confirmation email background send failed for %s: %s", to_email, exc)
+        raise self.retry(exc=exc)
+
 
 # Configure logging
 logging.basicConfig(
@@ -123,6 +154,20 @@ def create_app():
     config = get_config()
     app.config.from_object(config)
     config.init_app(app)
+
+    # Import SQL models before init_db so they register on Base.metadata
+    try:
+        import src.infrastructure.demo_sql_repositories as _demo_models
+        logger.info('SQL models loaded for schema registration')
+    except Exception as exc:
+        logger.error('Failed to load SQL models: %s', exc)
+
+    # Initialize SQLAlchemy and create schema if needed
+    try:
+        init_db(app)
+        logger.info('SQLAlchemy database initialized successfully')
+    except Exception as exc:
+        logger.error('SQLAlchemy initialization failed: %s', exc)
     
     # JWT Configuration
     app.config['JWT_SECRET_KEY'] = os.environ.get('JWT_SECRET_KEY', 'dev-secret-key-change-in-production')
@@ -197,6 +242,42 @@ def create_app():
     except Exception as e:
         logger.error(f"SMS service initialization failed: {str(e)}")
         sms_service = None
+
+    # Initialize transactional email service (SMTP + Resend)
+    try:
+        # Inject all email config into os.environ so EmailService._reload_config() picks them up
+        for _key in ('SMTP_HOST','SMTP_PORT','SMTP_USER','SMTP_PASS','SMTP_USE_TLS',
+                     'MAIL_FROM','MAIL_FROM_NAME',
+                     'RESEND_API_KEY','RESEND_FROM_EMAIL','RESEND_FROM_NAME','EMAIL_ENABLED'):
+            _val = app.config.get(_key, os.environ.get(_key, ''))
+            if _val:
+                os.environ.setdefault(_key, str(_val))
+
+        from src.infrastructure.email_service import email_service as _email_svc
+        _email_svc._reload_config()
+
+        if _email_svc.is_available:
+            logger.info(
+                "Email service initialized: provider=%s, from=%s",
+                _email_svc.provider, _email_svc._config.get('from_email',''),
+            )
+            # Run SMTP connection test if SMTP is the provider
+            if _email_svc.provider == 'smtp':
+                _smtp_test = _email_svc.test_smtp_connection()
+                if _smtp_test.get('success'):
+                    logger.info("SMTP connection test: PASSED — %s", _smtp_test.get('detail'))
+                else:
+                    logger.warning("SMTP connection test: FAILED — %s", _smtp_test.get('detail'))
+        else:
+            logger.info(
+                "Email service running in DISABLED mode (provider=%s, EMAIL_ENABLED=%s)",
+                _email_svc.provider, os.environ.get('EMAIL_ENABLED',''),
+            )
+        global email_service
+        email_service = _email_svc
+    except Exception as e:
+        logger.error(f"Email service initialization failed: {str(e)}")
+        email_service = None
 
     # Initialize payment service
     try:
@@ -309,16 +390,51 @@ def create_app():
         """Demo scheduling page with CSRF protection"""
         from src.application.demo_booking_service import demo_booking_service
         csrf_token = demo_booking_service.generate_csrf_token()
-        return render_template('schedule-demo.html', csrf_token=csrf_token)
+        session_token = request.args.get('sessionToken', '')
+        response = render_template('schedule-demo.html', csrf_token=csrf_token, session_token=session_token)
+        from flask import make_response
+        resp = make_response(response)
+        if session_token:
+            resp.set_cookie(
+                'demoSessionToken',
+                session_token,
+                max_age=7 * 24 * 60 * 60,
+                path='/',
+                samesite='Lax'
+            )
+        return resp
+
+    @app.route('/legal/privacy')
+    def privacy_policy():
+        """Privacy Policy page"""
+        return render_template('privacy-policy.html')
 
     @app.route('/demo-prep')
     def demo_prep():
-        """Secure Demo Preparation Portal — requires valid booking token"""
+        """Secure Demo Preparation Portal — requires valid booking or session token"""
         from src.application.demo_booking_service import demo_booking_service
         token = request.args.get('token', '')
-        booking = demo_booking_service.get_booking_by_token(token)
-        if not token or not booking:
+        session_token = request.args.get('sessionToken', '')
+        booking = None
+        if token:
+            booking = demo_booking_service.get_booking_by_token(token)
+        elif session_token:
+            booking = demo_booking_service.get_booking_by_session_token(session_token)
+            if booking:
+                token = booking.get('token', '')
+        else:
+            cookie_token = request.cookies.get('demoSessionToken', '')
+            if cookie_token:
+                booking = demo_booking_service.get_booking_by_session_token(cookie_token)
+                if booking:
+                    token = booking.get('token', '')
+
+        if not booking:
             return render_template('demo-prep.html', error='invalid_token')
+
+        email_delivery_status = booking.get('email_status', 'pending')
+        email_delivery_error = booking.get('email_error', '')
+
         return render_template('demo-prep.html',
             token=token,
             name=booking['name'],
@@ -328,7 +444,9 @@ def create_app():
             date=booking['date'],
             status=booking['status'],
             onboarding_progress=booking.get('onboarding_progress', {}),
-            onboarding_completed=booking.get('onboarding_completed', False)
+            onboarding_completed=booking.get('onboarding_completed', False),
+            email_status=email_delivery_status,
+            email_error=email_delivery_error,
         )
 
     @app.route('/trial-gate')
@@ -565,12 +683,134 @@ def create_app():
     @app.route('/health')
     def health_check():
         """Health check endpoint"""
+        email_status = 'unknown'
+        try:
+            from src.infrastructure.email_service import email_service as _es
+            _es._reload_config()
+            email_status = {
+                'provider': _es.provider,
+                'available': _es.is_available,
+                'from': _es._config.get('from_email', ''),
+                'resend_key_set': bool(_es._config.get('resend_api_key', '')),
+                'env_resend_key': bool(os.environ.get('RESEND_API_KEY', '')),
+                'env_email_enabled': os.environ.get('EMAIL_ENABLED', ''),
+                'env_smtp_host': os.environ.get('SMTP_HOST', ''),
+            }
+        except Exception as exc:
+            email_status = {'error': str(exc)}
         return jsonify({
             'status': 'healthy',
             'timestamp': datetime.utcnow().isoformat(),
             'version': '1.0.0',
-            'environment': app.config.get('ENVIRONMENT', 'unknown')
+            'environment': app.config.get('ENVIRONMENT', 'unknown'),
+            'email': email_status,
         })
+
+    @app.route('/api/email/diagnostics')
+    def email_diagnostics():
+        """Email delivery diagnostics panel data"""
+        diag = {
+            'timestamp': datetime.utcnow().isoformat(),
+            'environment': app.config.get('ENVIRONMENT', 'unknown'),
+            'env_vars': {},
+            'service_state': {},
+            'recent_sends': [],
+        }
+        try:
+            # Check env vars
+            env_keys = ['RESEND_API_KEY', 'EMAIL_ENABLED', 'MAIL_FROM', 'MAIL_FROM_NAME',
+                        'RESEND_FROM_EMAIL', 'RESEND_FROM_NAME', 'SMTP_HOST', 'SMTP_PORT',
+                        'SMTP_USER', 'SMTP_USE_TLS', 'APP_URL', 'DATABASE_URL']
+            for k in env_keys:
+                val = os.environ.get(k, '')
+                if k in ('RESEND_API_KEY', 'SMTP_PASS', 'DATABASE_URL'):
+                    val = '***SET***' if val else '(empty)'
+                diag['env_vars'][k] = val
+
+            # Check email service state
+            from src.infrastructure.email_service import email_service as _es
+            _es._reload_config()
+            diag['service_state'] = {
+                'provider': _es.provider,
+                'available': _es.is_available,
+                'from_email': _es._config.get('from_email', ''),
+                'from_name': _es._config.get('from_name', ''),
+                'resend_key_set': bool(_es._config.get('resend_api_key', '')),
+                'smtp_configured': bool(_es._config.get('smtp_host', '')),
+                'email_enabled': _es._config.get('email_enabled', False),
+            }
+
+            # Test send with full logging — inline the helper
+            try:
+                import requests as _req
+                _api_key = os.environ.get('RESEND_API_KEY', '')
+                _from_email = os.environ.get('MAIL_FROM', os.environ.get('RESEND_FROM_EMAIL', 'onboarding@resend.dev'))
+                _from_name = os.environ.get('MAIL_FROM_NAME', os.environ.get('RESEND_FROM_NAME', 'Attendrix Team'))
+                if _api_key:
+                    _headers = {"Authorization": f"Bearer {_api_key}"}
+                    _test_payload = {
+                        "from": f"{_from_name} <{_from_email}>",
+                        "to": [f"diag-{int(datetime.utcnow().timestamp())}@resend.dev"],
+                        "subject": "Attendrix Email Diagnostics Test",
+                        "html": "<p>This is an automated diagnostics test from Attendrix.</p>",
+                    }
+                    _r = _req.post("https://api.resend.com/emails", json=_test_payload,
+                                   headers={**_headers, "Content-Type": "application/json"}, timeout=30)
+                    try:
+                        _resp_body = _r.json()
+                    except Exception:
+                        _resp_body = {"raw": _r.text[:500]}
+                    diag['send_test'] = {
+                        'key_prefix': _api_key[:8] + '...', 'key_set': True,
+                        'send_test': {
+                            'status_code': _r.status_code, 'response': _resp_body,
+                            'from': _from_email, 'to': _test_payload['to'][0],
+                        },
+                        'success': _r.status_code in (200, 201),
+                    }
+                else:
+                    diag['send_test'] = {'error': 'RESEND_API_KEY not set', 'success': False}
+            except Exception as _e:
+                diag['send_test'] = {'error': str(_e), 'success': False}
+
+            # DNS / deliverability — add DNS lookup results for SPF/DKIM/DMARC
+            diag['deliverability'] = _check_dns_deliverability()
+
+        except Exception as exc:
+            diag['error'] = str(exc)
+
+        return jsonify(diag)
+
+    @app.route('/email-diagnostics')
+    def email_diagnostics_page():
+        """Email diagnostics HTML panel"""
+        return render_template('email-diagnostics.html')
+
+    def _check_dns_deliverability():
+        """Check DNS records (SPF, DKIM, DMARC) for the sender domain via public DNS API."""
+        import urllib.request, urllib.parse, json as _json
+        domain = 'resend.dev'
+        result = {'domain': domain, 'records': {}}
+
+        def _dns_lookup(record_type, query_name):
+            try:
+                url = 'https://dns.google/resolve?name=' + urllib.parse.quote(query_name) + '&type=' + record_type
+                with urllib.request.urlopen(url, timeout=10) as r:
+                    data = _json.loads(r.read().decode())
+                    answers = data.get('Answer', [])
+                    return [a.get('data', '') for a in answers]
+            except Exception as e:
+                return [f'(lookup failed: {e})']
+
+        result['records']['SPF'] = _dns_lookup('TXT', domain)
+        result['records']['DMARC'] = _dns_lookup('TXT', '_dmarc.' + domain)
+        result['records']['DKIM'] = _dns_lookup('TXT', 'google._domainkey.' + domain)
+        result['note'] = (
+            'DMARC policy is p=reject — DKIM/SPF alignment is required for Gmail delivery. '
+            'resend.dev uses Google SPF (include:_spf.google.com). '
+            'If Gmail is not receiving emails, check Spam folder and mark as "Not Spam".'
+        )
+        return result
     
     @app.route('/api/ping')
     def ping():
@@ -656,15 +896,17 @@ def create_app():
                         'message': result['message'],
                         'existing_token': result.get('existing_token')
                     }), 409
-                status = 400 if result.get('errors') else 500
-                return jsonify(result), status
+                if result.get('errors'):
+                    result['message'] = result['errors'][0] if isinstance(result['errors'], list) else result['errors']
+                    return jsonify(result), 400
+                return jsonify(result), 400
 
             logger.info(f"Demo booked (persisted): {data.get('email')} @ {data.get('time')}")
             return jsonify(result), 200
 
         except Exception as e:
             logger.error(f"Demo booking error: {str(e)}")
-            return jsonify({'success': False, 'message': 'Booking failed due to a server error. Please try again.'}), 500
+            return jsonify({'success': False, 'message': 'Unable to complete booking right now. Please try again shortly.'}), 500
 
     @app.route('/api/demo/lookup', methods=['POST'])
     @log_access

@@ -77,3 +77,6 @@ paho-mqtt>=2.0.0,<3.0.0
 
 # Environment management
 python-decouple==3.8
+
+# HTTP client for email/SMS API calls
+requests>=2.31.0
