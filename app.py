@@ -158,6 +158,7 @@ def create_app():
     # Import SQL models before init_db so they register on Base.metadata
     try:
         import src.infrastructure.demo_sql_repositories as _demo_models
+        import src.infrastructure.feedback_models as _feedback_models
         logger.info('SQL models loaded for schema registration')
     except Exception as exc:
         logger.error('Failed to load SQL models: %s', exc)
@@ -3461,6 +3462,10 @@ def create_app():
             }
         })
     
+    # ── Feedback Intelligence Center ──
+    from src.presentation.api.feedback_routes import feedback_api
+    app.register_blueprint(feedback_api)
+
     return app
 
 

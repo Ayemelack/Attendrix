@@ -602,6 +602,7 @@ tr:hover td { background: var(--bg-hover); }
       <button class="nav-item" data-tab="audit"><i class="fas fa-lg fa-list"></i><span>Audit</span></button>
       <button class="nav-item" data-tab="analytics"><i class="fas fa-lg fa-chart-line"></i><span>Analytics</span></button>
       <button class="nav-item" data-tab="bookings"><i class="fas fa-lg fa-calendar-check"></i><span>Demo Bookings</span></button>
+      <button class="nav-item" data-tab="feedback"><i class="fas fa-lg fa-comments"></i><span>Feedback Intelligence</span><span class="nav-badge" id="feedbackBadge">0</span></button>
 
       <div class="nav-section-label" style="margin-top:1rem;">System</div>
       <button class="nav-item" onclick="window.location.href='/institutional-admin/dashboard'" title="Exit Command Center"><i class="fas fa-lg fa-right-from-bracket"></i><span>Exit</span></button>
@@ -718,6 +719,11 @@ tr:hover td { background: var(--bg-hover); }
       <div class="section-header"><h2><i class="fas fa-calendar-check"></i> Demo Bookings</h2><span class="badge-count" id="bookingCount">0</span></div>
       <div class="table-wrap"><table><thead><tr><th>Name</th><th>Email</th><th>Institution</th><th>Type</th><th>Students</th><th>Status</th><th>Date</th><th>Onboarding</th></tr></thead><tbody id="bookingTableBody"></tbody></table></div>
     </div>
+
+    <!-- ═══ FEEDBACK INTELLIGENCE CENTER ═══ -->
+    <div class="tab-content" id="tab-feedback">
+      <div id="feedbackContent"></div>
+    </div>
   </div>
 </div>
 
@@ -779,6 +785,7 @@ function loadTab(tab) {
     health: loadHealth, security: loadSecurity, 'anti-proxy': loadAntiProxy,
     suspicious: loadSuspicious, 'ai-risk': loadAiRisk, activity: loadActivity,
     audit: loadAudit, analytics: loadAnalytics, bookings: loadBookings,
+    feedback: loadFeedback,
   };
   if (fns[tab]) fns[tab]();
 }
@@ -1232,6 +1239,410 @@ function loadBookings() {
         '<td style="font-size:0.7rem;">' + (b.preferred_date ? fmtDate(b.preferred_date) : '\u2014') + '</td>' +
         '<td><div class="risk-bar"><div class="risk-bar-fill" style="width:' + prog + '%;background:var(--' + (prog >= 80 ? 'success' : prog >= 40 ? 'warning' : 'info') + ')"></div></div><span style="font-size:0.65rem;">' + prog + '%</span></td></tr>';
     }).join('');
+  });
+}
+
+
+/* ═══════════════════════════ FEEDBACK INTELLIGENCE CENTER ═══════════════════════════ */
+/* ─── Enterprise SaaS Feedback Control Center ─── */
+var fbSSESource = null;
+
+function loadFeedback() {
+  var el = document.getElementById('feedbackContent');
+  el.innerHTML = '<div class="loading-state"><div class="spinner"></div></div>';
+
+  var FDB = '/api/super-admin/feedback';
+
+  // Connect SSE for real-time updates
+  connectFeedbackSSE();
+
+  function renderUI(overview) {
+    var o = overview || {};
+    var badge = document.getElementById('feedbackBadge');
+    if (badge) badge.textContent = (o.unviewed || 0) || '0';
+
+    var sevColors = {critical:'#EF4444',high:'#F59E0B',medium:'#3B82F6',low:'#6B7280'};
+    var sevHtml = o.severity_counts ? Object.entries(o.severity_counts).map(function(e) {
+      return '<div class="stat-card" style="min-width:90px;"><div class="stat-label">' + e[0].charAt(0).toUpperCase() + e[0].slice(1) + '</div><div class="stat-value" style="color:' + (sevColors[e[0]]||'var(--text)') + ';font-size:1.2rem;">' + e[1] + '</div></div>';
+    }).join('') : '';
+
+    var sentColors = {positive:'#22C55E',negative:'#EF4444',neutral:'#6B7280'};
+    var sentHtml = o.sentiment_counts ? Object.entries(o.sentiment_counts).map(function(e) {
+      return '<span style="color:' + (sentColors[e[0]]||'var(--text-muted)') + ';font-weight:600;font-size:0.85rem;">' + e[0].charAt(0).toUpperCase() + e[0].slice(1) + ': ' + e[1] + '</span>';
+    }).join(' \u00b7 ') : '';
+
+    var trendingHtml = (o.trending && o.trending.length) ? o.trending.map(function(f) {
+      return '<div class="policy-card" style="padding:0.65rem;cursor:pointer;" onclick="viewFeedbackDetail(\'' + f.id + '\')"><div style="display:flex;justify-content:space-between;align-items:center;"><strong style="font-size:0.85rem;">' + esc(f.title) + '</strong><span class="status-badge ' + (f.severity === 'critical' ? 'inactive' : f.severity === 'high' ? 'pending' : 'active') + '" style="font-size:0.55rem;">' + f.severity + '</span></div><div style="display:flex;gap:1rem;margin-top:0.2rem;font-size:0.7rem;color:var(--text-muted);"><span>' + esc(f.category.replace(/_/g,' ')) + '</span><span><i class="fas fa-arrow-up"></i> ' + f.upvotes + '</span><span>' + fmtTime(f.created_at) + '</span></div></div>';
+    }).join('') : '<div style="font-size:0.85rem;color:var(--text-muted);padding:1rem;text-align:center;">No trending issues</div>';
+
+    el.innerHTML =
+      '<div class="section-header"><h2><i class="fas fa-comments"></i> Feedback Control Center</h2>' +
+      '<div style="display:flex;gap:0.5rem;flex-wrap:wrap;">' +
+      '<span class="badge-count" style="background:rgba(239,68,68,0.15);color:#FCA5A5;">' + (o.critical||0) + ' Critical</span>' +
+      '<span class="badge-count" style="background:rgba(245,158,11,0.15);color:#FDE68A;">' + (o.high||0) + ' High</span>' +
+      '<span class="badge-count" style="background:rgba(59,130,246,0.15);color:#93C5FD;">' + (o.unviewed||0) + ' Unviewed</span>' +
+      '<span class="badge-count" style="background:rgba(34,197,94,0.15);color:#86EFAC;">' + (o.resolved||0) + ' Resolved</span>' +
+      '<span style="font-size:0.7rem;color:var(--text-muted);display:flex;align-items:center;" id="fbLiveIndicator"><i class="fas fa-circle" style="color:var(--success);font-size:0.4rem;margin-right:0.3rem;"></i> Live</span>' +
+      '</div></div>' +
+
+      '<div class="stats-grid">' +
+      '<div class="stat-card"><div class="stat-icon"><i class="fas fa-message"></i></div><div class="stat-label">Total Feedback</div><div class="stat-value">' + (o.total||0) + '</div><div class="stat-sub">' + (o.today||0) + ' today</div></div>' +
+      '<div class="stat-card"><div class="stat-icon"><i class="fas fa-clock"></i></div><div class="stat-label">Open</div><div class="stat-value" style="color:' + ((o.open||0) > (o.total||1) * 0.5 ? 'var(--warning)' : 'var(--text)') + '">' + (o.open||0) + '</div><div class="stat-sub">' + (o.hidden||0) + ' hidden \u00b7 ' + (o.flagged||0) + ' flagged</div></div>' +
+      '<div class="stat-card"><div class="stat-icon"><i class="fas fa-arrow-up"></i></div><div class="stat-label">Upvotes</div><div class="stat-value">' + (o.upvotes_total||0) + '</div><div class="stat-sub">Community engagement</div></div>' +
+      '<div class="stat-card"><div class="stat-icon"><i class="fas fa-check-circle"></i></div><div class="stat-label">Resolution</div><div class="stat-value" style="color:var(--success);">' + (o.total > 0 ? Math.round(o.resolved/o.total*100) : 0) + '%</div><div class="stat-sub">' + (o.resolved||0) + ' resolved</div></div>' +
+      '</div>' +
+
+      '<div class="two-col">' +
+      '<div><div class="section-header" style="margin-top:0.5rem;"><h2>Severity</h2></div><div class="stats-grid" style="grid-template-columns:repeat(auto-fill,minmax(80px,1fr));">' + sevHtml + '</div></div>' +
+      '<div><div class="section-header" style="margin-top:0.5rem;"><h2>Sentiment</h2></div><div style="display:flex;gap:0.5rem;flex-wrap:wrap;padding:0.75rem;background:var(--surface);border-radius:12px;">' + (sentHtml || '<span style="color:var(--text-muted);font-size:0.85rem;">No sentiment data</span>') + '</div></div>' +
+      '</div>' +
+
+      '<div class="two-col">' +
+      '<div><div class="section-header" style="margin-top:0.5rem;"><h2>Trending Issues</h2></div><div style="display:grid;gap:0.4rem;">' + trendingHtml + '</div></div>' +
+      '<div><div class="section-header" style="margin-top:0.5rem;"><h2>Top Institutions</h2></div><div class="table-wrap" style="max-height:240px;"><table><thead><tr><th>Institution</th><th>Reports</th></tr></thead><tbody>' + ((o.top_institutions && o.top_institutions.length) ? o.top_institutions.map(function(i) { return '<tr><td>' + esc(i.name||'Unknown') + '</td><td>' + i.count + '</td></tr>'; }).join('') : '<tr><td colspan="2" style="text-align:center;color:var(--text-muted);font-size:0.85rem;">No data</td></tr>') + '</tbody></table></div></div>' +
+      '</div>' +
+
+      '<div class="section-header" style="margin-top:1rem;"><h2><i class="fas fa-chart-line"></i> Trends & Analytics</h2></div>' +
+      '<div id="feedbackAnalyticsSection"><div class="loading-state"><div class="spinner"></div></div></div>' +
+
+      '<div class="section-header" style="margin-top:1rem;"><h2><i class="fas fa-users"></i> User Activity Insights</h2></div>' +
+      '<div id="feedbackActivitySection"><div class="loading-state"><div class="spinner"></div></div></div>' +
+
+      '<div class="section-header" style="margin-top:1rem;"><h2><i class="fas fa-list"></i> All Feedback</h2>' +
+      '<div style="display:flex;gap:0.5rem;flex-wrap:wrap;">' +
+      '<select id="fbFilterStatus" onchange="loadFeedbackList()"><option value="">All Status</option><option value="open">Open</option><option value="in_review">In Review</option><option value="resolved">Resolved</option><option value="archived">Archived</option><option value="hidden">Hidden</option></select>' +
+      '<select id="fbFilterCategory" onchange="loadFeedbackList()"><option value="">All Categories</option><option value="attendance_issue">Attendance</option><option value="bug_report">Bug</option><option value="feature_request">Feature</option><option value="network_failure">Network</option><option value="security_concern">Security</option><option value="sync_failure">Sync</option><option value="suggestion">Suggestion</option><option value="general">General</option></select>' +
+      '<select id="fbFilterSeverity" onchange="loadFeedbackList()"><option value="">All Severity</option><option value="critical">Critical</option><option value="high">High</option><option value="medium">Medium</option><option value="low">Low</option></select>' +
+      '<input type="text" id="fbSearch" placeholder="Search..." style="width:130px;max-width:100%;font-size:0.78rem;" oninput="var t=this;setTimeout(function(){if(t.value===t._v)loadFeedbackList();t._v=t.value;},300)">' +
+      '<label style="display:flex;align-items:center;gap:0.2rem;font-size:0.72rem;cursor:pointer;white-space:nowrap;"><input type="checkbox" id="fbUnviewedOnly" onchange="loadFeedbackList()"> Unviewed</label>' +
+      '<label style="display:flex;align-items:center;gap:0.2rem;font-size:0.72rem;cursor:pointer;white-space:nowrap;"><input type="checkbox" id="fbFlaggedOnly" onchange="loadFeedbackList()"> Flagged</label>' +
+      '<label style="display:flex;align-items:center;gap:0.2rem;font-size:0.72rem;cursor:pointer;white-space:nowrap;"><input type="checkbox" id="fbHiddenOnly" onchange="loadFeedbackList()"> Hidden</label>' +
+      '<label style="display:flex;align-items:center;gap:0.2rem;font-size:0.72rem;cursor:pointer;white-space:nowrap;"><input type="checkbox" id="fbEscalatedOnly" onchange="loadFeedbackList()"> Escalated</label>' +
+      '<select id="fbSort" onchange="loadFeedbackList()" style="font-size:0.72rem;"><option value="latest">Latest</option><option value="upvotes">Upvoted</option><option value="severity">Severity</option><option value="oldest">Oldest</option></select>' +
+      '<button class="btn-action" onclick="loadFeedbackList()" title="Apply filters"><i class="fas fa-filter"></i></button>' +
+      '<a href="/api/super-admin/feedback/export?format=csv" class="btn-action" title="Export CSV" style="text-decoration:none;"><i class="fas fa-download"></i></a>' +
+      '</div></div>' +
+      '<div class="table-wrap" style="max-height:500px;overflow-y:auto;"><table><thead><tr><th>Title</th><th>Category</th><th>Severity</th><th>Status</th><th>Inst.</th><th>Upvotes</th><th>Replies</th><th>Sentiment</th><th>Esc.</th><th>Viewed</th><th>Created</th><th>Actions</th></tr></thead><tbody id="feedbackListBody"></tbody></table></div>' +
+      '<div style="display:flex;justify-content:space-between;align-items:center;margin-top:0.5rem;"><span id="fbPaginationInfo" style="font-size:0.78rem;color:var(--text-muted);"></span><div id="fbPaginationBtns" style="display:flex;gap:0.4rem;"></div></div>';
+
+    loadFeedbackList();
+    loadFeedbackAnalytics();
+    loadFeedbackActivity();
+  }
+
+  apiFetch(FDB + '/overview', function(d) {
+    if (!d.success) { el.innerHTML = errorState(); return; }
+    renderUI(d.data);
+  });
+}
+
+function connectFeedbackSSE() {
+  if (fbSSESource) { fbSSESource.close(); }
+  fbSSESource = new EventSource('/api/feedback/events/stream');
+  fbSSESource.onmessage = function(e) {
+    try {
+      var d = JSON.parse(e.data);
+      if (d.type === 'overview' && d.data) {
+        var badge = document.getElementById('feedbackBadge');
+        if (badge) badge.textContent = (d.data.unviewed || 0) || '0';
+        var liveDot = document.querySelector('#fbLiveIndicator i');
+        if (liveDot) liveDot.style.color = 'var(--success)';
+      }
+    } catch(ex) {}
+  };
+  fbSSESource.onerror = function() {
+    var liveDot = document.querySelector('#fbLiveIndicator i');
+    if (liveDot) liveDot.style.color = 'var(--danger)';
+    setTimeout(connectFeedbackSSE, 5000);
+  };
+}
+
+function loadFeedbackAnalytics() {
+  var section = document.getElementById('feedbackAnalyticsSection');
+  if (!section) return;
+  apiFetch('/api/super-admin/feedback/analytics', function(d) {
+    if (!d.success || !d.data) { section.innerHTML = '<div class="error-state">Analytics unavailable</div>'; return; }
+    var a = d.data;
+    var dailyHtml = '';
+    if (a.daily_counts && a.daily_counts.length) {
+      var maxCount = Math.max.apply(null, a.daily_counts.map(function(dd) { return dd.count; })) || 1;
+      dailyHtml = '<div style="display:flex;align-items:flex-end;gap:4px;min-height:80px;">' +
+        a.daily_counts.slice(-14).map(function(dd) {
+          var pct = (dd.count / maxCount) * 100;
+          return '<div title="' + dd.date + ': ' + dd.count + '" style="flex:1;display:flex;flex-direction:column;align-items:center;"><div style="width:100%;background:linear-gradient(180deg,var(--primary),var(--accent));border-radius:3px 3px 0 0;height:' + pct + 'px;min-height:4px;transition:height 0.3s;" onmouseover="this.style.opacity=\'0.8\'" onmouseout="this.style.opacity=\'1\'"></div><span style="font-size:0.5rem;color:var(--text-muted);margin-top:2px;">' + dd.date.slice(-5) + '</span></div>';
+        }).join('') + '</div>';
+    } else {
+      dailyHtml = '<div style="font-size:0.85rem;color:var(--text-muted);padding:1rem;text-align:center;">No daily data yet</div>';
+    }
+
+    var catHtml = '';
+    if (a.category_distribution && a.category_distribution.length) {
+      var catMax = Math.max.apply(null, a.category_distribution.map(function(c) { return c.count; })) || 1;
+      catHtml = a.category_distribution.map(function(c) {
+        var pct = (c.count / catMax) * 100;
+        return '<div style="display:flex;align-items:center;gap:0.5rem;margin-bottom:0.3rem;"><span style="width:90px;font-size:0.72rem;color:var(--text-muted);text-align:right;">' + c.name.replace(/_/g,' ') + '</span><div style="flex:1;height:16px;background:var(--surface-card);border-radius:8px;overflow:hidden;"><div style="height:100%;width:' + pct + '%;background:linear-gradient(90deg,var(--primary),var(--accent));border-radius:8px;transition:width 0.5s;"></div></div><span style="font-size:0.72rem;color:var(--text-secondary);min-width:30px;">' + c.count + '</span></div>';
+      }).join('');
+    }
+
+    var deviceHtml = '';
+    if (a.device_breakdown && a.device_breakdown.length) {
+      deviceHtml = a.device_breakdown.map(function(dd) {
+        return '<span style="font-size:0.78rem;color:var(--text-secondary);"><i class="fas fa-' + (dd.type === 'mobile' ? 'mobile-screen' : 'desktop') + '"></i> ' + dd.type + ': ' + dd.count + '</span>';
+      }).join(' \u00b7 ');
+    }
+
+    section.innerHTML =
+      '<div class="two-col">' +
+      '<div><div class="section-header"><h3 style="font-size:0.85rem;">Daily Submissions (14 days)</h3></div>' + dailyHtml + '</div>' +
+      '<div><div class="section-header"><h3 style="font-size:0.85rem;">Category Distribution</h3></div>' + catHtml + '</div>' +
+      '</div>' +
+      '<div class="two-col" style="margin-top:0.5rem;">' +
+      '<div style="display:flex;gap:1rem;flex-wrap:wrap;padding:0.75rem;background:var(--surface);border-radius:12px;">' +
+      '<span style="font-size:0.78rem;color:var(--text-muted);"><i class="fas fa-chart-pie"></i> Network Issues: <strong style="color:var(--text);">' + (a.network_issues||0) + '</strong></span>' +
+      '<span style="font-size:0.78rem;color:var(--text-muted);"><i class="fas fa-gauge-high"></i> Resolution Rate: <strong style="color:var(--success);">' + (a.resolution_rate||0) + '%</strong></span>' +
+      '<span style="font-size:0.78rem;color:var(--text-muted);"><i class="fas fa-arrow-up"></i> Avg Upvotes: <strong style="color:var(--text);">' + (a.avg_upvotes||0) + '</strong></span>' +
+      '</div>' +
+      '<div style="padding:0.75rem;background:var(--surface);border-radius:12px;display:flex;flex-wrap:wrap;gap:0.5rem;">' +
+      (deviceHtml || '<span style="font-size:0.78rem;color:var(--text-muted);">No device data</span>') +
+      '</div>' +
+      '</div>';
+  });
+}
+
+function loadFeedbackActivity() {
+  var section = document.getElementById('feedbackActivitySection');
+  if (!section) return;
+  apiFetch('/api/super-admin/feedback/activity', function(dAct) {
+    apiFetch('/api/super-admin/feedback/response-times', function(dResp) {
+      var actHtml = '', respHtml = '';
+      if (dAct.success && dAct.data) {
+        var a = dAct.data;
+        actHtml = '<div class="two-col"><div style="display:flex;gap:1rem;flex-wrap:wrap;padding:0.75rem;background:var(--surface);border-radius:12px;">' +
+          '<span style="font-size:0.78rem;color:var(--text-muted);">Unique Contributors: <strong style="color:var(--text);">' + (a.total_unique_contributors||0) + '</strong></span>' +
+          '<span style="font-size:0.78rem;color:var(--text-muted);">Repeat Contributors: <strong style="color:var(--text);">' + (a.repeat_contributors||0) + '</strong></span>' +
+          '<span style="font-size:0.78rem;color:var(--text-muted);">Avg Upvotes/User: <strong style="color:var(--text);">' + (a.avg_upvotes_per_user||0) + '</strong></span>' +
+          '</div><div></div></div>';
+        if (a.top_contributors && a.top_contributors.length) {
+          actHtml += '<div style="margin-top:0.5rem;"><table><thead><tr><th>User ID</th><th>Role</th><th>Submissions</th><th>Total Upvotes</th></tr></thead><tbody>' +
+            a.top_contributors.map(function(u) {
+              return '<tr><td style="font-size:0.7rem;">' + esc(u.user_id.slice(0,12)) + '...</td><td style="font-size:0.72rem;">' + esc(u.role) + '</td><td>' + u.submissions + '</td><td>' + u.total_upvotes + '</td></tr>';
+            }).join('') + '</tbody></table></div>';
+        }
+      }
+      if (dResp.success && dResp.data) {
+        var r = dResp.data;
+        respHtml = '<div style="display:flex;gap:1rem;flex-wrap:wrap;padding:0.75rem;background:var(--surface);border-radius:12px;margin-top:0.5rem;">' +
+          '<span style="font-size:0.78rem;color:var(--text-muted);"><i class="fas fa-clock"></i> Avg Resolution: <strong style="color:var(--text);">' + (r.avg_resolution_hours||0) + 'h</strong></span>' +
+          '<span style="font-size:0.78rem;color:var(--text-muted);"><i class="fas fa-arrow-up"></i> Max: <strong style="color:var(--warning);">' + (r.max_resolution_hours||0) + 'h</strong></span>' +
+          '<span style="font-size:0.78rem;color:var(--text-muted);"><i class="fas fa-arrow-down"></i> Min: <strong style="color:var(--success);">' + (r.min_resolution_hours||0) + 'h</strong></span>' +
+          '<span style="font-size:0.78rem;color:var(--text-muted);"><i class="fas fa-check-circle"></i> Resolved (7d): <strong style="color:var(--accent);">' + (r.recently_resolved_7d||0) + '</strong></span>' +
+          '</div>';
+      }
+      section.innerHTML = actHtml + respHtml;
+    });
+  });
+}
+
+var fbCurrentPage = 1;
+
+function loadFeedbackList() {
+  var tb = document.getElementById('feedbackListBody');
+  if (!tb) return;
+  tb.innerHTML = '<tr><td colspan="12" class="loading-state"><div class="spinner"></div></td></tr>';
+  var params = 'page=' + fbCurrentPage + '&per_page=30';
+  var s = document.getElementById('fbSearch');
+  if (s && s.value.trim()) params += '&search=' + encodeURIComponent(s.value.trim());
+  var st = document.getElementById('fbFilterStatus');
+  if (st && st.value) params += '&status=' + st.value;
+  var ct = document.getElementById('fbFilterCategory');
+  if (ct && ct.value) params += '&category=' + ct.value;
+  var sv = document.getElementById('fbFilterSeverity');
+  if (sv && sv.value) params += '&severity=' + sv.value;
+  var sort = document.getElementById('fbSort');
+  if (sort && sort.value) params += '&sort=' + sort.value;
+  var uv = document.getElementById('fbUnviewedOnly');
+  if (uv && uv.checked) params += '&unviewed_only=true';
+  var fl = document.getElementById('fbFlaggedOnly');
+  if (fl && fl.checked) params += '&flagged_only=true';
+  var hl = document.getElementById('fbHiddenOnly');
+  if (hl && hl.checked) params += '&hidden_only=true';
+  var el = document.getElementById('fbEscalatedOnly');
+  if (el && el.checked) params += '&escalated_only=true';
+
+  apiFetch('/api/super-admin/feedback/list?' + params, function(d) {
+    if (!d.success) { tb.innerHTML = '<tr><td colspan="12" class="error-state">Failed</td></tr>'; return; }
+    var items = d.data || [];
+    if (!items.length) {
+      tb.innerHTML = '<tr><td colspan="12" style="text-align:center;padding:2rem;color:var(--text-muted);font-size:0.9rem;"><i class="fas fa-comments" style="font-size:1.5rem;margin-bottom:0.5rem;display:block;"></i>No feedback matching filters</td></tr>';
+      var pi = document.getElementById('fbPaginationInfo');
+      if (pi) pi.textContent = '';
+      var pb = document.getElementById('fbPaginationBtns');
+      if (pb) pb.innerHTML = '';
+      return;
+    }
+    var pi = document.getElementById('fbPaginationInfo');
+    if (pi) pi.textContent = 'Page ' + d.page + ' of ' + d.total_pages + ' (' + d.total + ' total)';
+    var pb = document.getElementById('fbPaginationBtns');
+    if (pb) {
+      var bHtml = '';
+      if (d.page > 1) bHtml += '<button class="btn-action" onclick="fbPage(' + (d.page - 1) + ')">Prev</button>';
+      bHtml += '<span style="font-size:0.72rem;color:var(--text-muted);padding:0 0.4rem;">' + d.page + '</span>';
+      if (d.page < d.total_pages) bHtml += '<button class="btn-action" onclick="fbPage(' + (d.page + 1) + ')">Next</button>';
+      pb.innerHTML = bHtml;
+    }
+    tb.innerHTML = items.map(function(f) {
+      var sevCls = f.severity === 'critical' ? 'inactive' : f.severity === 'high' ? 'pending' : 'active';
+      var viewedIcon = f.admin_viewed ? '<i class="fas fa-eye" style="color:var(--success);font-size:0.7rem;" title="Viewed ' + (f.admin_viewed_at ? fmtTime(f.admin_viewed_at) : '') + '"></i>' : '<i class="fas fa-eye-slash" style="color:var(--text-muted);font-size:0.7rem;" title="Unviewed"></i>';
+      var hideIcon = f.is_hidden ? '<i class="fas fa-eye-slash" style="color:var(--warning);font-size:0.7rem;"></i>' : '';
+      var flagIcon = f.is_flagged ? '<i class="fas fa-flag" style="color:var(--danger);font-size:0.7rem;"></i>' : '';
+      var escLevel = f.escalation_level !== 'none' ? '<span class="status-badge inactive" style="font-size:0.55rem;">' + f.escalation_level + '</span>' : '\u2014';
+      return '<tr>' +
+        '<td><strong style="font-size:0.85rem;">' + esc(f.title) + '</strong></td>' +
+        '<td style="font-size:0.7rem;">' + esc(f.category.replace(/_/g,' ')) + '</td>' +
+        '<td><span class="status-badge ' + sevCls + '" style="font-size:0.55rem;">' + f.severity + '</span></td>' +
+        '<td><span class="status-badge ' + (f.status === 'resolved' ? 'active' : f.status === 'hidden' || f.status === 'archived' ? 'inactive' : 'pending') + '" style="font-size:0.55rem;">' + f.status + '</span></td>' +
+        '<td style="font-size:0.7rem;">' + esc(f.institution || '\u2014') + '</td>' +
+        '<td style="font-size:0.8rem;">' + f.upvotes + '</td>' +
+        '<td style="font-size:0.8rem;">' + f.reply_count + '</td>' +
+        '<td><span style="color:' + (f.sentiment_label === 'positive' ? 'var(--success)' : f.sentiment_label === 'negative' ? 'var(--danger)' : 'var(--text-muted)') + ';font-size:0.7rem;">' + esc(f.sentiment_label || '\u2014') + '</span></td>' +
+        '<td>' + escLevel + '</td>' +
+        '<td>' + viewedIcon + ' ' + hideIcon + ' ' + flagIcon + '</td>' +
+        '<td style="font-size:0.65rem;">' + fmtTime(f.created_at) + '</td>' +
+        '<td><button class="btn-action" onclick="viewFeedbackDetail(\'' + f.id + '\')" title="View & Manage"><i class="fas fa-eye"></i></button></td>' +
+        '</tr>';
+    }).join('');
+  });
+}
+
+function fbPage(p) {
+  fbCurrentPage = p;
+  loadFeedbackList();
+}
+
+function viewFeedbackDetail(id) {
+  var existing = document.getElementById('feedbackDetailModal');
+  if (existing) existing.remove();
+  var html = '<div id="feedbackDetailModal" style="position:fixed;inset:0;z-index:10000;background:rgba(0,0,0,0.7);display:flex;align-items:center;justify-content:center;padding:1rem;" onclick="if(event.target===this)closeFeedbackDetail()">' +
+    '<div style="background:var(--darker);border-radius:24px;max-width:720px;width:100%;max-height:90vh;overflow-y:auto;padding:1.5rem;border:1px solid var(--border);box-shadow:0 32px 80px rgba(0,0,0,0.5);" onclick="event.stopPropagation()">' +
+    '<div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:1rem;"><h3 style="margin:0;font-size:1.1rem;" id="fbDetailTitle">Loading...</h3><button class="btn-action" onclick="closeFeedbackDetail()" style="border:none;background:transparent;font-size:1.2rem;"><i class="fas fa-times"></i></button></div>' +
+    '<div id="fbDetailBody">Loading...</div></div></div>';
+  document.body.insertAdjacentHTML('beforeend', html);
+
+  apiFetch('/api/super-admin/feedback/' + id + '/detail', function(d) {
+    if (!d.success || !d.data) {
+      document.getElementById('fbDetailBody').innerHTML = '<div class="error-state">Failed to load feedback</div>';
+      return;
+    }
+    var f = d.data;
+    document.getElementById('fbDetailTitle').textContent = f.title;
+    var sevColor = f.severity === 'critical' ? 'var(--danger)' : f.severity === 'high' ? 'var(--warning)' : f.severity === 'medium' ? 'var(--primary-light)' : 'var(--text-muted)';
+    var sevRgb = f.severity === 'critical' ? '239,68,68' : f.severity === 'high' ? '245,158,11' : '59,130,246';
+
+    var repliesHtml = (f.replies && f.replies.length) ? f.replies.map(function(r) {
+      return '<div style="padding:0.65rem;background:var(--surface-card);border-radius:12px;margin-bottom:0.4rem;"><div style="display:flex;justify-content:space-between;font-size:0.7rem;color:var(--text-muted);"><span>' + esc(r.display_name) + (r.is_admin ? ' <span style="color:var(--accent);font-weight:600;">(Admin)</span>' : '') + '</span><span>' + fmtTime(r.created_at) + '</span></div><div style="margin-top:0.25rem;font-size:0.85rem;color:var(--text-secondary);">' + esc(r.body) + '</div></div>';
+    }).join('') : '<div style="font-size:0.85rem;color:var(--text-muted);padding:0.75rem;text-align:center;">No replies yet.</div>';
+
+    document.getElementById('fbDetailBody').innerHTML =
+      '<div style="display:flex;gap:0.5rem;flex-wrap:wrap;margin-bottom:0.75rem;">' +
+      '<span class="badge-count" style="font-size:0.65rem;">' + esc(f.category.replace(/_/g,' ')) + '</span>' +
+      '<span class="badge-count" style="background:rgba(' + sevRgb + ',0.15);color:' + sevColor + ';font-size:0.65rem;">' + f.severity + '</span>' +
+      '<span class="badge-count" style="background:rgba(79,70,229,0.15);color:var(--primary-light);font-size:0.65rem;">' + (f.status || 'open') + '</span>' +
+      (f.is_resolved ? '<span class="badge-count" style="background:rgba(34,197,94,0.15);color:#86EFAC;font-size:0.65rem;"><i class="fas fa-check-circle"></i> Resolved</span>' : '') +
+      (f.institution ? '<span class="badge-count" style="background:rgba(107,114,128,0.15);color:var(--text-muted);font-size:0.65rem;">' + esc(f.institution) + '</span>' : '') +
+      (f.sentiment_label ? '<span class="badge-count" style="background:' + (f.sentiment_label==='positive'?'rgba(34,197,94,0.15)':f.sentiment_label==='negative'?'rgba(239,68,68,0.15)':'rgba(107,114,128,0.15)') + ';color:' + (f.sentiment_label==='positive'?'#86EFAC':f.sentiment_label==='negative'?'#FCA5A5':'var(--text-muted)') + ';font-size:0.65rem;">' + f.sentiment_label + '</span>' : '') +
+      '</div>' +
+      '<div style="margin-bottom:0.75rem;line-height:1.7;font-size:0.9rem;color:var(--text-secondary);padding:0.75rem;background:var(--surface-card);border-radius:12px;">' + esc(f.description) + '</div>' +
+      '<div style="display:flex;gap:1rem;font-size:0.75rem;color:var(--text-muted);margin-bottom:0.75rem;flex-wrap:wrap;">' +
+      '<span><i class="fas fa-user-secret"></i> ' + esc(f.display_name || 'Anonymous') + '</span>' +
+      '<span><i class="fas fa-arrow-up"></i> ' + f.upvotes + '</span>' +
+      '<span><i class="fas fa-reply"></i> ' + (f.reply_count||0) + '</span>' +
+      '<span><i class="fas fa-clock"></i> ' + fmtTime(f.created_at) + '</span>' +
+      (f.experience_rating ? '<span><i class="fas fa-star"></i> Rating: ' + f.experience_rating + '/5</span>' : '') +
+      '</div>' +
+
+      '<div class="section-header" style="margin-top:0.75rem;"><h3 style="font-size:0.85rem;">Status Workflow</h3></div>' +
+      '<div style="display:flex;gap:0.4rem;flex-wrap:wrap;margin-bottom:0.75rem;">' +
+      '<button class="btn-action" onclick="updateFeedbackStatus(\'' + id + '\',\'open\')" style="background:rgba(79,70,229,0.15);color:var(--primary-light);font-size:0.7rem;"><i class="fas fa-folder-open"></i> Open</button>' +
+      '<button class="btn-action" onclick="updateFeedbackStatus(\'' + id + '\',\'in_review\')" style="background:rgba(245,158,11,0.15);color:#FDE68A;font-size:0.7rem;"><i class="fas fa-search"></i> In Review</button>' +
+      '<button class="btn-action" onclick="updateFeedbackStatus(\'' + id + '\',\'resolved\')" style="background:rgba(34,197,94,0.15);color:#86EFAC;font-size:0.7rem;"><i class="fas fa-check"></i> Resolved</button>' +
+      '<button class="btn-action" onclick="updateFeedbackStatus(\'' + id + '\',\'archived\')" style="background:rgba(107,114,128,0.15);color:var(--text-muted);font-size:0.7rem;"><i class="fas fa-archive"></i> Archive</button>' +
+      '</div>' +
+
+      '<div class="section-header" style="margin-top:0.75rem;"><h3 style="font-size:0.85rem;">Replies</h3></div><div style="display:grid;gap:0.4rem;margin-bottom:0.75rem;">' + repliesHtml + '</div>' +
+      '<div style="display:flex;gap:0.5rem;margin-bottom:0.75rem;">' +
+      '<input type="text" id="fbAdminReply" placeholder="Write a public reply..." style="flex:1;padding:0.5rem 0.75rem;border-radius:12px;background:var(--surface-card);border:1px solid var(--border);color:var(--text);font-size:0.82rem;">' +
+      '<button class="btn-action" onclick="submitAdminReply(\'' + id + '\')"><i class="fas fa-paper-plane"></i></button>' +
+      '</div>' +
+
+      '<div class="section-header" style="margin-top:0.75rem;"><h3 style="font-size:0.85rem;">Private Admin Notes</h3></div>' +
+      '<div style="display:flex;gap:0.5rem;margin-bottom:0.75rem;">' +
+      '<input type="text" id="fbAdminNote" placeholder="Add private note (invisible to users)..." style="flex:1;padding:0.5rem 0.75rem;border-radius:12px;background:var(--surface-card);border:1px solid var(--border);color:var(--text);font-size:0.82rem;">' +
+      '<button class="btn-action" onclick="submitAdminNote(\'' + id + '\')"><i class="fas fa-sticky-note"></i></button>' +
+      '</div>' +
+
+      '<div class="section-header" style="margin-top:0.75rem;"><h3 style="font-size:0.85rem;">Moderation Actions</h3></div>' +
+      '<div style="display:flex;gap:0.4rem;flex-wrap:wrap;">' +
+      '<button class="btn-action" onclick="moderateFeedback(\'' + id + '\',\'hide\')" style="background:rgba(239,68,68,0.15);color:#FCA5A5;font-size:0.7rem;"><i class="fas fa-eye-slash"></i> Hide</button>' +
+      '<button class="btn-action" onclick="moderateFeedback(\'' + id + '\',\'unhide\')" style="background:rgba(34,197,94,0.15);color:#86EFAC;font-size:0.7rem;"><i class="fas fa-eye"></i> Unhide</button>' +
+      '<button class="btn-action" onclick="moderateFeedback(\'' + id + '\',\'flag\')" style="background:rgba(245,158,11,0.15);color:#FDE68A;font-size:0.7rem;"><i class="fas fa-flag"></i> Flag</button>' +
+      '<button class="btn-action" onclick="moderateFeedback(\'' + id + '\',\'resolve\')" style="background:rgba(34,197,94,0.15);color:#86EFAC;font-size:0.7rem;"><i class="fas fa-check"></i> Resolve</button>' +
+      '<button class="btn-action" onclick="moderateFeedback(\'' + id + '\',\'archive\')" style="background:rgba(107,114,128,0.15);color:var(--text-muted);font-size:0.7rem;"><i class="fas fa-archive"></i> Archive</button>' +
+      '</div>';
+  });
+}
+
+function closeFeedbackDetail() {
+  var el = document.getElementById('feedbackDetailModal');
+  if (el) { el.remove(); loadFeedback(); }
+}
+
+function updateFeedbackStatus(id, status) {
+  fetch('/api/super-admin/feedback/' + id + '/moderate', {
+    method: 'POST',
+    headers: {'Content-Type': 'application/json'},
+    body: JSON.stringify({action: status === 'resolved' ? 'resolve' : status === 'archived' ? 'archive' : status, reason: 'Status update via workflow'})
+  }).then(function(r) { return r.json(); }).then(function(d) {
+    if (d.success) { viewFeedbackDetail(id); loadFeedbackList(); }
+    else { alert('Failed: ' + (d.error || 'Unknown')); }
+  });
+}
+
+function submitAdminReply(id) {
+  var input = document.getElementById('fbAdminReply');
+  if (!input || !input.value.trim()) return;
+  fetch('/api/super-admin/feedback/' + id + '/reply-admin', {
+    method: 'POST',
+    headers: {'Content-Type': 'application/json'},
+    body: JSON.stringify({body: input.value.trim()})
+  }).then(function(r) { return r.json(); }).then(function(d) {
+    if (d.success) { input.value = ''; viewFeedbackDetail(id); loadFeedbackList(); }
+    else { alert('Failed: ' + (d.error || 'Unknown')); }
+  });
+}
+
+function submitAdminNote(id) {
+  var input = document.getElementById('fbAdminNote');
+  if (!input || !input.value.trim()) return;
+  fetch('/api/super-admin/feedback/' + id + '/note', {
+    method: 'POST',
+    headers: {'Content-Type': 'application/json'},
+    body: JSON.stringify({note: input.value.trim()})
+  }).then(function(r) { return r.json(); }).then(function(d) {
+    if (d.success) { input.value = ''; alert('Private note saved.'); }
+    else { alert('Failed: ' + (d.error || 'Unknown')); }
+  });
+}
+
+function moderateFeedback(id, action) {
+  var reason = action === 'flag' ? prompt('Flag reason:') : '';
+  if (action === 'flag' && !reason) return;
+  fetch('/api/super-admin/feedback/' + id + '/moderate', {
+    method: 'POST',
+    headers: {'Content-Type': 'application/json'},
+    body: JSON.stringify({action: action, reason: reason || 'Moderated by admin'})
+  }).then(function(r) { return r.json(); }).then(function(d) {
+    if (d.success) { viewFeedbackDetail(id); loadFeedbackList(); }
+    else { alert('Failed: ' + (d.error || 'Unknown')); }
   });
 }
 
