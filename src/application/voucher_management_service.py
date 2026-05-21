@@ -18,8 +18,9 @@ class VoucherManagementService:
         self.expiry_days = 30
     
     def generate_voucher_batch(self, role: UserRole, institution_id: str, 
-                           quantity: int = 10, email_binding: Optional[str] = None,
-                           fixed_code: Optional[str] = None) -> List[Dict[str, Any]]:
+                            quantity: int = 10, email_binding: Optional[str] = None,
+                            fixed_code: Optional[str] = None,
+                            generated_by: str = 'system') -> List[Dict[str, Any]]:
         """Generate multiple vouchers for bulk distribution"""
         try:
             vouchers = []
@@ -37,7 +38,7 @@ class VoucherManagementService:
                     'is_used': False,
                     'created_at': datetime.utcnow().isoformat(),
                     'expires_at': (datetime.utcnow() + timedelta(days=self.expiry_days)).isoformat(),
-                    'generated_by': 'system',  # Track who generated
+                    'generated_by': generated_by,
                     'batch_id': f"batch_{datetime.utcnow().strftime('%Y%m%d_%H%M%S')}"
                 }
                 
@@ -78,6 +79,14 @@ class VoucherManagementService:
                 }
             
             voucher = vouchers[0]
+            
+            # Check if revoked
+            if voucher.get('revoked', False):
+                return {
+                    'valid': False,
+                    'error': 'Voucher has been revoked',
+                    'error_code': 'REVOKED'
+                }
             
             # Check if already used
             if voucher.get('is_used', False):
@@ -173,23 +182,27 @@ class VoucherManagementService:
                 filters=[{'field': 'institution_id', 'value': institution_id}]
             )
             
+            now = datetime.utcnow()
+            used = [v for v in all_vouchers if v.get('is_used')]
+            revoked = [v for v in all_vouchers if v.get('revoked')]
+            expired = [v for v in all_vouchers if not v.get('is_used') and not v.get('revoked') and now > datetime.fromisoformat(v['expires_at'])]
+            
             stats = {
                 'total_generated': len(all_vouchers),
-                'used': len([v for v in all_vouchers if v.get('is_used', False)]),
-                'unused': len([v for v in all_vouchers if not v.get('is_used', False)]),
-                'expired': len([v for v in all_vouchers if datetime.utcnow() > datetime.fromisoformat(v['expires_at'])]),
+                'used': len(used),
+                'unused': len(all_vouchers) - len(used) - len(expired) - len(revoked),
+                'expired': len(expired),
+                'revoked': len(revoked),
                 'by_role': {},
                 'recent_activity': []
             }
             
-            # Count by role
             for voucher in all_vouchers:
                 role = voucher.get('role', 'unknown')
                 stats['by_role'][role] = stats['by_role'].get(role, 0) + 1
             
-            # Recent activity (last 10)
-            recent_vouchers = sorted(all_vouchers, 
-                                 key=lambda x: x.get('created_at', ''), 
+            recent_vouchers = sorted(all_vouchers,
+                                 key=lambda x: x.get('created_at', ''),
                                  reverse=True)[:10]
             stats['recent_activity'] = recent_vouchers
             
@@ -199,6 +212,88 @@ class VoucherManagementService:
             logger.error(f"Voucher statistics error: {str(e)}")
             return {}
     
+    def list_vouchers(self, institution_id: str, page: int = 1, per_page: int = 20,
+                     search: str = '', status_filter: str = '', role_filter: str = '') -> Dict[str, Any]:
+        """List vouchers for an institution with pagination, search and filters"""
+        try:
+            all_vouchers = self.firebase_service.query_documents(
+                'vouchers',
+                filters=[{'field': 'institution_id', 'value': institution_id}]
+            )
+            
+            now = datetime.utcnow()
+            for v in all_vouchers:
+                v['_expired'] = now > datetime.fromisoformat(v['expires_at'])
+                v['_status'] = 'revoked' if v.get('revoked') else ('used' if v.get('is_used') else ('expired' if v['_expired'] else 'active'))
+                # Resolve used_by email
+                if v.get('used_by'):
+                    try:
+                        user_doc = self.firebase_service.get_document('users', v['used_by'])
+                        if user_doc:
+                            v['used_by_email'] = user_doc.get('email', v['used_by'])
+                        else:
+                            v['used_by_email'] = v['used_by']
+                    except:
+                        v['used_by_email'] = v['used_by']
+            
+            if search:
+                s = search.upper()
+                all_vouchers = [v for v in all_vouchers if s in v.get('code', '').upper() or
+                                s in (v.get('used_by') or '').upper() or
+                                s in (v.get('used_by_email') or '').upper()]
+            
+            if status_filter:
+                all_vouchers = [v for v in all_vouchers if v['_status'] == status_filter]
+            
+            if role_filter:
+                all_vouchers = [v for v in all_vouchers if v.get('role') == role_filter]
+            
+            all_vouchers.sort(key=lambda x: x.get('created_at', ''), reverse=True)
+            total = len(all_vouchers)
+            total_pages = max(1, (total + per_page - 1) // per_page)
+            page = max(1, min(page, total_pages))
+            start = (page - 1) * per_page
+            end = start + per_page
+            items = all_vouchers[start:end]
+            
+            used = sum(1 for v in all_vouchers if v.get('is_used'))
+            unused = sum(1 for v in all_vouchers if not v.get('is_used') and not v.get('revoked') and not v['_expired'])
+            expired = sum(1 for v in all_vouchers if v['_expired'] and not v.get('is_used'))
+            revoked = sum(1 for v in all_vouchers if v.get('revoked'))
+            
+            return {
+                'vouchers': items,
+                'total': total,
+                'page': page,
+                'total_pages': total_pages,
+                'stats': {
+                    'total': total,
+                    'used': used,
+                    'unused': unused,
+                    'expired': expired,
+                    'revoked': revoked,
+                }
+            }
+        except Exception as e:
+            logger.error(f"List vouchers error: {str(e)}")
+            return {'vouchers': [], 'total': 0, 'page': 1, 'total_pages': 1, 'stats': {}}
+
+    def revoke_voucher(self, voucher_id: str) -> bool:
+        """Revoke a voucher so it can no longer be used"""
+        try:
+            doc = self.firebase_service.get_document('vouchers', voucher_id)
+            if not doc:
+                return False
+            self.firebase_service.update_document('vouchers', voucher_id, {
+                'revoked': True,
+                'revoked_at': datetime.utcnow().isoformat()
+            })
+            logger.info(f"Voucher {voucher_id} revoked")
+            return True
+        except Exception as e:
+            logger.error(f"Revoke voucher error: {str(e)}")
+            return False
+
     def _generate_secure_voucher_code(self) -> str:
         """Generate cryptographically secure voucher code"""
         # Use uppercase letters and numbers only

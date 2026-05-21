@@ -15,7 +15,7 @@ _MOCK_DB_FILE = 'mock_database.json'
 def load_mock_database():
     try:
         if os.path.exists(_MOCK_DB_FILE):
-            with open(_MOCK_DB_FILE, 'r') as f:
+            with open(_MOCK_DB_FILE, 'r', encoding='utf-8') as f:
                 data = json.load(f)
                 return data
         else:
@@ -26,8 +26,8 @@ def load_mock_database():
 
 def save_mock_database(data):
     try:
-        with open(_MOCK_DB_FILE, 'w') as f:
-            json.dump(data, f, indent=2, default=str)
+        with open(_MOCK_DB_FILE, 'w', encoding='utf-8') as f:
+            json.dump(data, f, indent=2, default=str, ensure_ascii=False)
     except Exception as e:
         logger.error(f"Failed to save mock database: {str(e)}")
 

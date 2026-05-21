@@ -10,9 +10,9 @@
     <script>
         if ('serviceWorker' in navigator) {
             window.addEventListener('load', function() {
-                // navigator.serviceWorker.register('/static/js/sw.js', { scope: '/static/' }).then(function(reg) {
+                navigator.serviceWorker.register('/sw.js', { scope: '/' }).then(function(reg) {
                     console.log('SW registered:', reg.scope);
-                }, function(err) {
+                }).catch(function(err) {
                     console.warn('SW registration failed:', err);
                 });
             });
@@ -362,6 +362,14 @@
         /* ── MODAL FORM ── */
         .form-input:focus { border-color: var(--primary) !important; box-shadow: 0 0 0 2px rgba(79,70,229,0.15); }
         .form-input option { background: #1a1f35; color: #fff; }
+        select.form-control option {
+            background: #1a1f35;
+            color: #fff;
+        }
+        select.form-control:focus option:checked {
+            background: #4F46E5;
+            color: #fff;
+        }
 
         /* ── EMPTY ── */
         .empty-muted { text-align: center; padding: 1.5rem 1rem; color: var(--text-dim); font-size: 0.75rem; }
@@ -442,6 +450,7 @@
 
         <div class="nav-label" data-i18n="finance">Finance</div>
         <a href="#" data-section="payments"><i class="fas fa-money-bill-wave"></i> <span data-i18n="payments">Payments</span> <span class="nav-count" id="paymentBadge">0</span></a>
+        <a href="#" data-section="vouchers"><i class="fas fa-ticket-alt"></i> <span data-i18n="vouchers">Vouchers</span> <span class="nav-count" id="voucherBadge">0</span></a>
 
         <div class="nav-label" data-i18n="data">Data</div>
         <a href="#" data-section="reports"><i class="fas fa-chart-bar"></i> <span data-i18n="reports">Reports</span></a>
@@ -644,7 +653,33 @@
                     <div class="card-body"><div class="broker-grid" id="brokerGrid"></div></div>
                 </div>
             </div>
-            <div class="card-noc">
+            <div class="grid-2col" style="margin-top:0.75rem;">
+                <div class="card-noc">
+                    <div class="card-header"><div class="card-title"><i class="fas fa-layer-group"></i> Mesh Sync Health</div></div>
+                    <div class="card-body">
+                        <div class="stats-row" id="meshStats">
+                            <div class="stat-card" style="flex:1;"><div class="stat-val" id="meshStatus" style="font-size:0.9rem;">—</div><div class="stat-label">Status</div></div>
+                            <div class="stat-card" style="flex:1;"><div class="stat-val" id="meshNodes">—</div><div class="stat-label">Nodes</div></div>
+                            <div class="stat-card" style="flex:1;"><div class="stat-val" id="meshSuccessRate">—</div><div class="stat-label">Success</div></div>
+                            <div class="stat-card" style="flex:1;"><div class="stat-val" id="meshTotalSyncs">—</div><div class="stat-label">Total Syncs</div></div>
+                        </div>
+                        <div class="node-grid" id="meshNodeDetails" style="margin-top:0.4rem;"></div>
+                    </div>
+                </div>
+                <div class="card-noc">
+                    <div class="card-header"><div class="card-title"><i class="fas fa-balance-scale"></i> Load Balance</div></div>
+                    <div class="card-body">
+                        <div class="stats-row" id="loadStats">
+                            <div class="stat-card" style="flex:1;"><div class="stat-val" id="loadStatus" style="font-size:0.9rem;">—</div><div class="stat-label">Status</div></div>
+                            <div class="stat-card" style="flex:1;"><div class="stat-val" id="loadSessions">—</div><div class="stat-label">Sessions</div></div>
+                            <div class="stat-card" style="flex:1;"><div class="stat-val" id="loadTarget">—</div><div class="stat-label">Target/Node</div></div>
+                        </div>
+                        <div style="font-size:0.6rem;color:var(--text-dim);margin-top:0.4rem;" id="loadRec"></div>
+                        <div class="stats-row" style="margin-top:0.4rem;gap:0.3rem;" id="overloadGrid"></div>
+                    </div>
+                </div>
+            </div>
+            <div class="card-noc" style="margin-top:0.75rem;">
                 <div class="card-header"><div class="card-title"><i class="fas fa-tachometer-alt"></i> <span data-i18n="faculty_comparison">Faculty Comparison</span></div></div>
                 <div class="card-body"><div class="chart-wrap chart-wrap-tall"><canvas id="facultyChart"></canvas></div></div>
             </div>
@@ -733,6 +768,56 @@
                         <tbody id="paymentTableBody"></tbody>
                     </table>
                     <div class="pagination-controls" id="paymentPagination" style="display:none;padding:0.5rem 1rem;border-top:1px solid rgba(255,255,255,0.04);"></div>
+                </div>
+            </div>
+        </div>
+
+        <!-- ═══════ VOUCHERS ═══════ -->
+        <div class="section" id="section-vouchers">
+            <div class="stats-row" id="voucherStats">
+                <div class="stat-card"><div class="stat-top"><span class="stat-label">Total Vouchers</span><div class="stat-icon" style="background:rgba(79,70,229,0.12);color:#A5B4FC;"><i class="fas fa-ticket-alt"></i></div></div><div class="stat-value" id="vTotal">—</div><div class="stat-footer">All created</div></div>
+                <div class="stat-card"><div class="stat-top"><span class="stat-label">Used</span><div class="stat-icon" style="background:rgba(16,185,129,0.12);color:#6EE7B7;"><i class="fas fa-check-circle"></i></div></div><div class="stat-value" id="vUsed">—</div><div class="stat-footer up"><i class="fas fa-circle"></i> Claimed</div></div>
+                <div class="stat-card"><div class="stat-top"><span class="stat-label">Unused</span><div class="stat-icon" style="background:rgba(245,158,11,0.12);color:#FCD34D;"><i class="fas fa-clock"></i></div></div><div class="stat-value" id="vUnused">—</div><div class="stat-footer">Available</div></div>
+                <div class="stat-card"><div class="stat-top"><span class="stat-label">Expired</span><div class="stat-icon" style="background:rgba(239,68,68,0.12);color:#FCA5A5;"><i class="fas fa-hourglass-end"></i></div></div><div class="stat-value" id="vExpired">—</div><div class="stat-footer down"><i class="fas fa-exclamation-circle"></i> Past expiry</div></div>
+            </div>
+            <div class="grid-2col" style="margin-bottom:0.7rem;">
+                <div class="card-noc">
+                    <div class="card-header"><div class="card-title"><i class="fas fa-chart-pie"></i> <span>Vouchers by Role</span></div></div>
+                    <div class="card-body"><div class="chart-wrap" style="height:140px;"><canvas id="voucherRoleChart"></canvas></div></div>
+                </div>
+                <div class="card-noc">
+                    <div class="card-header"><div class="card-title"><i class="fas fa-chart-donut"></i> <span>Voucher Status</span></div></div>
+                    <div class="card-body"><div class="chart-wrap" style="height:140px;"><canvas id="voucherStatusChart"></canvas></div></div>
+                </div>
+            </div>
+            <div class="card-noc">
+                <div class="card-header">
+                    <div class="card-title"><i class="fas fa-ticket-alt"></i> <span>Voucher Management</span></div>
+                    <div style="display:flex;gap:0.4rem;align-items:center;flex-wrap:wrap;">
+                        <input type="text" id="voucherSearch" placeholder="Search code..." style="background:rgba(255,255,255,0.04);border:1px solid rgba(255,255,255,0.08);border-radius:6px;padding:0.25rem 0.55rem;color:#fff;font-size:0.7rem;outline:none;width:140px;" oninput="debounceVoucherSearch()">
+                        <select id="voucherStatusFilter" style="background:rgba(255,255,255,0.04);border:1px solid rgba(255,255,255,0.08);border-radius:6px;padding:0.25rem 0.4rem;color:rgba(255,255,255,0.6);font-size:0.65rem;outline:none;" onchange="loadVouchers()">
+                            <option value="">All Status</option>
+                            <option value="active">Active</option>
+                            <option value="used">Used</option>
+                            <option value="expired">Expired</option>
+                            <option value="revoked">Revoked</option>
+                        </select>
+                        <select id="voucherRoleFilter" style="background:rgba(255,255,255,0.04);border:1px solid rgba(255,255,255,0.08);border-radius:6px;padding:0.25rem 0.4rem;color:rgba(255,255,255,0.6);font-size:0.65rem;outline:none;" onchange="loadVouchers()">
+                            <option value="">All Roles</option>
+                            <option value="student">Student</option>
+                            <option value="lecturer">Lecturer</option>
+                            <option value="institutional_admin">Admin</option>
+                        </select>
+                        <button class="qa-btn" style="background:rgba(79,70,229,0.15);padding:0.3rem 0.7rem;font-size:0.65rem;" onclick="openVoucherGenerateModal()"><i class="fas fa-plus"></i> Generate</button>
+                        <button class="qa-btn" style="background:rgba(16,185,129,0.15);padding:0.3rem 0.7rem;font-size:0.65rem;" onclick="exportVouchersCSV()"><i class="fas fa-file-csv"></i> CSV</button>
+                    </div>
+                </div>
+                <div class="card-body compact" style="overflow-x:auto;">
+                    <table class="table-noc">
+                        <thead><tr><th>Code</th><th>Role</th><th>Status</th><th>Used By</th><th>Created</th><th>Expires</th><th>Actions</th></tr></thead>
+                        <tbody id="voucherTableBody"></tbody>
+                    </table>
+                    <div class="pagination-controls" id="voucherPagination" style="display:none;padding:0.5rem 1rem;border-top:1px solid rgba(255,255,255,0.04);"></div>
                 </div>
             </div>
         </div>
@@ -827,7 +912,7 @@
         <div class="form-group" style="margin-top:0.5rem;"><label style="font-size:0.7rem;color:var(--text-dim);">Last Name</label><input type="text" id="userLastName" class="form-control" style="background:rgba(255,255,255,0.04);border:1px solid rgba(255,255,255,0.08);color:#fff;font-size:0.75rem;padding:0.35rem 0.5rem;border-radius:6px;width:100%;"></div>
         <div class="form-group" style="margin-top:0.5rem;"><label style="font-size:0.7rem;color:var(--text-dim);">Email</label><input type="email" id="userEmail" class="form-control" style="background:rgba(255,255,255,0.04);border:1px solid rgba(255,255,255,0.08);color:#fff;font-size:0.75rem;padding:0.35rem 0.5rem;border-radius:6px;width:100%;"></div>
         <div class="form-group" style="margin-top:0.5rem;"><label style="font-size:0.7rem;color:var(--text-dim);">Phone</label><input type="text" id="userPhone" class="form-control" style="background:rgba(255,255,255,0.04);border:1px solid rgba(255,255,255,0.08);color:#fff;font-size:0.75rem;padding:0.35rem 0.5rem;border-radius:6px;width:100%;"></div>
-        <div class="form-group" style="margin-top:0.5rem;"><label style="font-size:0.7rem;color:var(--text-dim);">Password (only for new users)</label><input type="password" id="userPassword" class="form-control" style="background:rgba(255,255,255,0.04);border:1px solid rgba(255,255,255,0.08);color:#fff;font-size:0.75rem;padding:0.35rem 0.5rem;border-radius:6px;width:100%;"></div>
+        <div class="form-group" style="margin-top:0.5rem;"><label style="font-size:0.7rem;color:var(--text-dim);">Password (only for new users)</label><div style="position:relative;"><input type="password" id="userPassword" class="form-control" style="background:rgba(255,255,255,0.04);border:1px solid rgba(255,255,255,0.08);color:#fff;font-size:0.75rem;padding:0.35rem 2rem 0.35rem 0.5rem;border-radius:6px;width:100%;"><button type="button" id="toggleUserPassword" style="position:absolute;right:0.5rem;top:50%;transform:translateY(-50%);background:none;border:none;color:rgba(255,255,255,0.3);cursor:pointer;padding:0.1rem;font-size:0.8rem;line-height:1;" tabindex="-1"><i class="fas fa-eye"></i></button></div></div>
         <div class="form-group" style="margin-top:0.5rem;"><label style="font-size:0.7rem;color:var(--text-dim);">Role</label><select id="userRole" class="form-control" style="background:rgba(255,255,255,0.04);border:1px solid rgba(255,255,255,0.08);color:#fff;font-size:0.75rem;padding:0.35rem 0.5rem;border-radius:6px;width:100%;"><option value="student">Student</option><option value="lecturer">Lecturer</option><option value="institutional_admin">Admin</option></select></div>
         <div class="form-group" style="margin-top:0.5rem;"><label style="font-size:0.7rem;color:var(--text-dim);">Department</label><select id="userDept" class="form-control" style="background:rgba(255,255,255,0.04);border:1px solid rgba(255,255,255,0.08);color:#fff;font-size:0.75rem;padding:0.35rem 0.5rem;border-radius:6px;width:100%;"><option value="">— None —</option></select></div>
       </div>
@@ -902,6 +987,29 @@
       <div class="modal-footer" style="border-top:1px solid rgba(255,255,255,0.06);padding:0.6rem 1rem;">
         <button class="qa-btn" style="background:rgba(255,255,255,0.06);color:rgba(255,255,255,0.5);font-size:0.7rem;" data-bs-dismiss="modal">Cancel</button>
         <button class="qa-btn" style="background:#4F46E5;color:#fff;font-size:0.7rem;" onclick="submitEnrollmentForm()"><i class="fas fa-check me-1"></i> Enroll</button>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- ─── VOUCHER GENERATE MODAL ─── -->
+<div class="modal fade" id="voucherGenerateModal" tabindex="-1" aria-hidden="true">
+  <div class="modal-dialog modal-dialog-centered modal-dialog-scrollable modal-md">
+    <div class="modal-content" style="background:rgba(15,23,42,0.98);border:1px solid rgba(255,255,255,0.08);border-radius:10px;">
+      <div class="modal-header" style="border-bottom:1px solid rgba(255,255,255,0.06);padding:0.75rem 1rem;">
+        <h6 class="modal-title" style="color:#fff;font-weight:700;font-size:0.8rem;">Generate Vouchers</h6>
+        <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal" style="font-size:0.7rem;"></button>
+      </div>
+      <div class="modal-body" style="padding:0.85rem 1rem;">
+        <div class="form-group"><label style="font-size:0.7rem;color:var(--text-dim);">Role</label><select id="vGenRole" class="form-control" style="background:rgba(255,255,255,0.04);border:1px solid rgba(255,255,255,0.08);color:#fff;font-size:0.75rem;padding:0.35rem 0.5rem;border-radius:6px;width:100%;"><option value="student">Student</option><option value="lecturer">Lecturer</option><option value="institutional_admin">Admin</option></select></div>
+        <div class="form-group" style="margin-top:0.5rem;"><label style="font-size:0.7rem;color:var(--text-dim);">Quantity</label><input type="number" id="vGenQuantity" class="form-control" value="10" min="1" max="500" style="background:rgba(255,255,255,0.04);border:1px solid rgba(255,255,255,0.08);color:#fff;font-size:0.75rem;padding:0.35rem 0.5rem;border-radius:6px;width:100%;"></div>
+        <div class="form-group" style="margin-top:0.5rem;"><label style="font-size:0.7rem;color:var(--text-dim);">Email Binding <span style="color:var(--text-dim);font-weight:400;">(optional — lock all to one email)</span></label><input type="email" id="vGenEmail" class="form-control" placeholder="user@example.com" style="background:rgba(255,255,255,0.04);border:1px solid rgba(255,255,255,0.08);color:#fff;font-size:0.75rem;padding:0.35rem 0.5rem;border-radius:6px;width:100%;"></div>
+        <div class="form-group" style="margin-top:0.5rem;"><label style="font-size:0.7rem;color:var(--text-dim);">Email Recipients <span style="color:var(--text-dim);font-weight:400;">(optional — one per line, 1:1 with quantity)</span></label><textarea id="vGenRecipients" rows="2" class="form-control" placeholder="user1@example.com&#10;user2@example.com" style="background:rgba(255,255,255,0.04);border:1px solid rgba(255,255,255,0.08);color:#fff;font-size:0.75rem;padding:0.35rem 0.5rem;border-radius:6px;width:100%;"></textarea></div>
+        <div id="vGenResult" style="margin-top:0.5rem;display:none;padding:0.5rem;border-radius:6px;font-size:0.75rem;max-height:200px;overflow-y:auto;"></div>
+      </div>
+      <div class="modal-footer" style="border-top:1px solid rgba(255,255,255,0.06);padding:0.6rem 1rem;">
+        <button class="qa-btn" style="background:rgba(255,255,255,0.06);color:rgba(255,255,255,0.5);font-size:0.7rem;" data-bs-dismiss="modal">Cancel</button>
+        <button class="qa-btn" style="background:#4F46E5;color:#fff;font-size:0.7rem;" onclick="submitVoucherGenerate()"><i class="fas fa-check me-1"></i> Generate</button>
       </div>
     </div>
   </div>
@@ -1186,47 +1294,77 @@
 
     async function triggerForceSync() {
         try {
-            const res = await apiFetch('/api/institutional/offline-sync', {
+            showToast('Initializing force synchronization...', 'info');
+            const enqRes = await apiFetch('/api/institutional/offline-sync', {
                 method: 'POST',
-                body: JSON.stringify({node_name: 'Admin Panel', records: 0})
+                body: JSON.stringify({node_name: 'Admin Panel', records: -1})
             });
-            if (res && res.ok) {
+            if (!enqRes || !enqRes.ok) { showToast('Enqueue failed', 'error'); return; }
+            const procRes = await apiFetch('/api/institutional/offline-queue/process', { method: 'POST' });
+            if (procRes && procRes.ok) {
                 await apiFetch('/api/institutional/activity-log', {
                     method: 'POST',
-                    body: JSON.stringify({type: 'sync_completed', message: 'Force sync triggered from admin panel', faculty: 'Infrastructure'})
+                    body: JSON.stringify({type: 'sync_completed', message: 'Force sync completed from admin panel', faculty: 'Infrastructure'})
                 });
-                showToast('Force sync initiated — syncing pending records', 'success');
-                loadActivityFeed(); loadOverview();
+                showToast('Force sync completed — all pending records synchronized', 'success');
             } else {
-                showToast('Sync request failed', 'error');
+                showToast('Sync processing returned a warning', 'error');
             }
+            loadActivityFeed(); loadOverview(); loadOfflineData();
         } catch(e) { showToast('Error: ' + e.message, 'error'); }
     }
 
     async function triggerBackup() {
         try {
-            const res = await apiFetch('/api/institutional/activity-log', {
+            showToast('Compiling backup data...', 'info');
+            const [uRes, cRes, dRes, eRes] = await Promise.all([
+                apiFetch('/api/institutional/users?per_page=9999&search='),
+                apiFetch('/api/institutional/courses?per_page=9999&search='),
+                apiFetch('/api/institutional/departments?per_page=9999&search='),
+                apiFetch('/api/institutional/enrollments?per_page=9999&search=')
+            ]);
+            if (!uRes || !cRes || !dRes || !eRes) { showToast('Failed to fetch backup data', 'error'); return; }
+            const [users, courses, departments, enrollments] = await Promise.all([
+                uRes.json(), cRes.json(), dRes.json(), eRes.json()
+            ]);
+            const backup = {
+                timestamp: new Date().toISOString(),
+                institution: document.getElementById('instName').textContent,
+                exported_by: (userData ? (userData.first_name + ' ' + userData.last_name).trim() : 'Admin'),
+                summary: {
+                    users: (users.users||[]).length,
+                    courses: (courses.courses||[]).length,
+                    departments: (departments.departments||[]).length,
+                    enrollments: (enrollments.enrollments||[]).length
+                },
+                data: { users: users.users||[], courses: courses.courses||[], departments: departments.departments||[], enrollments: enrollments.enrollments||[] }
+            };
+            const blob = new Blob([JSON.stringify(backup, null, 2)], {type: 'application/json'});
+            const url = URL.createObjectURL(blob);
+            const a = document.createElement('a');
+            a.href = url;
+            a.download = 'attendrix-backup-' + new Date().toISOString().slice(0,10) + '.json';
+            document.body.appendChild(a); a.click();
+            document.body.removeChild(a); URL.revokeObjectURL(url);
+            await apiFetch('/api/institutional/activity-log', {
                 method: 'POST',
-                body: JSON.stringify({type: 'backup', message: 'Manual backup triggered by admin', faculty: 'System'})
+                body: JSON.stringify({type: 'backup', message: 'Manual backup completed — ' + backup.summary.users + ' users, ' + backup.summary.courses + ' courses', faculty: 'System'})
             });
-            if (res && res.ok) {
-                showToast('Backup initiated — data export in progress', 'success');
-                loadActivityFeed();
-            } else {
-                showToast('Backup request failed', 'error');
-            }
+            showToast('Backup completed — ' + backup.summary.users + ' users, ' + backup.summary.courses + ' courses exported', 'success');
+            loadActivityFeed();
         } catch(e) { showToast('Error: ' + e.message, 'error'); }
     }
 
     // ── OVERVIEW ──
     async function loadOverview() {
         try {
-            const [shRes, trendRes, netRes, offRes, infraRes] = await Promise.all([
+            const [shRes, trendRes, netRes, offRes, infraRes, innovNetRes] = await Promise.all([
                 apiFetch('/api/institutional/session-health?page=' + sessionPage + '&per_page=20'),
                 apiFetch('/api/institutional/attendance-trends'),
                 apiFetch('/api/institutional/network-status'),
                 apiFetch('/api/institutional/offline-log'),
                 apiFetch('/api/institutional/infrastructure'),
+                apiFetch('/api/innovation/infrastructure/status'),
             ]);
             if (shRes && shRes.ok) {
                 const d = await shRes.json();
@@ -1286,6 +1424,10 @@
                 const d = await infraRes.json();
                 renderInfrastructure(d);
             }
+            if (innovNetRes && innovNetRes.ok) {
+                const d = await innovNetRes.json();
+                renderInnovationNetwork(d);
+            }
         } catch(e) { console.error('Overview error:', e); }
     }
 
@@ -1307,6 +1449,55 @@
         const orEl = document.getElementById('ispOrange');
         if (mtn) { mtnEl.className = 'pill-indicator ' + (mtn.status === 'up' ? 'pill-green' : mtn.status === 'degraded' ? 'pill-yellow' : 'pill-red'); mtnEl.innerHTML = '<span class="dot"></span> MTN ' + mtn.latency_ms + 'ms'; }
         if (orange) { orEl.className = 'pill-indicator ' + (orange.status === 'up' ? 'pill-green' : orange.status === 'degraded' ? 'pill-yellow' : 'pill-red'); orEl.innerHTML = '<span class="dot"></span> Orange ' + orange.latency_ms + 'ms'; }
+    }
+
+    // ── INNOVATION NETWORK (Mesh Health + Load Balance) ──
+    function renderInnovationNetwork(d) {
+        // Mesh health
+        var mh = d.mesh_health || {};
+        var msEl = document.getElementById('meshStatus');
+        if (msEl) {
+            msEl.textContent = (mh.mesh_status || 'N/A').toUpperCase();
+            msEl.style.color = mh.mesh_status === 'healthy' ? '#10B981' : mh.mesh_status === 'degraded' ? '#F59E0B' : '#EF4444';
+        }
+        document.getElementById('meshNodes').textContent = mh.nodes_assessed ?? '—';
+        document.getElementById('meshSuccessRate').textContent = mh.overall_success_rate ? (mh.overall_success_rate * 100).toFixed(1) + '%' : '—';
+        document.getElementById('meshTotalSyncs').textContent = mh.total_syncs_assessed ?? '—';
+
+        var mnd = document.getElementById('meshNodeDetails');
+        var details = mh.node_details || {};
+        var keys = Object.keys(details);
+        if (mnd && keys.length > 0) {
+            mnd.innerHTML = keys.map(function(k) {
+                var n = details[k];
+                var c = n.status === 'healthy' ? '#10B981' : n.status === 'degraded' ? '#F59E0B' : '#EF4444';
+                return '<div class="node-item" style="justify-content:space-between;"><span style="color:#fff;font-size:0.65rem;">' + k + '</span><span style="color:' + c + ';font-size:0.6rem;">' + n.status + ' · ' + (n.success_rate * 100).toFixed(0) + '% · ' + n.avg_duration_ms + 'ms</span></div>';
+            }).join('');
+        } else if (mnd) {
+            mnd.innerHTML = '<div class="empty-muted" style="font-size:0.6rem;">No mesh nodes assessed</div>';
+        }
+
+        // Load balance
+        var lb = d.load_balance || {};
+        var lsEl = document.getElementById('loadStatus');
+        if (lsEl) {
+            var lbl = lb.load_balancing || 'idle';
+            lsEl.textContent = lbl.toUpperCase();
+            lsEl.style.color = lbl === 'balanced' || lbl === 'idle' ? '#10B981' : '#F59E0B';
+        }
+        document.getElementById('loadSessions').textContent = lb.total_sessions ?? '—';
+        document.getElementById('loadTarget').textContent = lb.target_per_node ?? '—';
+        document.getElementById('loadRec').textContent = lb.recommendation || '';
+
+        var og = document.getElementById('overloadGrid');
+        if (og) {
+            var overloaded = lb.overloaded_nodes || [];
+            var underloaded = lb.underloaded_nodes || [];
+            var parts = [];
+            overloaded.forEach(function(n) { parts.push('<span style="font-size:0.55rem;color:#EF4444;background:rgba(239,68,68,0.1);padding:0.15rem 0.4rem;border-radius:4px;">' + n.node_id + ' (' + n.sessions + ')</span>'); });
+            underloaded.forEach(function(n) { parts.push('<span style="font-size:0.55rem;color:#F59E0B;background:rgba(245,158,11,0.1);padding:0.15rem 0.4rem;border-radius:4px;">' + n.node_id + ' (' + n.sessions + ')</span>'); });
+            og.innerHTML = parts.join(' ') || '<span style="font-size:0.55rem;color:var(--text-dim);">All nodes balanced</span>';
+        }
     }
 
     // ── ACTIVITY ──
@@ -1843,66 +2034,7 @@
         }
     }
 
-    // ── NETWORK TOPOLOGY VISUALIZER ──
-    var topoNodes = [];
-    var topoAnimFrame = null;
-
-    function renderTopology(nodes, broker) {
-        var canvas = document.getElementById('topologyCanvas');
-        if (!canvas) return;
-        var rect = canvas.parentElement.getBoundingClientRect();
-        canvas.width = rect.width || 500;
-        canvas.height = 280;
-        var ctx = canvas.getContext('2d');
-        var W = canvas.width, H = canvas.height;
-        var cx = W / 2, cy = H / 2;
-
-        // Classify nodes
-        var buildings = nodes.filter(function(n){return n.type !== 'broker';});
-        var brokerNode = nodes.filter(function(n){return n.type === 'broker';})[0] || null;
-
-        // Layout: broker in center, buildings in a circle
-        var count = buildings.length;
-        var radius = Math.min(W, H) * 0.32;
-
-        topoNodes = [];
-        // Center broker
-        topoNodes.push({
-            x: cx, y: cy, r: 16,
-            name: brokerNode ? brokerNode.name : 'Core Broker',
-            status: brokerNode ? brokerNode.status : 'healthy',
-            latency: brokerNode ? brokerNode.latency_ms : 0,
-            isBroker: true,
-        });
-
-        // Building nodes around the circle
-        buildings.forEach(function(n, i) {
-            var angle = (i / count) * 2 * Math.PI - Math.PI / 2;
-            var nx = cx + radius * Math.cos(angle);
-            var ny = cy + radius * Math.sin(angle);
-            topoNodes.push({
-                x: nx, y: ny, r: 12,
-                name: n.name,
-                status: n.status,
-                latency: n.latency_ms,
-                packetLoss: n.packet_loss,
-                isBroker: false,
-                orig: n,
-            });
-        });
-
-        // Draw legend
-        var legendEl = document.getElementById('topologyLegend');
-        var healthy = nodes.filter(function(n){return n.status === 'healthy';}).length;
-        var degraded = nodes.filter(function(n){return n.status === 'degraded';}).length;
-        var offline = nodes.filter(function(n){return n.status === 'offline';}).length;
-        legendEl.innerHTML = '<span><span class="dot" style="background:#10B981;"></span> Healthy: ' + healthy + '</span>' +
-            '<span><span class="dot" style="background:#F59E0B;"></span> Degraded: ' + degraded + '</span>' +
-            '<span><span class="dot" style="background:#EF4444;"></span> Offline: ' + offline + '</span>' +
-            '<span style="margin-left:auto;">' + (broker ? 'Broker: ' + (broker.messages_per_sec || 0) + ' msg/s' : '') + '</span>';
-
-        drawTopology(ctx);
-    }
+    // ── NETWORK TOPOLOGY VISUALIZER (handled by network-topology.js / AttendrixTopology) ──
 
     function drawTopology(ctx) {
         var W = ctx.canvas.width, H = ctx.canvas.height;
@@ -2111,12 +2243,12 @@
     async function editUser(id) {
         document.getElementById('userModalTitle').textContent = 'Edit User';
         document.getElementById('userEditId').value = id;
-        loadDeptDropdown('userDept');
-        var r = await apiFetch('/api/institutional/users?search='+id+'&per_page=999');
+        await loadDeptDropdown('userDept');
+        var r = await apiFetch('/api/institutional/users?search=&per_page=9999');
         if (!r || !r.ok) return;
         var data = await r.json();
         var u = (data.users||[]).filter(function(x){return x.id===id;})[0];
-        if (!u) return;
+        if (!u) { showToast('User not found', 'error'); return; }
         document.getElementById('userFirstName').value = u.first_name;
         document.getElementById('userLastName').value = u.last_name;
         document.getElementById('userEmail').value = u.email;
@@ -2150,6 +2282,24 @@
         await apiFetch('/api/institutional/users/'+id+'/toggle-status', {method:'POST'});
         loadUsers();
     }
+
+    // ── Password Toggle ──
+    document.addEventListener('DOMContentLoaded', function() {
+        var toggleBtn = document.getElementById('toggleUserPassword');
+        if (toggleBtn) {
+            toggleBtn.addEventListener('click', function() {
+                var pw = document.getElementById('userPassword');
+                var icon = this.querySelector('i');
+                if (pw.type === 'password') {
+                    pw.type = 'text';
+                    icon.className = 'fas fa-eye-slash';
+                } else {
+                    pw.type = 'password';
+                    icon.className = 'fas fa-eye';
+                }
+            });
+        }
+    });
 
     // ── COURSE MANAGEMENT CRUD ──
     let coursePage = 1, courseSearch = '', courseTimer = null;
@@ -2314,42 +2464,242 @@
         loadEnrollments();
     }
 
+    // ── VOUCHER MANAGEMENT ──
+    let voucherPage = 1, voucherSearchVal = '', voucherTimer = null;
+    let vRoleChartInstance = null, vStatusChartInstance = null;
+    function debounceVoucherSearch() { clearTimeout(voucherTimer); voucherTimer = setTimeout(function(){ voucherPage=1; loadVouchers(); }, 300); }
+    async function loadVouchers() {
+        voucherSearchVal = document.getElementById('voucherSearch').value;
+        var statusFilter = document.getElementById('voucherStatusFilter').value;
+        var roleFilter = document.getElementById('voucherRoleFilter').value;
+        var res = await apiFetch('/api/voucher/list?page='+voucherPage+'&per_page=15&search='+encodeURIComponent(voucherSearchVal)+'&status='+statusFilter+'&role='+roleFilter);
+        if (!res || !res.ok) return;
+        var data = await res.json();
+        var stats = data.stats || {};
+        document.getElementById('vTotal').textContent = stats.total || 0;
+        document.getElementById('vUsed').textContent = stats.used || 0;
+        document.getElementById('vUnused').textContent = stats.unused || 0;
+        document.getElementById('vExpired').textContent = stats.expired || 0;
+        document.getElementById('voucherBadge').textContent = stats.unused || 0;
+        renderVoucherCharts(data);
+        var tb = document.getElementById('voucherTableBody');
+        tb.innerHTML = '';
+        (data.vouchers||[]).forEach(function(v) {
+            var statusClass = 'pill-active';
+            var statusLabel = v._status || 'unknown';
+            if (statusLabel === 'used') { statusClass = 'pill-completed'; }
+            else if (statusLabel === 'expired') { statusClass = 'pill-syncing'; }
+            else if (statusLabel === 'revoked') { statusClass = ''; }
+            var usedBy = v.used_by || '—';
+            if (v.used_by_email) usedBy = v.used_by_email;
+            var actionsHtml = '';
+            if (v._status === 'active') {
+                actionsHtml = '<button class="qa-btn" style="background:rgba(239,68,68,0.15);padding:0.15rem 0.4rem;font-size:0.6rem;" onclick="revokeVoucher(\''+v.id+'\')"><i class="fas fa-ban"></i></button>';
+            }
+            actionsHtml += '<button class="qa-btn" style="background:rgba(99,102,241,0.15);padding:0.15rem 0.4rem;font-size:0.6rem;margin-left:0.2rem;" onclick="copyVoucherCode(\''+v.code+'\')"><i class="fas fa-copy"></i></button>';
+            tb.innerHTML += '<tr><td style="font-weight:600;color:#fff;font-family:monospace;font-size:0.75rem;">'+v.code+'</td><td>'+v.role.replace(/_/g,' ').replace(/\b\w/g,function(l){return l.toUpperCase()})+'</td><td><span class="status-pill '+(statusClass||'')+'" style="'+(statusLabel==='revoked'?'background:rgba(239,68,68,0.1);color:#FCA5A5;border:1px solid rgba(239,68,68,0.15)':'')+'">'+statusLabel.toUpperCase()+'</span></td><td style="max-width:120px;overflow:hidden;text-overflow:ellipsis;" title="'+usedBy+'">'+usedBy+'</td><td style="font-size:0.6rem;">'+(v.created_at ? new Date(v.created_at).toLocaleDateString() : '—')+'</td><td style="font-size:0.6rem;">'+(v.expires_at ? new Date(v.expires_at).toLocaleDateString() : '—')+'</td><td>'+actionsHtml+'</td></tr>';
+        });
+        renderPagination('voucherPagination', data.page, data.total_pages, function(p){ voucherPage=p; loadVouchers(); });
+    }
+    function renderVoucherCharts(data) {
+        // By role chart
+        var roleCounts = {};
+        (data.vouchers||[]).forEach(function(v) {
+            var r = v.role.replace(/_/g,' ').replace(/\b\w/g,function(l){return l.toUpperCase()});
+            roleCounts[r] = (roleCounts[r]||0)+1;
+        });
+        var roleLabels = Object.keys(roleCounts);
+        var roleValues = Object.values(roleCounts);
+        if (roleLabels.length === 0) { roleLabels = ['No data']; roleValues = [1]; }
+        var roleCtx = document.getElementById('voucherRoleChart');
+        if (roleCtx) {
+            if (vRoleChartInstance) vRoleChartInstance.destroy();
+            vRoleChartInstance = new Chart(roleCtx.getContext('2d'), {
+                type: 'doughnut',
+                data: {
+                    labels: roleLabels,
+                    datasets: [{ data: roleValues, backgroundColor: ['#4F46E5','#10B981','#F59E0B','#EF4444','#06B6D4'], borderWidth: 0 }]
+                },
+                options: { responsive: true, maintainAspectRatio: false, plugins: { legend: { position: 'right', labels: { color: 'rgba(255,255,255,0.5)', font: { size: 9 }, boxWidth: 10 } } } }
+            });
+        }
+        // Status chart
+        var stats = data.stats || {};
+        var stCtx = document.getElementById('voucherStatusChart');
+        if (stCtx) {
+            if (vStatusChartInstance) vStatusChartInstance.destroy();
+            vStatusChartInstance = new Chart(stCtx.getContext('2d'), {
+                type: 'doughnut',
+                data: {
+                    labels: ['Used', 'Unused', 'Expired', 'Revoked'],
+                    datasets: [{ data: [stats.used||0, stats.unused||0, stats.expired||0, stats.revoked||0], backgroundColor: ['#10B981','#4F46E5','#F59E0B','#EF4444'], borderWidth: 0 }]
+                },
+                options: { responsive: true, maintainAspectRatio: false, plugins: { legend: { position: 'right', labels: { color: 'rgba(255,255,255,0.5)', font: { size: 9 }, boxWidth: 10 } } } }
+            });
+        }
+    }
+    function copyVoucherCode(code) {
+        navigator.clipboard.writeText(code).then(function() {
+            showToast('Copied ' + code, 'success');
+        }).catch(function() {
+            showToast('Failed to copy', 'error');
+        });
+    }
+    function openVoucherGenerateModal() {
+        document.getElementById('vGenRole').value = 'student';
+        document.getElementById('vGenQuantity').value = '10';
+        document.getElementById('vGenEmail').value = '';
+        document.getElementById('vGenRecipients').value = '';
+        document.getElementById('vGenResult').style.display = 'none';
+        var modal = new bootstrap.Modal(document.getElementById('voucherGenerateModal')); modal.show();
+    }
+    async function submitVoucherGenerate() {
+        var role = document.getElementById('vGenRole').value;
+        var qty = parseInt(document.getElementById('vGenQuantity').value) || 10;
+        var email = document.getElementById('vGenEmail').value.trim();
+        var recipientsRaw = document.getElementById('vGenRecipients').value.trim();
+        if (qty < 1) { showToast('Quantity must be at least 1', 'error'); return; }
+        if (qty > 500) { showToast('Maximum 500 vouchers per batch', 'error'); return; }
+        var payload = {
+            role: role,
+            institution_id: (userData && userData.institution_id) || 'inst_001',
+            quantity: qty,
+        };
+        if (email) payload.email_binding = email;
+        var resultEl = document.getElementById('vGenResult');
+        resultEl.style.display = 'block';
+        resultEl.style.background = 'rgba(245,158,11,0.1)';
+        resultEl.style.color = '#FCD34D';
+        resultEl.textContent = 'Generating ' + qty + ' voucher(s)...';
+        try {
+            var res = await apiFetch('/api/voucher/generate-batch', {method:'POST', body:JSON.stringify(payload)});
+            var result = await res.json();
+            if (res.ok) {
+                var vouchers = result.vouchers || [];
+                var codes = vouchers.map(function(v){return v.code;});
+                resultEl.style.background = 'rgba(16,185,129,0.1)';
+                resultEl.style.color = '#6EE7B7';
+                resultEl.innerHTML = '<div style="margin-bottom:0.3rem;">Generated ' + vouchers.length + ' voucher(s):</div>';
+                var codeHtml = '<div style="font-family:monospace;font-size:0.7rem;color:#fff;">';
+                codes.forEach(function(c, i) {
+                    codeHtml += '<div style="display:flex;justify-content:space-between;align-items:center;padding:0.12rem 0;border-bottom:1px solid rgba(255,255,255,0.04);"><span>' + (i+1) + '. ' + c + '</span><button class="qa-btn" style="background:rgba(99,102,241,0.2);padding:0.1rem 0.35rem;font-size:0.55rem;border:none;cursor:pointer;color:#fff;" onclick="navigator.clipboard.writeText(\''+c+'\').then(function(){showToast(\'Copied '+c+'\',\'success\')})"><i class="fas fa-copy"></i></button></div>';
+                });
+                codeHtml += '</div>';
+                resultEl.innerHTML += codeHtml;
+                // Handle email delivery if recipients provided
+                if (recipientsRaw) {
+                    var emails = recipientsRaw.split('\n').map(function(s){return s.trim();}).filter(function(s){return s;});
+                    if (emails.length > 0) {
+                        resultEl.innerHTML += '<div style="margin-top:0.4rem;padding-top:0.4rem;border-top:1px solid rgba(255,255,255,0.08);font-size:0.7rem;">Delivering via email...</div>';
+                        var emailRes = await apiFetch('/api/voucher/email-delivery', {method:'POST', body:JSON.stringify({vouchers: vouchers, recipients: emails})});
+                        var emailResult = emailRes ? await emailRes.json() : {};
+                        if (emailResult.success) {
+                            resultEl.innerHTML += '<div style="color:#6EE7B7;font-size:0.7rem;">' + emailResult.message + '</div>';
+                        } else {
+                            resultEl.innerHTML += '<div style="color:#FCA5A5;font-size:0.7rem;">' + (emailResult.error||'Email delivery failed') + '</div>';
+                        }
+                    }
+                }
+                showToast('Generated ' + vouchers.length + ' vouchers', 'success');
+                loadVouchers();
+            } else {
+                resultEl.style.background = 'rgba(239,68,68,0.1)';
+                resultEl.style.color = '#FCA5A5';
+                resultEl.textContent = result.error || 'Generation failed';
+            }
+        } catch(e) {
+            resultEl.style.background = 'rgba(239,68,68,0.1)';
+            resultEl.style.color = '#FCA5A5';
+            resultEl.textContent = 'Error: ' + e.message;
+        }
+    }
+    async function revokeVoucher(id) {
+        if (!confirm('Revoke this voucher? It can no longer be used for registration.')) return;
+        try {
+            var res = await apiFetch('/api/voucher/revoke/'+id, {method:'POST'});
+            if (res && res.ok) {
+                showToast('Voucher revoked successfully', 'success');
+                loadVouchers();
+            } else {
+                showToast('Failed to revoke voucher', 'error');
+            }
+        } catch(e) { showToast('Error: ' + e.message, 'error'); }
+    }
+    async function exportVouchersCSV() {
+        try {
+            var statusFilter = document.getElementById('voucherStatusFilter').value;
+            var roleFilter = document.getElementById('voucherRoleFilter').value;
+            var token = getToken();
+            var url = '/api/voucher/export/csv?token=' + encodeURIComponent(token);
+            if (statusFilter) url += '&status=' + statusFilter;
+            if (roleFilter) url += '&role=' + roleFilter;
+            var a = document.createElement('a');
+            a.href = url;
+            a.download = 'vouchers_export_' + new Date().toISOString().slice(0,10) + '.csv';
+            document.body.appendChild(a);
+            a.click();
+            a.remove();
+            showToast('Vouchers exported as CSV', 'success');
+        } catch(e) { showToast('Export failed: ' + e.message, 'error'); }
+    }
+
     // ── DROPDOWN HELPERS ──
     async function loadDeptDropdown(selectId) {
         var sel = document.getElementById(selectId);
         if (!sel) return;
         var val = sel.value;
-        sel.innerHTML = '<option value="">— None —</option>';
-        var res = await apiFetch('/api/institutional/lookup/departments');
-        var data = await res.json();
-        (data.departments||[]).forEach(function(d){ sel.innerHTML += '<option value="'+d.id+'">'+d.name+' ('+d.code+')</option>'; });
-        sel.value = val;
+        sel.innerHTML = '<option value="">Loading...</option>';
+        try {
+            var res = await apiFetch('/api/institutional/lookup/departments');
+            if (!res || !res.ok) { sel.innerHTML = '<option value="">— Error loading —</option>'; return; }
+            var data = await res.json();
+            var depts = data.departments || [];
+            if (depts.length === 0) {
+                sel.innerHTML = '<option value="">— No departments available —</option>';
+            } else {
+                sel.innerHTML = '<option value="">— None —</option>';
+                depts.forEach(function(d){ sel.innerHTML += '<option value="'+d.id+'">'+d.name+' ('+d.code+')</option>'; });
+            }
+            sel.value = val;
+        } catch(e) { sel.innerHTML = '<option value="">— Error —</option>'; }
     }
     async function loadLecturerDropdown(selectId) {
         var sel = document.getElementById(selectId);
         if (!sel) return;
         var val = sel.value;
-        sel.innerHTML = '<option value="">— None —</option>';
-        var res = await apiFetch('/api/institutional/lookup/lecturers');
-        var data = await res.json();
-        (data.lecturers||[]).forEach(function(l){ sel.innerHTML += '<option value="'+l.id+'">'+l.name+'</option>'; });
-        sel.value = val;
+        sel.innerHTML = '<option value="">Loading...</option>';
+        try {
+            var res = await apiFetch('/api/institutional/lookup/lecturers');
+            if (!res || !res.ok) { sel.innerHTML = '<option value="">— Error loading —</option>'; return; }
+            var data = await res.json();
+            sel.innerHTML = '<option value="">— None —</option>';
+            (data.lecturers||[]).forEach(function(l){ sel.innerHTML += '<option value="'+l.id+'">'+l.name+'</option>'; });
+            sel.value = val;
+        } catch(e) { sel.innerHTML = '<option value="">— Error —</option>'; }
     }
     async function loadStudentDropdown(selectId) {
         var sel = document.getElementById(selectId);
         if (!sel) return;
-        sel.innerHTML = '<option value="">— Select Student —</option>';
-        var res = await apiFetch('/api/institutional/lookup/students');
-        var data = await res.json();
-        (data.students||[]).forEach(function(s){ sel.innerHTML += '<option value="'+s.id+'">'+s.first_name+' '+s.last_name+' ('+s.email+')</option>'; });
+        sel.innerHTML = '<option value="">Loading...</option>';
+        try {
+            var res = await apiFetch('/api/institutional/lookup/students');
+            if (!res || !res.ok) { sel.innerHTML = '<option value="">— Error loading —</option>'; return; }
+            var data = await res.json();
+            sel.innerHTML = '<option value="">— Select Student —</option>';
+            (data.students||[]).forEach(function(s){ sel.innerHTML += '<option value="'+s.id+'">'+s.first_name+' '+s.last_name+' ('+s.email+')</option>'; });
+        } catch(e) { sel.innerHTML = '<option value="">— Error —</option>'; }
     }
     async function loadCourseDropdown(selectId) {
         var sel = document.getElementById(selectId);
         if (!sel) return;
-        sel.innerHTML = '<option value="">— Select Course —</option>';
-        var res = await apiFetch('/api/institutional/lookup/courses');
-        var data = await res.json();
-        (data.courses||[]).forEach(function(c){ sel.innerHTML += '<option value="'+c.id+'">'+c.name+' ('+c.code+')</option>'; });
+        sel.innerHTML = '<option value="">Loading...</option>';
+        try {
+            var res = await apiFetch('/api/institutional/lookup/courses');
+            if (!res || !res.ok) { sel.innerHTML = '<option value="">— Error loading —</option>'; return; }
+            var data = await res.json();
+            sel.innerHTML = '<option value="">— Select Course —</option>';
+            (data.courses||[]).forEach(function(c){ sel.innerHTML += '<option value="'+c.id+'">'+c.name+' ('+c.code+')</option>'; });
+        } catch(e) { sel.innerHTML = '<option value="">— Error —</option>'; }
     }
 
     // ── PHASE D: SMS & PAYMENT ──
@@ -2434,6 +2784,7 @@
         loadCourses();
         loadDepartments();
         loadEnrollments();
+        loadVouchers();
 
         // SSE real-time connection (replaces polling)
         startSSE();

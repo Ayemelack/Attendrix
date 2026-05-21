@@ -345,6 +345,23 @@ def create_app():
         result_backend=app.config.get('CELERY_RESULT_BACKEND', os.environ.get('REDIS_URL', 'redis://localhost:6379/0')),
     )
 
+    # Initialize Innovation Engine (Smart Campus Intelligence Suite)
+    try:
+        from src.innovation.services import create_innovation_engine
+        from src.innovation.routes import init_innovation_routes, innovation_bp as _innov_bp
+        global innovation_engine
+        global innovation_bp
+        innovation_engine = create_innovation_engine(
+            firebase_service=firebase_service,
+        )
+        innovation_bp = _innov_bp
+        init_innovation_routes(innovation_engine)
+        logger.info("Innovation Engine initialized with 12 modules")
+    except Exception as e:
+        logger.error(f"Innovation Engine initialization failed: {str(e)}")
+        innovation_engine = None
+        innovation_bp = None
+
     # Error handlers
     @app.errorhandler(404)
     def not_found(error):
@@ -359,198 +376,6 @@ def create_app():
         return jsonify({'error': 'Access forbidden'}), 403
     
     # Routes
-    @app.route('/')
-    def landing():
-        """Landing page"""
-        # Debug: Log template path and file info
-        template_path = app.jinja_env.loader.get_source(app.jinja_env, 'landing.html')[1]
-        logger.info(f"Rendering template from: {template_path}")
-        
-        response = render_template('landing.html')
-        # Add cache-busting headers
-        from flask import make_response
-        resp = make_response(response)
-        resp.headers['Cache-Control'] = 'no-cache, no-store, must-revalidate'
-        resp.headers['Pragma'] = 'no-cache'
-        resp.headers['Expires'] = '0'
-        return resp
-    
-    @app.route('/request-demo')
-    def request_demo():
-        """Request demo page"""
-        response = render_template('request-demo.html')
-        from flask import make_response
-        resp = make_response(response)
-        resp.headers['Cache-Control'] = 'no-cache, no-store, must-revalidate'
-        resp.headers['Pragma'] = 'no-cache'
-        resp.headers['Expires'] = '0'
-        return resp
-    
-    @app.route('/schedule-demo')
-    def schedule_demo():
-        """Demo scheduling page with CSRF protection"""
-        from src.application.demo_booking_service import demo_booking_service
-        csrf_token = demo_booking_service.generate_csrf_token()
-        session_token = request.args.get('sessionToken', '')
-        response = render_template('schedule-demo.html', csrf_token=csrf_token, session_token=session_token)
-        from flask import make_response
-        resp = make_response(response)
-        if session_token:
-            resp.set_cookie(
-                'demoSessionToken',
-                session_token,
-                max_age=7 * 24 * 60 * 60,
-                path='/',
-                samesite='Lax'
-            )
-        return resp
-
-    @app.route('/legal/privacy')
-    def privacy_policy():
-        """Privacy Policy page"""
-        return render_template('privacy-policy.html')
-
-    @app.route('/demo-prep')
-    def demo_prep():
-        """Secure Demo Preparation Portal — requires valid booking or session token"""
-        from src.application.demo_booking_service import demo_booking_service
-        token = request.args.get('token', '')
-        session_token = request.args.get('sessionToken', '')
-        booking = None
-        if token:
-            booking = demo_booking_service.get_booking_by_token(token)
-        elif session_token:
-            booking = demo_booking_service.get_booking_by_session_token(session_token)
-            if booking:
-                token = booking.get('token', '')
-        else:
-            cookie_token = request.cookies.get('demoSessionToken', '')
-            if cookie_token:
-                booking = demo_booking_service.get_booking_by_session_token(cookie_token)
-                if booking:
-                    token = booking.get('token', '')
-
-        if not booking:
-            return render_template('demo-prep.html', error='invalid_token')
-
-        email_delivery_status = booking.get('email_status', 'pending')
-        email_delivery_error = booking.get('email_error', '')
-
-        return render_template('demo-prep.html',
-            token=token,
-            name=booking['name'],
-            email=booking['email'],
-            institution=booking['institution'],
-            time=booking['time'],
-            date=booking['date'],
-            status=booking['status'],
-            onboarding_progress=booking.get('onboarding_progress', {}),
-            onboarding_completed=booking.get('onboarding_completed', False),
-            email_status=email_delivery_status,
-            email_error=email_delivery_error,
-        )
-
-    @app.route('/trial-gate')
-    def trial_gate():
-        """Trial eligibility gate page"""
-        return render_template('trial-gate.html')
-
-    @app.route('/product-overview')
-    def product_overview():
-        """Product overview page"""
-        return render_template('product-overview.html')
-    
-    @app.route('/brochure')
-    def brochure():
-        """Brochure page"""
-        return render_template('brochure.html')
-    
-    @app.route('/api/brochure/download')
-    def brochure_download():
-        """Download PDF brochure"""
-        from flask import send_file
-        import io
-        try:
-            from reportlab.lib.pagesizes import A4
-            from reportlab.lib.styles import getSampleStyleSheet, ParagraphStyle
-            from reportlab.platypus import SimpleDocTemplate, Paragraph, Spacer, ListFlowable, ListItem
-            from reportlab.lib.colors import HexColor
-            from reportlab.lib.units import mm
-            
-            buf = io.BytesIO()
-            doc = SimpleDocTemplate(buf, pagesize=A4,
-                leftMargin=20*mm, rightMargin=20*mm,
-                topMargin=20*mm, bottomMargin=20*mm)
-            
-            styles = getSampleStyleSheet()
-            title_style = ParagraphStyle('Title2', parent=styles['Title'], fontSize=26, spaceAfter=6, textColor=HexColor('#4F46E5'))
-            heading_style = ParagraphStyle('Heading2', parent=styles['Heading2'], fontSize=16, spaceAfter=6, spaceBefore=14, textColor=HexColor('#1E293B'))
-            body_style = ParagraphStyle('Body2', parent=styles['Normal'], fontSize=10, leading=15, spaceAfter=8, textColor=HexColor('#334155'))
-            bullet_style = ParagraphStyle('Bullet2', parent=styles['Normal'], fontSize=10, leading=14, leftIndent=16, spaceAfter=4, textColor=HexColor('#334155'))
-            
-            elements = []
-            elements.append(Paragraph("Attendrix", title_style))
-            elements.append(Paragraph("Intelligent Attendance Management for Modern Universities", ParagraphStyle('Sub', fontSize=12, spaceAfter=20, textColor=HexColor('#64748B'))))
-            elements.append(Spacer(1, 6))
-            
-            elements.append(Paragraph("Introduction", heading_style))
-            elements.append(Paragraph("Attendrix is a next-generation attendance management system purpose-built for higher education institutions. It replaces traditional, error-prone roll-calling methods with an AI-powered, anti-proxy platform that delivers real-time visibility, automated reporting, and seamless integration with existing campus infrastructure.", body_style))
-            elements.append(Spacer(1, 4))
-            
-            elements.append(Paragraph("Key Features", heading_style))
-            features = [
-                ("<b>Anti-Proxy Shield</b> — Multi-layered detection using device fingerprinting, geolocation, and behavioral analysis prevents proxy attendance."),
-                ("<b>Biometric Verification</b> — Facial recognition and fingerprint scanning ensure each attendance record is authentic."),
-                ("<b>Real-Time Analytics</b> — Live dashboards with predictive insights help administrators identify trends and intervene early."),
-                ("<b>Offline-First Architecture</b> — Distributed mesh network enables attendance recording without internet. Data syncs automatically when reconnected."),
-                ("<b>Automated Reporting</b> — Export attendance reports to PDF or Excel. Schedule automated delivery to stakeholders."),
-            ]
-            for f in features:
-                elements.append(ListFlowable([ListItem(Paragraph(f, bullet_style))], bulletType='bullet', bulletColor=HexColor('#4F46E5'), start='\u2022'))
-            elements.append(Spacer(1, 4))
-            
-            elements.append(Paragraph("Architecture", heading_style))
-            elements.append(Paragraph("Attendrix is built on a distributed, offline-first architecture. Each classroom operates as an independent node. Data synchronizes across LAN and cloud with automatic conflict resolution, ensuring high availability and data integrity even under adverse network conditions.", body_style))
-            elements.append(Spacer(1, 4))
-            
-            elements.append(Paragraph("Benefits", heading_style))
-            benefits = [
-                "Eliminate proxy attendance completely",
-                "Reduce administrative workload by up to 80%",
-                "Real-time visibility across all classrooms",
-                "Boost student accountability and engagement",
-                "Seamless integration with existing LMS and SIS",
-                "GDPR and FERPA compliant data handling",
-                "Scalable from 500 to 50,000+ students",
-                "24/7 support with dedicated account management",
-            ]
-            for b in benefits:
-                elements.append(ListFlowable([ListItem(Paragraph(b, bullet_style))], bulletType='bullet', bulletColor=HexColor('#10B981'), start='\u2022'))
-            elements.append(Spacer(1, 4))
-            
-            elements.append(Paragraph("Use Cases", heading_style))
-            use_cases = [
-                "University Lectures — 500-2000 student courses with multi-factor verification",
-                "Lab Sessions — Small group attendance with biometric check-in",
-                "Seminars & Workshops — Flexible attendance modes for events",
-                "Multi-Campus Institutions — Unified attendance across all locations",
-                "Examination Halls — Strict identity verification for exam integrity",
-            ]
-            for uc in use_cases:
-                elements.append(ListFlowable([ListItem(Paragraph(uc, bullet_style))], bulletType='bullet', bulletColor=HexColor('#4F46E5'), start='\u2022'))
-            
-            elements.append(Spacer(1, 10))
-            elements.append(Paragraph("For more information, visit attendrix.com or schedule a personalized demo.", body_style))
-            
-            doc.build(elements)
-            buf.seek(0)
-            
-            return send_file(buf, mimetype='application/pdf', as_attachment=True, download_name='Attendrix_Brochure.pdf')
-        except ImportError:
-            return jsonify({'error': 'PDF generation not available'}), 500
-        except Exception as e:
-            logger.error(f"PDF generation failed: {str(e)}")
-            return jsonify({'error': 'Failed to generate PDF'}), 500
     
     # ===== SECURE DEMO REQUEST API =====
     _demo_rate_limit = {}
@@ -782,37 +607,6 @@ def create_app():
 
         return jsonify(diag)
 
-    @app.route('/email-diagnostics')
-    def email_diagnostics_page():
-        """Email diagnostics HTML panel"""
-        return render_template('email-diagnostics.html')
-
-    def _check_dns_deliverability():
-        """Check DNS records (SPF, DKIM, DMARC) for the sender domain via public DNS API."""
-        import urllib.request, urllib.parse, json as _json
-        domain = 'resend.dev'
-        result = {'domain': domain, 'records': {}}
-
-        def _dns_lookup(record_type, query_name):
-            try:
-                url = 'https://dns.google/resolve?name=' + urllib.parse.quote(query_name) + '&type=' + record_type
-                with urllib.request.urlopen(url, timeout=10) as r:
-                    data = _json.loads(r.read().decode())
-                    answers = data.get('Answer', [])
-                    return [a.get('data', '') for a in answers]
-            except Exception as e:
-                return [f'(lookup failed: {e})']
-
-        result['records']['SPF'] = _dns_lookup('TXT', domain)
-        result['records']['DMARC'] = _dns_lookup('TXT', '_dmarc.' + domain)
-        result['records']['DKIM'] = _dns_lookup('TXT', 'google._domainkey.' + domain)
-        result['note'] = (
-            'DMARC policy is p=reject — DKIM/SPF alignment is required for Gmail delivery. '
-            'resend.dev uses Google SPF (include:_spf.google.com). '
-            'If Gmail is not receiving emails, check Spam folder and mark as "Not Spam".'
-        )
-        return result
-    
     @app.route('/api/ping')
     def ping():
         """Lightweight ping endpoint for latency measurement."""
@@ -988,200 +782,6 @@ def create_app():
             logger.error(f"Trial eligibility check error: {str(e)}")
             return jsonify({'eligible': False, 'message': 'Eligibility check failed. Please try again.'}), 500
 
-    # Authentication routes
-    @app.route('/api/auth/register', methods=['POST'])
-    @log_access
-    def register():
-        """User registration with voucher validation"""
-        try:
-            data = request.get_json()
-
-            required_fields = ['email', 'password', 'first_name', 'last_name', 'role', 'voucher_code']
-            for field in required_fields:
-                if field not in data:
-                    return jsonify({'error': f'Missing required field: {field}'}), 400
-
-            from src.domain.entities import UserRole
-            role_mapping = {
-                'institutional_admin': UserRole.INSTITUTIONAL_ADMIN,
-                'lecturer': UserRole.LECTURER,
-                'student': UserRole.STUDENT
-            }
-
-            role_enum = role_mapping.get(data['role'])
-            if not role_enum:
-                return jsonify({'error': f'Invalid role: {data["role"]}'}), 400
-
-            if not auth_service:
-                return jsonify({'error': 'Authentication service not available'}), 500
-
-            user = auth_service.register_user(
-                email=data['email'],
-                password=data['password'],
-                first_name=data['first_name'],
-                last_name=data['last_name'],
-                role=role_enum,
-                institution_id=data['institution_id'],
-                voucher_code=data.get('voucher_code'),
-                student_id=data.get('student_id')
-            )
-
-            return jsonify({
-                'id': user.id,
-                'email': user.email,
-                'first_name': user.first_name,
-                'last_name': user.last_name,
-                'role': user.role.value,
-                'institution_id': user.institution_id,
-                'message': 'Registration successful'
-            }), 201
-
-        except ValueError as e:
-            return jsonify({'error': str(e)}), 400
-        except Exception as e:
-            logger.error(f"Registration error: {str(e)}")
-            error_msg = str(e).lower()
-            if 'firebase' in error_msg and 'credentials' in error_msg:
-                return jsonify({'error': 'Service temporarily unavailable'}), 503
-            if 'exists' in error_msg:
-                return jsonify({'error': 'Email already registered'}), 409
-            return jsonify({'error': f'Registration failed: {str(e)}'}), 500
-    
-    @app.route('/signup-voucher')
-    def signup_voucher_page():
-        """Professional voucher-based signup page"""
-        return render_template('signup-voucher.html')
-
-    @app.route('/api/auth/signup', methods=['POST'])
-    @log_access
-    def signup():
-        """User registration - alias for register endpoint"""
-        return register()
-    
-    @app.route('/api/auth/login', methods=['POST'])
-    @log_access
-    def login():
-        """User login with rate limiting"""
-        try:
-            data = request.get_json()
-            if data is None:
-                return jsonify({'success': False, 'message': 'Invalid request format'}), 400
-
-            if not data.get('email') or not data.get('password'):
-                return jsonify({'success': False, 'message': 'Email and password are required'}), 400
-
-            client_ip = request.remote_addr or 'unknown'
-            if rate_limiter.is_limited(client_ip):
-                logger.warning(f"Rate limit exceeded for IP: {client_ip}")
-                return jsonify({'success': False, 'message': 'Too many attempts. Try again in 15 minutes.'}), 429
-
-            if not auth_service:
-                return jsonify({'success': False, 'message': 'Service temporarily unavailable'}), 500
-
-            result = auth_service.authenticate_user(
-                email=data['email'],
-                password=data['password'],
-                remember_me=data.get('remember_me', False),
-                device_fingerprint=data.get('device_fingerprint'),
-                ip_address=request.remote_addr,
-                user_agent=request.headers.get('User-Agent')
-            )
-
-            if result and isinstance(result, dict):
-                if result.get('success'):
-                    rate_limiter.record_success(client_ip)
-                    return jsonify(result), 200
-                return jsonify(result), 401
-
-            return jsonify({'success': False, 'message': 'Authentication failed'}), 401
-
-        except Exception as e:
-            logger.error(f"Login error: {str(e)}")
-            return jsonify({'success': False, 'message': 'Authentication failed'}), 401
-    
-    @app.route('/api/auth/refresh', methods=['POST'])
-    @log_access
-    def refresh_token():
-        """Refresh access token"""
-        try:
-            data = request.get_json()
-            refresh_token = data.get('refresh_token')
-            
-            if not refresh_token:
-                return jsonify({'error': 'Refresh token required'}), 400
-            
-            result = auth_service.refresh_token(refresh_token)
-            
-            if result:
-                return jsonify(result), 200
-            else:
-                return jsonify({'error': 'Invalid refresh token'}), 401
-                
-        except Exception as e:
-            logger.error(f"Token refresh error: {str(e)}")
-            return jsonify({'error': 'Token refresh failed'}), 500
-    
-    @app.route('/api/auth/logout', methods=['POST'])
-    @require_auth
-    @log_access
-    def logout():
-        """User logout"""
-        try:
-            user_id = request.current_user.get('user_id')
-            success = auth_service.logout_user(
-                user_id=user_id,
-                ip_address=request.remote_addr,
-                user_agent=request.headers.get('User-Agent')
-            )
-            
-            if success:
-                return jsonify({'message': 'Logged out successfully'}), 200
-            else:
-                return jsonify({'error': 'Logout failed'}), 500
-        except Exception as e:
-            logger.error(f"Logout error: {str(e)}")
-            return jsonify({'error': 'Logout failed'}), 500
-
-    @app.route('/api/auth/change-password', methods=['POST'])
-    @require_auth
-    @log_access
-    def change_password():
-        """Change password for authenticated user"""
-        try:
-            data = request.get_json()
-            if not data or not data.get('current_password') or not data.get('new_password'):
-                return jsonify({'error': 'current_password and new_password required'}), 400
-
-            user_id = request.current_user.get('user_id')
-            ok = auth_service.change_password(
-                user_id=user_id,
-                current_password=data['current_password'],
-                new_password=data['new_password']
-            )
-            if ok:
-                return jsonify({'message': 'Password changed successfully'}), 200
-            else:
-                return jsonify({'error': 'Current password is incorrect'}), 401
-        except Exception as e:
-            logger.error(f"Password change error: {str(e)}")
-            return jsonify({'error': 'Password change failed'}), 500
-
-
-    @app.route('/logout', methods=['GET'])
-    def logout_page():
-        """Logout page redirect"""
-        return render_template('logout.html')
-    
-    @app.route('/login', methods=['GET'])
-    def login_page():
-        """Login page"""
-        return render_template('login.html')
-    
-    @app.route('/signup', methods=['GET'])
-    def signup_page():
-        """Sign up page"""
-        return render_template('signup.html')
-    
     # Scheduling routes
     @app.route('/api/schedules', methods=['POST'])
     @require_auth
@@ -1440,6 +1040,8 @@ def create_app():
             return jsonify({'error': 'Failed to get statistics'}), 500
     
     # User profile routes
+    from src.infrastructure.repositories import user_repo
+
     @app.route('/api/users/profile', methods=['GET'])
     @require_auth
     @log_access
@@ -1525,6 +1127,9 @@ def create_app():
     
     # Clean dashboard routes - no old logic
     @app.route('/institutional-admin/dashboard', strict_slashes=False)
+    @require_auth
+    @require_role('institutional_admin', 'super_admin')
+    @log_access
     def institutional_admin_dashboard():
         """Institutional Administrator Dashboard"""
         return render_template('institutional-admin/dashboard.html')
@@ -1959,7 +1564,79 @@ def create_app():
         institution_id = request.current_user.get('institution_id', 'inst_001')
         if not offline_queue_service:
             return jsonify({'error': 'Offline queue service unavailable'}), 503
-        result = offline_queue_service.process_queue(institution_id)
+        
+        # Build handler map — dispatches each operation type to the real service
+        def _handle_create_attendance(payload):
+            doc_id = firebase_service.create_document('attendance', payload)
+            return True, {'id': doc_id}, None
+
+        def _handle_mark_attendance(payload):
+            session_code = payload.get('session_code')
+            student_id = payload.get('student_id')
+            if session_code and student_id:
+                existing = firebase_service.query_documents('attendance', filters=[
+                    {'field': 'session_code', 'value': session_code},
+                    {'field': 'student_id', 'value': student_id},
+                ])
+                if not existing:
+                    firebase_service.create_document('attendance', payload)
+                return True, {}, None
+            return False, {}, 'session_code and student_id required'
+
+        def _handle_create_session(payload):
+            doc_id = firebase_service.create_document('sessions', payload)
+            return True, {'id': doc_id}, None
+
+        def _handle_update_user(payload):
+            user_id = payload.pop('id', None)
+            if user_id:
+                firebase_service.update_document('users', user_id, payload)
+                return True, {}, None
+            return False, {}, 'User ID required'
+
+        def _handle_create_enrollment(payload):
+            doc_id = firebase_service.create_document('enrollments', payload)
+            return True, {'id': doc_id}, None
+
+        def _handle_create_activity_log(payload):
+            doc_id = firebase_service.create_document('activity_log', payload)
+            return True, {'id': doc_id}, None
+
+        def _handle_create_security_alert(payload):
+            doc_id = firebase_service.create_document('security_alerts', payload)
+            return True, {'id': doc_id}, None
+
+        def _handle_upsert_network_node(payload):
+            node_name = payload.get('name')
+            if node_name:
+                existing = firebase_service.query_documents('network_nodes', filters=[
+                    {'field': 'name', 'value': node_name},
+                    {'field': 'institution_id', 'value': payload.get('institution_id', '')},
+                ])
+                if existing:
+                    firebase_service.update_document('network_nodes', existing[0]['id'], payload)
+                else:
+                    firebase_service.create_document('network_nodes', payload)
+                return True, {}, None
+            return False, {}, 'Node name required'
+
+        def _handle_create_payment(payload):
+            doc_id = firebase_service.create_document('payments', payload)
+            return True, {'id': doc_id}, None
+
+        handler_map = {
+            'create_attendance': _handle_create_attendance,
+            'mark_attendance': _handle_mark_attendance,
+            'create_session': _handle_create_session,
+            'update_user': _handle_update_user,
+            'create_enrollment': _handle_create_enrollment,
+            'create_activity_log': _handle_create_activity_log,
+            'create_security_alert': _handle_create_security_alert,
+            'upsert_network_node': _handle_upsert_network_node,
+            'create_payment': _handle_create_payment,
+        }
+        
+        result = offline_queue_service.process_queue(institution_id, handler_map)
         return jsonify(result)
 
     @app.route('/api/institutional/offline-queue/pending')
@@ -2374,7 +2051,7 @@ def create_app():
     @log_access
     def institutional_lookup_departments():
         institution_id = request.current_user.get('institution_id', 'inst_001')
-        result = dashboard_service.list_departments(institution_id) if dashboard_service else {'departments': []}
+        result = dashboard_service.list_departments(institution_id, per_page=999) if dashboard_service else {'departments': []}
         return jsonify(result)
 
     @app.route('/api/institutional/lookup/courses')
@@ -3155,6 +2832,14 @@ def create_app():
             
             voucher = vouchers[0]
             
+            # Check if revoked
+            if voucher.get('revoked', False):
+                return jsonify({
+                    'valid': False,
+                    'error': 'Voucher has been revoked by administrator',
+                    'error_code': 'REVOKED'
+                }), 200
+            
             # Check if already used
             if voucher.get('is_used', False):
                 return jsonify({
@@ -3164,7 +2849,6 @@ def create_app():
                 }), 200
             
             # Check expiry
-            from datetime import datetime
             expiry_date = datetime.fromisoformat(voucher['expires_at'])
             if datetime.utcnow() > expiry_date:
                 return jsonify({
@@ -3207,13 +2891,15 @@ def create_app():
                 return jsonify({'error': 'Role and institution_id required'}), 400
             
             from src.application.voucher_management_service import VoucherManagementService
+            from src.domain.entities import UserRole
             voucher_service = VoucherManagementService(firebase_service)
             
             vouchers = voucher_service.generate_voucher_batch(
                 role=UserRole(role),
                 institution_id=institution_id,
                 quantity=quantity,
-                email_binding=email_binding
+                email_binding=email_binding,
+                generated_by=request.current_user.get('email', 'admin')
             )
             
             return jsonify({
@@ -3224,6 +2910,174 @@ def create_app():
         except Exception as e:
             logger.error(f"Voucher batch generation error: {str(e)}")
             return jsonify({'error': 'Failed to generate vouchers'}), 500
+    
+    @app.route('/api/voucher/list', methods=['GET'])
+    @require_auth
+    @require_role('institutional_admin', 'super_admin')
+    @log_access
+    def list_vouchers():
+        """List vouchers with pagination, search, and filters"""
+        try:
+            from src.application.voucher_management_service import VoucherManagementService
+            voucher_service = VoucherManagementService(firebase_service)
+            
+            user = request.current_user
+            institution_id = request.args.get('institution_id', user.get('institution_id', ''))
+            
+            if not institution_id:
+                return jsonify({'error': 'Institution ID required'}), 400
+            
+            page = int(request.args.get('page', 1))
+            per_page = int(request.args.get('per_page', 20))
+            search = request.args.get('search', '')
+            status_filter = request.args.get('status', '')
+            role_filter = request.args.get('role', '')
+            
+            result = voucher_service.list_vouchers(
+                institution_id=institution_id,
+                page=page,
+                per_page=per_page,
+                search=search,
+                status_filter=status_filter,
+                role_filter=role_filter
+            )
+            
+            return jsonify(result), 200
+            
+        except Exception as e:
+            logger.error(f"List vouchers error: {str(e)}")
+            return jsonify({'error': 'Failed to list vouchers'}), 500
+    
+    @app.route('/api/voucher/revoke/<voucher_id>', methods=['POST'])
+    @require_auth
+    @require_role('institutional_admin', 'super_admin')
+    @log_access
+    def revoke_voucher(voucher_id):
+        """Revoke a voucher"""
+        try:
+            from src.application.voucher_management_service import VoucherManagementService
+            voucher_service = VoucherManagementService(firebase_service)
+            
+            if voucher_service.revoke_voucher(voucher_id):
+                return jsonify({'success': True, 'message': 'Voucher revoked successfully'}), 200
+            else:
+                return jsonify({'error': 'Voucher not found'}), 404
+                
+        except Exception as e:
+            logger.error(f"Revoke voucher error: {str(e)}")
+            return jsonify({'error': 'Failed to revoke voucher'}), 500
+    
+    @app.route('/api/voucher/export/csv', methods=['GET'])
+    @require_auth
+    @require_role('institutional_admin', 'super_admin')
+    @log_access
+    def export_vouchers_csv():
+        """Export vouchers as CSV"""
+        try:
+            from src.application.voucher_management_service import VoucherManagementService
+            from flask import Response
+            import csv, io
+            
+            voucher_service = VoucherManagementService(firebase_service)
+            
+            user = request.current_user
+            institution_id = user.get('institution_id', '')
+            status_filter = request.args.get('status', '')
+            role_filter = request.args.get('role', '')
+            
+            result = voucher_service.list_vouchers(
+                institution_id=institution_id,
+                page=1,
+                per_page=99999,
+                status_filter=status_filter,
+                role_filter=role_filter
+            )
+            
+            si = io.StringIO()
+            cw = csv.writer(si)
+            cw.writerow(['Code', 'Role', 'Status', 'Used By', 'Used At', 'Created At', 'Expires At', 'Revoked At'])
+            
+            for v in result.get('vouchers', []):
+                cw.writerow([
+                    v.get('code', ''),
+                    v.get('role', ''),
+                    v.get('_status', ''),
+                    v.get('used_by', ''),
+                    v.get('used_at', ''),
+                    v.get('created_at', ''),
+                    v.get('expires_at', ''),
+                    v.get('revoked_at', ''),
+                ])
+            
+            output = si.getvalue()
+            si.close()
+            
+            return Response(
+                output,
+                mimetype='text/csv',
+                headers={'Content-Disposition': f'attachment; filename=vouchers_{institution_id}_{datetime.utcnow().strftime("%Y%m%d")}.csv'}
+            )
+            
+        except Exception as e:
+            logger.error(f"Export vouchers CSV error: {str(e)}")
+            return jsonify({'error': 'Failed to export vouchers'}), 500
+    
+    @app.route('/api/voucher/email-delivery', methods=['POST'])
+    @require_auth
+    @require_role('institutional_admin', 'super_admin')
+    @log_access
+    def voucher_email_delivery():
+        """Email voucher codes to recipients"""
+        try:
+            data = request.get_json()
+            vouchers = data.get('vouchers', [])
+            recipients = data.get('recipients', [])
+            
+            if not vouchers or not recipients:
+                return jsonify({'success': False, 'error': 'Vouchers and recipients required'}), 400
+            
+            global email_service
+            if not email_service or not email_service.is_available:
+                return jsonify({'success': False, 'error': 'Email service not configured. Set EMAIL_ENABLED=true and configure SMTP or RESEND_API_KEY.'}), 200
+            
+            sent = 0
+            failed = 0
+            for i, voucher in enumerate(vouchers):
+                to_email = recipients[i] if i < len(recipients) else recipients[-1]
+                role_display = voucher.get('role', '').replace('_', ' ').title()
+                html = f"""
+                <div style="font-family:sans-serif;max-width:480px;margin:0 auto;">
+                    <div style="background:linear-gradient(135deg,#4F46E5,#7C3AED);padding:24px;border-radius:12px 12px 0 0;text-align:center;">
+                        <h1 style="color:#fff;margin:0;font-size:20px;">Attendrix</h1>
+                        <p style="color:rgba(255,255,255,0.7);margin:4px 0 0;font-size:13px;">Voucher Code</p>
+                    </div>
+                    <div style="background:#1a1f35;padding:24px;border-radius:0 0 12px 12px;">
+                        <p style="color:rgba(255,255,255,0.6);font-size:13px;margin:0 0 12px;">Your <strong style="color:#fff;">{role_display}</strong> voucher is ready:</p>
+                        <div style="background:rgba(79,70,229,0.1);border:2px dashed rgba(79,70,229,0.3);border-radius:8px;padding:16px;text-align:center;margin-bottom:12px;">
+                            <span style="font-family:monospace;font-size:28px;font-weight:700;color:#A5B4FC;letter-spacing:4px;">{voucher['code']}</span>
+                        </div>
+                        <p style="color:rgba(255,255,255,0.5);font-size:11px;margin:0;">Visit the registration page and enter this code to activate your account. This code expires on {voucher.get('expires_at','')[:10]}.</p>
+                    </div>
+                </div>
+                """
+                result = email_service.send_email(
+                    to_email=to_email,
+                    subject=f'Your Attendrix {role_display} Voucher Code',
+                    html_body=html,
+                )
+                if result.get('status') in ('sent', 'queued'):
+                    sent += 1
+                else:
+                    failed += 1
+            
+            return jsonify({
+                'success': True,
+                'message': f'Delivered {sent}/{len(vouchers)} voucher(s) via email' + (f' ({failed} failed)' if failed else '')
+            }), 200
+            
+        except Exception as e:
+            logger.error(f"Voucher email delivery error: {str(e)}")
+            return jsonify({'error': 'Failed to send emails'}), 500
     
     @app.route('/api/voucher/statistics/<institution_id>', methods=['GET'])
     @require_auth
@@ -3462,9 +3316,24 @@ def create_app():
             }
         })
     
+    # ── Presentation Layer Blueprints ──
+    from src.presentation.routes.pages import pages_bp
+    app.register_blueprint(pages_bp)
+
+    from src.presentation.routes.auth import auth_bp, init_auth_routes
+    init_auth_routes(auth_service, rate_limiter)
+    app.register_blueprint(auth_bp)
+
     # ── Feedback Intelligence Center ──
     from src.presentation.api.feedback_routes import feedback_api
     app.register_blueprint(feedback_api)
+
+    # ── Innovation Engine API (Smart Campus Suite) ──
+    if innovation_bp:
+        app.register_blueprint(innovation_bp)
+        logger.info("Innovation blueprint registered at /api/innovation")
+    else:
+        logger.warning("Innovation blueprint not available — skipping registration")
 
     return app
 

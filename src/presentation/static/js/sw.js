@@ -20,14 +20,25 @@ const API_CACHE = `attendrix-api-${CACHE_VERSION}`;
 
 const STATIC_ASSETS = [
   '/static/js/landing.js',
-  '/static/css/landing.css',
+  '/static/js/i18n.js',
+  '/static/js/responsive.js',
+  '/static/js/device-fingerprint.js',
+  '/static/js/network-monitor.js',
+  '/static/js/network-topology.js',
+  '/static/css/responsive.css',
+  '/static/images/favicon.svg',
+  '/static/images/icon-192.png',
+  '/static/images/icon-512.png',
 ];
 
 const APP_SHELL_PAGES = [
+  '/',
   '/login',
   '/signup',
   '/signup-voucher',
   '/offline',
+  '/product-overview',
+  '/legal/privacy',
 ];
 
 const API_CACHE_PREFIX = '/api/';

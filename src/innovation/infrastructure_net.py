@@ -40,12 +40,54 @@ class InfrastructureNet:
             "load_balance_max_sessions_per_node": 50,
             "self_heal_retry_delay_seconds": 10,
         }
+        self._seed_default_nodes()
 
     def initialize(self, firebase_service=None, repositories: dict = None) -> None:
         self._firebase = firebase_service
         self._repos = repositories or {}
         registry.subscribe(InnovationEvent.SYNC_COMPLETED, self._on_sync)
-        logger.info("InfrastructureNet initialized")
+
+    def _seed_default_nodes(self) -> None:
+        """Register default campus edge nodes and seed sync history."""
+        default_nodes = [
+            ("building-a", "building", "Main Campus Building A", ["attendance", "sync"]),
+            ("building-b", "building", "Main Campus Building B", ["attendance", "sync"]),
+            ("science-block", "building", "Science Block", ["attendance", "sync", "lab"]),
+            ("library", "building", "Library", ["attendance", "sync"]),
+            ("student-center", "building", "Student Center", ["attendance", "sync"]),
+            ("admin-block", "building", "Administration Block", ["sync", "compliance"]),
+        ]
+        for node_id, node_type, location, caps in default_nodes:
+            self.register_node(node_id, node_type, location, caps)
+
+        # Seed mock sync history for mesh health evaluation
+        seed_syncs = [
+            ("building-a", "success", 120, 45),
+            ("building-b", "success", 95, 30),
+            ("science-block", "success", 210, 60),
+            ("library", "success", 80, 25),
+            ("student-center", "success", 150, 55),
+            ("admin-block", "success", 60, 20),
+            ("building-a", "success", 110, 40),
+            ("building-b", "failed", 300, 10),
+            ("science-block", "success", 190, 55),
+            ("library", "success", 75, 22),
+            ("student-center", "failed", 450, 8),
+            ("admin-block", "success", 55, 18),
+            ("building-a", "success", 130, 50),
+            ("building-b", "success", 100, 35),
+            ("science-block", "degraded", 500, 5),
+        ]
+        for node_id, status, duration, records in seed_syncs:
+            self._sync_history.append({
+                "timestamp": datetime.utcnow() - timedelta(seconds=len(self._sync_history) * 60),
+                "node_id": node_id,
+                "status": status,
+                "duration_ms": duration,
+                "records_synced": records,
+            })
+
+        logger.info("InfrastructureNet initialized with %d campus nodes", len(default_nodes))
 
     def _on_sync(self, data: dict) -> None:
         """Track sync events for health analysis."""

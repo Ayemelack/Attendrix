@@ -172,6 +172,8 @@ def require_auth(f):
                 if not role:
                     if request.path.startswith('/api/super-admin/'):
                         role = UserRole.SUPER_ADMIN.value
+                    elif request.path.startswith('/system/'):
+                        role = UserRole.SUPER_ADMIN.value
                     elif request.path.startswith('/admin/'):
                         role = UserRole.SUPER_ADMIN.value
                     elif request.path.startswith('/institutional-admin/'):
@@ -185,7 +187,6 @@ def require_auth(f):
                     elif request.path.startswith('/api/biometric/'):
                         role = UserRole.STUDENT.value
                     else:
-                        # Don't default to super_admin - require explicit role
                         return jsonify({'error': 'Access denied - role parameter required for development mode'}), 403
                 
                 # Create mock user data for development
