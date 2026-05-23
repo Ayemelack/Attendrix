@@ -26,14 +26,16 @@ class PaymentService:
             logger.info(f"Payment provider configured: {provider}")
 
     def initiate_payment(self, provider: str, phone: str, amount: int,
-                         reference: str = '', description: str = '') -> Dict[str, Any]:
+                         reference: str = '', description: str = '',
+                         institution_id: str = '') -> Dict[str, Any]:
         result = {
             'transaction_id': str(uuid.uuid4()),
             'provider': provider,
             'phone': phone,
             'amount': amount,
-            'reference': reference or result['transaction_id'],
+            'reference': reference or str(uuid.uuid4()),
             'status': 'pending',
+            'institution_id': institution_id,
             'timestamp': datetime.utcnow().isoformat(),
         }
         try:
@@ -169,9 +171,11 @@ class PaymentService:
         try:
             self.fb.create_document('payment_transactions', {
                 'id': result['transaction_id'],
+                'institution_id': result.get('institution_id', ''),
                 'provider': result['provider'],
                 'phone': result['phone'],
                 'amount': result['amount'],
+                'amount_xaf': result['amount'],
                 'reference': result.get('reference', ''),
                 'status': result['status'],
                 'provider_reference': result.get('provider_reference', ''),

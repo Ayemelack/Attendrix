@@ -278,6 +278,29 @@
 
         @keyframes spin { to { transform: rotate(360deg); } }
 
+        .toggle-pw {
+            position: absolute;
+            right: 0.75rem;
+            top: 50%;
+            transform: translateY(-50%);
+            background: none;
+            border: none;
+            color: rgba(255,255,255,0.3);
+            cursor: pointer;
+            padding: 0.25rem;
+            font-size: 1rem;
+            transition: color 0.3s;
+        }
+        .toggle-pw:hover { color: rgba(255,255,255,0.6); }
+
+        .validation-feedback {
+            font-size: 0.75rem;
+            margin-top: 0.3rem;
+            display: block;
+        }
+        .validation-feedback.invalid { color: #FCA5A5; }
+        .validation-feedback.valid { color: #6EE7B7; }
+
         /* Step 2 - Registration */
         .voucher-badge {
             display: inline-flex;
@@ -451,10 +474,10 @@
             <label for="voucherCode">Voucher Code</label>
             <i class="fas fa-hashtag input-icon"></i>
             <input type="text" class="form-control" id="voucherCode"
-                   placeholder="e.g. ADMIN123" maxlength="8" autocomplete="off">
+                   placeholder="" maxlength="8" autocomplete="off">
         </div>
 
-        <button class="btn-primary-custom" id="validateVoucherBtn" onclick="validateVoucher()">
+        <button class="btn-primary-custom" id="validateVoucherBtn" onclick="validateVoucher()" disabled>
             <span class="spinner" id="voucherSpinner"></span>
             <span id="voucherBtnText">Validate Voucher</span>
         </button>
@@ -521,20 +544,28 @@
                 <label for="password">Password</label>
                 <i class="fas fa-lock input-icon"></i>
                 <input type="password" class="form-control" id="password" name="password"
-                       placeholder="Min. 8 characters" required minlength="8">
+                       placeholder="Min. 8 characters" required minlength="8" autocomplete="new-password">
+                <button type="button" class="toggle-pw" id="togglePassword" tabindex="-1">
+                    <i class="fas fa-eye"></i>
+                </button>
                 <div class="password-strength">
                     <div class="password-strength-bar" id="passwordStrength"></div>
                 </div>
             </div>
+            <span class="validation-feedback" id="passwordFeedback"></span>
 
             <div class="input-group-custom">
                 <label for="confirmPassword">Confirm Password</label>
                 <i class="fas fa-lock input-icon"></i>
                 <input type="password" class="form-control" id="confirmPassword" name="confirmPassword"
-                       placeholder="Re-enter password" required minlength="8">
+                       placeholder="Re-enter password" required minlength="8" autocomplete="new-password">
+                <button type="button" class="toggle-pw" id="toggleConfirmPassword" tabindex="-1">
+                    <i class="fas fa-eye"></i>
+                </button>
             </div>
+            <span class="validation-feedback" id="confirmPasswordFeedback"></span>
 
-            <button type="submit" class="btn-primary-custom" id="submitRegistrationBtn">
+            <button type="submit" class="btn-primary-custom" id="submitRegistrationBtn" disabled>
                 <i class="fas fa-user-plus me-2"></i>
                 Complete Registration
             </button>
@@ -568,6 +599,103 @@
 <script>
     let currentStep = 1;
     let validatedVoucher = null;
+
+    // ── Input Security ──
+    function hasMaliciousInput(value) {
+        if (/\0/.test(value)) return true;
+        if (/<[^>]*>/i.test(value)) return true;
+        if (/javascript:/i.test(value)) return true;
+        if (/on\w+\s*=/i.test(value)) return true;
+        if (/['"]\s*(?:OR|AND|SELECT|INSERT|UPDATE|DELETE|DROP|UNION|--|#|;)/i.test(value)) return true;
+        return false;
+    }
+
+    function sanitizeText(value) {
+        return value.replace(/[\0\x08\x0B\x0C\x0E-\x1F]/g, '');
+    }
+
+    // ── Validation ──
+    function validateFullName(value) {
+        const v = value.trim();
+        if (!v) return { valid: false, msg: '' };
+        if (hasMaliciousInput(v)) return { valid: false, msg: 'Invalid characters detected' };
+        if (/^\d+$/.test(v)) return { valid: false, msg: 'Name cannot be only numbers' };
+        if (/^[^a-zA-Z]+$/.test(v)) return { valid: false, msg: 'Name must contain letters' };
+        return { valid: true, msg: '' };
+    }
+
+    function validateEmail(value) {
+        if (!value) return { valid: false, msg: '' };
+        if (hasMaliciousInput(value)) return { valid: false, msg: 'Invalid characters detected' };
+        if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(value)) return { valid: false, msg: 'Invalid email format' };
+        return { valid: true, msg: '' };
+    }
+
+    function validatePassword(value) {
+        const checks = {
+            minLen: value.length >= 8,
+            upper: /[A-Z]/.test(value),
+            lower: /[a-z]/.test(value),
+            num: /\d/.test(value),
+            special: /[^a-zA-Z0-9]/.test(value)
+        };
+        const valid = checks.minLen && checks.upper && checks.lower && checks.num && checks.special;
+        return { valid, checks };
+    }
+
+    function checkRegistrationForm() {
+        const fullName = document.getElementById('fullName').value;
+        const email = document.getElementById('email').value;
+        const password = document.getElementById('password').value;
+        const confirmPassword = document.getElementById('confirmPassword').value;
+        const role = document.getElementById('validatedRole').value;
+        const pwVal = validatePassword(password);
+        const emailVal = validateEmail(email.trim());
+        const nameVal = validateFullName(fullName);
+
+        let allValid = nameVal.valid && emailVal.valid && pwVal.valid &&
+                       confirmPassword === password &&
+                       document.getElementById('fullName').value.trim() &&
+                       email.trim();
+
+        if (role === 'institutional_admin') {
+            const instName = document.getElementById('institutionName').value.trim();
+            allValid = allValid && instName.length >= 3 && !hasMaliciousInput(instName);
+        }
+        if (role === 'student') {
+            const sid = document.getElementById('studentId').value.trim();
+            allValid = allValid && sid.length >= 3 && !hasMaliciousInput(sid);
+        }
+
+        const btn = document.getElementById('submitRegistrationBtn');
+        btn.disabled = !allValid;
+    }
+
+    // ── Password Toggles ──
+    document.addEventListener('DOMContentLoaded', function () {
+        document.getElementById('togglePassword').addEventListener('click', function () {
+            const pw = document.getElementById('password');
+            const icon = this.querySelector('i');
+            if (pw.type === 'password') {
+                pw.type = 'text';
+                icon.className = 'fas fa-eye-slash';
+            } else {
+                pw.type = 'password';
+                icon.className = 'fas fa-eye';
+            }
+        });
+        document.getElementById('toggleConfirmPassword').addEventListener('click', function () {
+            const pw = document.getElementById('confirmPassword');
+            const icon = this.querySelector('i');
+            if (pw.type === 'password') {
+                pw.type = 'text';
+                icon.className = 'fas fa-eye-slash';
+            } else {
+                pw.type = 'password';
+                icon.className = 'fas fa-eye';
+            }
+        });
+    });
 
     async function validateVoucher() {
         const code = document.getElementById('voucherCode').value.trim().toUpperCase();
@@ -611,6 +739,17 @@
             e.preventDefault();
             handleRegistration();
         });
+
+        const fields = ['fullName', 'email', 'password', 'confirmPassword', 'institutionName', 'studentId'];
+        fields.forEach(function (id) {
+            const el = document.getElementById(id);
+            if (el) {
+                el.addEventListener('input', function () { checkRegistrationForm(); });
+                el.addEventListener('blur', function () { checkRegistrationForm(); });
+            }
+        });
+
+        checkRegistrationForm();
     });
 
     function handleRegistration() {
@@ -628,14 +767,8 @@
             student_id: document.getElementById('studentId')?.value?.trim() || null
         };
 
-        if (!data.email || !data.password || !data.first_name) { showAlert('Please fill all required fields', 'error'); return; }
-        if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(data.email)) { showAlert('Please enter a valid email address', 'error'); return; }
-        if (data.password.length < 8) { showAlert('Password must be at least 8 characters', 'error'); return; }
-        if (data.password !== document.getElementById('confirmPassword').value) { showAlert('Passwords do not match', 'error'); return; }
-        if (data.role === 'student' && (!data.student_id || data.student_id.length < 3)) { showAlert('Please enter a valid student ID', 'error'); return; }
-        if (data.role === 'institutional_admin') {
-            const instName = document.getElementById('institutionName').value.trim();
-            if (!instName || instName.length < 3) { showAlert('Please enter a valid institution name', 'error'); return; }
+        if (hasMaliciousInput(data.email + data.first_name + data.last_name + (data.student_id || ''))) {
+            showAlert('Invalid input detected', 'error'); return;
         }
 
         btn.disabled = true;
@@ -663,6 +796,47 @@
         });
     }
 
+    // ── Full Name Sanitization ──
+    document.getElementById('fullName').addEventListener('input', function () {
+        this.value = sanitizeText(this.value).replace(/[^a-zA-ZÀ-ÿ\s'\-]/g, '');
+        validateFullNameField();
+    });
+
+    function validateFullNameField() {
+        const el = document.getElementById('fullName');
+        const fb = document.getElementById('fullNameFeedback') || (function () {
+            const s = document.createElement('span');
+            s.className = 'validation-feedback';
+            s.id = 'fullNameFeedback';
+            el.parentNode.after(s);
+            return s;
+        })();
+        const r = validateFullName(el.value);
+        if (el.value.trim() && !r.valid) {
+            fb.textContent = r.msg;
+            fb.className = 'validation-feedback invalid';
+        } else {
+            fb.textContent = '';
+            fb.className = 'validation-feedback';
+        }
+    }
+
+    // ── Email Sanitization ──
+    document.getElementById('email').addEventListener('input', function () {
+        this.value = sanitizeText(this.value).replace(/\s/g, '').toLowerCase();
+    });
+
+    // ── Institution Name Sanitization ──
+    document.getElementById('institutionName').addEventListener('input', function () {
+        this.value = sanitizeText(this.value).replace(/[<>]/g, '');
+    });
+
+    // ── Student ID Sanitization ──
+    document.getElementById('studentId').addEventListener('input', function () {
+        this.value = sanitizeText(this.value).replace(/[^a-zA-Z0-9]/g, '');
+    });
+
+    // ── Password Validation & Strength ──
     document.getElementById('password').addEventListener('input', function () {
         const pw = this.value;
         const bar = document.getElementById('passwordStrength');
@@ -670,10 +844,47 @@
         else if (pw.length < 6 || !/(?=.*[a-z])(?=.*[A-Z])(?=.*\d)/.test(pw)) bar.className = 'password-strength-bar strength-weak';
         else if (pw.length < 10 || !/[^a-zA-Z0-9]/.test(pw)) bar.className = 'password-strength-bar strength-medium';
         else bar.className = 'password-strength-bar strength-strong';
+
+        const r = validatePassword(pw);
+        const fb = document.getElementById('passwordFeedback');
+        if (pw && !r.valid) {
+            const missing = [];
+            if (!r.checks.minLen) missing.push('8+ characters');
+            if (!r.checks.upper) missing.push('uppercase');
+            if (!r.checks.lower) missing.push('lowercase');
+            if (!r.checks.num) missing.push('number');
+            if (!r.checks.special) missing.push('special character');
+            fb.textContent = 'Requires: ' + missing.join(', ');
+            fb.className = 'validation-feedback invalid';
+        } else if (pw && r.valid) {
+            fb.textContent = 'Password is strong';
+            fb.className = 'validation-feedback valid';
+        } else {
+            fb.textContent = '';
+            fb.className = 'validation-feedback';
+        }
     });
 
+    // ── Confirm Password Validation ──
+    document.getElementById('confirmPassword').addEventListener('input', function () {
+        const pw = document.getElementById('password').value;
+        const fb = document.getElementById('confirmPasswordFeedback');
+        if (this.value && this.value !== pw) {
+            fb.textContent = 'Passwords do not match';
+            fb.className = 'validation-feedback invalid';
+        } else if (this.value && this.value === pw) {
+            fb.textContent = 'Passwords match';
+            fb.className = 'validation-feedback valid';
+        } else {
+            fb.textContent = '';
+            fb.className = 'validation-feedback';
+        }
+    });
+
+    // ── Voucher auto-format ──
     document.getElementById('voucherCode').addEventListener('input', function () {
         this.value = this.value.toUpperCase().replace(/[^A-Z0-9]/g, '');
+        document.getElementById('validateVoucherBtn').disabled = !this.value.trim();
     });
     document.getElementById('voucherCode').addEventListener('keypress', function (e) {
         if (e.key === 'Enter') validateVoucher();
@@ -712,7 +923,7 @@
         const btn = document.getElementById('validateVoucherBtn');
         spinner.style.display = loading ? 'inline-block' : 'none';
         text.textContent = loading ? 'Validating...' : 'Validate Voucher';
-        btn.disabled = loading;
+        btn.disabled = loading || !document.getElementById('voucherCode').value.trim();
     }
 </script>
 

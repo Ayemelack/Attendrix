@@ -162,45 +162,9 @@ def require_auth(f):
     """Decorator to require authentication"""
     @wraps(f)
     def decorated_function(*args, **kwargs):
-        # Dev bypass — ?role= query param skips auth for direct URL access
-        if request.args.get('role') or request.path.startswith(('/admin/', '/system/', '/institutional-admin/', '/lecturer/', '/student/', '/employee/', '/api/super-admin/', '/api/biometric/')):
-                
-                # Try to get role from query parameter first
-                role = request.args.get('role')
-                
-                # If no role in query param, determine from path for direct URL access
-                if not role:
-                    if request.path.startswith('/api/super-admin/'):
-                        role = UserRole.SUPER_ADMIN.value
-                    elif request.path.startswith('/system/'):
-                        role = UserRole.SUPER_ADMIN.value
-                    elif request.path.startswith('/admin/'):
-                        role = UserRole.SUPER_ADMIN.value
-                    elif request.path.startswith('/institutional-admin/'):
-                        role = UserRole.INSTITUTIONAL_ADMIN.value
-                    elif request.path.startswith('/lecturer/'):
-                        role = UserRole.LECTURER.value
-                    elif request.path.startswith('/student/'):
-                        role = UserRole.STUDENT.value
-                    elif request.path.startswith('/employee/'):
-                        role = UserRole.EMPLOYEE.value
-                    elif request.path.startswith('/api/biometric/'):
-                        role = UserRole.STUDENT.value
-                    else:
-                        return jsonify({'error': 'Access denied - role parameter required for development mode'}), 403
-                
-                # Create mock user data for development
-                request.current_user = {
-                    'user_id': f'dev_user_{role}',
-                    'email': f'{role}@attendrix.dev',
-                    'role': role,
-                    'institution_id': 'dev_institution'
-                }
-                return f(*args, **kwargs)
-        
         token = None
         
-        # Check for token in header
+        # Check for token in header first (real auth always takes priority)
         auth_header = request.headers.get('Authorization')
         if auth_header:
             try:
@@ -208,17 +172,55 @@ def require_auth(f):
             except IndexError:
                 return jsonify({'error': 'Invalid authorization header format'}), 401
         
-        if not token:
-            return jsonify({'error': 'Access token is required'}), 401
+        if token:
+            # Verify token
+            payload = auth_service.verify_token(token)
+            if not payload:
+                return jsonify({'error': 'Invalid or expired token'}), 401
+            
+            # Add user info to request context
+            request.current_user = payload
+            return f(*args, **kwargs)
         
-        # Verify token
-        payload = auth_service.verify_token(token)
-        if not payload:
-            return jsonify({'error': 'Invalid or expired token'}), 401
+        # Dev bypass — only when no token AND in development mode
+        env = current_app.config.get('ENVIRONMENT', 'development') if current_app else 'development'
+        if env == 'development' and (
+            request.args.get('role') or
+            request.path.startswith(('/admin/', '/system/', '/institutional-admin/',
+                                     '/lecturer/', '/student/', '/employee/',
+                                     '/api/super-admin/', '/api/biometric/'))
+        ):
+            role = request.args.get('role')
+            
+            if not role:
+                if request.path.startswith('/api/super-admin/'):
+                    role = UserRole.SUPER_ADMIN.value
+                elif request.path.startswith('/system/'):
+                    role = UserRole.SUPER_ADMIN.value
+                elif request.path.startswith('/admin/'):
+                    role = UserRole.SUPER_ADMIN.value
+                elif request.path.startswith('/institutional-admin/'):
+                    role = UserRole.INSTITUTIONAL_ADMIN.value
+                elif request.path.startswith('/lecturer/'):
+                    role = UserRole.LECTURER.value
+                elif request.path.startswith('/student/'):
+                    role = UserRole.STUDENT.value
+                elif request.path.startswith('/employee/'):
+                    role = UserRole.EMPLOYEE.value
+                elif request.path.startswith('/api/biometric/'):
+                    role = UserRole.STUDENT.value
+                else:
+                    return jsonify({'error': 'Access denied - role parameter required for development mode'}), 403
+            
+            request.current_user = {
+                'user_id': f'dev_user_{role}',
+                'email': f'{role}@attendrix.dev',
+                'role': role,
+                'institution_id': 'dev_institution'
+            }
+            return f(*args, **kwargs)
         
-        # Add user info to request context
-        request.current_user = payload
-        return f(*args, **kwargs)
+        return jsonify({'error': 'Access token is required'}), 401
     
     return decorated_function
 

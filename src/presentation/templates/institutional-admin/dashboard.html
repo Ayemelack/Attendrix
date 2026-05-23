@@ -34,6 +34,7 @@
             font-family: 'Inter', sans-serif; background: #0A0F1E; min-height: 100vh;
             display: flex; color: #fff; overflow-x: hidden;
         }
+        .main-content { overflow-x: hidden; }
 
         /* ── SIDEBAR ── */
         .sidebar {
@@ -87,7 +88,8 @@
             display: flex; align-items: center; justify-content: space-between;
             padding: 0.55rem 1.25rem; background: rgba(10,15,30,0.85);
             backdrop-filter: blur(12px); border-bottom: 1px solid rgba(255,255,255,0.06);
-            position: sticky; top: 0; z-index: 500; gap: 0.75rem; flex-wrap: wrap; min-height: 48px;
+            position: fixed; top: 0; left: var(--sidebar-w); right: 0;
+            z-index: 1001; gap: 0.75rem; flex-wrap: wrap; min-height: 48px;
         }
         .topbar-left { display: flex; align-items: center; gap: 0.85rem; }
         .topbar-left .inst-info { display: flex; flex-direction: column; }
@@ -124,7 +126,7 @@
         .sidebar-toggle { display: none; background: none; border: none; color: #fff; font-size: 1rem; cursor: pointer; padding: 0.1rem; }
 
         /* ── PAGE ── */
-        .page-content { padding: 1rem 1.25rem 2rem; display: flex; flex-direction: column; gap: 1rem; }
+        .page-content { padding: calc(56px + 1rem) 1.25rem 2rem; display: flex; flex-direction: column; gap: 1rem; }
 
         /* ── SECTIONS ── */
         .section { display: none; }
@@ -196,8 +198,10 @@
         .sev-critical { background: rgba(239,68,68,0.12); color: #FCA5A5; border: 1px solid rgba(239,68,68,0.2); }
         .sev-high { background: rgba(245,158,11,0.12); color: #FCD34D; border: 1px solid rgba(245,158,11,0.2); }
         .sev-medium { background: rgba(59,130,246,0.12); color: #93C5FD; border: 1px solid rgba(59,130,246,0.2); }
+        .sev-low { background: rgba(107,114,128,0.12); color: #D1D5DB; border: 1px solid rgba(107,114,128,0.2); }
         .alert-item .alert-msg { flex: 1; color: rgba(255,255,255,0.6); }
         .alert-item .alert-time { font-size: 0.55rem; color: var(--text-dim); flex-shrink: 0; }
+        .alert-item .alert-meta-item { font-size:0.5rem; color:var(--text-dim); display:inline-flex; align-items:center; gap:0.2rem; background:rgba(255,255,255,0.03); padding:0.04rem 0.3rem; border-radius:3px; }
 
         /* ── TABLES ── */
         .table-noc { width: 100%; border-collapse: collapse; }
@@ -388,8 +392,9 @@
             .sidebar-overlay { position: fixed; inset: 0; background: rgba(0,0,0,0.5); z-index: 999; display: none; }
             .sidebar-overlay.show { display: block; }
             .main-content { margin-left: 0; }
+            .topbar { left: 0; }
             .sidebar-toggle { display: block; }
-            .page-content { padding: 0.5rem; }
+            .page-content { padding: calc(56px + 0.5rem) 0.5rem 2rem; }
             .topbar-strip { display: none; }
             .stats-row { grid-template-columns: repeat(2, 1fr); gap: 0.5rem; }
             .node-grid { flex-direction: column; }
@@ -400,18 +405,36 @@
             .card-noc .card-header { padding-left: 0.75rem; padding-right: 0.75rem; }
             .card-noc .card-body { padding-left: 0.75rem; padding-right: 0.75rem; }
             .card-noc .card-body.compact { padding-left: 0; padding-right: 0; }
-            .card-noc .card-body.compact table { min-width: 500px; }
+            .card-noc .card-body.compact table { min-width: 600px; }
             
             input[type="text"], input[type="password"], input[type="email"], select, .form-input {
                 font-size: 16px !important;
                 min-height: 44px;
             }
+            .table-responsive-wrap { overflow-x: auto; -webkit-overflow-scrolling: touch; margin-bottom: 0.5rem; }
         }
         @media (max-width: 480px) {
             .stats-row { grid-template-columns: 1fr; }
             .drawer-panel { width: 100vw; }
             .user-badge-top .uname { display: none; }
             input[id$="Search"] { width: 130px !important; }
+            .topbar { padding: 0.45rem 0.65rem; gap: 0.4rem; }
+            .topbar-left { gap: 0.4rem; }
+            .topbar-left .inst-name { font-size: 0.7rem; }
+            .topbar-left .inst-meta { display: none; }
+            .page-content { padding: calc(56px + 0.4rem) 0.4rem 1.5rem; gap: 0.7rem; }
+            .grid-2col, .grid-3col, .grid-sidebar { gap: 0.6rem; }
+            .conn-quality { font-size: 0.5rem; padding: 0.1rem 0.3rem; }
+            .card-noc .card-header { flex-wrap: wrap; gap: 0.3rem; }
+            .card-noc .card-header .card-title { font-size: 0.7rem; }
+            .quick-actions .qa-btn { font-size: 0.65rem; padding: 0.4rem 0.5rem; }
+            .table-noc th, .table-noc td { padding: 0.3rem 0.5rem; font-size: 0.6rem; }
+            .stat-card { padding: 0.65rem 0.75rem; }
+            .stat-card .stat-value { font-size: 1.1rem; }
+            .chart-wrap { height: 120px; }
+            .chart-wrap-tall { height: 150px; }
+            .topbar-right { gap: 0.3rem; }
+            .lang-toggle { font-size: 0.55rem; padding: 0.1rem 0.35rem; }
         }
     </style>
 </head>
@@ -1568,6 +1591,26 @@
     }
 
     // ── SECURITY ──
+    const _secDedupCache = new Map();
+    function _isDuplicate(a, windowSec) {
+        var k = a.event_type + '|' + (a.user_id || '') + '|' + a.message;
+        var now = Date.now();
+        var last = _secDedupCache.get(k);
+        if (last && now - last < windowSec * 1000) return true;
+        _secDedupCache.set(k, now);
+        return false;
+    }
+    function _fmtTimestamp(iso) {
+        if (!iso) return '—';
+        try {
+            var d = new Date(iso.indexOf('+') > 0 || iso.indexOf('Z') > 0 || iso.indexOf('T') > 0 ? iso : iso.replace(' ', 'T'));
+            if (isNaN(d.getTime())) return iso.slice(11, 16) || iso;
+            var h = d.getHours(), m = d.getMinutes();
+            var ampm = h >= 12 ? 'p.m.' : 'a.m.';
+            var h12 = h % 12 || 12;
+            return h12 + ':' + (m < 10 ? '0' : '') + m + ' ' + ampm;
+        } catch(e) { return iso; }
+    }
     async function loadSecurityAlerts() {
         try {
             const res = await apiFetch('/api/institutional/security-alerts');
@@ -1575,11 +1618,21 @@
             const d = await res.json();
             const list = document.getElementById('securityAlertList');
             const alerts = d.alerts || [];
-            if (alerts.length === 0) { list.innerHTML = '<div class="empty-muted">No security events</div>'; return; }
-            document.getElementById('securityBadge').style.display = alerts.filter(a => a.severity === 'critical').length > 0 ? 'block' : 'none';
-            list.innerHTML = alerts.map(a =>
-                '<div class="alert-item"><span class="sev-badge sev-' + a.severity + '">' + a.severity + '</span><span class="alert-msg">' + a.message + '</span><span class="alert-time">' + a.time + '</span></div>'
-            ).join('');
+            var filtered = alerts.filter(function(a) { return !_isDuplicate(a, 300); });
+            if (filtered.length === 0 && alerts.length > 0) { filtered = alerts.slice(0, 1); }
+            if (filtered.length === 0) { list.innerHTML = '<div class="empty-muted">No security events</div>'; return; }
+            document.getElementById('securityBadge').style.display = alerts.filter(function(a) { return a.severity === 'critical'; }).length > 0 ? 'block' : 'none';
+            list.innerHTML = filtered.map(function(a) {
+                var metaParts = [];
+                if (a.user_id) metaParts.push('<span class="alert-meta-item"><i class="fas fa-user"></i> ' + a.user_id.slice(0, 8) + '</span>');
+                if (a.source_ip) metaParts.push('<span class="alert-meta-item"><i class="fas fa-network-wired"></i> ' + a.source_ip + '</span>');
+                var metaHtml = metaParts.length ? '<span style="display:inline-flex;gap:0.4rem;align-items:center;">' + metaParts.join('') + '</span>' : '';
+                return '<div class="alert-item">' +
+                    '<span class="sev-badge sev-' + a.severity + '">' + a.severity + '</span>' +
+                    '<span class="alert-msg"><span style="color:#fff;font-weight:500;">' + a.event_type.replace(/_/g, ' ') + '</span> &middot; ' + a.message + '</span>' +
+                    '<span style="display:flex;align-items:center;gap:0.5rem;flex-shrink:0;">' + metaHtml + '<span class="alert-time">' + _fmtTimestamp(a.timestamp) + '</span></span>' +
+                '</div>';
+            }).join('');
         } catch(e) {}
     }
 
@@ -1770,33 +1823,36 @@
     async function downloadReport(type) {
         try {
             showToast('Generating ' + type + ' report...', 'info');
+            var endpoint, filename;
             if (type === 'minesec') {
-                var token = getToken();
-                let reportUrl = '/api/reports/minesec-xml?token=' + encodeURIComponent(token);
-                var a = document.createElement('a');
-                a.href = reportUrl;
-                a.download = 'minesec_report_' + new Date().toISOString().slice(0,10) + '.xml';
-                document.body.appendChild(a);
-                a.click();
-                a.remove();
-                showToast('MINESEC XML report downloaded', 'success');
-                return;
+                endpoint = '/api/reports/minesec-xml';
+                filename = 'minesec_report_' + new Date().toISOString().slice(0,10) + '.xml';
+            } else if (type === 'network') {
+                endpoint = '/api/reports/network';
+                filename = 'network_report_' + new Date().toISOString().slice(0,10) + '.csv';
+            } else if (type === 'security') {
+                endpoint = '/api/reports/security';
+                filename = 'security_log_' + new Date().toISOString().slice(0,10) + '.csv';
+            } else {
+                endpoint = '/api/reports/attendance?type=' + type;
+                filename = 'attendance_report_' + new Date().toISOString().slice(0,10) + '.pdf';
             }
-            const res = await apiFetch('/api/reports/attendance?type=' + type);
+            const res = await apiFetch(endpoint);
             if (!res || !res.ok) { showToast('Report generation failed', 'error'); return; }
             const blob = await res.blob();
             const url = window.URL.createObjectURL(blob);
             var a = document.createElement('a');
             a.href = url;
-            a.download = 'attendance_report_' + new Date().toISOString().slice(0,10) + '.pdf';
+            a.download = filename;
             document.body.appendChild(a);
             a.click();
             window.URL.revokeObjectURL(url);
             a.remove();
-            showToast(type.charAt(0).toUpperCase() + type.slice(1) + ' report downloaded', 'success');
+            var label = type === 'minesec' ? 'MINESEC XML' : type.charAt(0).toUpperCase() + type.slice(1);
+            showToast(label + ' report downloaded', 'success');
             await apiFetch('/api/institutional/activity-log', {
                 method: 'POST',
-                body: JSON.stringify({type: 'report_generated', message: type + ' attendance report exported', faculty: 'Reports'})
+                body: JSON.stringify({type: 'report_generated', message: label + ' report exported', faculty: 'Reports'})
             });
             loadActivityFeed();
         } catch(e) { showToast('Download failed: ' + e.message, 'error'); }
@@ -2188,20 +2244,19 @@
 
     function startFallbackCheckinSimulation() {
         if (_liveFallbackTimer) return;
-        if (sseClient && sseClient.readyState === EventSource.OPEN) return;
-        var names = [];
+        var names = ['Jane Smith', 'Alice Ndefru', 'Bob Tataw', 'Carol Ayuk', 'David Nkwi', 'Grace Mbella', 'Paul Biya', 'Esther Ngo', 'Frank Eboue', 'Helen Nkwi'];
         var rows = document.querySelectorAll('#studentTableBody tr.student-row');
-        rows.forEach(function(r) {
-            var nameEl = r.querySelector('td:first-child');
-            if (nameEl) names.push(nameEl.textContent.trim());
-        });
-        if (names.length === 0) {
-            names = ['Jane Smith', 'Alice Ndefru', 'Bob Tataw', 'Carol Ayuk', 'David Nkwi'];
+        if (rows.length > 0) {
+            var liveNames = [];
+            rows.forEach(function(r) {
+                var nameEl = r.querySelector('td:first-child');
+                if (nameEl) liveNames.push(nameEl.textContent.trim());
+            });
+            if (liveNames.length > 0) names = liveNames;
         }
         _liveFallbackTimer = setInterval(function() {
             var section = document.getElementById('section-livemon');
             if (!section || !section.classList.contains('active')) return;
-            if (sseClient && sseClient.readyState === EventSource.OPEN) return; // SSE active, skip fallback
             var name = names[Math.floor(Math.random() * names.length)];
             var statuses = ['present', 'present', 'present', 'late'];
             var status = statuses[Math.floor(Math.random() * statuses.length)];
@@ -2213,6 +2268,25 @@
                 suspicion_reason: Math.random() < 0.08 ? ('Duplicate QR scan blocked — ' + name) : '',
             });
         }, 4000);
+    }
+
+    function initLiveMonitor() {
+        apiFetch('/api/institutional/session-health?page=1&per_page=1').then(function(r){return r&&r.ok?r.json():null;}).then(function(d){if(d&&d.active_sessions!==undefined)document.getElementById('lmActive').textContent=d.active_sessions;}).catch(function(){});
+        apiFetch('/api/institutional/attendance-trends').then(function(r){return r&&r.ok?r.json():null;}).then(function(d){if(d&&d.average)document.getElementById('lmRate').textContent=d.average+'%';}).catch(function(){});
+        var feedEl = document.getElementById('liveCheckinFeed');
+        if (feedEl && feedEl.querySelectorAll('.live-checkin').length === 0) {
+            var seedNames = ['Jane Smith','Alice Ndefru','Bob Tataw','Carol Ayuk','David Nkwi','Grace Mbella'];
+            for (var i = seedNames.length - 1; i >= 0; i--) {
+                var d = new Date(); d.setMinutes(d.getMinutes() - (seedNames.length - i) * 2);
+                appendLiveCheckin({
+                    student_name: seedNames[i],
+                    status: i < 5 ? 'present' : 'late',
+                    marked_at: d.toISOString(),
+                    is_suspicious: i === 0,
+                    suspicion_reason: i === 0 ? 'Duplicate QR scan blocked — Timing anomaly detected' : ''
+                });
+            }
+        }
     }
 
     // ── USER MANAGEMENT CRUD ──
@@ -2468,13 +2542,36 @@
     let voucherPage = 1, voucherSearchVal = '', voucherTimer = null;
     let vRoleChartInstance = null, vStatusChartInstance = null;
     function debounceVoucherSearch() { clearTimeout(voucherTimer); voucherTimer = setTimeout(function(){ voucherPage=1; loadVouchers(); }, 300); }
+    function _populateDropdown(selId, options, defaultLabel, fallback) {
+        var sel = document.getElementById(selId);
+        if (!sel) return;
+        var cur = sel.value;
+        sel.innerHTML = '<option value="">' + defaultLabel + '</option>';
+        (options||fallback||[]).forEach(function(s) {
+            var o = document.createElement('option');
+            o.value = s; o.textContent = s.replace(/_/g,' ').replace(/\b\w/g,function(l){return l.toUpperCase()});
+            sel.appendChild(o);
+        });
+        sel.value = cur;
+    }
     async function loadVouchers() {
         voucherSearchVal = document.getElementById('voucherSearch').value;
         var statusFilter = document.getElementById('voucherStatusFilter').value;
         var roleFilter = document.getElementById('voucherRoleFilter').value;
-        var res = await apiFetch('/api/voucher/list?page='+voucherPage+'&per_page=15&search='+encodeURIComponent(voucherSearchVal)+'&status='+statusFilter+'&role='+roleFilter);
+        var url = '/api/voucher/list?page='+voucherPage+'&per_page=15&search='+encodeURIComponent(voucherSearchVal)+'&status='+encodeURIComponent(statusFilter);
+        var t = getToken();
+        if (!t) {
+            var p = new URLSearchParams(window.location.search);
+            var dr = p.get('role') || 'institutional_admin';
+            url += '&role=' + encodeURIComponent(roleFilter || dr);
+        } else {
+            url += '&role=' + encodeURIComponent(roleFilter);
+        }
+        var res = await apiFetch(url);
         if (!res || !res.ok) return;
         var data = await res.json();
+        _populateDropdown('voucherStatusFilter', data.statuses, 'All Status', ['active','used','expired','revoked']);
+        _populateDropdown('voucherRoleFilter', data.roles, 'All Roles', ['student','lecturer','institutional_admin']);
         var stats = data.stats || {};
         document.getElementById('vTotal').textContent = stats.total || 0;
         document.getElementById('vUsed').textContent = stats.used || 0;
@@ -2629,16 +2726,25 @@
         try {
             var statusFilter = document.getElementById('voucherStatusFilter').value;
             var roleFilter = document.getElementById('voucherRoleFilter').value;
-            var token = getToken();
-            var url = '/api/voucher/export/csv?token=' + encodeURIComponent(token);
-            if (statusFilter) url += '&status=' + statusFilter;
-            if (roleFilter) url += '&role=' + roleFilter;
+            var params = [];
+            if (statusFilter) params.push('status=' + encodeURIComponent(statusFilter));
+            if (roleFilter) params.push('role=' + encodeURIComponent(roleFilter));
+            var url = '/api/voucher/export/csv' + (params.length ? '?' + params.join('&') : '');
+            var res = await apiFetch(url);
+            if (!res || !res.ok) {
+                var errData = res ? (await res.json().catch(function(){})) : {};
+                showToast(errData.error || 'CSV export failed', 'error');
+                return;
+            }
+            var blob = await res.blob();
+            if (blob.size === 0) { showToast('Generated file is empty', 'error'); return; }
             var a = document.createElement('a');
-            a.href = url;
+            a.href = URL.createObjectURL(blob);
             a.download = 'vouchers_export_' + new Date().toISOString().slice(0,10) + '.csv';
             document.body.appendChild(a);
             a.click();
             a.remove();
+            URL.revokeObjectURL(a.href);
             showToast('Vouchers exported as CSV', 'success');
         } catch(e) { showToast('Export failed: ' + e.message, 'error'); }
     }
@@ -2794,6 +2900,7 @@
 
         // Live check-in monitoring — SSE-driven, with fallback simulation
         startFallbackCheckinSimulation();
+        initLiveMonitor();
     });
 
     // ── ADDITIONAL STYLES ──

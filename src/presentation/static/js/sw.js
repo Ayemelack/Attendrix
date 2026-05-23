@@ -141,20 +141,15 @@ self.addEventListener('message', function(event) {
 
 /* Network-first: try network, fall back to cache, save fresh response */
 async function networkFirstWithCacheFallback(request, cacheName) {
+  var networkResponse;
   try {
-    const networkResponse = await fetch(request);
-    if (networkResponse && networkResponse.ok) {
-      const cache = await caches.open(cacheName);
-      cache.put(request, networkResponse.clone());
-    }
-    return networkResponse;
+    networkResponse = await fetch(request);
   } catch (err) {
     const cachedResponse = await caches.match(request);
     if (cachedResponse) {
       console.log('SW: Serving from cache (network failed):', request.url);
       return cachedResponse;
     }
-    /* If navigation request and no cache, show offline fallback */
     if (request.mode === 'navigate') {
       const fallback = await caches.match(OFFLINE_FALLBACK);
       if (fallback) return fallback;
@@ -167,6 +162,14 @@ async function networkFirstWithCacheFallback(request, cacheName) {
       headers: { 'Content-Type': 'application/json' }
     });
   }
+  /* Cache in background — never replace a good response with 503 */
+  if (networkResponse && networkResponse.ok) {
+    try {
+      const cache = await caches.open(cacheName);
+      cache.put(request, networkResponse.clone());
+    } catch (_) {}
+  }
+  return networkResponse;
 }
 
 /* Cache-first: serve from cache, refresh in background */

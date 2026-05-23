@@ -230,6 +230,45 @@ class ReportService:
             'sessions': session_details,
         }
 
+    def generate_network_report(self, institution_id: str) -> Optional[bytes]:
+        try:
+            nodes = self.fb.query_documents(
+                'network_nodes',
+                filters=[{'field': 'institution_id', 'value': institution_id}]
+            )
+            broker = self.fb.query_documents(
+                'broker_status',
+                filters=[{'field': 'institution_id', 'value': institution_id}],
+                limit=1
+            )
+            broker = broker[0] if broker else {}
+            lines = ['Network Status Report', f'Generated: {datetime.utcnow().isoformat()}', '']
+            lines.append('Node Name,Type,Status,Latency (ms),Packet Loss (%),Last Seen')
+            for n in nodes:
+                lines.append(f'{n.get("name","")},{n.get("type","")},{n.get("status","")},{n.get("latency_ms",0)},{n.get("packet_loss",0)},{n.get("last_seen","")}')
+            lines.append('')
+            lines.append(f'Broker Stats: msgs/sec={broker.get("messages_per_sec",0)}, connected_nodes={broker.get("connected_nodes",0)}, dropped={broker.get("dropped_messages",0)}, bandwidth={broker.get("bandwidth_mbps",0)}Mbps')
+            return '\n'.join(lines).encode('utf-8')
+        except Exception as e:
+            logger.error(f"Network report generation failed: {e}")
+            return None
+
+    def generate_security_log(self, institution_id: str) -> Optional[bytes]:
+        try:
+            logs = self.fb.query_documents(
+                'security_logs',
+                filters=[{'field': 'institution_id', 'value': institution_id}],
+                order_by='-created_at'
+            )
+            lines = ['Security Log Report', f'Generated: {datetime.utcnow().isoformat()}', '']
+            lines.append('Event Type,Severity,Description,User ID,IP Address,Created At')
+            for l in logs:
+                lines.append(f'{l.get("event_type","")},{l.get("severity","")},{l.get("description","")},{l.get("user_id","")},{l.get("ip_address","")},{l.get("created_at","")}')
+            return '\n'.join(lines).encode('utf-8')
+        except Exception as e:
+            logger.error(f"Security log generation failed: {e}")
+            return None
+
     def generate_minesec_xml(self, institution_id: str) -> Optional[bytes]:
         try:
             institution = self._get_institution_info(institution_id)
@@ -260,14 +299,15 @@ class ReportService:
             sessions_elem = ET.SubElement(root, 'Sessions')
             for s in stats['sessions']:
                 se = ET.SubElement(sessions_elem, 'Session')
-                ET.SubElement(se, 'Course').text = s.get('course_name', '')
-                ET.SubElement(se, 'Lecturer').text = s.get('lecturer_name', '')
-                ET.SubElement(se, 'TotalStudents').text = str(s.get('total_students', 0))
-                ET.SubElement(se, 'Present').text = str(s.get('present', 0))
-                absent = s.get('total_students', 0) - s.get('present', 0)
-                ET.SubElement(se, 'Absent').text = str(max(0, absent))
-                ET.SubElement(se, 'AttendanceRate').text = f'{s.get("attendance_rate", 0)}%'
-                ET.SubElement(se, 'Status').text = s.get('status', 'completed')
+                ET.SubElement(se, 'Course').text = str(s.get('course_name', ''))
+                ET.SubElement(se, 'Lecturer').text = str(s.get('lecturer_name', ''))
+                total_s = int(s.get('total_students', 0) or 0)
+                present_s = int(s.get('present', 0) or 0)
+                ET.SubElement(se, 'TotalStudents').text = str(total_s)
+                ET.SubElement(se, 'Present').text = str(present_s)
+                ET.SubElement(se, 'Absent').text = str(max(0, total_s - present_s))
+                ET.SubElement(se, 'AttendanceRate').text = str(s.get('attendance_rate', 0)) + '%'
+                ET.SubElement(se, 'Status').text = str(s.get('status', 'completed'))
 
             footer = ET.SubElement(root, 'ReportFooter')
             ET.SubElement(footer, 'Certification').text = 'This report is MINESEC-compliant and generated electronically.'

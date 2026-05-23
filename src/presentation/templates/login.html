@@ -441,7 +441,7 @@
         <div class="alert-custom alert-info" id="devHint"
              style="display:none;font-size:0.8rem;text-align:center;margin-bottom:1.25rem;">
             <i class="fas fa-flask me-2"></i>
-            <span data-i18n="demo_hint">Demo:</span> <strong>admin@attendrix.demo</strong> / <strong>password123</strong>
+            <span data-i18n="demo_hint">Demo:</span> <strong>tech.admin@attendrix.demo</strong> / <strong>TechAdmin@2024</strong>
         </div>
 
         <!-- Device Verification -->
@@ -483,7 +483,7 @@
                 <label for="rememberMe" data-i18n="remember_me">Remember this device</label>
             </div>
 
-            <button type="submit" class="btn-primary-custom" id="loginBtn">
+            <button type="submit" class="btn-primary-custom" id="loginBtn" disabled>
                 <span class="spinner" id="loginSpinner"></span>
                 <span id="loginBtnText" data-i18n="sign_in">Sign In</span>
             </button>
@@ -506,9 +506,32 @@
 <script>
     let deviceFingerprint = null;
 
+    // ── Input Security ──
+    function hasMaliciousInput(value) {
+        if (/\0/.test(value)) return true;
+        if (/<[^>]*>/i.test(value)) return true;
+        if (/javascript:/i.test(value)) return true;
+        if (/on\w+\s*=/i.test(value)) return true;
+        if (/['"]\s*(?:OR|AND|SELECT|INSERT|UPDATE|DELETE|DROP|UNION|--|#|;)/i.test(value)) return true;
+        return false;
+    }
+
+    // ── Controlled Submit ──
+    function checkLoginForm() {
+        const email = document.getElementById('email').value.trim();
+        const password = document.getElementById('password').value;
+        const institutionId = document.getElementById('institutionId').value.trim();
+
+        const validEmail = email && /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email) && !hasMaliciousInput(email);
+        const validPassword = password.length > 0;
+        const validInstId = institutionId.length > 0 && !hasMaliciousInput(institutionId);
+
+        const btn = document.getElementById('loginBtn');
+        btn.disabled = !(validEmail && validPassword && validInstId);
+    }
+
     // ── Device Fingerprint ──
     document.addEventListener('DOMContentLoaded', async function () {
-        // Use AttendrixSecurity for rich fingerprint (canvas, WebGL, etc.)
         if (window.AttendrixSecurity && AttendrixSecurity.collectAllSignals) {
             try {
                 var signals = await AttendrixSecurity.collectAllSignals();
@@ -531,7 +554,6 @@
         } else {
             await generateBasicFingerprint();
         }
-        // Show dev hint on localhost
         if (location.hostname === '127.0.0.1' || location.hostname === 'localhost') {
             var hint = document.getElementById('devHint');
             if (hint) hint.style.display = 'block';
@@ -587,17 +609,37 @@
         }
     });
 
+    // ── Input Sanitization & Validation ──
+    document.getElementById('email').addEventListener('input', function () {
+        this.value = this.value.replace(/\s/g, '').toLowerCase().replace(/[\0\x08\x0B\x0C\x0E-\x1F]/g, '');
+        checkLoginForm();
+    });
+    document.getElementById('password').addEventListener('input', function () {
+        checkLoginForm();
+    });
+    document.getElementById('institutionId').addEventListener('input', function () {
+        this.value = this.value.replace(/[\0\x08\x0B\x0C\x0E-\x1F<>]/g, '');
+        checkLoginForm();
+    });
+
     // ── Form Submit ──
     document.getElementById('loginForm').addEventListener('submit', async function (e) {
         e.preventDefault();
         const email = document.getElementById('email').value.trim();
         const password = document.getElementById('password').value;
+        const institutionId = document.getElementById('institutionId').value.trim();
 
         if (!email || !/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email)) {
             showAlert('Please enter a valid email address', 'error'); return;
         }
         if (!password) {
             showAlert('Please enter your password', 'error'); return;
+        }
+        if (!institutionId) {
+            showAlert('Please enter your institution ID', 'error'); return;
+        }
+        if (hasMaliciousInput(email) || hasMaliciousInput(institutionId)) {
+            showAlert('Invalid input detected', 'error'); return;
         }
 
         setLoading(true);
@@ -608,7 +650,7 @@
                 body: JSON.stringify({
                     email: email,
                     password: password,
-                    institutionId: document.getElementById('institutionId').value.trim(),
+                    institutionId: institutionId,
                     remember_me: document.getElementById('rememberMe').checked,
                     device_fingerprint: deviceFingerprint
                 })
@@ -675,6 +717,7 @@
         s.style.display = loading ? 'inline-block' : 'none';
         t.textContent = loading ? 'Signing In...' : 'Sign In';
         b.disabled = loading;
+        if (!loading) checkLoginForm();
     }
 </script>
 

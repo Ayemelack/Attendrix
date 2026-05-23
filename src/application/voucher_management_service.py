@@ -272,11 +272,13 @@ class VoucherManagementService:
                     'unused': unused,
                     'expired': expired,
                     'revoked': revoked,
-                }
+                },
+                'statuses': ['active', 'used', 'expired', 'revoked'],
+                'roles': ['student', 'lecturer', 'institutional_admin'],
             }
         except Exception as e:
             logger.error(f"List vouchers error: {str(e)}")
-            return {'vouchers': [], 'total': 0, 'page': 1, 'total_pages': 1, 'stats': {}}
+            return {'vouchers': [], 'total': 0, 'page': 1, 'total_pages': 1, 'stats': {}, 'statuses': ['active', 'used', 'expired', 'revoked'], 'roles': ['student', 'lecturer', 'institutional_admin']}
 
     def revoke_voucher(self, voucher_id: str) -> bool:
         """Revoke a voucher so it can no longer be used"""
