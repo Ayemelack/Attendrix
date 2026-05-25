@@ -197,8 +197,9 @@
         .code-input-group input:focus { border-color: var(--accent); }
         .code-input-group input::placeholder { letter-spacing: 0; font-size: .78rem; color: var(--text-dim); }
         .btn { padding: 9px 18px; border-radius: var(--radius-sm); font-size: .78rem; font-weight: 600; cursor: pointer; border: none; transition: all .15s; }
+        .btn:disabled { opacity: .4; cursor: not-allowed; pointer-events: none; }
         .btn-primary { background: var(--accent); color: #fff; }
-        .btn-primary:hover { background: #6a4ce0; }
+        .btn-primary:hover:not(:disabled) { background: #6a4ce0; }
         .btn-secondary { background: var(--bg-elevated); color: var(--text-secondary); border: 1px solid var(--border); }
         .btn-secondary:hover { background: var(--border-light); color: var(--text); }
 
@@ -213,6 +214,13 @@
         .scan-result .trust-ring .bg { fill: none; stroke: var(--border); stroke-width: 5; }
         .scan-result .trust-ring .fg { fill: none; stroke: var(--accent); stroke-width: 5; stroke-linecap: round; transition: stroke-dashoffset 1s ease; }
         .scan-result .trust-ring .center { position: absolute; inset: 0; display: flex; align-items: center; justify-content: center; font-size: 1.1rem; font-weight: 700; }
+        .face-attendance-row { background: rgba(124,92,252,.05); border: 1px solid rgba(124,92,252,.12); border-radius: var(--radius-sm); padding: 8px 10px; text-align: center; font-size: .72rem; }
+        .face-attendance-row .face-att-status { display: flex; align-items: center; justify-content: center; gap: 6px; color: var(--text-dim); }
+        .face-attendance-row .face-att-status.verified { color: var(--success); }
+        .face-attendance-row .face-att-status.failed { color: var(--danger); }
+        .face-attendance-row .face-att-status.skipped { color: var(--text-dim); }
+        .btn-outline { background: transparent; border: 1px solid var(--border); color: var(--text-secondary); }
+        .btn-outline:hover { border-color: var(--accent); color: var(--accent); }
         .checks-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 6px; margin-top: 10px; }
         .check-item { display: flex; align-items: center; gap: 6px; font-size: .7rem; color: var(--text-dim); padding: 5px 8px; background: var(--bg-card); border-radius: 4px; }
         .check-item .ck { font-size: .6rem; }
@@ -556,9 +564,20 @@
                                 <span style="font-size:.68rem;color:var(--text-dim);display:block;" id="scanLecturer"></span>
                             </div>
                             <div class="checks-grid" id="scanChecks"></div>
-                            <div class="sr-row" style="border-top:1px solid var(--border);padding-top:10px;margin-top:10px;justify-content:center;">
-                                <button class="btn btn-primary" onclick="confirmMark()" style="width:100%;" data-i18n="confirm_attendance">Confirm Attendance</button>
+                            <div class="face-attendance-row" id="faceAttendanceRow" style="display:none;margin-top:8px;">
+                                <div class="face-att-status" id="faceAttStatus">
+                                    <i class="fas fa-camera"></i>
+                                    <span id="faceAttLabel">Checking face enrollment...</span>
+                                </div>
+                                <button class="btn btn-sm btn-outline" id="faceAttBtn" onclick="startFaceVerification()" style="display:none;margin-top:6px;width:100%;">
+                                    <i class="fas fa-camera"></i> <span>Verify Face</span>
+                                </button>
                             </div>
+                            <div class="sr-row" style="border-top:1px solid var(--border);padding-top:10px;margin-top:10px;justify-content:center;">
+                                <div style="font-size:.7rem;color:var(--text-dim);margin-bottom:6px;text-align:center;" id="flowStatus">Session verified. Complete face verification to proceed.</div>
+                                <button class="btn btn-primary" id="confirmAttBtn" onclick="confirmMark()" style="width:100%;" disabled data-i18n="confirm_attendance">Confirm Attendance</button>
+                            </div>
+                            <video id="attFaceVideo" autoplay playsinline muted style="display:none;width:100%;max-width:360px;height:auto;border-radius:8px;margin:8px auto;"></video>
                         </div>
                     </div>
                 </div>
@@ -849,7 +868,13 @@
         try {
             var headers = { 'Authorization': 'Bearer ' + getToken() };
             if (opts && opts.body) headers['Content-Type'] = 'application/json';
-            return await fetch(url, { headers: headers, ...opts });
+            var res = await fetch(url, { headers: headers, ...opts });
+            if (res.status === 401) {
+                localStorage.removeItem('accessToken');
+                window.location.href = '/login?expired=1';
+                return null;
+            }
+            return res;
         } catch(e) { console.warn('apiFetch:', url); return null; }
     }
 
@@ -1175,6 +1200,8 @@
 
     // ── MARK ATTENDANCE ──
     var pendingVerification = null;
+    var attendanceFaceDescriptor = null;
+    var faceEnrolled = false;
 
     async function verifyAndMark() {
         var code = document.getElementById('sessionCode').value.trim();
@@ -1189,7 +1216,9 @@
             var result = await res.json();
             if (result.error) { showToast(result.error, 'error'); return; }
             pendingVerification = result;
+            pendingVerification._verified_code = code;
             showScanResult(result);
+            checkFaceForAttendance();
         } catch(e) { showToast(t('mark_failed'), 'error'); }
     }
 
@@ -1226,10 +1255,14 @@
 
     async function confirmMark() {
         if (!pendingVerification) { showToast(t('verify_first'), 'error'); return; }
+        if (!attendanceFaceDescriptor) { showToast('Please complete face verification first', 'error'); return; }
         try {
+            var geo = (window.AttendrixSecurity && AttendrixSecurity.geoPosition) ? AttendrixSecurity.geoPosition.lat + ',' + AttendrixSecurity.geoPosition.lng : 'Campus';
+            var body = { session_code: pendingVerification._verified_code || document.getElementById('sessionCode').value.trim(), device_fingerprint: generateFingerprint(), location: geo };
+            if (attendanceFaceDescriptor) { body.face_descriptor = attendanceFaceDescriptor; }
             var res = await apiFetch('/api/attendance/mark', {
                 method: 'POST',
-                body: JSON.stringify({ session_code: document.getElementById('sessionCode').value.trim(), device_fingerprint: generateFingerprint(), location: 'Campus' })
+                body: JSON.stringify(body)
             });
             if (!res) { showToast(t('mark_failed'), 'error'); return; }
             var result = await res.json();
@@ -1237,9 +1270,167 @@
             showToast(t('attendance_marked'), 'success');
             document.getElementById('sessionCode').value = '';
             document.getElementById('scanResult').style.display = 'none';
+            document.getElementById('confirmAttBtn').disabled = true;
             pendingVerification = null;
+            attendanceFaceDescriptor = null;
+            faceEnrolled = false;
+            stopAttFaceCam();
             loadDashboard();
         } catch(e) { showToast(t('mark_failed'), 'error'); }
+    }
+
+    // ── FACE VERIFICATION FOR ATTENDANCE ──
+    var attFaceStream = null;
+
+    async function checkFaceForAttendance() {
+        var row = document.getElementById('faceAttendanceRow');
+        var status = document.getElementById('faceAttStatus');
+        var label = document.getElementById('faceAttLabel');
+        var btn = document.getElementById('faceAttBtn');
+        try {
+            var res = await apiFetch('/api/biometric/face/status');
+            if (!res || !res.ok) { row.style.display = 'none'; return; }
+            var data = await res.json();
+            faceEnrolled = data.enrolled;
+            row.style.display = 'block';
+            status.className = 'face-att-status';
+            status.innerHTML = '<i class="fas fa-camera"></i> <span>' + (data.enrolled ? 'Tap to verify your face' : 'Tap to capture your face') + '</span>';
+            btn.style.display = 'block';
+            document.getElementById('flowStatus').textContent = data.enrolled ? 'Session verified. Verify your face to continue.' : 'Session verified. Capture your face to continue.';
+        } catch(e) { row.style.display = 'none'; }
+    }
+
+    async function startFaceVerification() {
+        var status = document.getElementById('faceAttStatus');
+        var label = document.getElementById('faceAttLabel');
+        var btn = document.getElementById('faceAttBtn');
+        btn.style.display = 'none';
+        status.className = 'face-att-status';
+        status.innerHTML = '<i class="fas fa-spinner fa-pulse"></i> <span>Loading face models...</span>';
+        try {
+            var video = document.getElementById('attFaceVideo');
+            video.style.display = 'block';
+            video.muted = true;
+            if (!window.faceapi) { throw new Error('Face API not loaded'); }
+
+            // Step 1: Pre-load ML models
+            status.innerHTML = '<i class="fas fa-spinner fa-pulse"></i> <span>Loading face models...</span>';
+            console.log('[FaceCapture] Loading face models...');
+            var modelUrl = 'https://cdn.jsdelivr.net/npm/@vladmandic/face-api/model/';
+            await window.faceapi.nets.tinyFaceDetector.loadFromUri(modelUrl);
+            await window.faceapi.nets.faceRecognitionNet.loadFromUri(modelUrl);
+            await window.faceapi.nets.faceLandmark68Net.loadFromUri(modelUrl);
+            console.log('[FaceCapture] Models loaded');
+
+            // Step 2: Start camera
+            status.innerHTML = '<i class="fas fa-spinner fa-pulse"></i> <span>Starting camera...</span>';
+            console.log('[FaceCapture] Requesting camera...');
+            attFaceStream = await navigator.mediaDevices.getUserMedia({ video: { width: 640, height: 480, facingMode: 'user' } });
+            console.log('[FaceCapture] Stream obtained, tracks:', attFaceStream.getTracks().length);
+            video.srcObject = attFaceStream;
+            await video.play();
+            if (video.readyState < 2) {
+                await new Promise(function(resolve) {
+                    video.addEventListener('canplay', resolve, { once: true });
+                });
+            }
+            console.log('[FaceCapture] Camera ready, starting detection');
+
+            // Step 3: Warm up camera
+            status.innerHTML = '<i class="fas fa-spinner fa-pulse"></i> <span>Capturing face...</span>';
+            await new Promise(function(r) { setTimeout(r, 1000); });
+            console.log('[FaceCapture] Video dimensions:', video.videoWidth, 'x', video.videoHeight);
+
+            // Step 4: Multi-frame detection loop (TinyFaceDetector)
+            var detected = null;
+            var maxAttempts = 30;
+            var captureCanvas = document.createElement('canvas');
+            var captureCtx = captureCanvas.getContext('2d');
+            for (var i = 0; i < maxAttempts; i++) {
+                try {
+                    status.innerHTML = '<i class="fas fa-spinner fa-pulse"></i> <span>Capturing face... attempt ' + (i + 1) + '/' + maxAttempts + '</span>';
+                    if (video.videoWidth === 0 || video.readyState < 2) {
+                        console.warn('[FaceCapture] No frame data yet, skipping attempt ' + (i + 1));
+                    } else {
+                        captureCanvas.width = video.videoWidth;
+                        captureCanvas.height = video.videoHeight;
+                        captureCtx.drawImage(video, 0, 0);
+                        var result = await window.faceapi.detectSingleFace(captureCanvas, new window.faceapi.TinyFaceDetectorOptions({ inputSize: 320, scoreThreshold: 0.3 })).withFaceLandmarks().withFaceDescriptor();
+                        if (result) {
+                            var score = result.detection ? result.detection.score || result.detection._score : '?';
+                            console.log('[FaceCapture] Attempt', (i + 1), '- confidence:', score, '- has descriptor:', !!result.descriptor, '- has landmarks:', !!result.landmarks);
+                        } else {
+                            console.log('[FaceCapture] Attempt', (i + 1), '- no face detected');
+                        }
+                        if (result && result.descriptor) {
+                            detected = result;
+                            break;
+                        }
+                    }
+                } catch (detectErr) { console.warn('[FaceCapture] Detection attempt ' + (i + 1) + ' failed:', detectErr.name + ':', detectErr.message); }
+                if (i < maxAttempts - 1) {
+                    await new Promise(function(r) { setTimeout(r, 300); });
+                }
+            }
+
+            stopAttFaceCam();
+
+            if (!detected) { throw new Error('No face detected after ' + maxAttempts + ' attempts'); }
+
+            // Step 5: Enroll or verify face identity
+            attendanceFaceDescriptor = Array.from(detected.descriptor);
+            if (!faceEnrolled) {
+                status.innerHTML = '<i class="fas fa-spinner fa-pulse"></i> <span>Enrolling face...</span>';
+                console.log('[FaceCapture] No enrollment found, auto-enrolling...');
+                var enrollRes = await apiFetch('/api/biometric/face/enroll', {
+                    method: 'POST',
+                    body: JSON.stringify({ descriptor: attendanceFaceDescriptor })
+                });
+                if (!enrollRes) { throw new Error('Face enrollment failed: unable to reach server'); }
+                var enrollData = await enrollRes.json();
+                if (enrollData.error) { throw new Error(enrollData.error); }
+                faceEnrolled = true;
+                console.log('[FaceCapture] Face enrolled successfully');
+                status.className = 'face-att-status verified';
+                status.innerHTML = '<i class="fas fa-check-circle"></i> <span>Face enrolled</span>';
+            } else {
+                status.innerHTML = '<i class="fas fa-spinner fa-pulse"></i> <span>Verifying face identity...</span>';
+                console.log('[FaceCapture] Verifying face against enrollment...');
+                var verifyRes = await apiFetch('/api/biometric/face/verify', {
+                    method: 'POST',
+                    body: JSON.stringify({ descriptor: attendanceFaceDescriptor, threshold: 0.6 })
+                });
+                if (!verifyRes) { throw new Error('Identity check failed: unable to reach server'); }
+                var verifyData = await verifyRes.json();
+                if (!verifyData.verified) {
+                    attendanceFaceDescriptor = null;
+                    throw new Error('Face mismatch: attendance denied' + (verifyData.message ? ' (' + verifyData.message + ')' : ''));
+                }
+                console.log('[FaceCapture] Identity verified - confidence:', verifyData.confidence, '- distance:', verifyData.distance);
+                status.className = 'face-att-status verified';
+                status.innerHTML = '<i class="fas fa-check-circle"></i> <span>Face matched (' + Math.round(verifyData.confidence * 100) + '%)</span>';
+            }
+            document.getElementById('flowStatus').textContent = 'Face verified successfully. You may now confirm attendance.';
+            document.getElementById('confirmAttBtn').disabled = false;
+        } catch(e) {
+            stopAttFaceCam();
+            attendanceFaceDescriptor = null;
+            status.className = 'face-att-status failed';
+            var errorName = e.name || 'Error';
+            console.error('[FaceCapture] Failed:', errorName + ':', e.message, e);
+            status.innerHTML = '<i class="fas fa-exclamation-triangle"></i> <span>Face capture failed: ' + errorName + ': ' + e.message + '</span>';
+            btn.style.display = 'block';
+            btn.querySelector('span').textContent = 'Retry';
+        }
+    }
+
+    function stopAttFaceCam() {
+        if (attFaceStream) {
+            attFaceStream.getTracks().forEach(function(t) { t.stop(); });
+            attFaceStream = null;
+        }
+        var video = document.getElementById('attFaceVideo');
+        if (video) { video.srcObject = null; video.style.display = 'none'; }
     }
 
     function generateFingerprint() {

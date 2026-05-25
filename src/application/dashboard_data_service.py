@@ -143,21 +143,7 @@ class DashboardDataService:
         offline = offline_list[0] if offline_list else {}
 
         if not nodes:
-            now = datetime.utcnow().isoformat()
-            nodes = [
-                {'id': 'sim_sci', 'name': 'Science Block', 'type': 'building', 'status': 'healthy', 'latency_ms': 8, 'packet_loss': 0.2, 'last_seen': now},
-                {'id': 'sim_eng', 'name': 'Engineering Block', 'type': 'building', 'status': 'healthy', 'latency_ms': 12, 'packet_loss': 0.5, 'last_seen': now},
-                {'id': 'sim_httc', 'name': 'HTTTC Annex', 'type': 'building', 'status': 'degraded', 'latency_ms': 45, 'packet_loss': 3.1, 'last_seen': now},
-                {'id': 'sim_lib', 'name': 'Central Library', 'type': 'building', 'status': 'healthy', 'latency_ms': 6, 'packet_loss': 0.1, 'last_seen': now},
-                {'id': 'sim_adm', 'name': 'Admin Block', 'type': 'building', 'status': 'healthy', 'latency_ms': 10, 'packet_loss': 0.3, 'last_seen': now},
-                {'id': 'sim_broker', 'name': 'Core Broker', 'type': 'broker', 'status': 'healthy', 'latency_ms': 3, 'packet_loss': 0.0, 'last_seen': now},
-            ]
-        if not broker:
-            broker = {
-                'messages_per_sec': 287.3, 'connected_nodes': 5, 'total_nodes': 6,
-                'dropped_messages': 2, 'bandwidth_mbps': 156.8, 'uptime': '72h 34m',
-                'qos_levels': {'0': 1500, '1': 800, '2': 320},
-            }
+            nodes = []
 
         all_healthy = all(n.get('status') == 'healthy' for n in nodes) if nodes else True
 
@@ -263,15 +249,32 @@ class DashboardDataService:
             if sess.get('is_active') and status != 'completed':
                 status = 'active'
 
+            qr_code_val = sess.get('qr_code', '')
+            session_code_val = sess.get('session_code', '')
+            if not qr_code_val and session_code_val and sess.get('is_active'):
+                try:
+                    from src.application.attendance_security_service import AttendanceSecurityService
+                    sec_svc = AttendanceSecurityService(self.fb)
+                    qr_code_val = sec_svc._generate_qr_code(session_code_val)
+                except Exception:
+                    pass
+
             result_sessions.append({
                 'id': sess.get('id', ''),
+                'course_id': course_id,
+                'course_name': sess.get('course_name', ''),
                 'course': sess.get('course_name', course_id),
+                'session_code': session_code_val,
+                'qr_code': qr_code_val,
                 'lecturer': sess.get('lecturer_name', '—'),
+                'lecturer_id': sess.get('lecturer_id', ''),
                 'total_students': sess.get('total_students', total),
                 'present': present,
                 'absent': total - present,
                 'attendance_rate': rate,
                 'status': status,
+                'is_active': sess.get('is_active', False),
+                'created_at': sess.get('created_at', ''),
                 'health': {
                     'broker': sess.get('broker_health', 'healthy'),
                     'latency_ms': sess.get('broker_latency_ms', 0),

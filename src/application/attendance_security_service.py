@@ -6,7 +6,7 @@ import qrcode
 import io
 import base64
 
-from src.domain.entities import AttendanceSession, AttendanceRecord, AttendanceStatus
+from src.domain.entities import AttendanceStatus
 
 logger = logging.getLogger(__name__)
 
@@ -20,60 +20,56 @@ class AttendanceSecurityService:
         self.qr_code_expiry_minutes = 5  # QR codes expire in 5 minutes
     
     def create_attendance_session(self, course_id: str, lecturer_id: str, 
-                             location: Optional[str] = None) -> Dict[str, Any]:
+                             location: Optional[str] = None,
+                             institution_id: Optional[str] = None) -> Dict[str, Any]:
         """Create new attendance session with QR code"""
         try:
-            # Generate unique session code
+            session_id = str(secrets.token_hex(8))
             session_code = self._generate_session_code()
+            now = datetime.utcnow()
             
-            # Create session
-            session = AttendanceSession(
-                id=str(secrets.token_hex(8)),
-                course_id=course_id,
-                lecturer_id=lecturer_id,
-                session_code=session_code,
-                start_time=datetime.utcnow(),
-                location=location,
-                is_active=True
-            )
+            # Generate QR code before storing so it persists in the database
+            qr_code_data = self._generate_qr_code(session_code)
             
-            # Store session in database
+            # Store session in database including qr_code for subsequent loads
             session_data = {
-                'id': session.id,
-                'course_id': session.course_id,
-                'lecturer_id': session.lecturer_id,
-                'session_code': session.session_code,
-                'start_time': session.start_time.isoformat(),
+                'id': session_id,
+                'course_id': course_id,
+                'lecturer_id': lecturer_id,
+                'session_code': session_code,
+                'qr_code': qr_code_data,
+                'start_time': now.isoformat(),
                 'end_time': None,
-                'location': session.location,
-                'is_active': session.is_active,
-                'created_at': session.created_at.isoformat()
+                'location': location,
+                'is_active': True,
+                'institution_id': institution_id,
+                'created_at': now.isoformat()
             }
             
-            self.firebase_service.create_document('attendance_sessions', session_data, session.id)
-            
-            # Generate QR code
-            qr_code_data = self._generate_qr_code(session_code)
+            self.firebase_service.create_document('attendance_sessions', session_data, session_id)
             
             logger.info(f"Created attendance session {session_code} for course {course_id}")
             return {
-                'session_id': session.id,
+                'session_id': session_id,
                 'session_code': session_code,
                 'qr_code': qr_code_data,
-                'start_time': session.start_time.isoformat(),
-                'expires_at': (session.start_time + timedelta(minutes=self.session_duration_minutes)).isoformat(),
-                'location': session.location,
+                'start_time': now.isoformat(),
+                'expires_at': (now + timedelta(minutes=self.session_duration_minutes)).isoformat(),
+                'location': location,
                 'message': 'Attendance session created successfully'
             }
             
         except Exception as e:
-            logger.error(f"Session creation failed: {str(e)}")
-            return {'error': 'Failed to create attendance session'}
+            err_msg = str(e)
+            logger.error(f"Session creation failed: {err_msg}")
+            return {'error': f'Session creation failed: {err_msg}'}
     
     def mark_attendance(self, session_code: str, student_id: str, 
                       device_fingerprint: Optional[str] = None,
                       ip_address: Optional[str] = None,
-                      location: Optional[str] = None) -> Dict[str, Any]:
+                      location: Optional[str] = None,
+                      face_verified: bool = False,
+                      face_match_score: float = 0.0) -> Dict[str, Any]:
         """Mark attendance with security validation"""
         try:
             # Validate session
@@ -81,8 +77,8 @@ class AttendanceSecurityService:
             if not session:
                 return {'error': 'Invalid or expired session code'}
             
-            # Check if session is active
-            if not session['is_active']:
+            # Check if session is active (redundant with _validate_session, safety net)
+            if not session.get('is_active', True):
                 return {'error': 'Session is not active'}
             
             # Check if student already marked attendance for this session
@@ -97,44 +93,43 @@ class AttendanceSecurityService:
             if existing_attendance:
                 return {'error': 'Attendance already marked for this session'}
             
-            # Check session time window
-            session_start = datetime.fromisoformat(session['start_time'])
+            # Check session time window (defensive parsing, _validate_session already did this)
+            start_raw = session.get('start_time') or session.get('created_at')
+            if isinstance(start_raw, datetime):
+                session_start = start_raw
+            else:
+                session_start = datetime.fromisoformat(str(start_raw).replace('Z', '+00:00'))
             session_end = session_start + timedelta(minutes=self.session_duration_minutes)
             if datetime.utcnow() > session_end:
                 return {'error': 'Session has expired'}
             
             # Create attendance record
-            record = AttendanceRecord(
-                id=str(secrets.token_hex(8)),
-                session_id=session['id'],
-                student_id=student_id,
-                mark_time=datetime.utcnow(),
-                status=AttendanceStatus.PRESENT,
-                location=location,
-                device_id=device_fingerprint,
-                ip_address=ip_address
-            )
+            record_id = str(secrets.token_hex(8))
+            now = datetime.utcnow()
             
             record_data = {
-                'id': record.id,
-                'session_id': record.session_id,
-                'student_id': record.student_id,
-                'mark_time': record.mark_time.isoformat(),
-                'status': record.status.value,
-                'location': record.location,
-                'device_id': record.device_id,
-                'ip_address': record.ip_address,
-                'created_at': record.created_at.isoformat()
+                'id': record_id,
+                'session_id': session['id'],
+                'student_id': student_id,
+                'mark_time': now.isoformat(),
+                'status': AttendanceStatus.PRESENT.value,
+                'location': location,
+                'device_id': device_fingerprint,
+                'ip_address': ip_address,
+                'face_verified': face_verified,
+                'face_match_score': face_match_score,
+                'biometric_check': 'verified' if face_verified else 'not_provided',
+                'created_at': now.isoformat()
             }
             
-            self.firebase_service.create_document('attendance_records', record_data, record.id)
+            self.firebase_service.create_document('attendance_records', record_data, record_id)
             
             logger.info(f"Attendance marked for student {student_id} in session {session_code}")
             return {
-                'record_id': record.id,
+                'record_id': record_id,
                 'session_id': session['id'],
-                'mark_time': record.mark_time.isoformat(),
-                'status': record.status.value,
+                'mark_time': now.isoformat(),
+                'status': AttendanceStatus.PRESENT.value,
                 'message': 'Attendance marked successfully'
             }
             
@@ -147,7 +142,10 @@ class AttendanceSecurityService:
         try:
             # Verify lecturer owns the session
             session = self.firebase_service.get_document('attendance_sessions', session_id)
-            if not session or session['lecturer_id'] != lecturer_id:
+            if not session:
+                return {'error': 'Session not found or access denied'}
+            stored_lecturer_id = session.get('lecturer_id')
+            if stored_lecturer_id is not None and stored_lecturer_id != lecturer_id:
                 return {'error': 'Session not found or access denied'}
             
             # Close session
@@ -191,27 +189,43 @@ class AttendanceSecurityService:
             sessions = self.firebase_service.query_documents(
                 'attendance_sessions',
                 filters=[
-                    {'field': 'session_code', 'value': session_code},
-                    {'field': 'is_active', 'value': True}
+                    {'field': 'session_code', 'value': session_code}
                 ]
             )
             
             if not sessions:
+                logger.info(f"Session validation: no docs for code {session_code}")
                 return None
             
             session = sessions[0]
-            
-            # Check if session is expired
-            session_start = datetime.fromisoformat(session['start_time'])
-            session_end = session_start + timedelta(minutes=self.session_duration_minutes)
-            
-            if datetime.utcnow() > session_end:
+            session_active = session.get('is_active', True)
+            if not session_active:
+                logger.info(f"Session {session_code}: is_active={session_active}, rejecting")
                 return None
             
+            start_time_raw = session.get('start_time') or session.get('created_at')
+            if not start_time_raw:
+                logger.warning(f"Session {session_code} has no start_time or created_at; keys={list(session.keys())}")
+                return None
+            
+            if isinstance(start_time_raw, datetime):
+                session_start = start_time_raw
+            elif isinstance(start_time_raw, str):
+                session_start = datetime.fromisoformat(start_time_raw.replace('Z', '+00:00'))
+            else:
+                logger.debug(f"Session {session_code}: start_time type={type(start_time_raw).__name__}, forcing str")
+                session_start = datetime.fromisoformat(str(start_time_raw).replace('Z', '+00:00'))
+            
+            if session_start.tzinfo is not None:
+                session_start = session_start.replace(tzinfo=None)
+            session_end = session_start + timedelta(minutes=self.session_duration_minutes)
+            if datetime.utcnow() > session_end:
+                logger.info(f"Session {session_code}: expired at {session_end.isoformat()}")
+                return None
             return session
             
         except Exception as e:
-            logger.error(f"Session validation failed: {str(e)}")
+            logger.error(f"Session validation failed for {session_code}: {type(e).__name__}: {str(e)}")
             return None
     
     def _generate_session_code(self) -> str:

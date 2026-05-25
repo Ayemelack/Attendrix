@@ -21,6 +21,7 @@
     <link rel="stylesheet" href="/static/css/responsive.css">
     <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.0/dist/chart.umd.min.js"></script>
     <style>
+        html { overflow-x: hidden; width: 100%; }
         * { margin: 0; padding: 0; box-sizing: border-box; }
         :root {
             --bg-body: #0a0c14; --bg-sidebar: #0a0c14; --bg-card: #14172b; --bg-card-hover: #1c2040;
@@ -28,15 +29,16 @@
             --text-secondary: #9ca0b0; --text-dim: #5f6577; --accent: #7c5cfc; --accent-glow: rgba(124,92,252,0.12);
             --success: #10b981; --warning: #f59e0b; --danger: #ef4444; --info: #06b6d4;
         }
-        body { background: var(--bg-body); color: var(--text-primary); font-family: 'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif; min-height: 100vh; }
+        body { background: var(--bg-body); color: var(--text-primary); font-family: 'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif; min-height: 100vh; overflow-x: hidden; width: 100%; }
         ::-webkit-scrollbar { width: 5px; }
         ::-webkit-scrollbar-track { background: transparent; }
         ::-webkit-scrollbar-thumb { background: var(--border-color); border-radius: 3px; }
-        .app-wrap { display: flex; min-height: 100vh; }
-        .sidebar { width: 230px; background: var(--bg-sidebar); border-right: 1px solid var(--border-color); display: flex; flex-direction: column; position: fixed; top: 0; left: 0; bottom: 0; z-index: 100; transition: transform 0.25s ease; }
-        .main { flex: 1; margin-left: 230px; display: flex; flex-direction: column; min-height: 100vh; }
-        .topbar { height: 56px; background: var(--bg-sidebar); border-bottom: 1px solid var(--border-color); display: flex; align-items: center; justify-content: space-between; padding: 0 24px; position: sticky; top: 0; z-index: 50; }
-        .content { flex: 1; padding: 20px 24px; max-width: 1440px; width: 100%; margin: 0 auto; }
+        .app-wrap { display: flex; min-height: 100vh; width: 100%; }
+        .sidebar { width: 230px; max-width: 80vw; background: var(--bg-sidebar); border-right: 1px solid var(--border-color); display: flex; flex-direction: column; position: fixed; top: 0; left: 0; bottom: 0; z-index: 100; transition: transform 0.25s ease; }
+        .main { flex: 1; margin-left: 230px; display: flex; flex-direction: column; min-height: 100vh; min-width: 0; padding-top: 56px; }
+        .topbar { height: 56px; background: var(--bg-sidebar); border-bottom: 1px solid var(--border-color); display: flex; align-items: center; justify-content: space-between; padding: 0 clamp(8px, 2vw, 24px); position: fixed; top: 0; left: 230px; right: 0; z-index: 50; }
+        .content { flex: 1; padding: clamp(8px, 2vw, 24px); max-width: min(1440px, 100%); width: 100%; margin: 0 auto; box-sizing: border-box; overflow-x: hidden; overflow-wrap: break-word; word-wrap: break-word; }
+        img, svg, canvas, video { max-width: 100%; height: auto; }
         .sidebar-brand { display: flex; align-items: center; gap: 10px; padding: 16px 18px; border-bottom: 1px solid var(--border-color); font-size: 1.05rem; font-weight: 700; color: var(--text-primary); }
         .sidebar-brand i { color: var(--accent); font-size: 1.2rem; }
         .sidebar-brand svg { color: var(--accent); width: 1.2rem; height: 1.2rem; }
@@ -68,30 +70,32 @@
         @keyframes fadeIn { from { opacity: 0; transform: translateY(5px); } to { opacity: 1; transform: translateY(0); } }
 
         /* ── STATS ── */
-        .stats-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(185px, 1fr)); gap: 12px; margin-bottom: 18px; }
+        .stats-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(min(185px, 100%), 1fr)); gap: 12px; margin-bottom: 18px; max-width: 100%; width: 100%; min-width: 0; }
         .stat-card { background: var(--bg-card); border-radius: 10px; padding: 15px 16px; border: 1px solid var(--border-color); transition: border-color 0.2s; }
         .stat-card:hover { border-color: var(--accent); }
         .stat-top { display: flex; align-items: center; justify-content: space-between; margin-bottom: 8px; }
-        .stat-label { font-size: 0.62rem; color: var(--text-secondary); text-transform: uppercase; letter-spacing: 0.4px; font-weight: 600; }
-        .stat-icon { width: 30px; height: 30px; border-radius: 7px; display: flex; align-items: center; justify-content: center; font-size: 0.75rem; }
-        .stat-value { font-size: 1.5rem; font-weight: 800; color: var(--text-primary); line-height: 1.2; }
-        .stat-footer { font-size: 0.62rem; color: var(--text-dim); margin-top: 4px; }
+        .stat-label { font-size: clamp(0.55rem, 0.6vw, 0.62rem); color: var(--text-secondary); text-transform: uppercase; letter-spacing: 0.4px; font-weight: 600; }
+        .stat-icon { width: 30px; height: 30px; border-radius: 7px; display: flex; align-items: center; justify-content: center; font-size: 0.75rem; flex-shrink: 0; }
+        .stat-value { font-size: clamp(1rem, 2.5vw, 1.5rem); font-weight: 800; color: var(--text-primary); line-height: 1.2; }
+        .stat-footer { font-size: clamp(0.55rem, 0.55vw, 0.62rem); color: var(--text-dim); margin-top: 4px; }
 
         /* ── CARDS ── */
-        .card-noc { background: var(--bg-card); border-radius: 10px; border: 1px solid var(--border-color); margin-bottom: 14px; }
-        .card-header { display: flex; align-items: center; justify-content: space-between; padding: 12px 16px; border-bottom: 1px solid var(--border-color); }
-        .card-title { font-size: 0.78rem; font-weight: 600; color: var(--text-primary); display: flex; align-items: center; gap: 7px; }
-        .card-body { padding: 12px 16px; }
-        .grid-2col { display: grid; grid-template-columns: 1fr 1fr; gap: 14px; }
+        .card-noc { background: var(--bg-card); border-radius: 10px; border: 1px solid var(--border-color); margin-bottom: 14px; width: 100%; max-width: 100%; box-sizing: border-box; min-width: 0; }
+        .card-header { display: flex; align-items: center; justify-content: space-between; padding: 12px 16px; border-bottom: 1px solid var(--border-color); flex-wrap: wrap; gap: 6px; min-width: 0; max-width: 100%; }
+        .card-title { font-size: clamp(0.7rem, 0.8vw, 0.78rem); font-weight: 600; color: var(--text-primary); display: flex; align-items: center; gap: 7px; }
+        .card-body { padding: 12px 16px; width: 100%; max-width: 100%; box-sizing: border-box; min-width: 0; overflow-wrap: break-word; word-wrap: break-word; }
+        .grid-2col { display: grid; grid-template-columns: 1fr 1fr; gap: 14px; width: 100%; min-width: 0; max-width: 100%; }
+        .grid-2col > * { min-width: 0; max-width: 100%; }
+        .section-title-wrap { display: flex; align-items: center; justify-content: space-between; margin-bottom: 14px; flex-wrap: wrap; gap: 8px; max-width: 100%; min-width: 0; }
 
         /* ── SESSION CONTROL PANEL ── */
         .session-panel { background: linear-gradient(135deg, #14172b 0%, #1a1040 100%); border-radius: 12px; border: 1px solid var(--accent); overflow: hidden; margin-bottom: 16px; }
-        .session-panel-header { display: flex; align-items: center; justify-content: space-between; padding: 14px 18px; background: rgba(124,92,252,0.06); border-bottom: 1px solid rgba(124,92,252,0.15); }
-        .session-panel-body { display: grid; grid-template-columns: 220px 1fr; gap: 0; }
-        .session-qr-area { padding: 18px; display: flex; flex-direction: column; align-items: center; justify-content: center; border-right: 1px solid var(--border-color); text-align: center; }
-        .session-qr-area img { width: 140px; height: 140px; border-radius: 10px; background: #fff; padding: 8px; }
-        .session-code-display { font-size: 1.1rem; font-weight: 800; color: var(--accent); letter-spacing: 3px; margin-top: 8px; }
-        .session-right { padding: 14px 18px; display: flex; flex-direction: column; gap: 10px; overflow: hidden; }
+        .session-panel-header { display: flex; align-items: center; justify-content: space-between; padding: 14px 18px; background: rgba(124,92,252,0.06); border-bottom: 1px solid rgba(124,92,252,0.15); flex-wrap: wrap; gap: 8px; min-width: 0; max-width: 100%; box-sizing: border-box; }
+        .session-panel-body { display: grid; grid-template-columns: minmax(140px, 220px) 1fr; gap: 0; min-width: 0; max-width: 100%; width: 100%; }
+        .session-qr-area { padding: clamp(12px, 2vw, 18px); display: flex; flex-direction: column; align-items: center; justify-content: center; border-right: 1px solid var(--border-color); text-align: center; }
+        .session-qr-area img { width: min(140px, 80%); height: auto; aspect-ratio: 1/1; border-radius: 10px; background: #fff; padding: 8px; max-width: 140px; }
+        .session-code-display { font-size: clamp(0.85rem, 1.5vw, 1.1rem); font-weight: 800; color: var(--accent); letter-spacing: 3px; margin-top: 8px; word-break: break-all; }
+        .session-right { padding: clamp(10px, 1.5vw, 18px); display: flex; flex-direction: column; gap: 10px; overflow: hidden; min-width: 0; max-width: 100%; width: 100%; box-sizing: border-box; }
 
         /* ── SESSION STATE TIMELINE ── */
         .state-timeline { display: flex; align-items: center; gap: 0; background: var(--bg-body); border-radius: 6px; padding: 6px 8px; }
@@ -109,7 +113,7 @@
         .sec-mode-btn:hover:not(.active) { color: var(--text-secondary); }
 
         /* ── LIVE STREAM ── */
-        .live-stream-wrap { max-height: 160px; overflow-y: auto; display: flex; flex-direction: column; gap: 4px; }
+        .live-stream-wrap { max-height: 160px; overflow-y: auto; display: flex; flex-direction: column; gap: 4px; max-width: 100%; width: 100%; min-width: 0; }
         .stream-item { display: flex; align-items: center; gap: 8px; padding: 5px 8px; border-radius: 5px; background: var(--bg-card-hover); font-size: 0.7rem; animation: slideInRight 0.25s ease; }
         .stream-item .stream-time { color: var(--text-dim); font-size: 0.6rem; white-space: nowrap; min-width: 50px; }
         .stream-item .stream-name { flex: 1; color: var(--text-primary); font-weight: 500; }
@@ -127,10 +131,10 @@
         .qr-rotating-border { animation: rotateBorder 2s infinite; }
 
         /* ── COUNTERS ── */
-        .counter-row { display: flex; gap: 12px; }
-        .counter-item { text-align: center; flex: 1; padding: 6px 8px; background: var(--bg-body); border-radius: 6px; }
-        .counter-num { font-size: 1rem; font-weight: 800; }
-        .counter-label { font-size: 0.55rem; color: var(--text-dim); text-transform: uppercase; letter-spacing: 0.3px; }
+        .counter-row { display: flex; gap: clamp(4px, 1vw, 12px); flex-wrap: wrap; width: 100%; min-width: 0; }
+        .counter-item { text-align: center; flex: 1 1 0; min-width: 50px; padding: 6px 6px; background: var(--bg-body); border-radius: 6px; }
+        .counter-num { font-size: clamp(0.75rem, 1.5vw, 1rem); font-weight: 800; }
+        .counter-label { font-size: clamp(0.45rem, 0.5vw, 0.55rem); color: var(--text-dim); text-transform: uppercase; letter-spacing: 0.3px; white-space: nowrap; }
 
         /* ── BUTTONS ── */
         .btn-prime { display: inline-flex; align-items: center; gap: 6px; padding: 8px 16px; border-radius: 7px; font-size: 0.75rem; font-weight: 600; border: none; cursor: pointer; transition: all 0.12s; text-decoration: none; }
@@ -145,7 +149,8 @@
         .btn-prime.xs { padding: 3px 8px; font-size: 0.6rem; }
 
         /* ── TABLE ── */
-        .table-wrap { overflow-x: auto; }
+        .table-wrap { overflow-x: auto; max-width: 100%; -webkit-overflow-scrolling: touch; width: 100%; min-width: 0; }
+        .table-wrap table { min-width: 0; }
         table.lec-table { width: 100%; border-collapse: collapse; font-size: 0.72rem; }
         table.lec-table th { text-align: left; padding: 8px 10px; color: var(--text-dim); font-weight: 600; font-size: 0.6rem; text-transform: uppercase; letter-spacing: 0.4px; border-bottom: 1px solid var(--border-color); }
         table.lec-table td { padding: 8px 10px; border-bottom: 1px solid var(--border-color); color: var(--text-secondary); }
@@ -158,13 +163,13 @@
         .pill-accent { background: var(--accent-glow); color: var(--accent); }
 
         /* ── NETWORK STRIP ── */
-        .netstrip { display: flex; align-items: center; gap: 14px; padding: 6px 16px; background: var(--bg-card); border-top: 1px solid var(--border-color); font-size: 0.6rem; color: var(--text-dim); }
-        .netstrip-item { display: flex; align-items: center; gap: 4px; }
+        .netstrip { display: flex; align-items: center; gap: 14px; padding: 6px 16px; background: var(--bg-card); border-top: 1px solid var(--border-color); font-size: 0.6rem; color: var(--text-dim); max-width: 100%; width: 100%; min-width: 0; box-sizing: border-box; }
+        .netstrip-item { display: flex; align-items: center; gap: 4px; min-width: 0; max-width: 100%; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
         .netstrip-dot { width: 5px; height: 5px; border-radius: 50%; }
         .empty-muted { text-align: center; padding: 20px; color: var(--text-dim); font-size: 0.75rem; }
 
         /* ── COURSE CARDS ── */
-        .course-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(240px, 1fr)); gap: 12px; }
+        .course-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(min(240px, 100%), 1fr)); gap: 12px; max-width: 100%; width: 100%; min-width: 0; }
         .course-card { background: var(--bg-card); border-radius: 9px; border: 1px solid var(--border-color); padding: 14px; transition: border-color 0.2s; }
         .course-card:hover { border-color: var(--accent); }
         .course-card .ccode { font-size: 0.55rem; text-transform: uppercase; letter-spacing: 1px; color: var(--accent); font-weight: 700; }
@@ -175,25 +180,25 @@
         .course-card .crisk { display: inline-flex; align-items: center; gap: 3px; font-size: 0.55rem; padding: 1px 6px; border-radius: 8px; font-weight: 600; }
 
         /* ── ACTIVITY FEED ── */
-        .feed-wrap { display: flex; flex-direction: column; gap: 5px; max-height: 300px; overflow-y: auto; }
+        .feed-wrap { display: flex; flex-direction: column; gap: 5px; max-height: 300px; overflow-y: auto; max-width: 100%; width: 100%; min-width: 0; }
         .feed-item { display: flex; align-items: center; gap: 8px; padding: 6px 10px; border-radius: 5px; background: var(--bg-card-hover); font-size: 0.7rem; }
         .feed-item .feed-dot { width: 6px; height: 6px; border-radius: 50%; flex-shrink: 0; }
         .feed-item .feed-msg { flex: 1; color: var(--text-secondary); }
         .feed-item .feed-time { color: var(--text-dim); font-size: 0.6rem; white-space: nowrap; }
 
         /* ── TOAST ── */
-        #toastContainer { position: fixed; top: 16px; right: 16px; z-index: 9999; display: flex; flex-direction: column; gap: 6px; }
+        #toastContainer { position: fixed; top: 16px; right: 16px; z-index: 9999; display: flex; flex-direction: column; gap: 6px; max-width: min(380px, calc(100vw - 32px)); width: calc(100% - 32px); }
         .toast-item { padding: 10px 16px; border-radius: 7px; color: #fff; font-size: 0.75rem; font-weight: 500; box-shadow: 0 6px 20px rgba(0,0,0,0.3); animation: slideInRight 0.25s ease; }
 
         /* ── STUDENT DRAWER ── */
         .drawer-overlay { display: none; position: fixed; inset: 0; background: rgba(0,0,0,0.5); z-index: 9997; }
         .drawer-overlay.show { display: block; }
-        .student-drawer { position: fixed; top: 0; right: -440px; width: 420px; height: 100%; background: var(--bg-card); border-left: 1px solid var(--border-color); z-index: 9998; transition: right 0.3s ease; overflow-y: auto; }
+        .student-drawer { position: fixed; top: 0; right: -440px; width: 420px; max-width: 100vw; height: 100%; background: var(--bg-card); border-left: 1px solid var(--border-color); z-index: 9998; transition: right 0.3s ease; overflow-y: auto; box-sizing: border-box; }
         .student-drawer.open { right: 0; }
         .drawer-header { display: flex; align-items: center; justify-content: space-between; padding: 16px 18px; border-bottom: 1px solid var(--border-color); position: sticky; top: 0; background: var(--bg-card); z-index: 1; }
         .drawer-header h3 { font-size: 0.9rem; font-weight: 700; }
         .drawer-close { background: none; border: none; color: var(--text-secondary); font-size: 1rem; cursor: pointer; padding: 4px; }
-        .drawer-section { padding: 14px 18px; border-bottom: 1px solid var(--border-color); }
+        .drawer-section { padding: 14px 18px; border-bottom: 1px solid var(--border-color); max-width: 100%; min-width: 0; box-sizing: border-box; overflow-wrap: break-word; word-wrap: break-word; }
         .drawer-section h4 { font-size: 0.7rem; text-transform: uppercase; letter-spacing: 0.5px; color: var(--text-dim); margin-bottom: 8px; }
         .drawer-row { display: flex; justify-content: space-between; padding: 4px 0; font-size: 0.72rem; }
         .drawer-row .label { color: var(--text-dim); }
@@ -201,7 +206,7 @@
         .drawer-pill { padding: 1px 7px; border-radius: 10px; font-size: 0.55rem; font-weight: 600; }
 
         /* ── SECURITY ALERT POPUP ── */
-        .alert-popup { position: fixed; bottom: 80px; right: 16px; z-index: 9996; display: flex; flex-direction: column; gap: 6px; max-width: 340px; }
+        .alert-popup { position: fixed; bottom: 80px; right: 16px; z-index: 9996; display: flex; flex-direction: column; gap: 6px; max-width: min(340px, calc(100vw - 32px)); width: calc(100% - 32px); }
         .alert-item { padding: 10px 14px; border-radius: 7px; color: #fff; font-size: 0.72rem; font-weight: 500; box-shadow: 0 4px 16px rgba(0,0,0,0.4); animation: slideInRight 0.3s ease; cursor: pointer; display: flex; align-items: center; gap: 8px; }
         .alert-item.critical { background: linear-gradient(135deg, #7f1d1d, #dc2626); border-left: 3px solid #fca5a5; }
         .alert-item.high { background: linear-gradient(135deg, #7c2d12, #ea580c); border-left: 3px solid #fdba74; }
@@ -211,15 +216,16 @@
         .alert-item .alert-time { font-size: 0.55rem; opacity: 0.7; }
 
         /* ── CHART ── */
-        .chart-wrap { position: relative; height: 160px; width: 100%; }
+        .chart-wrap { position: relative; height: 160px; width: 100%; min-width: 0; max-width: 100%; }
+        .chart-wrap canvas { max-width: 100% !important; max-height: 100% !important; width: 100% !important; height: 100% !important; }
 
         @keyframes slideInRight { from { transform: translateX(100%); opacity: 0; } to { transform: translateX(0); opacity: 1; } }
         @keyframes shrinkWidth { from { width: 100%; } to { width: 0%; } }
 
         /* ── MODAL ── */
-        .modal-overlay { display: none; position: fixed; inset: 0; background: rgba(0,0,0,0.65); z-index: 9998; align-items: center; justify-content: center; }
+        .modal-overlay { display: none; position: fixed; inset: 0; background: rgba(0,0,0,0.65); z-index: 9998; align-items: center; justify-content: center; padding: 16px; box-sizing: border-box; }
         .modal-overlay.show { display: flex; }
-        .modal-box { background: var(--bg-card); border-radius: 12px; padding: 22px; width: 90%; max-width: 380px; border: 1px solid var(--border-color); }
+        .modal-box { background: var(--bg-card); border-radius: 12px; padding: 22px; width: min(90%, 380px); max-width: min(90%, 380px); border: 1px solid var(--border-color); box-sizing: border-box; overflow-wrap: break-word; word-wrap: break-word; }
         .modal-box h3 { font-size: 0.95rem; font-weight: 700; margin-bottom: 14px; }
         .modal-box label { font-size: 0.7rem; color: var(--text-secondary); display: block; margin-bottom: 3px; }
         .modal-box select, .modal-box input { width: 100%; padding: 9px 11px; background: var(--bg-input); border: 1px solid var(--border-color); border-radius: 7px; color: var(--text-primary); font-size: 0.78rem; margin-bottom: 10px; }
@@ -228,21 +234,43 @@
         .lang-btn { background: var(--bg-card); border: 1px solid var(--border-color); color: var(--text-secondary); padding: 3px 10px; border-radius: 4px; font-size: 0.6rem; font-weight: 700; cursor: pointer; transition: all 0.12s; }
         .lang-btn:hover { border-color: var(--accent); color: var(--accent); }
 
+        /* ── RESPONSIVE BREAKPOINTS ── */
+
+        /* Ultra-wide screens (>1440px) */
+        @media (min-width: 1441px) {
+            .content { max-width: 1600px; padding: 24px 32px; }
+            .stats-grid { grid-template-columns: repeat(4, 1fr); }
+            .stat-value { font-size: 1.75rem; }
+            .course-grid { grid-template-columns: repeat(auto-fill, minmax(280px, 1fr)); }
+        }
+
+        /* Small laptops / tablets landscape (769px-1024px) */
+        @media (max-width: 1024px) {
+            .stats-grid { grid-template-columns: repeat(auto-fit, minmax(170px, 1fr)); }
+            .session-panel-body { grid-template-columns: 180px 1fr; }
+            .session-qr-area img { width: 110px; height: 110px; }
+            .course-grid { grid-template-columns: repeat(auto-fill, minmax(210px, 1fr)); }
+            .topbar { padding: 0 16px; }
+            .content { padding: 16px 18px; }
+        }
+
+        /* Tablets portrait / large phones (<768px) */
         @media (max-width: 768px) {
             .sidebar { transform: translateX(-100%); }
             .sidebar.open { transform: translateX(0); }
             .sidebar-overlay.show { display: block; }
-            .main { margin-left: 0; }
+            .main { margin-left: 0; padding-top: 50px; }
+            .topbar { left: 0; height: 50px; }
             .sidebar-toggle { display: block; }
-            .content { padding: 8px; }
-            .grid-2col { grid-template-columns: 1fr; }
+            .content { padding: 10px 12px; max-width: 100%; width: 100%; }
+            .grid-2col { grid-template-columns: 1fr; gap: 10px; }
             .session-panel-body { grid-template-columns: 1fr; }
             .session-qr-area { border-right: none; border-bottom: 1px solid var(--border-color); }
+            .session-qr-area img { width: 100px; height: 100px; }
             .state-timeline { flex-wrap: wrap; gap: 2px; }
             .stats-grid { grid-template-columns: repeat(2, 1fr); gap: 8px; }
-            
-            .card-noc { border-radius: 0; border-left: none; border-right: none; margin-left: -8px; margin-right: -8px; }
-            .card-header, .card-body { padding-left: 12px; padding-right: 12px; }
+            .stat-value { font-size: 1.25rem; }
+            .card-noc { border-radius: 6px; border-left: 1px solid var(--border-color); border-right: 1px solid var(--border-color); margin-left: 0; margin-right: 0; }
             
             input[type="text"], input[type="password"], input[type="email"], select {
                 font-size: 16px !important;
@@ -251,10 +279,190 @@
             .btn-prime { min-height: 44px; padding: 0.5rem 1rem; }
             .topbar-right .topbar-name { display: none; }
             .student-drawer { width: 100vw; right: -100vw; }
+            .course-grid { grid-template-columns: 1fr; gap: 10px; }
+            .counter-row { gap: 6px; }
+            .counter-num { font-size: 0.85rem; }
+            .counter-label { font-size: 0.5rem; }
+            .session-panel-header { flex-wrap: wrap; gap: 8px; }
+            .session-panel-header > div:last-child { width: 100%; }
+            .sec-mode-selector { width: 100%; }
+            .sec-mode-btn { flex: 1; text-align: center; padding: 6px 8px; }
+            .live-stream-wrap { max-height: 120px; }
+            .chart-wrap { height: 130px; }
+            h1 { font-size: 1.05rem !important; }
+            .topbar { padding: 0 12px; height: 50px; }
+            .topbar-badge { padding: 3px 8px; font-size: 0.6rem; }
+            .topbar-badge .label { display: none; }
+            .sidebar-toggle { font-size: 1rem; }
+            .netstrip { flex-wrap: wrap; gap: 8px; padding: 5px 12px; }
+            .netstrip-item { font-size: 0.55rem; }
+            .netstrip-item:last-child { margin-left: 0 !important; width: 100%; }
+            .section-title-wrap { flex-direction: column; align-items: flex-start !important; gap: 6px; }
+            .stats-grid#netStats { grid-template-columns: repeat(2, 1fr); }
+            .section.active { overflow-x: hidden; }
+            .card-body { padding-left: 10px; padding-right: 10px; }
+            .session-panel-body .session-right { padding: 10px; }
+            .btn-prime { padding: 6px 12px; font-size: 0.72rem; }
+            .lec-table { font-size: 0.68rem; }
+            table.lec-table th, table.lec-table td { padding: 6px 8px; }
+            .card-noc .card-body[style*="display:flex"] { flex-direction: column; }
+            .card-noc .card-body[style*="display:flex"] .btn-prime { width: 100%; justify-content: center; }
+        }
+
+        /* Small phones (<480px) */
+        @media (max-width: 480px) {
+            .content { padding: 8px 8px; max-width: 100%; width: 100%; }
+            .stats-grid { grid-template-columns: 1fr 1fr; gap: 6px; }
+            .stats-grid#netStats { grid-template-columns: 1fr 1fr; }
+            .stat-card { padding: 10px 12px; }
+            .stat-value { font-size: 1.1rem; }
+            .stat-label { font-size: 0.55rem; }
+            .stat-icon { width: 26px; height: 26px; font-size: 0.65rem; }
+            .session-code-display { font-size: 0.9rem; letter-spacing: 2px; }
+            .session-panel-header { padding: 10px 12px; }
+            .session-panel-header > div:first-child { flex-wrap: wrap; gap: 4px; }
+            .session-panel-header > div:first-child span { font-size: 0.7rem !important; }
+            .session-right { padding: 10px 12px; }
+            .session-qr-area { padding: 12px; }
+            .session-qr-area img { width: 80px; height: 80px; }
+            .counter-row { gap: 4px; }
+            .counter-item { padding: 4px 4px; }
+            .counter-num { font-size: 0.75rem; }
+            .counter-label { font-size: 0.45rem; }
+            .card-noc { margin-left: 0; margin-right: 0; border-radius: 6px; }
+            .card-header, .card-body { padding-left: 10px; padding-right: 10px; }
+            .card-title { font-size: 0.72rem; }
+            .topbar { padding: 0 8px; height: 46px; }
+            .main { padding-top: 46px; }
+            .topbar-left { gap: 8px; }
+            .topbar-left span { font-size: 0.72rem !important; }
+            .topbar-right { gap: 6px; }
+            .sidebar-toggle { font-size: 0.9rem; }
+            .btn-prime { min-height: 40px; padding: 0.4rem 0.75rem; font-size: 0.7rem; }
+            .modal-box { width: 95%; padding: 16px; }
+            .modal-box h3 { font-size: 0.85rem; }
+            .chart-wrap { height: 110px; }
+            h1 { font-size: 0.95rem !important; }
+            .lec-table { font-size: 0.65rem; }
+            table.lec-table th, table.lec-table td { padding: 5px 6px; }
+            .course-card { padding: 10px; }
+            .course-card .cname { font-size: 0.75rem; }
+            .student-drawer { width: 100vw; right: -100vw; }
+            .drawer-header { padding: 12px 14px; }
+            .drawer-header h3 { font-size: 0.8rem; }
+            .drawer-section { padding: 10px 14px; }
+            .stream-item { font-size: 0.65rem; padding: 4px 6px; }
+            .feed-item { font-size: 0.65rem; padding: 5px 8px; }
+            .empty-muted { padding: 14px; font-size: 0.68rem; }
+            .netstrip { padding: 4px 8px; gap: 6px; }
+            .netstrip-item { font-size: 0.5rem; }
+            .state-step { font-size: 0.55rem; padding: 3px 6px; }
+            .sec-mode-btn { padding: 4px 6px; font-size: 0.55rem; }
+            .topbar-badge { display: none; }
+            .topbar-badge:first-child { display: flex; }
+            .quick-actions-body .btn-prime { width: 100%; justify-content: center; padding: 10px 12px; font-size: 0.75rem; }
+            .card-body[style*="flex-direction:column"] .btn-prime { width: 100%; justify-content: center; }
+            .report-buttons-wrap .btn-prime { width: 100%; justify-content: center; }
+            .state-timeline { overflow-x: auto; flex-wrap: nowrap; gap: 0; }
+            .state-step { white-space: nowrap; font-size: 0.5rem; padding: 3px 4px; }
+            .state-arrow { flex-shrink: 0; }
+        }
+
+        /* Very small devices (<360px) */
+        @media (max-width: 360px) {
+            .stats-grid { grid-template-columns: 1fr 1fr; gap: 4px; }
+            .stat-card { padding: 8px 10px; }
+            .stat-value { font-size: 1rem; }
+            .content { padding: 6px 4px; max-width: 100%; width: 100%; }
+            .card-noc { margin-left: 0; margin-right: 0; }
+            .grid-2col { gap: 6px; }
+            .main { padding-top: 46px; }
+            .topbar-left span { font-size: 0.65rem !important; }
+            .counter-num { font-size: 0.65rem; }
+            .session-code-display { font-size: 0.8rem; letter-spacing: 1px; }
+            .session-qr-area img { width: 70px; height: 70px; }
+            h1 { font-size: 0.85rem !important; }
+            .btn-prime { padding: 0.35rem 0.6rem; font-size: 0.65rem; min-height: 36px; }
+        }
+
+        /* ── RESPONSIVE OVERFLOW & SAFETY ── */
+        .section { max-width: 100%; min-width: 0; overflow-wrap: break-word; word-wrap: break-word; width: 100%; }
+        .section.active { max-width: 100%; width: 100%; }
+        img { max-width: 100%; height: auto; }
+
+        /* ── COMPREHENSIVE RESPONSIVE SAFETY (covers ALL edge cases) ── */
+        @media (max-width: 768px) {
+            .section .section-title-wrap > div { max-width: 100%; }
+            .section .section-title-wrap h1 { word-break: break-word; }
+            [style*="display:flex"] { flex-wrap: wrap; }
+            .session-panel-header > div:first-child { flex-wrap: wrap; }
+            .counter-item { flex: 1 1 40%; min-width: 60px; }
+            .lec-table td.cell-name { max-width: 120px; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+            .course-card .cname { word-break: break-word; }
+        }
+
+        @media (max-width: 480px) {
+            .counter-item { flex: 1 1 45%; min-width: 55px; }
+            .lec-table td.cell-name { max-width: 80px; }
+            .topbar-right .topbar-badge:first-child { gap: 3px; }
+            .topbar-right .topbar-badge:first-child #connLatency { display: none; }
+            .feed-item .feed-msg { font-size: 0.65rem; }
+            .stream-item .stream-name { font-size: 0.65rem; }
+        }
+
+        @media (max-width: 360px) {
+            .counter-item { flex: 1 1 100%; min-width: 0; }
+            .stat-card { min-width: 0; }
+            .lec-table td.cell-name { max-width: 60px; }
+            .feed-item { flex-wrap: wrap; gap: 4px; }
+            .feed-item .feed-time { width: 100%; text-align: right; }
+            .stream-item { flex-wrap: wrap; gap: 4px; }
+        }
+
+        /* Touch optimization for all mobile devices */
+        @media (hover: none) and (pointer: coarse) {
+            .btn-prime, .sidebar-nav a, .lang-btn, .sidebar-toggle, .drawer-close, .sec-mode-btn {
+                cursor: default;
+            }
+            .sidebar-nav a { padding: 11px 12px; }
+            .sidebar-footer a { padding: 11px 12px; }
+            .feed-item { padding: 8px 10px; }
+            .stream-item { padding: 7px 8px; }
+            .stat-card { cursor: default; }
+            .course-card { cursor: default; }
+        }
+
+        /* Landscape phones */
+        @media (max-height: 480px) and (orientation: landscape) {
+            .sidebar { padding-top: 0; }
+            .sidebar-brand { padding: 10px 14px; }
+            .sidebar-nav a { padding: 6px 10px; font-size: 0.7rem; }
+            .sidebar-footer { display: none; }
+            .content { padding-top: 8px; padding-bottom: 8px; }
+            .stats-grid { grid-template-columns: repeat(4, 1fr); gap: 6px; }
+            .stat-card { padding: 8px 12px; }
+            .stat-value { font-size: 1rem; }
+            .chart-wrap { height: 90px; }
+            .session-panel { margin-bottom: 8px; }
+            .live-stream-wrap { max-height: 80px; }
+            .topbar { height: 42px; }
+            .main { padding-top: 42px; }
+        }
+
+        /* Print styling */
+        @media print {
+            .sidebar, .sidebar-overlay, .topbar, .topbar-right, .netstrip,
+            .session-panel, .alert-popup, .drawer-overlay, .student-drawer,
+            .modal-overlay, .btn-prime, .sidebar-toggle, .lang-btn { display: none !important; }
+            .main { margin-left: 0; }
+            .content { max-width: 100%; padding: 0; }
+            .card-noc { border: 1px solid #ddd; break-inside: avoid; }
+            body { background: #fff; color: #000; }
+            .stat-value { color: #000; }
         }
     </style>
 </head>
-<body>
+<body class="lecturer-dashboard">
     <div class="sidebar-overlay" id="sidebarOverlay"></div>
 
     <!-- ═══ SIDEBAR ═══ -->
@@ -307,12 +515,12 @@
 
             <!-- ═══ OVERVIEW ═══ -->
             <div class="section active" id="section-overview">
-                <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:14px;flex-wrap:wrap;gap:8px;">
+                <div class="section-title-wrap">
                     <div>
-                        <h1 style="font-size:1.2rem;font-weight:700;" data-i18n="smart_classroom">Smart Classroom</h1>
-                        <p style="font-size:0.7rem;color:var(--text-dim);" id="welcomeMsg" data-i18n="welcome_back">Welcome back</p>
+                        <h1 style="font-size:clamp(1rem,2vw,1.2rem);font-weight:700;" data-i18n="smart_classroom">Smart Classroom</h1>
+                        <p style="font-size:clamp(0.6rem,0.7vw,0.7rem);color:var(--text-dim);" id="welcomeMsg" data-i18n="welcome_back">Welcome back</p>
                     </div>
-                    <div style="display:flex;gap:8px;">
+                    <div style="display:flex;gap:8px;flex-wrap:wrap;">
                         <button class="btn-prime primary" onclick="openSessionModal()"><i class="fas fa-qrcode"></i> <span data-i18n="new_session">New Session</span></button>
                         <button class="btn-prime ghost" onclick="getAllData()"><i class="fas fa-sync-alt"></i></button>
                     </div>
@@ -369,10 +577,10 @@
                                 <div class="counter-item"><div class="counter-num" style="color:var(--text-dim);" id="scPending">0</div><div class="counter-label" data-i18n="pending">Pending</div></div>
                                 <div class="counter-item"><div class="counter-num" style="color:var(--danger);" id="scSuspicious">0</div><div class="counter-label" data-i18n="suspicious">Suspicious</div></div>
                             </div>
-                            <div style="display:flex;align-items:center;justify-content:space-between;">
+                            <div style="display:flex;align-items:center;justify-content:space-between;flex-wrap:wrap;gap:4px;">
                                 <span style="font-size:0.65rem;color:var(--text-dim);" data-i18n="live_checkins">Live Check-ins</span>
                                 <span style="font-size:0.6rem;color:var(--text-dim);font-weight:600;" id="sessionDuration">00:00</span>
-                                <div style="display:flex;gap:6px;">
+                                <div style="display:flex;gap:6px;flex-wrap:wrap;">
                                     <button class="btn-prime xs ghost" onclick="copySessionCode()"><i class="fas fa-copy"></i> <span data-i18n="copy_code">Copy</span></button>
                                     <button class="btn-prime xs danger" onclick="closeAttendanceSession()"><i class="fas fa-stop"></i> <span data-i18n="close_session">Close</span></button>
                                 </div>
@@ -391,7 +599,7 @@
                     </div>
                     <div class="card-noc">
                         <div class="card-header"><div class="card-title"><i class="fas fa-bolt"></i> <span data-i18n="quick_actions">Quick Actions</span></div></div>
-                        <div class="card-body" style="display:flex;flex-direction:column;gap:7px;">
+                        <div class="card-body quick-actions-body" style="display:flex;flex-direction:column;gap:7px;">
                             <button class="btn-prime primary" onclick="openSessionModal()" style="width:100%;justify-content:center;"><i class="fas fa-qrcode"></i> <span data-i18n="create_qr">Create QR Attendance</span></button>
                             <button class="btn-prime ghost" onclick="navigateTo('courses')" style="width:100%;justify-content:center;"><i class="fas fa-book"></i> <span data-i18n="view_courses">View My Courses</span></button>
                             <button class="btn-prime ghost" onclick="navigateTo('students')" style="width:100%;justify-content:center;"><i class="fas fa-users"></i> <span data-i18n="view_students">View Students</span></button>
@@ -402,17 +610,17 @@
 
             <!-- ═══ MY COURSES ═══ -->
             <div class="section" id="section-courses">
-                <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:14px;">
-                    <h1 style="font-size:1.2rem;font-weight:700;" data-i18n="my_courses">My Courses</h1>
-                    <span style="font-size:0.7rem;color:var(--text-dim);" id="courseCount">0 courses</span>
+                <div class="section-title-wrap">
+                    <h1 style="font-size:clamp(1rem,2vw,1.2rem);font-weight:700;" data-i18n="my_courses">My Courses</h1>
+                    <span style="font-size:clamp(0.6rem,0.7vw,0.7rem);color:var(--text-dim);" id="courseCount">0 courses</span>
                 </div>
                 <div class="course-grid" id="courseGrid"><div class="empty-muted" style="grid-column:1/-1;" data-i18n="loading">Loading...</div></div>
             </div>
 
             <!-- ═══ ATTENDANCE ═══ -->
             <div class="section" id="section-attendance">
-                <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:14px;">
-                    <h1 style="font-size:1.2rem;font-weight:700;" data-i18n="attendance_sessions">Attendance Sessions</h1>
+                <div class="section-title-wrap">
+                    <h1 style="font-size:clamp(1rem,2vw,1.2rem);font-weight:700;" data-i18n="attendance_sessions">Attendance Sessions</h1>
                     <button class="btn-prime primary" onclick="openSessionModal()"><i class="fas fa-plus"></i> <span data-i18n="new_session">New Session</span></button>
                 </div>
                 <div class="session-panel" id="sessionPanel2" style="display:none;">
@@ -450,9 +658,9 @@
 
             <!-- ═══ STUDENTS ═══ -->
             <div class="section" id="section-students">
-                <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:14px;">
-                    <h1 style="font-size:1.2rem;font-weight:700;" data-i18n="student_monitor">Student Monitor</h1>
-                    <span style="font-size:0.7rem;color:var(--text-dim);" id="checkinCount" data-i18n="live_feed">Live feed</span>
+                <div class="section-title-wrap">
+                    <h1 style="font-size:clamp(1rem,2vw,1.2rem);font-weight:700;" data-i18n="student_monitor">Student Monitor</h1>
+                    <span style="font-size:clamp(0.6rem,0.7vw,0.7rem);color:var(--text-dim);" id="checkinCount" data-i18n="live_feed">Live feed</span>
                 </div>
                 <div class="card-noc">
                     <div class="card-header"><div class="card-title"><i class="fas fa-user-check"></i> <span data-i18n="checkin_feed">Check-in Feed</span></div></div>
@@ -462,10 +670,10 @@
 
             <!-- ═══ REPORTS ═══ -->
             <div class="section" id="section-reports">
-                <h1 style="font-size:1.2rem;font-weight:700;margin-bottom:14px;" data-i18n="reports">Reports</h1>
+                <h1 style="font-size:clamp(1rem,2vw,1.2rem);font-weight:700;margin-bottom:14px;" data-i18n="reports">Reports</h1>
                 <div class="card-noc">
                     <div class="card-header"><div class="card-title"><i class="fas fa-download"></i> <span data-i18n="generate_reports">Generate Reports</span></div></div>
-                    <div class="card-body" style="display:flex;flex-wrap:wrap;gap:8px;">
+                    <div class="card-body report-buttons-wrap" style="display:flex;flex-wrap:wrap;gap:8px;">
                         <button class="btn-prime primary" onclick="downloadReport('summary')"><i class="fas fa-file-pdf"></i> <span data-i18n="attendance_pdf">Attendance PDF</span></button>
                         <button class="btn-prime ghost" onclick="downloadReport('minesec')"><i class="fas fa-file-code"></i> <span data-i18n="minesec_xml">MINESEC XML</span></button>
                         <button class="btn-prime ghost" onclick="downloadReport('detailed')"><i class="fas fa-file-excel"></i> <span data-i18n="detailed_xls">Detailed XLS</span></button>
@@ -475,7 +683,7 @@
 
             <!-- ═══ ACTIVITY ═══ -->
             <div class="section" id="section-activity">
-                <h1 style="font-size:1.2rem;font-weight:700;margin-bottom:14px;" data-i18n="live_activity">Live Activity</h1>
+                <h1 style="font-size:clamp(1rem,2vw,1.2rem);font-weight:700;margin-bottom:14px;" data-i18n="live_activity">Live Activity</h1>
                 <div class="card-noc">
                     <div class="card-header"><div class="card-title"><i class="fas fa-stream"></i> <span data-i18n="activity_feed">Activity Feed</span></div></div>
                     <div class="card-body"><div class="feed-wrap" id="activityFeed"><div class="empty-muted" data-i18n="no_activity">No recent activity</div></div></div>
@@ -484,7 +692,7 @@
 
             <!-- ═══ NETWORK ═══ -->
             <div class="section" id="section-network">
-                <h1 style="font-size:1.2rem;font-weight:700;margin-bottom:14px;" data-i18n="network_health">Network Health</h1>
+                <h1 style="font-size:clamp(1rem,2vw,1.2rem);font-weight:700;margin-bottom:14px;" data-i18n="network_health">Network Health</h1>
                 <div class="stats-grid" id="netStats">
                     <div class="stat-card"><div class="stat-top"><span class="stat-label" data-i18n="broker">Broker</span><div class="stat-icon" style="background:rgba(124,92,252,0.1);color:#7c5cfc;"><i class="fas fa-server"></i></div></div><div class="stat-value" id="netBroker">—</div><div class="stat-footer" id="netBrokerFooter" data-i18n="status">Status</div></div>
                     <div class="stat-card"><div class="stat-top"><span class="stat-label" data-i18n="latency">Latency</span><div class="stat-icon" style="background:rgba(6,182,212,0.1);color:#06b6d4;"><i class="fas fa-tachometer-alt"></i></div></div><div class="stat-value" id="netLatency">—</div><div class="stat-footer" data-i18n="to_broker">To broker</div></div>
@@ -499,7 +707,7 @@
 
             <!-- ═══ SECURITY ═══ -->
             <div class="section" id="section-security">
-                <h1 style="font-size:1.2rem;font-weight:700;margin-bottom:14px;" data-i18n="security_alerts_title">Security Alerts</h1>
+                <h1 style="font-size:clamp(1rem,2vw,1.2rem);font-weight:700;margin-bottom:14px;" data-i18n="security_alerts_title">Security Alerts</h1>
                 <div class="card-noc">
                     <div class="card-header"><div class="card-title"><i class="fas fa-exclamation-triangle"></i> <span data-i18n="alert_feed">Alert Feed</span> <span class="badge-dot red" id="secBadgeInline" style="display:none;"></span></div></div>
                     <div class="card-body"><div class="feed-wrap" id="securityAlertFeed"><div class="empty-muted" data-i18n="no_security_alerts">No security alerts</div></div></div>
@@ -508,13 +716,13 @@
 
             <!-- ═══ OFFLINE SYNC ═══ -->
             <div class="section" id="section-sync">
-                <h1 style="font-size:1.2rem;font-weight:700;margin-bottom:14px;" data-i18n="offline_sync_title">Offline Sync</h1>
+                <h1 style="font-size:clamp(1rem,2vw,1.2rem);font-weight:700;margin-bottom:14px;" data-i18n="offline_sync_title">Offline Sync</h1>
                 <div class="stats-grid" id="syncStats">
                     <div class="stat-card"><div class="stat-top"><span class="stat-label" data-i18n="pending_records">Pending Records</span><div class="stat-icon" style="background:rgba(245,158,11,0.1);color:#f59e0b;"><i class="fas fa-cloud-upload-alt"></i></div></div><div class="stat-value" id="syncPending">—</div><div class="stat-footer" id="syncLastSync" data-i18n="last_sync_na">Last sync: —</div></div>
                     <div class="stat-card"><div class="stat-top"><span class="stat-label" data-i18n="success_rate">Success Rate</span><div class="stat-icon" style="background:rgba(16,185,129,0.1);color:#10b981;"><i class="fas fa-check-circle"></i></div></div><div class="stat-value" id="syncSuccessRate">—</div><div class="stat-footer" data-i18n="sync_rate_desc">Of recent syncs</div></div>
                     <div class="stat-card"><div class="stat-top"><span class="stat-label" data-i18n="offline_nodes">Offline Nodes</span><div class="stat-icon" style="background:rgba(239,68,68,0.1);color:#ef4444;"><i class="fas fa-server"></i></div></div><div class="stat-value" id="syncOfflineNodes">—</div><div class="stat-footer" data-i18n="nodes_offline">Nodes currently offline</div></div>
                 </div>
-                <div style="display:flex;gap:8px;margin-bottom:14px;">
+                <div class="section-title-wrap" style="margin-bottom:14px;">
                     <button class="btn-prime success" onclick="forceSync()"><i class="fas fa-cloud-upload-alt"></i> <span data-i18n="sync_now">Sync Now</span></button>
                     <button class="btn-prime ghost" onclick="loadSyncStatus()"><i class="fas fa-sync-alt"></i> <span data-i18n="refresh">Refresh</span></button>
                 </div>
@@ -602,9 +810,23 @@
         function apiFetch(url, opts) {
             opts = opts || {};
             opts.headers = opts.headers || {};
-            opts.headers['Authorization'] = 'Bearer ' + getToken();
+            var token = getToken();
+            if (!token) {
+                window.location.href = '/login';
+                return;
+            }
+            opts.headers['Authorization'] = 'Bearer ' + token;
             if (!opts.headers['Content-Type'] && opts.body) opts.headers['Content-Type'] = 'application/json';
-            return fetch(url, opts);
+            return fetch(url, opts).then(function(res) {
+                if (res.status === 401) {
+                    localStorage.removeItem('accessToken');
+                    localStorage.removeItem('refreshToken');
+                    localStorage.removeItem('user');
+                    window.location.href = '/login';
+                    return;
+                }
+                return res;
+            });
         }
 
         function showToast(msg, type) {
@@ -814,7 +1036,11 @@
                 var d = await res.json();
                 var distinctCourses = {};
                 if (d.sessions) d.sessions.forEach(function(s) { if (s.course_id) distinctCourses[s.course_id] = true; });
-                document.getElementById('ovCourses').textContent = Object.keys(distinctCourses).length || '—';
+                var ocEl = document.getElementById('ovCourses');
+                var sessionCourseCount = Object.keys(distinctCourses).length;
+                if (ocEl && (ocEl.textContent === '—' || ocEl.textContent === '-' || ocEl.textContent === '0')) {
+                    ocEl.textContent = sessionCourseCount || '—';
+                }
                 document.getElementById('ovSessions').textContent = d.active_sessions || 0;
                 document.getElementById('ovSessionFooter').textContent = d.active_sessions > 0
                     ? (currentLang === 'fr' ? 'En cours' : 'Running now')
@@ -878,7 +1104,7 @@
                 document.getElementById('ovStudents').textContent = d.total || '—';
                 if (d.students && d.students.length) {
                     var tr = 0, tc = 0;
-                    d.students.forEach(function(s) { if (s.attendance_rate !== undefined) { tr += s.attendance_rate; tc++; } });
+                    d.students.forEach(function(s) { if (s.attendance_pct !== undefined) { tr += s.attendance_pct; tc++; } });
                     document.getElementById('ovAttRate').textContent = tc > 0 ? Math.round(tr / tc) + '%' : '—';
                 }
             } catch(e) { console.warn('loadStudentStats:', e); }
@@ -909,14 +1135,16 @@
                 var grid = document.getElementById('courseGrid');
                 var sel = document.getElementById('sessionCourseSelect');
                 sel.innerHTML = '<option value="">' + (currentLang === 'fr' ? '— Choisir un cours —' : '— Select Course —') + '</option>';
-                if (d.courses && d.courses.length) {
-                    document.getElementById('courseCount').textContent = d.courses.length + (currentLang === 'fr' ? ' cours' : ' courses');
-                    grid.innerHTML = d.courses.map(function(c) {
+                var courseList = d.courses || [];
+                document.getElementById('ovCourses').textContent = courseList.length || '—';
+                document.getElementById('courseCount').textContent = courseList.length + (currentLang === 'fr' ? ' cours' : ' courses');
+                if (courseList.length) {
+                    grid.innerHTML = courseList.map(function(c) {
                         var dept = c.department_name || '—';
                         var barPct = Math.min(Math.round((c.credits || 0) / 6 * 100), 100);
                         return '<div class="course-card"><div class="ccode">' + (c.code || '') + '</div><div class="cname">' + (c.name || '') + '</div><div class="cmeta"><i class="fas fa-building"></i> ' + dept + ' · <i class="fas fa-star"></i> ' + (c.credits || 0) + ' cr</div><div class="cbar"><div class="cbar-fill" style="width:' + barPct + '%;"></div></div><div style="display:flex;justify-content:space-between;margin-top:6px;"><span style="font-size:0.55rem;color:var(--text-dim);">' + (c.credits || 0) + ' / 6 cr</span></div></div>';
                     }).join('');
-                    d.courses.forEach(function(c) {
+                    courseList.forEach(function(c) {
                         sel.innerHTML += '<option value="' + (c.id || c.code) + '">' + c.code + ' — ' + c.name + '</option>';
                     });
                 } else {
@@ -1015,6 +1243,14 @@
             document.getElementById('sessionPanel2').style.display = 'block';
             document.getElementById('sessionCourseDisplay').textContent = sess.course_name || '';
             document.getElementById('sessionCourseDisplay2').textContent = sess.course_name || '';
+            if (sess.qr_code) {
+                document.getElementById('qrCodeImage').src = sess.qr_code;
+                document.getElementById('qrCodeImage2').src = sess.qr_code;
+            }
+            if (sess.session_code) {
+                document.getElementById('sessionCodeDisplay').textContent = sess.session_code;
+                document.getElementById('sessionCodeDisplay2').textContent = sess.session_code;
+            }
             ['scPresent','scLate','scPending','scSuspicious','scPresent2','scLate2','scPending2','scSuspicious2'].forEach(function(id) {
                 var el = document.getElementById(id);
                 if (el) el.textContent = '0';
@@ -1028,8 +1264,12 @@
             var sel = document.getElementById('sessionCourseSelect');
             var courseId = sel.value;
             var courseText = sel.options[sel.selectedIndex] ? sel.options[sel.selectedIndex].text : '';
-            var location = document.getElementById('sessionLocation').value || 'Lecture Hall';
+            var location = document.getElementById('sessionLocation').value;
             if (!courseId) { showToast(currentLang === 'fr' ? 'Veuillez choisir un cours' : 'Please select a course', 'error'); return; }
+            if (!location) {
+                document.getElementById('sessionLocation').value = 'Lecture Hall';
+                location = 'Lecture Hall';
+            }
             try {
                 var res = await fetch('/api/attendance/create-session', {
                     method: 'POST', headers: { 'Content-Type': 'application/json', 'Authorization': 'Bearer ' + getToken() },
@@ -1241,15 +1481,18 @@
                     showToast(currentLang === 'fr' ? 'XML MINESEC téléchargé' : 'MINESEC XML downloaded', 'success');
                     return;
                 }
+                var isXls = type === 'xls' || type === 'xlsx' || type === 'detailed';
                 var res = await fetch('/api/reports/attendance?type=' + type, { headers: { 'Authorization': 'Bearer ' + getToken() } });
                 if (!res || !res.ok) { showToast(currentLang === 'fr' ? 'Échec de génération' : 'Generation failed', 'error'); return; }
                 var blob = await res.blob();
                 var url = window.URL.createObjectURL(blob);
                 var a = document.createElement('a');
-                a.href = url; a.download = 'attendance_report_' + new Date().toISOString().slice(0,10) + '.pdf';
+                a.href = url; a.download = 'attendance_report_' + new Date().toISOString().slice(0,10) + (isXls ? '.xlsx' : '.pdf');
                 document.body.appendChild(a); a.click(); a.remove();
                 window.URL.revokeObjectURL(url);
-                showToast(currentLang === 'fr' ? 'Rapport téléchargé' : 'Report downloaded', 'success');
+                showToast(isXls
+                    ? (currentLang === 'fr' ? 'XLS téléchargé' : 'XLS downloaded')
+                    : (currentLang === 'fr' ? 'Rapport téléchargé' : 'Report downloaded'), 'success');
             } catch(e) { showToast((currentLang === 'fr' ? 'Échec: ' : 'Failed: ') + e.message, 'error'); }
         }
 
@@ -1303,13 +1546,14 @@
                 if (d.students && d.students.length) {
                     feed.innerHTML = '<div class="table-wrap"><table class="lec-table"><thead><tr><th data-i18n="name">Name</th><th data-i18n="student_id">ID</th><th data-i18n="attendance_rate">Rate</th><th data-i18n="risk_level">Risk</th><th data-i18n="trusted_device">Device</th><th data-i18n="suspicious_attempts">Susp.</th></tr></thead><tbody>' +
                         d.students.map(function(s) {
-                            var rate = s.attendance_rate !== undefined ? s.attendance_rate + '%' : '—';
+                            var rate = s.attendance_pct !== undefined ? s.attendance_pct + '%' : '—';
                             var risk = s.risk_level || 'low';
                             var riskPill = risk === 'high' ? 'pill-red' : risk === 'medium' ? 'pill-yellow' : 'pill-green';
                             var riskLabel = risk.charAt(0).toUpperCase() + risk.slice(1);
                             var device = s.trusted_device ? '<i class="fas fa-check-circle" style="color:var(--success);"></i>' : '<i class="fas fa-times-circle" style="color:var(--text-dim);"></i>';
                             var susp = s.suspicious_attempts || 0;
-                            return '<tr style="cursor:pointer;" onclick="openStudentDrawer(\'' + (s.id || s.user_id || '') + '\')"><td class="cell-name">' + (s.first_name || '') + ' ' + (s.last_name || '') + '</td><td>' + (s.student_id || s.email || '—') + '</td><td>' + rate + '</td><td><span class="pill ' + riskPill + '">' + riskLabel + '</span></td><td>' + device + '</td><td>' + susp + '</td></tr>';
+                            var stuName = s.name || [s.first_name, s.last_name].filter(Boolean).join(' ') || '—';
+                            return '<tr style="cursor:pointer;" onclick="openStudentDrawer(\'' + (s.id || s.user_id || '') + '\')"><td class="cell-name">' + stuName + '</td><td>' + (s.student_id || s.email || '—') + '</td><td>' + rate + '</td><td><span class="pill ' + riskPill + '">' + riskLabel + '</span></td><td>' + device + '</td><td>' + susp + '</td></tr>';
                         }).join('') + '</tbody></table></div>';
                     feed.querySelectorAll('[data-i18n]').forEach(function(el) {
                         var key = el.dataset.i18n;
@@ -1397,12 +1641,14 @@
                 document.getElementById('syncOfflineNodes').textContent = d.nodes_offline || 0;
                 document.getElementById('syncLastSync').textContent = (currentLang === 'fr' ? 'Dernière sync: ' : 'Last sync: ') + (d.last_sync ? new Date(d.last_sync).toLocaleString() : '—');
 
-                var queue = d.queue || [];
+                var queue = (d.queue || []).filter(function(q) { return q.records > 0; });
                 var tbody = document.getElementById('syncQueueBody');
                 if (queue.length) {
                     tbody.innerHTML = queue.map(function(q) {
                         var stPill = q.status === 'synced' ? 'pill-green' : q.status === 'syncing' ? 'pill-yellow' : 'pill-gray';
-                        return '<tr><td>' + (q.node || q.node_name || '—') + '</td><td>' + (q.records || 0) + '</td><td><span class="pill ' + stPill + '">' + (q.status || 'pending') + '</span></td><td>' + (q.since || '—') + '</td></tr>';
+                        var nodeLabel = q.node || q.node_name || '—';
+                        if (nodeLabel === 'Unknown') nodeLabel = '—';
+                        return '<tr><td>' + nodeLabel + '</td><td>' + (q.records || 0) + '</td><td><span class="pill ' + stPill + '">' + (q.status || 'pending') + '</span></td><td>' + (q.since || '—') + '</td></tr>';
                     }).join('');
                 } else {
                     tbody.innerHTML = '<tr><td colspan="4"><div class="empty-muted">' + (currentLang === 'fr' ? 'File d\'attente vide' : 'Queue empty') + '</div></td></tr>';
@@ -1415,7 +1661,7 @@
                 showToast(currentLang === 'fr' ? 'Synchronisation...' : 'Syncing...', 'info');
                 var res = await fetch('/api/institutional/offline-sync', {
                     method: 'POST', headers: { 'Authorization': 'Bearer ' + getToken(), 'Content-Type': 'application/json' },
-                    body: '{}'
+                    body: JSON.stringify({ node_name: 'Lecturer Dashboard', records: 0 })
                 });
                 if (!res.ok) { showToast(currentLang === 'fr' ? 'Échec de la sync' : 'Sync failed', 'error'); return; }
                 showToast(currentLang === 'fr' ? 'Synchronisé !' : 'Synced!', 'success');
@@ -1481,6 +1727,29 @@
                 document.getElementById('nsLatency').textContent = ms + 'ms';
             } catch(e) { console.warn('measurePing:', e); }
         }
+
+        // ═══════════════════════════════════════════════
+        //  ERROR / TIMEOUT SAFEGUARD
+        // ═══════════════════════════════════════════════
+        function showError(elId, msg) {
+            var el = document.getElementById(elId);
+            if (el && (el.textContent === '' || el.textContent.trim() === '' || el.querySelector('[data-i18n="loading"]') || el.innerHTML.includes('Loading') || el.innerHTML.includes('Chargement'))) {
+                el.innerHTML = '<div class="empty-muted" style="color:var(--danger);">' + (msg || '—') + '</div>';
+            }
+        }
+        setTimeout(function() {
+            showError('ovCourses', '—');
+            showError('ovSessions', '—');
+            showError('ovStudents', '—');
+            showError('ovAttRate', '—');
+            showError('recentSessionsBody', 'Failed to load');
+            showError('sessionHistoryBody', 'Failed to load');
+            showError('courseGrid', 'Failed to load');
+            showError('activityFeed', 'Failed to load');
+            showError('securityAlertFeed', 'Failed to load');
+            showError('checkinFeed', 'Failed to load');
+            showError('syncQueueBody', 'Failed to load');
+        }, 15000);
 
         // ═══════════════════════════════════════════════
         //  INIT

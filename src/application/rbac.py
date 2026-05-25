@@ -183,7 +183,7 @@ def require_auth(f):
             return f(*args, **kwargs)
         
         # Dev bypass — only when no token AND in development mode
-        env = current_app.config.get('ENVIRONMENT', 'development') if current_app else 'development'
+        env = current_app.config.get('ENVIRONMENT', 'production') if current_app else 'production'
         if env == 'development' and (
             request.args.get('role') or
             request.path.startswith(('/admin/', '/system/', '/institutional-admin/',

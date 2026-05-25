@@ -6,7 +6,7 @@ from decouple import config
 BASE_DIR = Path(__file__).parent.parent
 
 # Load environment file based on environment
-ENV_FILE = '.env.dev' if config('ENVIRONMENT', default='development') == 'development' else '.env'
+ENV_FILE = '.env.dev' if config('ENVIRONMENT', default='production') == 'development' else '.env'
 if os.path.exists(ENV_FILE):
     config.search_path = os.path.join(BASE_DIR, ENV_FILE)
 
@@ -14,11 +14,11 @@ class Config:
     """Base configuration class"""
     
     # Basic Flask configuration
-    SECRET_KEY = config('SECRET_KEY', default='dev-secret-key')
+    SECRET_KEY = config('SECRET_KEY', default='')
     DEBUG = config('DEBUG', default=False, cast=bool)
     
     # Environment
-    ENVIRONMENT = config('ENVIRONMENT', default='development')
+    ENVIRONMENT = config('ENVIRONMENT', default='production')
     
     # Firebase configuration
     FIREBASE_CREDENTIALS_PATH = config('FIREBASE_CREDENTIALS_PATH', default='firebase-dev.json')
@@ -33,7 +33,7 @@ class Config:
     REDIS_URL = config('REDIS_URL', default='redis://localhost:6379/0')
     
     # Security configuration
-    JWT_SECRET_KEY = config('JWT_SECRET_KEY', default='jwt-secret-key')
+    JWT_SECRET_KEY = config('JWT_SECRET_KEY', default='')
     JWT_ACCESS_TOKEN_EXPIRES = config('JWT_ACCESS_TOKEN_EXPIRES', default=3600, cast=int)
     JWT_REFRESH_TOKEN_EXPIRES = config('JWT_REFRESH_TOKEN_EXPIRES', default=86400, cast=int)
     
@@ -197,10 +197,10 @@ config_map = {
     'development': DevelopmentConfig,
     'staging': StagingConfig,
     'production': ProductionConfig,
-    'default': DevelopmentConfig
+    'default': ProductionConfig
 }
 
 def get_config():
     """Get configuration based on environment"""
-    env = config('ENVIRONMENT', default='development')
-    return config_map.get(env, DevelopmentConfig)
+    env = config('ENVIRONMENT', default='production')
+    return config_map.get(env, ProductionConfig)

@@ -3,6 +3,7 @@ from datetime import datetime, timedelta
 import jwt
 from flask import current_app
 import bcrypt
+import re
 import secrets
 import logging
 
@@ -33,6 +34,18 @@ class AuthenticationService:
                     role: UserRole, institution_id: str, **kwargs) -> Optional[User]:
         try:
             email = email.strip().lower()
+
+            # Defense-in-depth: server-side password strength validation
+            if len(password) < 8:
+                raise ValueError("Password must be at least 8 characters long")
+            if not re.search(r'[A-Z]', password):
+                raise ValueError("Password must contain at least one uppercase letter")
+            if not re.search(r'[a-z]', password):
+                raise ValueError("Password must contain at least one lowercase letter")
+            if not re.search(r'[0-9]', password):
+                raise ValueError("Password must contain at least one number")
+            if not re.search(r'[!@#$%^&*(),.?\":{}|<>_\-]', password):
+                raise ValueError("Password must contain at least one special character")
 
             existing = self.firebase_service.query_documents(
                 'users',

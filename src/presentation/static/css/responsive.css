@@ -583,6 +583,285 @@ select,
     font-size: 0.8rem;
     padding: 0.25rem 0.5rem;
   }
+
+  /* Lecturer dashboard specific overrides */
+  .stats-grid {
+    grid-template-columns: 1fr 1fr !important;
+  }
+
+  .grid-2col {
+    grid-template-columns: 1fr !important;
+  }
+
+  .session-panel-body {
+    grid-template-columns: 1fr !important;
+  }
+
+  .session-qr-area {
+    border-right: none !important;
+    border-bottom: 1px solid var(--border-color);
+  }
+
+  .quick-actions-body .btn-prime {
+    width: 100% !important;
+    justify-content: center !important;
+    min-height: 44px;
+  }
+
+  .report-buttons-wrap {
+    flex-direction: column !important;
+  }
+
+  .report-buttons-wrap .btn-prime {
+    width: 100% !important;
+    justify-content: center !important;
+  }
+
+  .course-grid {
+    grid-template-columns: 1fr !important;
+  }
+
+  .topbar-badge .label {
+    display: none;
+  }
+
+  .topbar {
+    height: 50px !important;
+    padding: 0 12px !important;
+  }
+
+  h1 {
+    font-size: 1.05rem !important;
+  }
+
+  .netstrip {
+    flex-wrap: wrap;
+    gap: 8px;
+    padding: 5px 12px !important;
+  }
+}
+
+@media (max-width: 480px) {
+  .stats-grid {
+    grid-template-columns: 1fr 1fr !important;
+    gap: 6px;
+  }
+
+  .stat-card {
+    padding: 10px 12px !important;
+  }
+
+  .stat-value {
+    font-size: 1.1rem !important;
+  }
+
+  .content {
+    padding: 8px !important;
+  }
+
+  .topbar {
+    height: 46px !important;
+    padding: 0 8px !important;
+  }
+
+  .btn-prime {
+    min-height: 40px;
+    padding: 0.4rem 0.75rem !important;
+    font-size: 0.7rem !important;
+  }
+
+  .quick-actions-body .btn-prime {
+    min-height: 44px;
+  }
+
+  h1 {
+    font-size: 0.95rem !important;
+  }
+
+  .course-card {
+    padding: 10px !important;
+  }
+
+  .course-card .cname {
+    font-size: 0.75rem !important;
+  }
+
+  .topbar-badge {
+    display: none !important;
+  }
+
+  .topbar-badge:first-child {
+    display: flex !important;
+  }
+
+  .state-timeline {
+    overflow-x: auto;
+    flex-wrap: nowrap !important;
+  }
+
+  .state-step {
+    white-space: nowrap;
+    font-size: 0.5rem !important;
+    padding: 3px 4px !important;
+  }
+}
+
+@media (max-width: 360px) {
+  .stats-grid {
+    grid-template-columns: 1fr 1fr !important;
+    gap: 4px;
+  }
+
+  .stat-card {
+    padding: 8px 10px !important;
+  }
+
+  .stat-value {
+    font-size: 1rem !important;
+  }
+
+  .content {
+    padding: 6px 4px !important;
+  }
+
+  h1 {
+    font-size: 0.85rem !important;
+  }
+
+  .btn-prime {
+    padding: 0.35rem 0.6rem !important;
+    font-size: 0.65rem !important;
+    min-height: 36px;
+  }
+
+  .session-qr-area img {
+    width: 70px !important;
+    height: 70px !important;
+  }
+}
+
+/* Lecturer dashboard fixed topbar — guaranteed always visible */
+.topbar {
+  position: fixed !important;
+  top: 0 !important;
+  left: 230px !important;
+  right: 0 !important;
+  z-index: 50 !important;
+}
+
+@media (max-width: 768px) {
+  .topbar {
+    left: 0 !important;
+  }
+}
+
+/* Prevent horizontal overflow on all lecturer dashboard pages */
+body.lecturer-dashboard {
+  overflow-x: hidden !important;
+  width: 100% !important;
+  max-width: 100% !important;
+}
+
+/* Ensure content containers don't overflow */
+.app-wrap,
+.content,
+.card-noc,
+.stats-grid,
+.grid-2col,
+.session-panel,
+.session-panel-body,
+.course-grid,
+.feed-wrap,
+.live-stream-wrap,
+.table-wrap,
+.netstrip {
+  max-width: 100% !important;
+  box-sizing: border-box !important;
+}
+
+/* Ensure main has proper padding-top for fixed topbar */
+.main {
+  padding-top: 56px;
+}
+
+@media (max-width: 768px) {
+  .main {
+    padding-top: 50px;
+  }
+}
+
+@media (max-width: 480px) {
+  .main {
+    padding-top: 46px;
+  }
+}
+
+/* Ensure images and canvases don't overflow */
+img, canvas, svg, video, iframe {
+  max-width: 100% !important;
+  height: auto !important;
+}
+
+/* ── EXTRA RESPONSIVE SAFETY (lecturer dashboard) ── */
+@media (max-width: 768px) {
+  body.lecturer-dashboard [style*="display:flex"] {
+    flex-wrap: wrap !important;
+  }
+  body.lecturer-dashboard .counter-item {
+    flex: 1 1 40% !important;
+    min-width: 60px !important;
+  }
+  body.lecturer-dashboard .lec-table td.cell-name {
+    max-width: 120px !important;
+    overflow: hidden !important;
+    text-overflow: ellipsis !important;
+    white-space: nowrap !important;
+  }
+  body.lecturer-dashboard .course-card .cname {
+    word-break: break-word !important;
+  }
+  body.lecturer-dashboard .section.active {
+    width: 100% !important;
+    max-width: 100% !important;
+  }
+}
+
+@media (max-width: 480px) {
+  body.lecturer-dashboard .counter-item {
+    flex: 1 1 45% !important;
+    min-width: 55px !important;
+  }
+  body.lecturer-dashboard .lec-table td.cell-name {
+    max-width: 80px !important;
+  }
+  body.lecturer-dashboard .feed-item .feed-msg {
+    font-size: 0.65rem !important;
+  }
+  body.lecturer-dashboard .stream-item .stream-name {
+    font-size: 0.65rem !important;
+  }
+}
+
+@media (max-width: 360px) {
+  body.lecturer-dashboard .counter-item {
+    flex: 1 1 100% !important;
+    min-width: 0 !important;
+  }
+  body.lecturer-dashboard .lec-table td.cell-name {
+    max-width: 60px !important;
+  }
+  body.lecturer-dashboard .feed-item {
+    flex-wrap: wrap !important;
+    gap: 4px !important;
+  }
+  body.lecturer-dashboard .feed-item .feed-time {
+    width: 100% !important;
+    text-align: right !important;
+  }
+  body.lecturer-dashboard .stream-item {
+    flex-wrap: wrap !important;
+    gap: 4px !important;
+  }
 }
 
 /* --- 25. Student Dashboard --- */

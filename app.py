@@ -123,6 +123,14 @@ class RateLimiter:
 
         return False
 
+    def get_attempt_count(self, key: str, window: int = 300) -> int:
+        """Get current failed attempt count within the time window"""
+        now = datetime.utcnow()
+        if key not in self._attempts:
+            return 0
+        self._attempts[key] = [t for t in self._attempts[key] if now - t < timedelta(seconds=window)]
+        return len(self._attempts[key])
+
     def record_success(self, key: str):
         if key in self._attempts:
             del self._attempts[key]
@@ -155,6 +163,21 @@ def create_app():
     app.config.from_object(config)
     config.init_app(app)
 
+    # Startup security configuration validation
+    _insecure_defaults = {
+        'SECRET_KEY': ('', 'dev-secret-key'),
+        'JWT_SECRET_KEY': ('', 'jwt-secret-key', 'dev-secret-key-change-in-production'),
+    }
+    for _key, _bad_values in _insecure_defaults.items():
+        _val = app.config.get(_key, '')
+        if _val in _bad_values or not _val:
+            raise RuntimeError(
+                f"{_key} is not set or is set to an insecure default. "
+                f"Set a unique, secure value in environment variables."
+            )
+    if app.config.get('ENVIRONMENT', 'production') not in ('development', 'staging', 'production'):
+        raise RuntimeError(f"Invalid ENVIRONMENT setting: {app.config.get('ENVIRONMENT')}")
+
     # Import SQL models before init_db so they register on Base.metadata
     try:
         import src.infrastructure.demo_sql_repositories as _demo_models
@@ -170,8 +193,19 @@ def create_app():
     except Exception as exc:
         logger.error('SQLAlchemy initialization failed: %s', exc)
     
-    # JWT Configuration
-    app.config['JWT_SECRET_KEY'] = os.environ.get('JWT_SECRET_KEY', 'dev-secret-key-change-in-production')
+    # JWT Configuration — require from environment, no fallback
+    jwt_secret = os.environ.get('JWT_SECRET_KEY') or app.config.get('JWT_SECRET_KEY')
+    if not jwt_secret:
+        raise RuntimeError(
+            "JWT_SECRET_KEY is not set. "
+            "Set the JWT_SECRET_KEY environment variable to a secure random string before starting the server."
+        )
+    if jwt_secret in ('dev-secret-key-change-in-production', 'jwt-secret-key', ''):
+        raise RuntimeError(
+            "JWT_SECRET_KEY is set to an insecure default value. "
+            "Generate and set a unique, secure JWT_SECRET_KEY in environment variables."
+        )
+    app.config['JWT_SECRET_KEY'] = jwt_secret
     app.config['JWT_ACCESS_TOKEN_EXPIRES'] = timedelta(hours=1)
     app.config['JWT_REFRESH_TOKEN_EXPIRES'] = timedelta(days=30)
     
@@ -848,6 +882,12 @@ def create_app():
             
             if not course_id:
                 return jsonify({'error': 'Course ID required'}), 400
+            if not location:
+                location = 'Lecture Hall'
+            
+            lecturer_id = request.current_user.get('user_id')
+            if not lecturer_id:
+                return jsonify({'error': 'Lecturer ID not found in session'}), 400
             
             # Use real attendance security service
             from src.application.attendance_security_service import AttendanceSecurityService
@@ -855,8 +895,9 @@ def create_app():
             
             result = attendance_security.create_attendance_session(
                 course_id=course_id,
-                lecturer_id=request.current_user.get('user_id'),
-                location=location
+                lecturer_id=lecturer_id,
+                location=location,
+                institution_id=request.current_user.get('institution_id')
             )
             
             if 'error' in result:
@@ -866,7 +907,7 @@ def create_app():
                 
         except Exception as e:
             logger.error(f"Attendance session creation error: {str(e)}")
-            return jsonify({'error': 'Session creation failed'}), 500
+            return jsonify({'error': f'Session creation failed: {str(e)}'}), 500
     
     @app.route('/api/attendance/mark', methods=['POST'])
     @require_auth
@@ -883,18 +924,24 @@ def create_app():
 
             # Optional face verification
             face_descriptor = data.get('face_descriptor')
+            face_verified = False
+            face_match_score = 0.0
+
             if face_descriptor:
                 from src.application.biometric_service import BiometricService as _BS
                 bs = _BS(firebase_service)
-                face_result = bs.verify_face(
-                    request.current_user.get('user_id'),
-                    face_descriptor
-                )
-                if not face_result.get('verified'):
-                    return jsonify({
-                        'error': 'Face verification failed',
-                        'face_result': face_result
-                    }), 403
+                user_id = request.current_user.get('user_id')
+                face_status = bs.get_face_status(user_id)
+                if face_status.get('enrolled'):
+                    face_result = bs.verify_face(user_id, face_descriptor)
+                    if face_result.get('verified'):
+                        face_verified = True
+                        face_match_score = face_result.get('confidence', 0.0)
+                    else:
+                        return jsonify({
+                            'error': 'Face verification failed',
+                            'face_result': face_result
+                        }), 403
             
             # Use real attendance security service
             from src.application.attendance_security_service import AttendanceSecurityService
@@ -905,7 +952,9 @@ def create_app():
                 student_id=request.current_user.get('user_id'),
                 device_fingerprint=data.get('device_fingerprint'),
                 ip_address=request.remote_addr,
-                location=data.get('location')
+                location=data.get('location'),
+                face_verified=face_verified,
+                face_match_score=face_match_score
             )
 
             if 'error' in result:
@@ -1290,13 +1339,27 @@ def create_app():
     @require_role('institutional_admin', 'super_admin', 'lecturer')
     @log_access
     def download_attendance_report():
-        """Generate and download attendance report as PDF"""
+        """Generate and download attendance report as PDF or XLS"""
         try:
             institution_id = request.current_user.get('institution_id', 'inst_001')
             report_type = request.args.get('type', 'summary')
 
             from src.application.report_service import ReportService
             report_svc = ReportService(firebase_service)
+
+            if report_type in ('xls', 'xlsx', 'detailed'):
+                xls_bytes = report_svc.generate_attendance_xls(institution_id)
+                if not xls_bytes:
+                    return jsonify({'error': 'Report generation failed'}), 500
+                from flask import send_file
+                import io as io_mod
+                return send_file(
+                    io_mod.BytesIO(xls_bytes),
+                    mimetype='application/vnd.openxmlformats-officedocument.spreadsheetml.sheet',
+                    as_attachment=True,
+                    download_name=f'attendance_report_{datetime.utcnow().strftime("%Y%m%d")}.xlsx'
+                )
+
             pdf_bytes = report_svc.generate_attendance_report(
                 institution_id, report_type=report_type
             )

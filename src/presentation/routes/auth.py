@@ -1,5 +1,7 @@
 """Authentication route blueprint — register, login, logout, password management."""
 
+import re
+import time as _time
 from flask import Blueprint, request, jsonify
 from src.application.rbac import require_auth, log_access
 
@@ -25,6 +27,23 @@ def register():
         for field in required_fields:
             if field not in data:
                 return jsonify({'error': f'Missing required field: {field}'}), 400
+
+        # Server-side password validation (redundant security layer)
+        if _rate_limiter:
+            _client_ip = request.remote_addr or 'unknown'
+            if _rate_limiter.get_attempt_count(_client_ip, window=3600) >= 5:
+                return jsonify({'error': 'Too many registration attempts. Try again later.'}), 429
+        password = data['password']
+        if len(password) < 8:
+            return jsonify({'error': 'Password must be at least 8 characters long'}), 400
+        if not re.search(r'[A-Z]', password):
+            return jsonify({'error': 'Password must contain at least one uppercase letter'}), 400
+        if not re.search(r'[a-z]', password):
+            return jsonify({'error': 'Password must contain at least one lowercase letter'}), 400
+        if not re.search(r'[0-9]', password):
+            return jsonify({'error': 'Password must contain at least one number'}), 400
+        if not re.search(r'[!@#$%^&*(),.?":{}|<>_\-]', password):
+            return jsonify({'error': 'Password must contain at least one special character'}), 400
 
         from src.domain.entities import UserRole
         role_mapping = {
@@ -90,8 +109,16 @@ def login():
             return jsonify({'success': False, 'message': 'Email and password are required'}), 400
 
         client_ip = request.remote_addr or 'unknown'
-        if _rate_limiter and _rate_limiter.is_limited(client_ip):
-            return jsonify({'success': False, 'message': 'Too many attempts. Try again in 15 minutes.'}), 429
+        if _rate_limiter:
+            _attempts = _rate_limiter.get_attempt_count(client_ip)
+            if _attempts >= 10:
+                return jsonify({'success': False, 'message': 'Account temporarily locked. Try again later.'}), 429
+            elif _attempts >= 5:
+                _time.sleep(3)
+            elif _attempts >= 3:
+                _time.sleep(1)
+            if _rate_limiter.is_limited(client_ip):
+                return jsonify({'success': False, 'message': 'Too many attempts. Try again later.'}), 429
 
         if not _auth_service:
             return jsonify({'success': False, 'message': 'Service temporarily unavailable'}), 500

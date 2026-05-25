@@ -372,9 +372,8 @@ class StudentDashboardService:
         if not sessions:
             return {'error': 'Invalid session code'}
         session = sessions[0]
-        if session.get('status') != 'active':
-            mode = session.get('status', 'unknown')
-            return {'error': f'Session is {mode}'}
+        if not session.get('is_active', True):
+            return {'error': 'Session is not active'}
 
         trust_score = 95
         checks = {'Campus WiFi': True, 'Secure Session': True, 'Device Verified': True}

@@ -319,3 +319,93 @@ class ReportService:
         except Exception as e:
             logger.error(f"MINESEC XML generation failed: {str(e)}")
             return None
+
+    def generate_attendance_xls(self, institution_id: str) -> Optional[bytes]:
+        try:
+            import openpyxl
+            from openpyxl.styles import Font, PatternFill, Alignment, Border, Side
+            institution = self._get_institution_info(institution_id)
+            inst_name = institution.get('name', 'Institution')
+            stats = self._compute_report_stats(institution_id)
+
+            wb = openpyxl.Workbook()
+            ws = wb.active
+            ws.title = 'Attendance Report'
+
+            header_font = Font(name='Calibri', bold=True, color='FFFFFF', size=12)
+            header_fill = PatternFill(start_color='4F46E5', end_color='4F46E5', fill_type='solid')
+            cell_font = Font(name='Calibri', size=10)
+            label_fill = PatternFill(start_color='F1F5F9', end_color='F1F5F9', fill_type='solid')
+
+            ws.merge_cells('A1:F1')
+            ws['A1'] = f'Attendrix Attendance Report — {inst_name}'
+            ws['A1'].font = Font(name='Calibri', bold=True, size=14)
+            ws['A2'] = f'Generated: {datetime.utcnow().strftime("%Y-%m-%d %H:%M UTC")}'
+            ws['A2'].font = Font(name='Calibri', italic=True, size=9, color='666666')
+
+            summary_headers = ['Metric', 'Value']
+            summary_data = [
+                ['Total Students', str(stats['total_students'])],
+                ['Total Sessions', str(stats['total_sessions'])],
+                ['Attendance Records', str(stats['total_records'])],
+                ['Overall Attendance Rate', f'{stats["attendance_rate"]}%'],
+                ['Active Sessions', str(stats['active_sessions'])],
+                ['Fraud Attempts Blocked', str(stats['fraud_attempts'])],
+            ]
+            row = 4
+            for i, h in enumerate(summary_headers, 1):
+                c = ws.cell(row=row, column=i, value=h)
+                c.font = header_font; c.fill = header_fill; c.alignment = Alignment(horizontal='center')
+            for r_data in summary_data:
+                row += 1
+                for i, v in enumerate(r_data, 1):
+                    c = ws.cell(row=row, column=i, value=v)
+                    c.font = cell_font
+                    if i == 1:
+                        c.fill = label_fill
+
+            row += 2
+            ws.merge_cells(f'A{row}:F{row}')
+            ws.cell(row=row, column=1, value='Session Breakdown').font = Font(bold=True, size=12)
+            row += 1
+            session_headers = ['Course', 'Lecturer', 'Students', 'Present', 'Rate', 'Status']
+            for i, h in enumerate(session_headers, 1):
+                c = ws.cell(row=row, column=i, value=h)
+                c.font = header_font; c.fill = header_fill; c.alignment = Alignment(horizontal='center')
+            for s in stats['sessions']:
+                row += 1
+                vals = [
+                    s.get('course_name', '—'),
+                    s.get('lecturer_name', '—'),
+                    s.get('total_students', 0),
+                    s.get('present', 0),
+                    f'{s.get("attendance_rate", 0)}%',
+                    s.get('status', '—').title(),
+                ]
+                for i, v in enumerate(vals, 1):
+                    c = ws.cell(row=row, column=i, value=v)
+                    c.font = cell_font
+                    if row % 2 == 0:
+                        c.fill = PatternFill(start_color='F8FAFC', end_color='F8FAFC', fill_type='solid')
+
+            thin_border = Border(
+                left=Side(style='thin'), right=Side(style='thin'),
+                top=Side(style='thin'), bottom=Side(style='thin'))
+            for r in ws.iter_rows(min_row=4, max_row=row, min_col=1, max_col=6):
+                for c in r:
+                    c.border = thin_border
+
+            for col in ['A', 'B', 'C', 'D', 'E', 'F']:
+                ws.column_dimensions[col].width = 22
+
+            buf = io.BytesIO()
+            wb.save(buf)
+            buf.seek(0)
+            return buf.getvalue()
+
+        except ImportError as e:
+            logger.error(f"openpyxl not installed: {e}")
+            return None
+        except Exception as e:
+            logger.error(f"XLS generation failed: {str(e)}")
+            return None

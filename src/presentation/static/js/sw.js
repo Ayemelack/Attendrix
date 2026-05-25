@@ -96,9 +96,8 @@ self.addEventListener('fetch', function(event) {
     return;
   }
 
-  /* API requests: network-first with cache fallback */
+  /* API requests: pass through without interception (auth headers must go direct) */
   if (url.pathname.startsWith(API_CACHE_PREFIX)) {
-    event.respondWith(networkFirstWithCacheFallback(request, API_CACHE));
     return;
   }
 
