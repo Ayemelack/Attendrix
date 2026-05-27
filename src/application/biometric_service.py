@@ -243,8 +243,9 @@ class BiometricService:
             logger.error(f"Face enrollment error: {str(e)}")
             return {'success': False, 'error': 'Failed to enroll face'}
 
-    def verify_face(self, user_id: str, descriptor: List[float], threshold: float = 0.6) -> Dict[str, Any]:
-        """Verify a face descriptor against enrolled faces using Euclidean distance"""
+    def verify_face(self, user_id: str, descriptor: List[float], threshold: float = 0.45) -> Dict[str, Any]:
+        """Verify a face descriptor against enrolled faces using Euclidean distance.
+        Threshold 0.45 per spec — matches face-api.js FaceMatcher default."""
         try:
             if not descriptor or len(descriptor) != 128:
                 return {'verified': False, 'error': 'Invalid face descriptor (must be 128 floats)'}
@@ -304,6 +305,105 @@ class BiometricService:
         except Exception as e:
             logger.error(f"Face verification error: {str(e)}")
             return {'verified': False, 'error': 'Failed to verify face'}
+
+    def verify_face_against_all(self, descriptor: List[float], institution_id: str = None,
+                                threshold: float = 0.45) -> Dict[str, Any]:
+        """Match a face descriptor against ALL enrolled faces (multi-user).
+        Returns the best match or 'unknown' if no match found.
+        Used when the student's identity must be verified against all enrollments."""
+        try:
+            if not descriptor or len(descriptor) != 128:
+                return {'verified': False, 'error': 'Invalid face descriptor'}
+
+            all_enrollments = self.get_all_face_descriptors(institution_id)
+            if not all_enrollments:
+                return {'verified': False, 'label': 'unknown', 'message': 'No enrolled faces found'}
+
+            best_distance = float('inf')
+            best_match = None
+
+            for entry in all_enrollments:
+                enrolled_desc = entry.get('descriptor', [])
+                if not enrolled_desc or len(enrolled_desc) != 128:
+                    continue
+                distance = self._euclidean_distance(descriptor, enrolled_desc)
+                if distance < best_distance:
+                    best_distance = distance
+                    best_match = entry
+
+            if best_match is None:
+                return {'verified': False, 'label': 'unknown', 'message': 'No valid match found'}
+
+            similarity = max(0.0, 1.0 - best_distance)
+            verified = best_distance <= threshold
+
+            if not verified:
+                return {
+                    'verified': False,
+                    'label': 'unknown',
+                    'confidence': round(similarity, 4),
+                    'distance': round(best_distance, 4),
+                    'reason': 'Face mismatch',
+                    'message': 'Face does not match enrolled face'
+                }
+
+            return {
+                'verified': True,
+                'label': best_match['label'],
+                'user_name': best_match['user_name'],
+                'confidence': round(similarity, 4),
+                'distance': round(best_distance, 4),
+                'threshold': threshold,
+                'message': f"Face verified → Student identified ({best_match['user_name']})"
+            }
+
+        except Exception as e:
+            logger.error(f"verify_face_against_all error: {str(e)}")
+            return {'verified': False, 'label': 'unknown', 'error': 'Failed to verify face'}
+
+    def get_all_face_descriptors(self, institution_id: str = None) -> List[Dict[str, Any]]:
+        """Return ALL active face enrollments with labels for FaceMatcher.
+        Each entry: { label: <student_id>, descriptor: [128 floats], user_name: <name> }
+        Called BEFORE verification starts to build labeled descriptors."""
+        try:
+            filters = [
+                {'field': 'biometric_type', 'value': 'face'},
+                {'field': 'is_active', 'value': True}
+            ]
+            if institution_id:
+                filters.append({'field': 'institution_id', 'value': institution_id})
+
+            enrollments = self.firebase_service.query_documents(
+                'biometric_enrollments', filters=filters
+            )
+
+            if not enrollments:
+                return []
+
+            # Enrich with user names
+            result = []
+            for e in enrollments:
+                desc = e.get('biometric_data', [])
+                if not desc or len(desc) != 128:
+                    continue
+                uid = e.get('user_id', 'unknown')
+                # Look up user name
+                user = self.firebase_service.get_document('users', uid) if uid != 'unknown' else None
+                name = ''
+                if user:
+                    name = f"{user.get('first_name', '')} {user.get('last_name', '')}".strip()
+                result.append({
+                    'label': uid,
+                    'user_name': name or uid,
+                    'descriptor': desc
+                })
+
+            logger.info(f"Loaded {len(result)} face descriptors for matching")
+            return result
+
+        except Exception as e:
+            logger.error(f"get_all_face_descriptors error: {str(e)}")
+            return []
 
     def get_face_status(self, user_id: str) -> Dict[str, Any]:
         """Check if user has active face enrollment"""

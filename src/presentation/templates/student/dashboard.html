@@ -548,7 +548,7 @@
                     <p class="sc-sub" data-i18n="code_from_lecturer">Use the code provided by your lecturer</p>
                     <div class="code-input-group">
                         <input type="text" id="sessionCode" placeholder="e.g. 49801005" maxlength="12" autocomplete="off">
-                        <button class="btn btn-primary" onclick="verifyAndMark()" data-i18n="verify">Verify</button>
+                                <button id="verifyBtn" class="btn btn-primary" data-i18n="verify">Verify</button>
                     </div>
                     <div class="scan-result" id="scanResult">
                         <div class="sr-card">
@@ -764,6 +764,7 @@
 <div class="toast-container" id="toastContainer"></div>
 
 <script>
+    console.log("Student dashboard script loaded successfully");
     var currentLang = localStorage.getItem('studentLang') || 'en';
     var i18n = {
             en: {
@@ -798,7 +799,7 @@
             network_topology:'Network Topology', offline_queue:'Offline Queue',
             pending:'Pending', failed:'Failed', synced:'Synced', recovery:'Recovery',
             queue_healthy:'Queue Healthy', queue_degraded:'Needs Attention',
-            data_particles:'Data Particles', paused:'Paused', nodes:'nodes',
+            no_topology_data:'No topology data available', data_particles:'Data Particles', paused:'Paused', nodes:'nodes',
             schedule:'Schedule', schedule_sub:'Your class schedule for this week',
             weekly_calendar:'Weekly Calendar', upcoming_sessions:'Upcoming Sessions',
             attendance_history:'Attendance History', history:'History',
@@ -844,7 +845,7 @@
             pending:'En Attente', failed:'\u00c9chou\u00e9', synced:'Synchronis\u00e9',
             recovery:'R\u00e9cup\u00e9ration',
             queue_healthy:'File d\'attente saine', queue_degraded:'N\u00e9cessite Attention',
-            data_particles:'Particules de donn\u00e9es', paused:'En Pause', nodes:'n\u0153uds',
+            no_topology_data:'Aucune donn\u00e9e de topologie', data_particles:'Particules de donn\u00e9es', paused:'En Pause', nodes:'n\u0153uds',
             schedule:'Emploi du Temps', schedule_sub:'Votre emploi du temps de la semaine',
             weekly_calendar:'Calendrier Hebdomadaire', upcoming_sessions:'Sessions \u00e0 Venir',
             attendance_history:'Historique des Pr\u00e9sences', history:'Historique',
@@ -862,13 +863,24 @@
     var verifiedSession = null;
     var trendChartInstance = null;
 
+    // ── PERSISTENT ATTENDANCE FLOW DATA (no cache/fallback) ──
+    var currentStudent = null;       // from dashboard profile
+    var activeSession = null;        // from dashboard upcoming (status === 'active')
+    var institutionData = null;      // from /api/institution/extended
+
     function getToken() { return localStorage.getItem('accessToken'); }
 
     async function apiFetch(url, opts) {
         try {
             var headers = { 'Authorization': 'Bearer ' + getToken() };
             if (opts && opts.body) headers['Content-Type'] = 'application/json';
-            var res = await fetch(url, { headers: headers, ...opts });
+            var fetchOpts = { method: 'GET', headers: headers };
+            if (opts) {
+                if (opts.method) fetchOpts.method = opts.method;
+                if (opts.body) fetchOpts.body = opts.body;
+                if (opts.headers) Object.assign(fetchOpts.headers, opts.headers);
+            }
+            var res = await fetch(url, fetchOpts);
             if (res.status === 401) {
                 localStorage.removeItem('accessToken');
                 window.location.href = '/login?expired=1';
@@ -894,7 +906,7 @@
 
     async function loadExtendedTranslations() {
         try {
-            var res = await fetch('/api/institutional/translations/extended?lang=' + currentLang);
+            var res = await apiFetch('/api/institutional/translations/extended?lang=' + currentLang);
             if (res && res.ok) {
                 var data = await res.json();
                 for (var k in data) {
@@ -907,6 +919,27 @@
                 applyTranslations();
             }
         } catch(e) { /* silently fail, use embedded translations */ }
+    }
+
+    // ── INSTITUTION DATA (optional — never blocks attendance) ──
+    async function loadInstitutionData() {
+        try {
+            var token = getToken();
+            var res = await fetch('/api/institution/extended?language=' + currentLang, {
+                method: 'GET',
+                headers: {
+                    'Authorization': 'Bearer ' + token,
+                    'Content-Type': 'application/json'
+                }
+            });
+            if (res.ok) {
+                institutionData = await res.json();
+            } else {
+                console.warn('Institution fetch failed, continuing limited mode. Status:', res.status);
+            }
+        } catch (err) {
+            console.warn('Continuing without institution data:', err.message);
+        }
     }
 
     function toggleLang() {
@@ -972,7 +1005,16 @@
         var res = await apiFetch('/api/student/dashboard');
         if (!res || !res.ok) return;
         dashboardData = await res.json();
+        // Extract persistent data from dashboard (NO cache/fallback)
+        currentStudent = dashboardData && dashboardData.profile ? dashboardData.profile : null;
+        var upcoming = dashboardData && dashboardData.upcoming ? dashboardData.upcoming : [];
+        activeSession = null;
+        for (var i = 0; i < upcoming.length; i++) {
+            if (upcoming[i].is_active === true) { activeSession = upcoming[i]; break; }
+        }
         renderAll();
+        // Institution data is OPTIONAL — fire-and-forget, never blocks attendance flow
+        loadInstitutionData();
     }
 
     function renderAll() {
@@ -1034,7 +1076,7 @@
             var d = s.created_at ? new Date(s.created_at) : null;
             if (!d) return false;
             var now = new Date();
-            return d.toDateString() === now.toDateString() || s.status === 'active';
+            return d.toDateString() === now.toDateString() || s.is_active === true;
         });
         if (!today.length) today = upcoming.slice(0, 3);
         if (!today.length) {
@@ -1042,9 +1084,9 @@
             return;
         }
         list.innerHTML = today.map(function(s) {
-            var isActive = s.status === 'active';
+            var isActive = s.is_active === true;
             var time = s.created_at ? new Date(s.created_at).toLocaleTimeString([], { hour:'2-digit', minute:'2-digit' }) : '';
-            return '<div class="s-item"><div class="si-icon ' + (isActive ? 'active' : 'past') + '"><i class="fas ' + (isActive ? 'fa-play' : 'fa-calendar') + '"></i></div><div class="si-body"><div class="si-title">' + (s.course_name || '—') + '</div><div class="si-sub">' + (s.lecturer_name || '') + ' · ' + time + '</div></div><div class="si-right">' + (isActive ? '<span class="pill pill-green">' + t('active_now') + '</span>' : '') + '</div></div>';
+            return '<div class="s-item"><div class="si-icon ' + (isActive ? 'active' : 'past') + '"><i class="fas ' + (isActive ? 'fa-play' : 'fa-calendar') + '"></i></div><div class="si-body"><div class="si-title">' + (s.course_name || '') + '</div><div class="si-sub">' + (s.lecturer_name || '') + ' · ' + time + '</div></div><div class="si-right">' + (isActive ? '<span class="pill pill-green">' + t('active_now') + '</span>' : '') + '</div></div>';
         }).join('');
     }
 
@@ -1056,7 +1098,7 @@
             var clr = r.status === 'present' ? 'var(--success)' : r.status === 'late' ? 'var(--warning)' : r.status === 'suspicious' ? 'var(--danger)' : 'var(--text-dim)';
             var lbl = r.status === 'present' ? t('present_label') : r.status === 'late' ? t('late') : r.status === 'suspicious' ? t('suspicious') : t('absent');
             var time = r.marked_at ? new Date(r.marked_at).toLocaleDateString() : '';
-            return '<div class="feed-item"><span class="feed-dot" style="background:' + clr + '"></span><span class="feed-msg">' + (r.course_name || '—') + ' — ' + lbl + '</span><span class="feed-time">' + time + '</span></div>';
+            return '<div class="feed-item"><span class="feed-dot" style="background:' + clr + '"></span><span class="feed-msg">' + (r.course_name || '') + ' — ' + lbl + '</span><span class="feed-time">' + time + '</span></div>';
         }).join('');
     }
 
@@ -1068,7 +1110,7 @@
         container.innerHTML = '<div class="course-grid">' + courses.slice(0, 6).map(function(c) {
             var barClass = c.rate >= 75 ? 'good' : c.rate >= 50 ? 'warn' : 'bad';
             var riskLabel = t(c.risk || 'low');
-            return '<div class="course-card" style="cursor:pointer;" onclick="openCourseDrawer(' + JSON.stringify(c).replace(/"/g, '&quot;') + ')"><div class="cc-top"><span class="cc-code">' + (c.course_id || '') + '</span><span class="risk-badge ' + (c.risk || 'low') + '">' + riskLabel + '</span></div><div class="cc-name">' + (c.course_name || '—') + '</div><div class="cc-lecturer">' + (c.lecturer_name || '') + '</div><div class="bar-track"><div class="bar-fill ' + barClass + '" style="width:' + c.rate + '%"></div></div><div class="cc-footer"><span>' + t('attended') + ': ' + c.present + '/' + c.total + '</span><span>' + c.rate + '%</span></div></div>';
+            return '<div class="course-card" style="cursor:pointer;" onclick="openCourseDrawer(' + JSON.stringify(c).replace(/"/g, '&quot;') + ')"><div class="cc-top"><span class="cc-code">' + (c.course_id || '') + '</span><span class="risk-badge ' + (c.risk || 'low') + '">' + riskLabel + '</span></div><div class="cc-name">' + (c.course_name || '') + '</div><div class="cc-lecturer">' + (c.lecturer_name || '') + '</div><div class="bar-track"><div class="bar-fill ' + barClass + '" style="width:' + c.rate + '%"></div></div><div class="cc-footer"><span>' + t('attended') + ': ' + c.present + '/' + c.total + '</span><span>' + c.rate + '%</span></div></div>';
         }).join('') + '</div>';
     }
 
@@ -1079,7 +1121,7 @@
         grid.innerHTML = courses.map(function(c) {
             var barClass = c.rate >= 75 ? 'good' : c.rate >= 50 ? 'warn' : 'bad';
             var riskLabel = t(c.risk || 'low');
-            return '<div class="course-card" style="cursor:pointer;" onclick="openCourseDrawer(' + JSON.stringify(c).replace(/"/g, '&quot;') + ')"><div class="cc-top"><span class="cc-code">' + (c.course_id || '') + '</span><span class="risk-badge ' + (c.risk || 'low') + '">' + riskLabel + '</span></div><div class="cc-name">' + (c.course_name || '—') + '</div><div class="cc-lecturer">' + (c.lecturer_name || '') + '</div><div class="bar-track"><div class="bar-fill ' + barClass + '" style="width:' + c.rate + '%"></div></div><div class="cc-footer"><span>' + t('attended') + ': ' + c.present + '/' + c.total + '</span><span>' + c.rate + '%</span></div></div>';
+            return '<div class="course-card" style="cursor:pointer;" onclick="openCourseDrawer(' + JSON.stringify(c).replace(/"/g, '&quot;') + ')"><div class="cc-top"><span class="cc-code">' + (c.course_id || '') + '</span><span class="risk-badge ' + (c.risk || 'low') + '">' + riskLabel + '</span></div><div class="cc-name">' + (c.course_name || '') + '</div><div class="cc-lecturer">' + (c.lecturer_name || '') + '</div><div class="bar-track"><div class="bar-fill ' + barClass + '" style="width:' + c.rate + '%"></div></div><div class="cc-footer"><span>' + t('attended') + ': ' + c.present + '/' + c.total + '</span><span>' + c.rate + '%</span></div></div>';
         }).join('');
     }
 
@@ -1087,21 +1129,21 @@
         var container = document.getElementById('sessionList');
         var sessions = dashboardData && dashboardData.upcoming ? dashboardData.upcoming : [];
         if (!sessions.length) { container.innerHTML = '<div class="empty-muted">' + t('no_sessions') + '</div>'; return; }
-        var active = sessions.filter(function(s) { return s.status === 'active'; });
-        var past = sessions.filter(function(s) { return s.status !== 'active'; });
+        var active = sessions.filter(function(s) { return s.is_active === true; });
+        var past = sessions.filter(function(s) { return s.is_active !== true; });
         var html = '';
         if (active.length) {
             html += '<div class="card"><div class="card-header" style="color:var(--success);"><i class="fas fa-play-circle"></i> ' + t('active_now') + ' <span class="pill pill-green" style="margin-left:auto;">' + active.length + '</span></div><div class="card-body session-list">' +
                 active.map(function(s) {
                     var time = s.created_at ? new Date(s.created_at).toLocaleString() : '';
-                    return '<div class="s-item"><div class="si-icon active"><i class="fas fa-play"></i></div><div class="si-body"><div class="si-title">' + (s.course_name || '—') + '</div><div class="si-sub">' + (s.lecturer_name || '') + ' · ' + time + '</div></div><div class="si-right"><span class="pill pill-green">' + t('active_now') + '</span></div></div>';
+                    return '<div class="s-item"><div class="si-icon active"><i class="fas fa-play"></i></div><div class="si-body"><div class="si-title">' + (s.course_name || '') + '</div><div class="si-sub">' + (s.lecturer_name || '') + ' · ' + time + '</div></div><div class="si-right"><span class="pill pill-green">' + t('active_now') + '</span></div></div>';
                 }).join('') + '</div></div>';
         }
         if (past.length) {
             html += '<div class="card"><div class="card-header">' + t('past') + ' <span style="margin-left:auto;font-weight:400;font-size:.7rem;color:var(--text-dim);">' + past.length + '</span></div><div class="card-body session-list">' +
                 past.map(function(s) {
                     var time = s.created_at ? new Date(s.created_at).toLocaleString() : '';
-                    return '<div class="s-item"><div class="si-icon past"><i class="fas fa-check"></i></div><div class="si-body"><div class="si-title">' + (s.course_name || '—') + '</div><div class="si-sub">' + (s.lecturer_name || '') + ' · ' + time + '</div></div></div>';
+                    return '<div class="s-item"><div class="si-icon past"><i class="fas fa-check"></i></div><div class="si-body"><div class="si-title">' + (s.course_name || '') + '</div><div class="si-sub">' + (s.lecturer_name || '') + ' · ' + time + '</div></div></div>';
                 }).join('') + '</div></div>';
         }
         container.innerHTML = html;
@@ -1202,24 +1244,226 @@
     var pendingVerification = null;
     var attendanceFaceDescriptor = null;
     var faceEnrolled = false;
+    var allLabeledDescriptors = null;
+    var faceMatcher = null;
 
-    async function verifyAndMark() {
-        var code = document.getElementById('sessionCode').value.trim();
-        if (!code) { showToast(t('enter_session_code'), 'error'); return; }
-        document.getElementById('scanResult').style.display = 'none';
+    // ── PHASE 1: SESSION VERIFICATION ONLY (no API calls) ──
+    // VERIFY button just validates session exists client-side,
+    // stores session data, and enables face capture.
+    // verify_scan API is called AFTER face capture (Phase 3).
+
+    async function verifySessionCode() {
+        console.log("VERIFY CLICKED");
         try {
-            var res = await apiFetch('/api/student/verify-scan', {
+            if (!activeSession || !activeSession.id) {
+                showToast('Session not loaded. Please wait for active session.', 'error');
+                return;
+            }
+            if (!currentStudent || !currentStudent.id) {
+                showToast('Student profile not loaded. Please refresh.', 'error');
+                return;
+            }
+            var code = document.getElementById('sessionCode').value;
+            code = (code || '').trim().toUpperCase();
+            if (!code) { showToast(t('enter_session_code'), 'error'); return; }
+
+            // Store session data for later phases
+            pendingVerification = {
+                _verified_code: code,
+                _student_id: currentStudent.id,
+                _session_id: activeSession.id,
+                _institution_id: (institutionData && institutionData.id) || (activeSession && activeSession.institution_id) || ''
+            };
+
+            console.log('PHASE 1 — Session verified:', code);
+            console.log('SESSION:', pendingVerification._session_id);
+            console.log('STUDENT:', pendingVerification._student_id);
+            console.log('SESSION CODE:', pendingVerification._verified_code);
+            console.log('INSTITUTION:', pendingVerification._institution_id);
+
+            onSessionVerified(); // Phase 2 will capture face, then Phase 3 calls verify_scan
+        } catch (err) {
+            console.error("VERIFY ERROR:", err);
+            showToast('An error occurred: ' + err.message, 'error');
+        }
+    }
+
+    // ── PHASE 2: FACE CAPTURE (starts automatically after Phase 1) ──
+    function onSessionVerified() {
+        console.log("PHASE 1 COMPLETE");
+        lockVerifyButton();
+        disableSessionInput();
+        startFaceCapture();
+    }
+
+    function lockVerifyButton() {
+        var btn = document.getElementById('verifyBtn');
+        if (btn) btn.disabled = true;
+    }
+
+    function disableSessionInput() {
+        var input = document.getElementById('sessionCode');
+        if (input) input.disabled = true;
+    }
+
+    function enableMarkAttendanceButton() {
+        document.getElementById('confirmAttBtn').disabled = false;
+    }
+
+    function stopCamera() {
+        if (attFaceStream) {
+            attFaceStream.getTracks().forEach(function(t) { t.stop(); });
+            attFaceStream = null;
+        }
+        var video = document.getElementById('attFaceVideo');
+        if (video) { video.srcObject = null; video.style.display = 'none'; }
+    }
+
+    function startFaceCapture() {
+        console.log("ENTERING FACE CAPTURE MODE");
+
+        var row = document.getElementById('faceAttendanceRow');
+        var btn = document.getElementById('faceAttBtn');
+        var status = document.getElementById('faceAttStatus');
+        row.style.display = 'block';
+        btn.style.display = 'none';
+        status.className = 'face-att-status';
+        status.innerHTML = '<i class="fas fa-spinner fa-pulse"></i> <span>Loading face models...</span>';
+        document.getElementById('flowStatus').textContent = 'Session verified. Starting face capture...';
+        // Show the scan result card so the video, status, and flowStatus are visible
+        document.getElementById('scanResult').style.display = 'block';
+
+        startFaceVerification();
+    }
+
+    // ── FACE VERIFIED SUCCESS HANDLER ──
+    function onFaceVerified(capturedDescriptor, confidence) {
+        console.log('Face matched');
+        console.log('Success callback executed');
+        console.log('Attendance button enabled');
+        // Show success status while camera is still visible
+        var status = document.getElementById('faceAttStatus');
+        status.className = 'face-att-status verified';
+        status.innerHTML = '<i class="fas fa-check-circle"></i> <span>Face Verified (' + Math.round(confidence * 100) + '%)</span>';
+        document.getElementById('flowStatus').textContent = 'Face verified successfully!';
+        // Brief pause so user can see verified badge over live preview, then stop camera
+        setTimeout(function() {
+            stopCamera();
+        }, 1500);
+        submitVerifyScan(capturedDescriptor);
+    }
+
+    // ── FACE DETECTION LOOP (polling) ──
+    async function startFaceDetection() {
+        var status = document.getElementById('faceAttStatus');
+        var video = document.getElementById('attFaceVideo');
+        var captureCanvas = document.createElement('canvas');
+        var captureCtx = captureCanvas.getContext('2d');
+        var maxAttempts = 60;
+        var attempts = 0;
+
+        return new Promise(function(resolve) {
+            function poll() {
+                attempts++;
+                if (attempts === 1) {
+                    status.innerHTML = '<i class="fas fa-spinner fa-pulse"></i> <span>Camera Ready</span>';
+                } else {
+                    status.innerHTML = '<i class="fas fa-spinner fa-pulse"></i> <span>Detecting face... ' + attempts + 's</span>';
+                }
+                if (video.videoWidth === 0 || video.readyState < 2) {
+                    if (attempts < maxAttempts) { setTimeout(poll, 1000); } else { resolve(null); }
+                    return;
+                }
+                captureCanvas.width = video.videoWidth;
+                captureCanvas.height = video.videoHeight;
+                captureCtx.drawImage(video, 0, 0);
+                try {
+                    window.faceapi.detectSingleFace(captureCanvas, new window.faceapi.TinyFaceDetectorOptions({ inputSize: 320, scoreThreshold: 0.3 })).withFaceLandmarks().withFaceDescriptor().then(function(result) {
+                        if (result && result.descriptor) {
+                            console.log('Face detected');
+                            resolve(result);
+                        } else if (attempts < maxAttempts) {
+                            setTimeout(poll, 1000);
+                        } else {
+                            resolve(null);
+                        }
+                    }).catch(function(err) {
+                        console.error('FACE FLOW ERROR:', err);
+                        if (attempts < maxAttempts) { setTimeout(poll, 1000); } else { resolve(null); }
+                    });
+                } catch (loopErr) {
+                    console.error('FACE FLOW ERROR:', loopErr);
+                    if (attempts < maxAttempts) { setTimeout(poll, 1000); } else { resolve(null); }
+                }
+            }
+            setTimeout(poll, 300);
+        });
+    }
+
+    // ── PHASE 3: SUBMIT VERIFY SCAN (called AFTER face capture succeeds) ──
+    async function submitVerifyScan(faceData) {
+        // FIX 2 — BLOCK NULL FACE DATA
+        if (!faceData) {
+            console.error('face_data is required before verify_scan');
+            return;
+        }
+
+        var studentId = pendingVerification._student_id;
+        var sessionId = pendingVerification._session_id;
+        var sessionCode = pendingVerification._verified_code;
+        var institutionId = pendingVerification._institution_id;
+
+        if (!studentId || !sessionId || !sessionCode || !institutionId) {
+            console.error('Missing session data from Phase 1. Re-verify session code.');
+            return;
+        }
+
+        console.log('PHASE 3 — Submitting verify_scan with face data');
+
+        var payload = {
+            studentId: studentId,
+            sessionId: sessionId,
+            sessionCode: sessionCode,
+            institutionId: institutionId,
+            faceDescriptor: faceData,
+            timestamp: Date.now()
+        };
+
+        console.log('SESSION:', sessionId);
+        console.log('STUDENT:', studentId);
+        console.log('SESSION CODE:', sessionCode);
+        console.log('FACE DATA:', faceData ? 'captured' : 'null');
+        console.log('INSTITUTION:', institutionId);
+        console.log('verify_scan payload:', payload);
+
+        try {
+            var token = getToken();
+            var res = await fetch('/api/student/verify-scan', {
                 method: 'POST',
-                body: JSON.stringify({ session_code: code, device_fingerprint: generateFingerprint() })
+                headers: {
+                    'Content-Type': 'application/json',
+                    'Authorization': 'Bearer ' + token
+                },
+                body: JSON.stringify(payload)
             });
-            if (!res) { showToast(t('mark_failed'), 'error'); return; }
+            if (!res.ok) {
+                var errData = await res.json();
+                throw new Error(errData.message || errData.error || 'Verify scan failed');
+            }
             var result = await res.json();
-            if (result.error) { showToast(result.error, 'error'); return; }
             pendingVerification = result;
-            pendingVerification._verified_code = code;
+            pendingVerification._verified_code = sessionCode;
+            pendingVerification._student_id = studentId;
+            pendingVerification._session_id = sessionId;
+            pendingVerification._institution_id = institutionId;
             showScanResult(result);
-            checkFaceForAttendance();
-        } catch(e) { showToast(t('mark_failed'), 'error'); }
+            document.getElementById('flowStatus').textContent = 'Session verified. You may now confirm attendance.';
+            console.log('Attendance button enabled');
+            enableMarkAttendanceButton();
+        } catch(e) {
+            console.error('Verify scan failed:', e.message);
+            showToast('Verify scan failed: ' + e.message, 'error');
+        }
     }
 
     var CHECK_TRANSLATIONS = {
@@ -1254,19 +1498,56 @@
     }
 
     async function confirmMark() {
-        if (!pendingVerification) { showToast(t('verify_first'), 'error'); return; }
-        if (!attendanceFaceDescriptor) { showToast('Please complete face verification first', 'error'); return; }
+        // ── FIX 3 — VALIDATE BEFORE SUBMIT ──
+        var studentId = pendingVerification ? pendingVerification._student_id : null;
+        var sessionId = pendingVerification ? pendingVerification._session_id : null;
+        var sessionCode = pendingVerification ? pendingVerification._verified_code : null;
+        var institutionId = pendingVerification ? pendingVerification._institution_id : null;
+        var faceDescriptor = attendanceFaceDescriptor;
+
+        if (!studentId || !sessionId || !faceDescriptor || !sessionCode) {
+            console.error('Missing attendance fields', { studentId, sessionId, sessionCode, hasFace: !!faceDescriptor });
+            return;
+        }
+
+        // ── FIX 4 — ONLY SUBMIT IF ALL CHECKS PASS ──
+        var sessionValid = !!pendingVerification;
+        var faceMatched = !!faceDescriptor;
+        var serverReady = true;
+        if (!sessionValid || !faceMatched || !serverReady) { return; }
+
         try {
-            var geo = (window.AttendrixSecurity && AttendrixSecurity.geoPosition) ? AttendrixSecurity.geoPosition.lat + ',' + AttendrixSecurity.geoPosition.lng : 'Campus';
-            var body = { session_code: pendingVerification._verified_code || document.getElementById('sessionCode').value.trim(), device_fingerprint: generateFingerprint(), location: geo };
-            if (attendanceFaceDescriptor) { body.face_descriptor = attendanceFaceDescriptor; }
-            var res = await apiFetch('/api/attendance/mark', {
-                method: 'POST',
-                body: JSON.stringify(body)
+            var body = JSON.stringify({
+                studentId: studentId,
+                sessionId: sessionId,
+                sessionCode: sessionCode,
+                institutionId: institutionId,
+                faceDescriptor: faceDescriptor
             });
-            if (!res) { showToast(t('mark_failed'), 'error'); return; }
-            var result = await res.json();
-            if (result.error) { showToast(result.error, 'error'); return; }
+
+            var token = getToken();
+
+            // ── FIX 1 — SHOW REAL BACKEND ERROR ──
+            var response = await fetch('/api/attendance/mark', {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json',
+                    'Authorization': 'Bearer ' + token
+                },
+                body: body
+            });
+
+            // ── FIX 2 — NEVER HIDE SERVER RESPONSE ──
+            console.log('STATUS:', response.status);
+
+            var data = await response.json();
+            console.log('RESPONSE DATA:', data);
+
+            if (!response.ok) {
+                console.error('BACKEND ERROR:', data);
+                throw new Error(data.message || data.error || 'Attendance failed');
+            }
+
             showToast(t('attendance_marked'), 'success');
             document.getElementById('sessionCode').value = '';
             document.getElementById('scanResult').style.display = 'none';
@@ -1274,9 +1555,15 @@
             pendingVerification = null;
             attendanceFaceDescriptor = null;
             faceEnrolled = false;
+            allLabeledDescriptors = null;
+            faceMatcher = null;
             stopAttFaceCam();
             loadDashboard();
-        } catch(e) { showToast(t('mark_failed'), 'error'); }
+
+        } catch (error) {
+            console.error('MARK ATTENDANCE FAILED:', error.message);
+            alert(error.message);
+        }
     }
 
     // ── FACE VERIFICATION FOR ATTENDANCE ──
@@ -1285,7 +1572,6 @@
     async function checkFaceForAttendance() {
         var row = document.getElementById('faceAttendanceRow');
         var status = document.getElementById('faceAttStatus');
-        var label = document.getElementById('faceAttLabel');
         var btn = document.getElementById('faceAttBtn');
         try {
             var res = await apiFetch('/api/biometric/face/status');
@@ -1300,33 +1586,69 @@
         } catch(e) { row.style.display = 'none'; }
     }
 
+    async function loadAllFaceDescriptors() {
+        // Load ALL enrolled student face descriptors before verification starts
+        if (allLabeledDescriptors) return allLabeledDescriptors;
+        var res = await apiFetch('/api/biometric/face/descriptors');
+        if (!res || !res.ok) throw new Error('Failed to load face descriptors');
+        var data = await res.json();
+        var descriptors = data.descriptors || [];
+        if (!descriptors.length) throw new Error('No enrolled faces found in system');
+        allLabeledDescriptors = descriptors;
+        return descriptors;
+    }
+
     async function startFaceVerification() {
         var status = document.getElementById('faceAttStatus');
-        var label = document.getElementById('faceAttLabel');
         var btn = document.getElementById('faceAttBtn');
         btn.style.display = 'none';
         status.className = 'face-att-status';
         status.innerHTML = '<i class="fas fa-spinner fa-pulse"></i> <span>Loading face models...</span>';
+
+        // RULE: Do NOT allow face verification unless session is fully loaded
+        if (!pendingVerification || !pendingVerification._verified_code) {
+            status.className = 'face-att-status failed';
+            status.innerHTML = '<i class="fas fa-exclamation-triangle"></i> <span>Session not loaded. Verify session code first.</span>';
+            btn.style.display = 'block';
+            return;
+        }
+
         try {
-            var video = document.getElementById('attFaceVideo');
-            video.style.display = 'block';
-            video.muted = true;
             if (!window.faceapi) { throw new Error('Face API not loaded'); }
 
             // Step 1: Pre-load ML models
+            console.log('Face capture: Loading models...');
             status.innerHTML = '<i class="fas fa-spinner fa-pulse"></i> <span>Loading face models...</span>';
-            console.log('[FaceCapture] Loading face models...');
             var modelUrl = 'https://cdn.jsdelivr.net/npm/@vladmandic/face-api/model/';
             await window.faceapi.nets.tinyFaceDetector.loadFromUri(modelUrl);
             await window.faceapi.nets.faceRecognitionNet.loadFromUri(modelUrl);
             await window.faceapi.nets.faceLandmark68Net.loadFromUri(modelUrl);
-            console.log('[FaceCapture] Models loaded');
 
-            // Step 2: Start camera
+            // Step 2: Load ALL enrolled student descriptors BEFORE verification
+            console.log('Face capture: Loading descriptors...');
+            status.innerHTML = '<i class="fas fa-spinner fa-pulse"></i> <span>Loading enrolled face data...</span>';
+            var descriptors = await loadAllFaceDescriptors();
+            var labeledDescriptors = descriptors.map(function(d) {
+                var descArray = new Float32Array(d.descriptor);
+                return new window.faceapi.LabeledFaceDescriptors(
+                    d.label,
+                    [descArray]
+                );
+            });
+
+            // Step 3: Create FaceMatcher with fixed threshold 0.45
+            faceMatcher = new window.faceapi.FaceMatcher(labeledDescriptors, 0.45);
+
+            // Step 4: Show video element BEFORE starting camera
+            console.log('Face capture: Starting camera...');
+            var video = document.getElementById('attFaceVideo');
+            video.style.display = 'block';
+            video.hidden = false;
+            video.muted = true;
+
+            // Start camera stream
             status.innerHTML = '<i class="fas fa-spinner fa-pulse"></i> <span>Starting camera...</span>';
-            console.log('[FaceCapture] Requesting camera...');
             attFaceStream = await navigator.mediaDevices.getUserMedia({ video: { width: 640, height: 480, facingMode: 'user' } });
-            console.log('[FaceCapture] Stream obtained, tracks:', attFaceStream.getTracks().length);
             video.srcObject = attFaceStream;
             await video.play();
             if (video.readyState < 2) {
@@ -1334,86 +1656,88 @@
                     video.addEventListener('canplay', resolve, { once: true });
                 });
             }
-            console.log('[FaceCapture] Camera ready, starting detection');
+            console.log('Camera stream started');
+            console.log('Camera stream active');
 
-            // Step 3: Warm up camera
-            status.innerHTML = '<i class="fas fa-spinner fa-pulse"></i> <span>Capturing face...</span>';
-            await new Promise(function(r) { setTimeout(r, 1000); });
-            console.log('[FaceCapture] Video dimensions:', video.videoWidth, 'x', video.videoHeight);
+            // Step 5: Camera is live — user sees themselves
+            console.log('Video preview rendered');
+            status.className = 'face-att-status';
+            status.innerHTML = '<i class="fas fa-camera"></i> <span>Camera Ready</span>';
+            document.getElementById('flowStatus').textContent = 'Camera ready. Detecting face...';
+            await new Promise(function(r) { setTimeout(r, 500); });
 
-            // Step 4: Multi-frame detection loop (TinyFaceDetector)
-            var detected = null;
-            var maxAttempts = 30;
-            var captureCanvas = document.createElement('canvas');
-            var captureCtx = captureCanvas.getContext('2d');
-            for (var i = 0; i < maxAttempts; i++) {
-                try {
-                    status.innerHTML = '<i class="fas fa-spinner fa-pulse"></i> <span>Capturing face... attempt ' + (i + 1) + '/' + maxAttempts + '</span>';
-                    if (video.videoWidth === 0 || video.readyState < 2) {
-                        console.warn('[FaceCapture] No frame data yet, skipping attempt ' + (i + 1));
-                    } else {
-                        captureCanvas.width = video.videoWidth;
-                        captureCanvas.height = video.videoHeight;
-                        captureCtx.drawImage(video, 0, 0);
-                        var result = await window.faceapi.detectSingleFace(captureCanvas, new window.faceapi.TinyFaceDetectorOptions({ inputSize: 320, scoreThreshold: 0.3 })).withFaceLandmarks().withFaceDescriptor();
-                        if (result) {
-                            var score = result.detection ? result.detection.score || result.detection._score : '?';
-                            console.log('[FaceCapture] Attempt', (i + 1), '- confidence:', score, '- has descriptor:', !!result.descriptor, '- has landmarks:', !!result.landmarks);
-                        } else {
-                            console.log('[FaceCapture] Attempt', (i + 1), '- no face detected');
-                        }
-                        if (result && result.descriptor) {
-                            detected = result;
-                            break;
-                        }
-                    }
-                } catch (detectErr) { console.warn('[FaceCapture] Detection attempt ' + (i + 1) + ' failed:', detectErr.name + ':', detectErr.message); }
-                if (i < maxAttempts - 1) {
-                    await new Promise(function(r) { setTimeout(r, 300); });
-                }
+            // Step 6: Start face detection loop (Promise-based polling)
+            console.log('Face detection started');
+            status.innerHTML = '<i class="fas fa-spinner fa-pulse"></i> <span>Detecting face...</span>';
+            document.getElementById('flowStatus').textContent = 'Detecting face...';
+            var detected = await startFaceDetection();
+
+            if (!detected) {
+                stopCamera();
+                throw new Error('No face detected after multiple attempts');
             }
 
-            stopAttFaceCam();
+            // Step 7: Face detected — show matching status (camera stays ON)
+            console.log('Face detected');
+            status.innerHTML = '<i class="fas fa-spinner fa-pulse"></i> <span>Matching Face...</span>';
+            document.getElementById('flowStatus').textContent = 'Face detected. Matching...';
 
-            if (!detected) { throw new Error('No face detected after ' + maxAttempts + ' attempts'); }
+            // Step 8: Match face using FaceMatcher
+            var capturedDescriptor = Array.from(detected.descriptor);
+            var bestMatch = faceMatcher.findBestMatch(detected.descriptor);
 
-            // Step 5: Enroll or verify face identity
-            attendanceFaceDescriptor = Array.from(detected.descriptor);
-            if (!faceEnrolled) {
-                status.innerHTML = '<i class="fas fa-spinner fa-pulse"></i> <span>Enrolling face...</span>';
-                console.log('[FaceCapture] No enrollment found, auto-enrolling...');
-                var enrollRes = await apiFetch('/api/biometric/face/enroll', {
-                    method: 'POST',
-                    body: JSON.stringify({ descriptor: attendanceFaceDescriptor })
-                });
-                if (!enrollRes) { throw new Error('Face enrollment failed: unable to reach server'); }
-                var enrollData = await enrollRes.json();
-                if (enrollData.error) { throw new Error(enrollData.error); }
-                faceEnrolled = true;
-                console.log('[FaceCapture] Face enrolled successfully');
-                status.className = 'face-att-status verified';
-                status.innerHTML = '<i class="fas fa-check-circle"></i> <span>Face enrolled</span>';
-            } else {
-                status.innerHTML = '<i class="fas fa-spinner fa-pulse"></i> <span>Verifying face identity...</span>';
-                console.log('[FaceCapture] Verifying face against enrollment...');
-                var verifyRes = await apiFetch('/api/biometric/face/verify', {
-                    method: 'POST',
-                    body: JSON.stringify({ descriptor: attendanceFaceDescriptor, threshold: 0.6 })
-                });
-                if (!verifyRes) { throw new Error('Identity check failed: unable to reach server'); }
-                var verifyData = await verifyRes.json();
-                if (!verifyData.verified) {
-                    attendanceFaceDescriptor = null;
-                    throw new Error('Face mismatch: attendance denied' + (verifyData.message ? ' (' + verifyData.message + ')' : ''));
-                }
-                console.log('[FaceCapture] Identity verified - confidence:', verifyData.confidence, '- distance:', verifyData.distance);
-                status.className = 'face-att-status verified';
-                status.innerHTML = '<i class="fas fa-check-circle"></i> <span>Face matched (' + Math.round(verifyData.confidence * 100) + '%)</span>';
+            var matchLabel = bestMatch._label || bestMatch.label || 'unknown';
+            var matchDistance = bestMatch._distance !== undefined ? bestMatch._distance : bestMatch.distance || 999;
+
+            console.log('[FaceCapture] Best match:', matchLabel, 'distance:', matchDistance);
+
+            // Step 9: RULE — If distance > 0.45 (threshold), deny
+            if (matchDistance > 0.45) {
+                stopCamera();
+                attendanceFaceDescriptor = null;
+                status.className = 'face-att-status failed';
+                status.innerHTML = '<i class="fas fa-exclamation-triangle"></i> <span>Face mismatch → Attendance denied</span>';
+                document.getElementById('flowStatus').textContent = 'Face mismatch → Attendance denied';
+                document.getElementById('confirmAttBtn').disabled = true;
+                btn.style.display = 'block';
+                btn.querySelector('span').textContent = 'Retry';
+                return;
             }
-            document.getElementById('flowStatus').textContent = 'Face verified successfully. You may now confirm attendance.';
-            document.getElementById('confirmAttBtn').disabled = false;
+
+            // Step 10: RULE — If label is "unknown", block attendance
+            if (matchLabel === 'unknown') {
+                stopCamera();
+                attendanceFaceDescriptor = null;
+                status.className = 'face-att-status failed';
+                status.innerHTML = '<i class="fas fa-exclamation-triangle"></i> <span>Face not recognized. Please re-register or retry.</span>';
+                document.getElementById('flowStatus').textContent = 'Face not recognized. Please re-register or retry.';
+                document.getElementById('confirmAttBtn').disabled = true;
+                btn.style.display = 'block';
+                btn.querySelector('span').textContent = 'Retry';
+                return;
+            }
+
+            // Step 11: RULE — If confidence < 0.55, reject
+            var confidence = Math.max(0, 1 - matchDistance);
+            if (confidence < 0.55) {
+                stopCamera();
+                attendanceFaceDescriptor = null;
+                status.className = 'face-att-status failed';
+                status.innerHTML = '<i class="fas fa-exclamation-triangle"></i> <span>Face mismatch → Attendance denied</span>';
+                document.getElementById('flowStatus').textContent = 'Face mismatch → Attendance denied';
+                document.getElementById('confirmAttBtn').disabled = true;
+                btn.style.display = 'block';
+                btn.querySelector('span').textContent = 'Retry';
+                return;
+            }
+
+            // Step 12: Face matched — camera stays ON until onFaceVerified stops it
+            console.log('Face matched');
+            attendanceFaceDescriptor = capturedDescriptor;
+            onFaceVerified(capturedDescriptor, confidence);
+
         } catch(e) {
-            stopAttFaceCam();
+            stopCamera();
             attendanceFaceDescriptor = null;
             status.className = 'face-att-status failed';
             var errorName = e.name || 'Error';
@@ -1511,7 +1835,7 @@
         var totalLate = analyticsData ? analyticsData.total_late : 0;
         var totalSuspicious = analyticsData ? analyticsData.total_suspicious : 0;
         if (worst) {
-            html += '<div class="feed-item"><span class="feed-dot" style="background:var(--warning);"></span><span class="feed-msg"><strong>' + (worst.course_name || '—') + '</strong> ' + (currentLang === 'fr' ? 'a le plus faible taux' : 'has the lowest rate') + ': ' + worst.rate + '%</span></div>';
+            html += '<div class="feed-item"><span class="feed-dot" style="background:var(--warning);"></span><span class="feed-msg"><strong>' + (worst.course_name || '') + '</strong> ' + (currentLang === 'fr' ? 'a le plus faible taux' : 'has the lowest rate') + ': ' + worst.rate + '%</span></div>';
         }
         if (totalLate > 0) {
             html += '<div class="feed-item"><span class="feed-dot" style="background:var(--warning);"></span><span class="feed-msg">' + (currentLang === 'fr' ? 'Vous avez été en retard' : 'You\'ve been late') + ' ' + totalLate + ' ' + (currentLang === 'fr' ? 'fois' : 'times') + '</span></div>';
@@ -1552,7 +1876,9 @@
         var deviceBody = document.getElementById('deviceStatusBody');
         var trusted = securityData.trusted_device;
         var vpn = securityData.vpn_detected;
-        deviceBody.innerHTML = '<div class="feed-item"><span class="feed-dot" style="background:' + (trusted ? 'var(--success)' : 'var(--danger)') + '"></span><span class="feed-msg">' + (currentLang === 'fr' ? 'Appareil de confiance' : 'Trusted Device') + '</span><span style="font-size:.7rem;font-weight:600;color:' + (trusted ? 'var(--success)' : 'var(--danger)') + '">' + (trusted ? t('trusted') : t('not_trusted')) + '</span></div><div class="feed-item"><span class="feed-dot" style="background:' + (vpn ? 'var(--warning)' : 'var(--success)') + '"></span><span class="feed-msg">VPN ' + (currentLang === 'fr' ? 'Détecté' : 'Detected') + '</span><span style="font-size:.7rem;font-weight:600;color:' + (vpn ? 'var(--warning)' : 'var(--success)') + '">' + (vpn ? t('high') : t('low')) + '</span></div><div class="feed-item"><span class="feed-dot" style="background:var(--info);"></span><span class="feed-msg">' + (currentLang === 'fr' ? 'Dernière connexion' : 'Last Login') + '</span><span style="font-size:.7rem;color:var(--text-dim);">' + (securityData.last_login ? new Date(securityData.last_login).toLocaleDateString() : '—') + '</span></div>';
+        var trustedColor = trusted === true ? 'var(--success)' : trusted === false ? 'var(--danger)' : 'var(--text-dim)';
+        var trustedLabel = trusted === true ? t('trusted') : trusted === false ? t('not_trusted') : (currentLang === 'fr' ? 'Non évalué' : 'Not Evaluated');
+        deviceBody.innerHTML = '<div class="feed-item"><span class="feed-dot" style="background:' + trustedColor + '"></span><span class="feed-msg">' + (currentLang === 'fr' ? 'Appareil de confiance' : 'Trusted Device') + '</span><span style="font-size:.7rem;font-weight:600;color:' + trustedColor + '">' + trustedLabel + '</span></div><div class="feed-item"><span class="feed-dot" style="background:' + (vpn ? 'var(--warning)' : 'var(--success)') + '"></span><span class="feed-msg">VPN ' + (currentLang === 'fr' ? 'Détecté' : 'Detected') + '</span><span style="font-size:.7rem;font-weight:600;color:' + (vpn ? 'var(--warning)' : 'var(--success)') + '">' + (vpn ? t('high') : t('low')) + '</span></div><div class="feed-item"><span class="feed-dot" style="background:var(--info);"></span><span class="feed-msg">' + (currentLang === 'fr' ? 'Dernière connexion' : 'Last Login') + '</span><span style="font-size:.7rem;color:var(--text-dim);">' + (securityData.last_login ? new Date(securityData.last_login).toLocaleDateString() : '—') + '</span></div>';
 
         var eventsBody = document.getElementById('securityEventsBody');
         var events = securityData.events || [];
@@ -1712,7 +2038,7 @@
             var statusLabel = r.status === 'present' ? t('present_label') : r.status === 'late' ? t('late') : r.status === 'suspicious' ? t('suspicious') : r.status === 'absent' ? t('absent') : r.status;
             var statusClass = r.status === 'present' ? 'pill-green' : r.status === 'late' ? 'pill-yellow' : r.status === 'suspicious' || r.status === 'absent' ? 'pill-red' : 'pill-gray';
             var date = r.marked_at ? new Date(r.marked_at).toLocaleDateString(currentLang === 'fr' ? 'fr' : 'en', { day:'numeric', month:'short' }) : '—';
-            return '<tr><td>' + date + '</td><td class="cell-name">' + (r.course_name || '—') + '</td><td><span class="pill ' + statusClass + '">' + statusLabel + '</span></td><td>' + (r.lecturer_name || '—') + '</td></tr>';
+            return '<tr><td>' + date + '</td><td class="cell-name">' + (r.course_name || '') + '</td><td><span class="pill ' + statusClass + '">' + statusLabel + '</span></td><td>' + (r.lecturer_name || '') + '</td></tr>';
         }).join('');
         if (data.total_pages > 1) {
             pag.style.display = 'flex';
@@ -1774,8 +2100,8 @@
         if (sessions.length) {
             listEl.innerHTML = sessions.slice(0, 10).map(function(s) {
                 var time = s.created_at ? new Date(s.created_at).toLocaleString(currentLang === 'fr' ? 'fr' : 'en', { weekday:'short', month:'short', day:'numeric', hour:'2-digit', minute:'2-digit' }) : '';
-                var isActive = s.status === 'active';
-                return '<div class="s-item"><div class="si-icon ' + (isActive ? 'active' : 'past') + '"><i class="fas ' + (isActive ? 'fa-play' : 'fa-calendar-check') + '"></i></div><div class="si-body"><div class="si-title">' + (s.course_name || '—') + '</div><div class="si-sub">' + (s.lecturer_name || '') + ' · ' + time + '</div></div><div class="si-right">' + (isActive ? '<span class="pill pill-green">' + t('active_now') + '</span>' : '') + '</div></div>';
+                var isActive = s.is_active === true;
+                return '<div class="s-item"><div class="si-icon ' + (isActive ? 'active' : 'past') + '"><i class="fas ' + (isActive ? 'fa-play' : 'fa-calendar-check') + '"></i></div><div class="si-body"><div class="si-title">' + (s.course_name || '') + '</div><div class="si-sub">' + (s.lecturer_name || '') + ' · ' + time + '</div></div><div class="si-right">' + (isActive ? '<span class="pill pill-green">' + t('active_now') + '</span>' : '') + '</div></div>';
             }).join('');
         } else {
             listEl.innerHTML = '<div class="empty-muted">' + t('no_sessions') + '</div>';
@@ -1785,7 +2111,7 @@
     // ── LIVE BADGE (Gap 10) ──
     function updateLiveBadge() {
         var sessions = dashboardData && dashboardData.upcoming ? dashboardData.upcoming : [];
-        var active = sessions.filter(function(s) { return s.status === 'active'; });
+        var active = sessions.filter(function(s) { return s.is_active === true; });
         var liveBadge = document.getElementById('liveBadge');
         var sessionBadge = document.getElementById('sessionBadge');
         if (active.length) {
@@ -1800,9 +2126,9 @@
     // ── COURSE DRAWER (Gap 11) ──
     function openCourseDrawer(course) {
         if (!course) return;
-        document.getElementById('drawerTitle').textContent = course.course_name || t('course_details');
+        document.getElementById('drawerTitle').textContent = course.course_name || '';
         document.getElementById('drawerCode').textContent = course.course_id || '—';
-        document.getElementById('drawerLecturer').textContent = course.lecturer_name || '—';
+        document.getElementById('drawerLecturer').textContent = course.lecturer_name || '';
         document.getElementById('drawerPresent').textContent = course.present || 0;
         document.getElementById('drawerLate').textContent = course.late || 0;
         document.getElementById('drawerAbsent').textContent = course.absent || 0;
@@ -1819,7 +2145,7 @@
         if (courseSessions.length) {
             sessionsEl.innerHTML = courseSessions.slice(0, 8).map(function(s) {
                 var time = s.created_at ? new Date(s.created_at).toLocaleDateString(currentLang === 'fr' ? 'fr' : 'en', { day:'numeric', month:'short' }) : '';
-                var active = s.status === 'active';
+                var active = s.is_active === true;
                 return '<div class="feed-item"><span class="feed-dot" style="background:' + (active ? 'var(--success)' : 'var(--text-dim)') + '"></span><span class="feed-msg">' + time + ' — ' + (active ? t('active_now') : t('past')) + '</span></div>';
             }).join('');
         } else {
@@ -1870,14 +2196,22 @@
 
     // ── NETWORK TOPOLOGY ──
     function renderTopology() {
-        if (!window.AttendrixTopology) return;
+        var legend = document.getElementById('topologyLegend');
         var net = dashboardData && dashboardData.network ? dashboardData.network : {};
         var nodes = net.nodes || [];
         var broker = net.broker || {};
         var count = document.getElementById('topologyNodeCount');
+        if (!window.AttendrixTopology) {
+            if (legend) legend.innerHTML = '<span>' + t('no_topology_data') + '</span>';
+            if (count) count.textContent = '';
+            return;
+        }
         if (count) count.textContent = nodes.length + ' ' + t('nodes');
         if (nodes.length > 0) {
             AttendrixTopology.start(nodes, broker, 'topologyCanvas');
+            if (legend) legend.innerHTML = nodes.map(function(n) { return '<span><span class="dot" style="background:' + (n.status === 'healthy' ? '#10B981' : n.status === 'degraded' ? '#F59E0B' : '#EF4444') + '"></span>' + (n.name || n.type || 'Node') + '</span>'; }).join('');
+        } else {
+            if (legend) legend.innerHTML = '<span>' + t('no_topology_data') + '</span>';
         }
     }
 
@@ -1938,6 +2272,17 @@
             }
         };
     }
+
+    // ── FORCE VERIFY BUTTON BINDING ──
+    window.onload = function () {
+        var btn = document.getElementById("verifyBtn");
+        if (!btn) {
+            console.error("Verify button not found");
+            return;
+        }
+        btn.addEventListener("click", verifySessionCode);
+        console.log("Verify button bound successfully");
+    };
 
     // ── INIT ──
     applyTranslations();

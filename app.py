@@ -90,6 +90,28 @@ def send_demo_confirmation_email(self, to_email: str, to_name: str, institution:
         raise self.retry(exc=exc)
 
 
+@celery.task(bind=True, max_retries=1, default_retry_delay=30)
+def process_mail_queue(self):
+    """Process pending emails in the Attendrix Mail queue."""
+    try:
+        from src.infrastructure.mail_service import mail_service as _mail_queue
+        count = _mail_queue.process_queue(batch_size=20)
+        if count:
+            logger.info("Mail queue processed: %d emails", count)
+        return {"processed": count}
+    except Exception as exc:
+        logger.error("Mail queue processing failed: %s", exc)
+        return {"processed": 0, "error": str(exc)}
+
+
+celery.conf.beat_schedule = {
+    'process-mail-queue-every-15s': {
+        'task': 'app.process_mail_queue',
+        'schedule': 15.0,
+    },
+}
+
+
 # Configure logging
 logging.basicConfig(
     level=logging.INFO,
@@ -313,6 +335,20 @@ def create_app():
     except Exception as e:
         logger.error(f"Email service initialization failed: {str(e)}")
         email_service = None
+
+    # Initialize Attendrix Mail subsystem (queue-based internal email)
+    try:
+        import src.infrastructure.sqlalchemy_db as _sqlalchemy_db
+        from src.infrastructure.mail_models import MailQueue, MailTemplate, MailAuditLog, MailSmtpProfile
+        _sqlalchemy_db.Base.metadata.create_all(_sqlalchemy_db.engine)
+        from src.infrastructure.mail_service import mail_service as _mail_svc
+        _mail_svc.initialize()
+        global mail_service
+        mail_service = _mail_svc
+        logger.info("Attendrix Mail initialized (queue-based email subsystem)")
+    except Exception as e:
+        logger.warning(f"Attendrix Mail initialization deferred: {str(e)}")
+        mail_service = None
 
     # Initialize payment service
     try:
@@ -914,65 +950,122 @@ def create_app():
     @require_role('student')
     @log_access
     def mark_attendance():
-        """Mark attendance with QR code validation - real implementation"""
+        """Mark attendance with strict validation flow:
+        1. Normalize session code immediately
+        2. Load session from SERVER (not cache)
+        3. Validate session is active + not expired
+        4. Verify session code matches server exactly
+        5. Verify face (if provided) — match against all descriptors
+        6. Submit attendance record
+        Accepts both new (camelCase) and legacy (snake_case) payload formats.
+        """
         try:
             data = request.get_json()
-            
-            session_code = data.get('session_code')
-            if not session_code:
+
+            # Accept both payload formats: new (sessionCode) and legacy (session_code)
+            raw_code = data.get('sessionCode') or data.get('session_code', '')
+            if not raw_code or not raw_code.strip():
                 return jsonify({'error': 'Session code required'}), 400
 
-            # Optional face verification
-            face_descriptor = data.get('face_descriptor')
+            # Normalize IMMEDIATELY — before any lookup or comparison
+            session_code = raw_code.strip().upper()
+            user_id = data.get('studentId') or request.current_user.get('user_id')
+
+            # Step 1-4: Load session from SERVER & validate
+            from src.application.attendance_security_service import AttendanceSecurityService
+            attendance_security = AttendanceSecurityService(firebase_service)
+
+            server_validation = attendance_security.validate_server_session(session_code)
+            if not server_validation.get('valid'):
+                return jsonify({
+                    'error': server_validation.get('error', 'Invalid session code'),
+                    'message': server_validation.get('message', '')
+                }), 400
+
+            server_session = server_validation['session']
+
+            # Step 4b: Verify session code match against server data
+            stored_code = (server_session.get('session_code') or '').strip().upper()
+            if session_code != stored_code:
+                return jsonify({
+                    'error': 'Invalid Session Code → STOP PROCESS',
+                    'message': 'Session code mismatch'
+                }), 400
+
+            # Step 5: Face verification if descriptor provided
+            face_descriptor = data.get('faceDescriptor') or data.get('face_descriptor')
             face_verified = False
             face_match_score = 0.0
+            face_matched_label = None
 
             if face_descriptor:
                 from src.application.biometric_service import BiometricService as _BS
                 bs = _BS(firebase_service)
-                user_id = request.current_user.get('user_id')
-                face_status = bs.get_face_status(user_id)
-                if face_status.get('enrolled'):
-                    face_result = bs.verify_face(user_id, face_descriptor)
-                    if face_result.get('verified'):
-                        face_verified = True
-                        face_match_score = face_result.get('confidence', 0.0)
-                    else:
+
+                # Match against ALL enrolled faces (not just current user)
+                face_result = bs.verify_face_against_all(
+                    face_descriptor,
+                    institution_id=request.current_user.get('institution_id'),
+                    threshold=0.45
+                )
+
+                if not face_result.get('verified'):
+                    label = face_result.get('label', 'unknown')
+                    confidence = face_result.get('confidence', 0)
+
+                    # Rule: if confidence < 0.55 OR label == "unknown" → fail
+                    if label == 'unknown' or confidence < 0.55:
                         return jsonify({
-                            'error': 'Face verification failed',
-                            'face_result': face_result
+                            'error': 'Face mismatch → Attendance denied',
+                            'message': 'Face does not match enrolled face',
+                            'face_result': {
+                                'status': 'failed',
+                                'reason': 'Face mismatch',
+                                'message': 'Face does not match enrolled face'
+                            }
                         }), 403
-            
-            # Use real attendance security service
-            from src.application.attendance_security_service import AttendanceSecurityService
-            attendance_security = AttendanceSecurityService(firebase_service)
-            
+
+                    return jsonify({
+                        'error': 'Face not recognized. Please re-register or retry.',
+                        'face_result': face_result
+                    }), 403
+
+                # Face matched
+                face_verified = True
+                face_match_score = face_result.get('confidence', 0.0)
+                face_matched_label = face_result.get('label')
+
+                # Verify the matched student is the current user
+                if face_matched_label and face_matched_label != user_id:
+                    logger.warning(f"Face matched {face_matched_label} but current user is {user_id}")
+
+            # Step 6: Submit attendance
             result = attendance_security.mark_attendance(
                 session_code=session_code,
-                student_id=request.current_user.get('user_id'),
-                device_fingerprint=data.get('device_fingerprint'),
+                student_id=user_id,
+                device_fingerprint=data.get('device_fingerprint') or data.get('deviceFingerprint', ''),
                 ip_address=request.remote_addr,
-                location=data.get('location'),
+                location=data.get('location', ''),
                 face_verified=face_verified,
                 face_match_score=face_match_score
             )
 
             if 'error' in result:
                 return jsonify(result), 400
-            else:
-                mqtt_service.publish(
-                    f'attendrix/attendance/{result.get("session_id", session_code)}',
-                    {
-                        'student_id': request.current_user.get('user_id'),
-                        'status': 'present',
-                        'session_code': session_code,
-                        'method': result.get('method', 'qr'),
-                        'timestamp': datetime.utcnow().isoformat(),
-                    },
-                    qos=1,
-                )
-                return jsonify(result), 200
-                
+
+            mqtt_service.publish(
+                f'attendrix/attendance/{result.get("session_id", session_code)}',
+                {
+                    'student_id': user_id,
+                    'status': 'present',
+                    'session_code': session_code,
+                    'method': result.get('method', 'qr'),
+                    'timestamp': datetime.utcnow().isoformat(),
+                },
+                qos=1,
+            )
+            return jsonify(result), 200
+
         except Exception as e:
             logger.error(f"Attendance marking error: {str(e)}")
             return jsonify({'error': 'Failed to mark attendance'}), 500
@@ -1039,6 +1132,22 @@ def create_app():
             logger.error(f"Face enroll error: {str(e)}")
             return jsonify({'success': False, 'error': 'Failed to enroll face'}), 500
 
+    @app.route('/api/biometric/face/descriptors', methods=['GET'])
+    @require_auth
+    @require_role('student')
+    def face_descriptors_all():
+        """Return ALL enrolled face descriptors with labels for frontend FaceMatcher.
+        Used to build labeled descriptors BEFORE verification starts."""
+        try:
+            from src.application.biometric_service import BiometricService as _BS
+            bs = _BS(firebase_service)
+            institution_id = request.current_user.get('institution_id')
+            descriptors = bs.get_all_face_descriptors(institution_id)
+            return jsonify({'descriptors': descriptors}), 200
+        except Exception as e:
+            logger.error(f"Face descriptors error: {str(e)}")
+            return jsonify({'descriptors': [], 'error': 'Failed to load descriptors'}), 500
+
     @app.route('/api/biometric/face/verify', methods=['POST'])
     @require_auth
     @require_role('student')
@@ -1047,7 +1156,7 @@ def create_app():
         try:
             data = request.get_json()
             descriptor = data.get('descriptor')
-            threshold = data.get('threshold', 0.6)
+            threshold = data.get('threshold', 0.45)
             if not descriptor:
                 return jsonify({'verified': False, 'error': 'Face descriptor required'}), 400
             from src.application.biometric_service import BiometricService as _BS
@@ -1554,6 +1663,30 @@ def create_app():
         if not data:
             return jsonify({'error': 'Institution not found'}), 404
         return jsonify(data)
+
+    # ── Institution Extended — accessible by student role ──
+    @app.route('/api/institution/extended', methods=['GET'])
+    @require_auth
+    @require_role('student', 'institutional_admin', 'super_admin')
+    @log_access
+    def institution_extended():
+        """Return extended institution data for the current user's institution."""
+        inst_id = request.current_user.get('institution_id')
+        if not inst_id:
+            return jsonify({'error': 'Institution not found'}), 404
+        data = institution_repo.get_by_id(inst_id)
+        if not data:
+            return jsonify({'error': 'Institution not found'}), 404
+        language = request.args.get('language', 'English')
+        return jsonify({
+            'id': data.get('id'),
+            'name': data.get('name'),
+            'code': data.get('code'),
+            'language': language,
+            'timezone': data.get('timezone', 'UTC'),
+            'country': data.get('country', ''),
+            'session_duration': data.get('session_duration', 60),
+        })
 
     @app.route('/api/notifications', methods=['GET'])
     @require_auth
@@ -2467,22 +2600,41 @@ def create_app():
     @require_role('student')
     @log_access
     def api_student_verify_scan():
-        """Verify a session code before marking attendance"""
+        """Verify a session code before marking attendance.
+        Accepts: studentId, sessionId, sessionCode, institutionId, faceDescriptor.
+        Validates: sessionCode required; all fields echoed back for frontend storage."""
         try:
-            data = request.get_json()
-            session_code = data.get('session_code', '')
-            device_fingerprint = data.get('device_fingerprint', '')
+            body = request.get_json()
+            session_code = body.get('sessionCode', '')
+            student_id = body.get('studentId', '')
+            session_id = body.get('sessionId', '')
+            institution_id = body.get('institutionId', '')
+            face_descriptor = body.get('faceDescriptor')
+            timestamp = body.get('timestamp', '')
+
+            logger.info(f"verify-scan request: sessionCode='{session_code}' studentId='{student_id}' sessionId='{session_id}' institutionId='{institution_id}' hasFaceData={'yes' if face_descriptor else 'no'} timestamp='{timestamp}'")
+
             if not session_code:
                 return jsonify({'error': 'Session code required'}), 400
+            if not student_id or not session_id or not institution_id:
+                return jsonify({'error': 'Missing required fields: studentId, sessionId, institutionId'}), 400
             if student_dashboard_service is None:
                 return jsonify({'error': 'Service not available'}), 503
+
             result = student_dashboard_service.verify_scan(
                 session_code=session_code,
-                user_id=request.current_user.get('user_id'),
-                device_fingerprint=device_fingerprint
+                user_id=student_id
             )
             if 'error' in result:
+                logger.warning(f"verify-scan failed: {result['error']}")
                 return jsonify(result), 400
+            logger.info(f"verify-scan succeeded for studentId='{student_id}' sessionCode='{session_code}'")
+            # Echo fields back for frontend to persist
+            result['_student_id'] = student_id
+            result['_session_id'] = session_id
+            result['_institution_id'] = institution_id
+            result['_session_code'] = session_code
+            result['_face_descriptor'] = face_descriptor
             return jsonify(result), 200
         except Exception as e:
             logger.error(f"Verify scan error: {str(e)}")
@@ -3490,6 +3642,28 @@ def create_app():
     # ── Feedback Intelligence Center ──
     from src.presentation.api.feedback_routes import feedback_api
     app.register_blueprint(feedback_api)
+
+    # ── Attendrix Mail Admin ──
+    from src.presentation.routes.mail_routes import mail_bp
+    app.register_blueprint(mail_bp)
+    logger.info("Attendrix Mail admin blueprint registered at /admin/mail")
+
+    # ── Attendrix Mail Unsubscribe Endpoint ──
+    @app.route('/api/mail/unsubscribe', methods=['GET'])
+    def mail_unsubscribe():
+        """Handle email unsubscribe requests."""
+        token = request.args.get('token', '')
+        email_hash = request.args.get('email_hash', '')
+        if not token or not email_hash:
+            return 'Invalid unsubscribe link.', 400
+        from src.infrastructure.mail_service import mail_service as _mail_svc
+        _mail_svc.handle_unsubscribe(token, email_hash)
+        return render_template('unsubscribed.html')
+
+    # ── Attendrix Mail API (for internal service integration) ──
+    from src.presentation.routes.mail_api_routes import mail_api
+    app.register_blueprint(mail_api)
+    logger.info("Attendrix Mail API blueprint registered at /api/mail")
 
     # ── Innovation Engine API (Smart Campus Suite) ──
     if innovation_bp:

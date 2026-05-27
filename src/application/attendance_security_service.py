@@ -203,6 +203,36 @@ class AttendanceSecurityService:
                 logger.info(f"Session {session_code}: is_active={session_active}, rejecting")
                 return None
             
+            # ──────────────────────────────────────────────
+            # Expiry check: respect explicit end_time first
+            # end_time=None → open-ended (not ended)
+            # end_time=datetime → use that as expiry
+            # no end_time key → fall back to start_time + duration
+            # ──────────────────────────────────────────────
+            end_raw = session.get('end_time')
+            has_end_key = 'end_time' in session
+
+            if has_end_key and end_raw is not None:
+                # Explicit end_time set — parse and check
+                if isinstance(end_raw, datetime):
+                    session_end = end_raw
+                elif isinstance(end_raw, str):
+                    session_end = datetime.fromisoformat(end_raw.replace('Z', '+00:00'))
+                else:
+                    session_end = datetime.fromisoformat(str(end_raw).replace('Z', '+00:00'))
+                if session_end.tzinfo is not None:
+                    session_end = session_end.replace(tzinfo=None)
+                if datetime.utcnow() > session_end:
+                    logger.info(f"Session {session_code}: passed explicit end_time {session_end.isoformat()}, rejecting")
+                    return None
+                return session
+
+            if has_end_key and end_raw is None:
+                # end_time explicitly null — open-ended session, not expired
+                logger.info(f"Session {session_code}: end_time=null (open-ended), valid")
+                return session
+
+            # No end_time key — fall back to start_time + duration
             start_time_raw = session.get('start_time') or session.get('created_at')
             if not start_time_raw:
                 logger.warning(f"Session {session_code} has no start_time or created_at; keys={list(session.keys())}")
@@ -220,13 +250,121 @@ class AttendanceSecurityService:
                 session_start = session_start.replace(tzinfo=None)
             session_end = session_start + timedelta(minutes=self.session_duration_minutes)
             if datetime.utcnow() > session_end:
-                logger.info(f"Session {session_code}: expired at {session_end.isoformat()}")
+                logger.info(f"Session {session_code}: expired at {session_end.isoformat()} (no end_time field, fell back to duration)")
                 return None
             return session
             
         except Exception as e:
             logger.error(f"Session validation failed for {session_code}: {type(e).__name__}: {str(e)}")
             return None
+
+    def get_server_session(self, session_code: str) -> Optional[Dict[str, Any]]:
+        """Fetch session from SERVER (not cache) — equivalent to Firestore getDocFromServer.
+        Normalizes code EARLY, queries server directly (no in-memory cache).
+        Validates session exists, is active, and is not expired."""
+        try:
+            # Normalize session code BEFORE any comparison or query
+            normalized_code = session_code.strip().upper()
+
+            # Query DIRECTLY from server (reloads from disk, bypasses cache)
+            sessions = self.firebase_service.query_documents_from_server(
+                'attendance_sessions',
+                filters=[
+                    {'field': 'session_code', 'value': normalized_code}
+                ]
+            )
+
+            if not sessions:
+                logger.info(f"Server session fetch: no docs for code {normalized_code}")
+                return None
+
+            server_session = sessions[0]
+            logger.info(f"Server session {normalized_code}: found doc id={server_session.get('id')}")
+
+            # Validate is_active
+            if not server_session.get('is_active', True):
+                logger.info(f"Server session {normalized_code}: is_active=False, rejecting")
+                return None
+
+            # ──────────────────────────────────────────────
+            # Expiry check: respect explicit end_time first
+            # end_time=None → open-ended (not ended)
+            # end_time=datetime → use that as expiry
+            # no end_time key → fall back to start_time + duration
+            # ──────────────────────────────────────────────
+            end_raw = server_session.get('end_time')
+            has_end_key = 'end_time' in server_session
+
+            if has_end_key and end_raw is not None:
+                # Explicit end_time set — parse and check
+                if isinstance(end_raw, datetime):
+                    session_end = end_raw
+                elif isinstance(end_raw, str):
+                    session_end = datetime.fromisoformat(end_raw.replace('Z', '+00:00'))
+                else:
+                    session_end = datetime.fromisoformat(str(end_raw).replace('Z', '+00:00'))
+                if session_end.tzinfo is not None:
+                    session_end = session_end.replace(tzinfo=None)
+                if datetime.utcnow() > session_end:
+                    logger.info(f"Server session {normalized_code}: passed explicit end_time {session_end.isoformat()}, rejecting")
+                    return None
+                logger.info(f"Server session {normalized_code}: valid (within explicit end_time)")
+                return server_session
+
+            if has_end_key and end_raw is None:
+                # end_time explicitly null — open-ended session, not expired
+                logger.info(f"Server session {normalized_code}: end_time=null (open-ended), valid")
+                return server_session
+
+            # No end_time key in document — fall back to start_time + duration
+            start_raw = server_session.get('start_time') or server_session.get('created_at')
+            if not start_raw:
+                logger.warning(f"Server session {normalized_code}: no start_time or end_time")
+                return None
+
+            if isinstance(start_raw, datetime):
+                session_start = start_raw
+            elif isinstance(start_raw, str):
+                session_start = datetime.fromisoformat(start_raw.replace('Z', '+00:00'))
+            else:
+                session_start = datetime.fromisoformat(str(start_raw).replace('Z', '+00:00'))
+
+            if session_start.tzinfo is not None:
+                session_start = session_start.replace(tzinfo=None)
+            session_end = session_start + timedelta(minutes=self.session_duration_minutes)
+
+            if datetime.utcnow() > session_end:
+                logger.info(f"Server session {normalized_code}: expired at {session_end.isoformat()} (no end_time field, fell back to duration)")
+                return None
+
+            logger.info(f"Server session {normalized_code}: valid and active")
+            return server_session
+
+        except Exception as e:
+            logger.error(f"Server session fetch failed for {session_code}: {type(e).__name__}: {str(e)}")
+            return None
+
+    def validate_server_session(self, session_code: str) -> Dict[str, Any]:
+        """Comprehensive server-side session validation.
+        Returns validated session data or an error dict."""
+        server_session = self.get_server_session(session_code)
+        if not server_session:
+            return {
+                'valid': False,
+                'error': 'Invalid Session Code → STOP PROCESS',
+                'message': 'Session not found, inactive, or expired'
+            }
+
+        return {
+            'valid': True,
+            'session': server_session,
+            'session_code': server_session.get('session_code'),
+            'course_name': server_session.get('course_name', ''),
+            'lecturer_name': server_session.get('lecturer_name', ''),
+            'lecturer_id': server_session.get('lecturer_id'),
+            'is_active': server_session.get('is_active', True),
+            'message': 'Session validated from server'
+        }
     
     def _generate_session_code(self) -> str:
         """Generate unique session code"""

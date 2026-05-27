@@ -229,6 +229,64 @@ class FirebaseService:
             logger.error(f"Failed to delete document from {collection}: {str(e)}")
             return False
 
+    def get_document_from_server(self, collection: str, document_id: str) -> Optional[Dict[str, Any]]:
+        """Force server fetch (simulates Firestore getDocFromServer).
+        In mock mode, bypasses in-memory cache by re-reading from disk."""
+        if not self._initialized:
+            self.initialize()
+        if self.is_mock():
+            global _mock_database
+            fresh = load_mock_database()
+            if fresh:
+                _mock_database = fresh
+            docs = _mock_database.get(collection, [])
+            for doc in docs:
+                if doc.get('id') == document_id:
+                    return doc
+            return None
+        try:
+            doc_ref = self.firestore_client.collection(collection).document(document_id)
+            doc = doc_ref.get()
+            return doc.to_dict() if doc.exists else None
+        except Exception as e:
+            logger.error(f"Failed to get document from server {collection}: {str(e)}")
+            return None
+
+    def query_documents_from_server(self, collection: str, filters: List[Dict[str, Any]] = None,
+                                    limit: int = None) -> List[Dict[str, Any]]:
+        """Force server-side query (simulates Firestore getDocFromServer + query).
+        Always re-reads from disk to bypass in-memory cache, then applies filters."""
+        if not self._initialized:
+            self.initialize()
+        if self.is_mock():
+            global _mock_database
+            fresh = load_mock_database()
+            if fresh:
+                _mock_database = fresh
+            _ensure_collection(collection)
+            result = list(_mock_database.get(collection, []))
+            if filters:
+                for f in filters:
+                    field = f.get('field')
+                    value = f.get('value')
+                    if field is not None:
+                        result = [d for d in result if d.get(field) == value]
+            if limit:
+                result = result[:limit]
+            return result
+        try:
+            from firebase_admin import firestore as _fs
+            q = self.firestore_client.collection(collection)
+            if filters:
+                for f in filters:
+                    q = q.where(f.get('field'), '==', f.get('value'))
+            if limit:
+                q = q.limit(limit)
+            return [doc.to_dict() for doc in q.stream()]
+        except Exception as e:
+            logger.error(f"Failed to query {collection} from server: {str(e)}")
+            return []
+
     def query_documents(self, collection: str, filters: List[Dict[str, Any]] = None,
                        limit: int = None, order_by: str = None) -> List[Dict[str, Any]]:
         if not self._initialized:

@@ -10,6 +10,51 @@ class StudentDashboardService:
     def __init__(self, firebase_service):
         self.fb = firebase_service
 
+    def _get_course_info(self, course_id: str) -> Optional[Dict[str, Any]]:
+        if not course_id:
+            return None
+        if not hasattr(self, '_course_cache'):
+            self._course_cache = {}
+        if course_id not in self._course_cache:
+            course = self.fb.get_document('courses', course_id)
+            if not course:
+                self._course_cache[course_id] = None
+            else:
+                lecturer_name = ''
+                lid = course.get('lecturer_id', '')
+                if lid:
+                    lecturer = self.fb.get_document('users', lid)
+                    if lecturer:
+                        lecturer_name = f"{lecturer.get('first_name', '')} {lecturer.get('last_name', '')}".strip()
+                if not lecturer_name:
+                    course_sessions = self.fb.query_documents(
+                        'attendance_sessions',
+                        filters=[{'field': 'course_id', 'value': course_id}]
+                    )
+                    for cs in course_sessions:
+                        if cs.get('lecturer_name'):
+                            lecturer_name = cs['lecturer_name']
+                            break
+                self._course_cache[course_id] = {
+                    'name': course.get('name') or course.get('course_name', ''),
+                    'lecturer_name': lecturer_name,
+                }
+        return self._course_cache[course_id]
+
+    def _enrich_session(self, session: Dict[str, Any]) -> Dict[str, Any]:
+        if not session:
+            return session
+        enriched = dict(session)
+        cid = enriched.get('course_id', '')
+        if not enriched.get('course_name') or not enriched.get('lecturer_name'):
+            cinfo = self._get_course_info(cid)
+            if cinfo:
+                if not enriched.get('course_name'):
+                    enriched['course_name'] = cinfo['name']
+                if not enriched.get('lecturer_name'):
+                    enriched['lecturer_name'] = cinfo['lecturer_name']
+        return enriched
+
     # ── MAIN DASHBOARD ──
 
     def get_dashboard_data(self, user_id: str, institution_id: str) -> Dict[str, Any]:
@@ -17,7 +62,7 @@ class StudentDashboardService:
         profile = self._get_profile(user_id)
         stats = self._get_attendance_stats(user_id)
         courses = self._get_courses(user_id)
-        upcoming = self._get_upcoming_sessions(institution_id)
+        upcoming = self._get_upcoming_sessions(institution_id, user_id)
         recent = self._get_recent_history(user_id)
         notifications = self._get_notifications(user_id, institution_id)
         network = self._get_network_status(institution_id)
@@ -101,7 +146,7 @@ class StudentDashboardService:
     def _compute_trust_level(self, user_id: str, stats: Dict[str, Any]) -> Dict[str, Any]:
         user = self.fb.get_document('users', user_id)
         score = 100
-        if user and user.get('trusted_device'):
+        if user and user.get('trusted_device') == True:
             score += 10
         if user and user.get('vpn_detected'):
             score -= 25
@@ -118,7 +163,7 @@ class StudentDashboardService:
             filters=[{'field': 'student_id', 'value': user_id}]
         )
         session_ids = list(set(
-            r.get('attendance_session_id') for r in records if r.get('attendance_session_id')
+            r.get('session_id') for r in records if r.get('session_id')
         ))
         sessions = []
         for sid in session_ids:
@@ -132,10 +177,11 @@ class StudentDashboardService:
         )
         for rec in records:
             session = next(
-                (s for s in sessions if s.get('id') == rec.get('attendance_session_id')),
+                (s for s in sessions if s.get('id') == rec.get('session_id')),
                 None
             )
             if session:
+                session = self._enrich_session(session)
                 cid = session.get('course_id', 'unknown')
                 course_data[cid]['total'] += 1
                 if rec.get('status') == 'present':
@@ -146,8 +192,38 @@ class StudentDashboardService:
                     course_data[cid]['absent'] += 1
                 if rec.get('is_suspicious'):
                     course_data[cid]['suspicious'] += 1
-                course_data[cid]['course_name'] = session.get('course_name', 'Unknown')
-                course_data[cid]['lecturer_name'] = session.get('lecturer_name', 'Unknown')
+                course_data[cid]['course_name'] = session.get('course_name', '') or 'Unknown'
+                course_data[cid]['lecturer_name'] = session.get('lecturer_name', '') or ''
+
+        enrollments = self.fb.query_documents(
+            'course_enrollments',
+            filters=[{'field': 'student_id', 'value': user_id}]
+        )
+        for e in enrollments:
+            cid = e.get('course_id', '')
+            if cid and cid not in course_data:
+                course_info = self.fb.get_document('courses', cid)
+                course_name = 'Unknown'
+                lecturer_name = ''
+                if course_info:
+                    course_name = course_info.get('name') or course_info.get('course_name', 'Unknown')
+                    lecturer_id = course_info.get('lecturer_id', '')
+                    if lecturer_id:
+                        lecturer = self.fb.get_document('users', lecturer_id)
+                        if lecturer:
+                            lecturer_name = f"{lecturer.get('first_name', '')} {lecturer.get('last_name', '')}".strip()
+                    if not lecturer_name:
+                        course_sessions = self.fb.query_documents(
+                            'attendance_sessions',
+                            filters=[{'field': 'course_id', 'value': cid}]
+                        )
+                        if course_sessions:
+                            lecturer_name = course_sessions[0].get('lecturer_name', '')
+                course_data[cid] = {
+                    'total': 0, 'present': 0, 'late': 0, 'absent': 0,
+                    'course_name': course_name, 'lecturer_name': lecturer_name,
+                    'suspicious': 0
+                }
 
         courses = []
         for cid, data in course_data.items():
@@ -169,14 +245,24 @@ class StudentDashboardService:
 
     # ── SESSIONS ──
 
-    def _get_upcoming_sessions(self, institution_id: str) -> List[Dict[str, Any]]:
+    def _get_upcoming_sessions(self, institution_id: str, user_id: str = None) -> List[Dict[str, Any]]:
         sessions = self.fb.query_documents(
             'attendance_sessions',
             filters=[{'field': 'institution_id', 'value': institution_id}],
             order_by='-created_at'
         )
-        active = [s for s in sessions if s.get('status') == 'active']
-        completed = [s for s in sessions if s.get('status') == 'completed']
+        enrolled_course_ids = None
+        if user_id:
+            enrollments = self.fb.query_documents(
+                'course_enrollments',
+                filters=[{'field': 'student_id', 'value': user_id}]
+            )
+            enrolled_course_ids = {e.get('course_id') for e in enrollments if e.get('course_id')}
+        if enrolled_course_ids:
+            sessions = [s for s in sessions if s.get('course_id') in enrolled_course_ids]
+        sessions = [self._enrich_session(s) for s in sessions]
+        active = [s for s in sessions if s.get('is_active') == True]
+        completed = [s for s in sessions if s.get('is_active') == False]
         return (active + completed)[:10]
 
     # ── HISTORY ──
@@ -190,14 +276,16 @@ class StudentDashboardService:
         )
         result = []
         for r in records:
-            session = self.fb.get_document('attendance_sessions', r.get('attendance_session_id', ''))
+            session = self.fb.get_document('attendance_sessions', r.get('session_id', ''))
+            if session:
+                session = self._enrich_session(session)
             result.append({
                 'id': r.get('id'),
-                'session_id': r.get('attendance_session_id'),
+                'session_id': r.get('session_id'),
                 'status': r.get('status', 'unknown'),
                 'marked_at': r.get('marked_at', r.get('created_at', '')),
-                'course_name': session.get('course_name', 'Unknown') if session else 'Unknown',
-                'lecturer_name': session.get('lecturer_name', '') if session else '',
+                'course_name': (session.get('course_name', '') or 'Unknown') if session else 'Unknown',
+                'lecturer_name': (session.get('lecturer_name', '') or '') if session else '',
                 'is_suspicious': r.get('is_suspicious', False),
             })
         return result
@@ -333,7 +421,7 @@ class StudentDashboardService:
 
     def get_security_data(self, user_id: str, institution_id: str) -> Dict[str, Any]:
         user = self.fb.get_document('users', user_id)
-        trusted = user.get('trusted_device', False) if user else False
+        trusted = user.get('trusted_device') if user else None
         vpn = user.get('vpn_detected', False) if user else False
         last_login = user.get('last_login', '') if user else ''
 
@@ -365,15 +453,23 @@ class StudentDashboardService:
 
     def verify_scan(self, session_code: str, user_id: str,
                     device_fingerprint: str = '') -> Dict[str, Any]:
-        sessions = self.fb.query_documents(
-            'attendance_sessions',
-            filters=[{'field': 'session_code', 'value': session_code}]
-        )
-        if not sessions:
-            return {'error': 'Invalid session code'}
-        session = sessions[0]
-        if not session.get('is_active', True):
-            return {'error': 'Session is not active'}
+        # Normalize session code IMMEDIATELY — before any lookup or comparison
+        normalized_code = session_code.strip().upper()
+
+        from src.application.attendance_security_service import AttendanceSecurityService
+        att_sec = AttendanceSecurityService(self.fb)
+        server_validation = att_sec.validate_server_session(normalized_code)
+
+        if not server_validation.get('valid'):
+            logger.warning(f"verify_scan: server validation failed for code='{normalized_code}' user='{user_id}': {server_validation.get('error')}")
+            return {'error': server_validation.get('error', 'Invalid session code')}
+
+        session = server_validation['session']
+
+        # Final safety check: verify returned session code matches
+        stored_code = (session.get('session_code') or '').strip().upper()
+        if normalized_code != stored_code:
+            return {'error': 'Invalid Session Code → STOP PROCESS'}
 
         trust_score = 95
         checks = {'Campus WiFi': True, 'Secure Session': True, 'Device Verified': True}
@@ -392,12 +488,13 @@ class StudentDashboardService:
         except Exception:
             pass
 
+        enriched = self._enrich_session(session)
         return {
             'verified': True,
             'session': {
-                'course_name': session.get('course_name', 'Unknown'),
-                'course_id': session.get('course_id', ''),
-                'lecturer_name': session.get('lecturer_name', ''),
+                'course_name': enriched.get('course_name', '') or 'Unknown',
+                'course_id': enriched.get('course_id', ''),
+                'lecturer_name': enriched.get('lecturer_name', '') or '',
             },
             'trust_score': max(0, trust_score),
             'checks': checks,
@@ -419,15 +516,17 @@ class StudentDashboardService:
 
         history = []
         for r in page_records:
-            session = self.fb.get_document('attendance_sessions', r.get('attendance_session_id', ''))
+            session = self.fb.get_document('attendance_sessions', r.get('session_id', ''))
+            if session:
+                session = self._enrich_session(session)
             history.append({
                 'id': r.get('id'),
-                'session_id': r.get('attendance_session_id'),
+                'session_id': r.get('session_id'),
                 'status': r.get('status', 'unknown'),
                 'marked_at': r.get('marked_at', r.get('created_at', '')),
-                'course_name': session.get('course_name', 'Unknown') if session else 'Unknown',
+                'course_name': (session.get('course_name', '') or 'Unknown') if session else 'Unknown',
                 'course_id': session.get('course_id', '') if session else '',
-                'lecturer_name': session.get('lecturer_name', '') if session else '',
+                'lecturer_name': (session.get('lecturer_name', '') or '') if session else '',
                 'is_suspicious': r.get('is_suspicious', False),
             })
 
@@ -442,4 +541,4 @@ class StudentDashboardService:
     # ── SCHEDULE ──
 
     def get_schedule(self, user_id: str, institution_id: str) -> List[Dict[str, Any]]:
-        return self._get_upcoming_sessions(institution_id)
+        return self._get_upcoming_sessions(institution_id, user_id)

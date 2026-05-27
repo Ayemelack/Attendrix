@@ -1,0 +1,479 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Mail Dashboard - Attendrix</title>
+    <meta name="description" content="Attendrix Mail administration panel">
+    <link rel="icon" type="image/svg+xml" href="/static/images/favicon.svg">
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <link rel="stylesheet" href="{{ url_for('static', filename='css/landing.css') }}">
+    <link rel="stylesheet" href="{{ url_for('static', filename='css/responsive.css') }}">
+    <style>
+        :root {
+            --primary-color: #4f46e5;
+            --primary-dark: #4338ca;
+            --secondary-color: #64748b;
+            --accent-color: #6366f1;
+            --success-color: #10b981;
+            --warning-color: #f59e0b;
+            --error-color: #ef4444;
+            --bg-primary: #ffffff;
+            --bg-secondary: #f8fafc;
+            --text-primary: #1e293b;
+            --text-secondary: #64748b;
+            --border-color: #e2e8f0;
+            --shadow-sm: 0 1px 2px 0 rgb(0 0 0 / 0.05);
+            --shadow-md: 0 4px 6px -1px rgb(0 0 0 / 0.1);
+            --radius-sm: 6px;
+            --radius-md: 8px;
+            --radius-lg: 12px;
+        }
+        * { margin: 0; padding: 0; box-sizing: border-box; }
+        body { font-family: 'Inter', sans-serif; background: var(--bg-secondary); color: var(--text-primary); line-height: 1.6; }
+        .dashboard-layout { display: flex; min-height: 100vh; }
+        .sidebar { width: 280px; background: var(--bg-primary); border-right: 1px solid var(--border-color); position: fixed; height: 100vh; left: 0; top: 0; z-index: 1000; transition: transform 0.3s ease; }
+        .sidebar-header { padding: 1.5rem; border-bottom: 1px solid var(--border-color); background: linear-gradient(135deg, var(--primary-color) 0%, var(--primary-dark) 100%); color: white; }
+        .sidebar-brand { display: flex; align-items: center; gap: 0.75rem; font-size: 1.25rem; font-weight: 700; text-decoration: none; color: white; }
+        .sidebar-nav { padding: 1rem 0; }
+        .sidebar-nav-item { display: block; padding: 0.875rem 1.5rem; color: var(--text-secondary); text-decoration: none; transition: all 0.2s ease; position: relative; font-weight: 500; }
+        .sidebar-nav-item:hover { background: var(--bg-secondary); color: var(--primary-color); }
+        .sidebar-nav-item.active { background: linear-gradient(90deg, rgba(79, 70, 229, 0.1) 0%, transparent 100%); color: var(--primary-color); font-weight: 600; }
+        .sidebar-nav-item.active::before { content: ''; position: absolute; left: 0; top: 0; bottom: 0; width: 4px; background: var(--primary-color); }
+        .sidebar-nav-item i { width: 20px; margin-right: 0.75rem; text-align: center; }
+        .main-content { flex: 1; margin-left: 280px; display: flex; flex-direction: column; min-height: 100vh; }
+        .top-header { background: var(--bg-primary); border-bottom: 1px solid var(--border-color); padding: 1rem 2rem; display: flex; justify-content: space-between; align-items: center; box-shadow: var(--shadow-sm); position: sticky; top: 0; z-index: 100; }
+        .header-left { display: flex; align-items: center; gap: 1rem; }
+        .header-title { font-size: 1.5rem; font-weight: 700; color: var(--text-primary); }
+        .header-subtitle { color: var(--text-secondary); font-size: 0.875rem; }
+        .header-right { display: flex; align-items: center; gap: 1rem; }
+        .content-area { flex: 1; padding: 2rem; }
+        .page-content { background: var(--bg-primary); padding: 2rem; border-radius: var(--radius-lg); box-shadow: var(--shadow-sm); border: 1px solid var(--border-color); }
+        .page-header { margin-bottom: 2rem; }
+        .page-title { font-size: 1.75rem; font-weight: 700; margin-bottom: 0.5rem; }
+        .page-description { color: var(--text-secondary); font-size: 1rem; }
+
+        .stats-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(140px, 1fr)); gap: 1rem; margin-bottom: 2rem; }
+        .stat-card { padding: 1.25rem; border-radius: var(--radius-md); border: 1px solid var(--border-color); text-align: center; }
+        .stat-value { font-size: 1.75rem; font-weight: 700; }
+        .stat-label { font-size: 0.75rem; color: var(--text-secondary); margin-top: 0.25rem; text-transform: uppercase; letter-spacing: 0.5px; }
+
+        .tabs { display: flex; gap: 0.5rem; border-bottom: 1px solid var(--border-color); margin-bottom: 1.5rem; padding-bottom: 0; }
+        .tab-btn { padding: 0.75rem 1.25rem; border: none; background: none; color: var(--text-secondary); cursor: pointer; font-weight: 500; font-size: 0.875rem; border-bottom: 2px solid transparent; transition: all 0.2s; }
+        .tab-btn:hover { color: var(--primary-color); }
+        .tab-btn.active { color: var(--primary-color); border-bottom-color: var(--primary-color); }
+
+        .tab-content { display: none; }
+        .tab-content.active { display: block; }
+
+        .data-table { width: 100%; border-collapse: collapse; font-size: 0.875rem; }
+        .data-table th { text-align: left; padding: 0.75rem 0.5rem; color: var(--text-secondary); font-weight: 600; border-bottom: 1px solid var(--border-color); font-size: 0.75rem; text-transform: uppercase; letter-spacing: 0.5px; }
+        .data-table td { padding: 0.75rem 0.5rem; border-bottom: 1px solid var(--border-color); }
+        .data-table tr:hover td { background: var(--bg-secondary); }
+
+        .badge { display: inline-block; padding: 0.2rem 0.6rem; border-radius: 999px; font-size: 0.7rem; font-weight: 600; }
+        .badge-pending { background: #FEF3C7; color: #92400E; }
+        .badge-sent { background: #D1FAE5; color: #065F46; }
+        .badge-failed { background: #FEE2E2; color: #991B1B; }
+        .badge-processing { background: #DBEAFE; color: #1E40AF; }
+        .badge-retrying { background: #FFF7ED; color: #9A3412; }
+        .badge-cancelled { background: #F1F5F9; color: #475569; }
+
+        .btn { padding: 0.5rem 1rem; border-radius: var(--radius-sm); border: none; cursor: pointer; font-weight: 500; font-size: 0.8rem; transition: all 0.2s; }
+        .btn-primary { background: var(--primary-color); color: white; }
+        .btn-primary:hover { background: var(--primary-dark); }
+        .btn-secondary { background: var(--bg-secondary); color: var(--text-primary); border: 1px solid var(--border-color); }
+        .btn-danger { background: var(--error-color); color: white; }
+        .btn-success { background: var(--success-color); color: white; }
+        .btn-sm { padding: 0.3rem 0.6rem; font-size: 0.7rem; }
+
+        .status-dot { width: 8px; height: 8px; border-radius: 50%; display: inline-block; margin-right: 0.4rem; }
+
+        .empty-state { text-align: center; padding: 3rem; color: var(--text-secondary); }
+        .empty-icon { font-size: 3rem; margin-bottom: 1rem; opacity: 0.4; }
+
+        @media (max-width: 768px) {
+            .sidebar { transform: translateX(-100%); z-index: 1050; }
+            .sidebar.open { transform: translateX(0); }
+            .main-content { margin-left: 0; }
+            .content-area { padding: 1rem; }
+            .page-content { padding: 1rem; }
+            .stats-grid { grid-template-columns: repeat(2, 1fr); }
+        }
+        .mobile-menu-btn { display: none; background: none; border: 1px solid var(--border-color); border-radius: var(--radius-sm); padding: 0.5rem; color: var(--text-secondary); cursor: pointer; }
+        .mobile-menu-btn:hover { background: var(--bg-secondary); color: var(--primary-color); }
+        @media (max-width: 768px) { .mobile-menu-btn { display: block; } }
+    </style>
+</head>
+<body>
+    <div class="dashboard-layout">
+        <div class="sidebar">
+            <div class="sidebar-header">
+                <a class="sidebar-brand" href="/admin/dashboard">
+                    <svg viewBox="0 0 24 24" width="1em" height="1em" fill="none" style="display:inline-block;vertical-align:-.125em;margin-right:.5em"><path d="M12 6.5L3.5 21" stroke="currentColor" stroke-width="2.2" stroke-linecap="round"/><path d="M12 6.5L20.5 21" stroke="currentColor" stroke-width="2.2" stroke-linecap="round"/><path d="M5 14.5L11 14.5" stroke="currentColor" stroke-width="2" stroke-linecap="round"/><path d="M13 14.5L19 14.5" stroke="currentColor" stroke-width="2" stroke-linecap="round"/><path d="M9.5 9.5Q12 6.2 14.5 9.5" stroke="currentColor" stroke-width="1.2" stroke-linecap="round" fill="none" opacity=".6"/><circle cx="12" cy="3.5" r="3" fill="currentColor"/><circle cx="3.5" cy="21" r="2.5" fill="currentColor"/><circle cx="20.5" cy="21" r="2.5" fill="currentColor"/></svg>
+                    <strong>Attendrix</strong>
+                </a>
+            </div>
+            <div class="sidebar-nav">
+                <a class="sidebar-nav-item" href="/admin/dashboard"><i class="fas fa-tachometer-alt"></i>Dashboard</a>
+                <a class="sidebar-nav-item" href="/admin/institutions"><i class="fas fa-building"></i>Institutions</a>
+                <a class="sidebar-nav-item" href="/admin/users"><i class="fas fa-users"></i>Users</a>
+                <a class="sidebar-nav-item" href="/admin/monitoring"><i class="fas fa-chart-line"></i>Monitoring</a>
+                <a class="sidebar-nav-item" href="/admin/security"><i class="fas fa-shield-alt me-2"></i>Security</a>
+                <a class="sidebar-nav-item active" href="/admin/mail"><i class="fas fa-envelope me-2"></i>Mail Service</a>
+                <a class="sidebar-nav-item" href="/admin/backup"><i class="fas fa-database me-2"></i>Backup & Restore</a>
+                <a class="sidebar-nav-item" href="/admin/notifications"><i class="fas fa-bell"></i>Notifications</a>
+                <a class="sidebar-nav-item" href="/admin/audit"><i class="fas fa-history"></i>Audit Logs</a>
+                <a class="sidebar-nav-item" href="/admin/roles"><i class="fas fa-user-shield"></i>Role Assignments</a>
+                <a class="sidebar-nav-item" href="/admin/profile"><i class="fas fa-user"></i>Profile</a>
+                <a class="sidebar-nav-item" href="/admin/settings"><i class="fas fa-cog"></i>Settings</a>
+            </div>
+        </div>
+        <div class="main-content">
+            <div class="top-header">
+                <div class="header-left">
+                    <button class="mobile-menu-btn" onclick="toggleSidebar()"><i class="fas fa-bars"></i></button>
+                    <div>
+                        <h1 class="header-title">Mail Service</h1>
+                        <p class="header-subtitle">Manage email queue, templates, and delivery</p>
+                    </div>
+                </div>
+                <div class="header-right">
+                    <div class="header-time" id="currentTime"></div>
+                </div>
+            </div>
+            <main class="content-area">
+                <div class="page-content">
+                    <div class="page-header">
+                        <h2 class="page-title">Mail Administration</h2>
+                        <p class="page-description">Monitor and manage the Attendrix Mail subsystem</p>
+                    </div>
+
+                    <div class="stats-grid" id="statsGrid">
+                        <div class="stat-card"><div class="stat-value" id="statTotal">--</div><div class="stat-label">Total</div></div>
+                        <div class="stat-card"><div class="stat-value" id="statPending">--</div><div class="stat-label">Pending</div></div>
+                        <div class="stat-card" style="border-color: #DBEAFE;"><div class="stat-value" id="statProcessing" style="color:#2563EB;">--</div><div class="stat-label">Processing</div></div>
+                        <div class="stat-card" style="border-color: #D1FAE5;"><div class="stat-value" id="statSent" style="color:#059669;">--</div><div class="stat-label">Sent</div></div>
+                        <div class="stat-card" style="border-color: #FEE2E2;"><div class="stat-value" id="statFailed" style="color:#DC2626;">--</div><div class="stat-label">Failed</div></div>
+                        <div class="stat-card" style="border-color: #FFF7ED;"><div class="stat-value" id="statRetrying" style="color:#EA580C;">--</div><div class="stat-label">Retrying</div></div>
+                        <div class="stat-card"><div class="stat-value" id="statCancelled">--</div><div class="stat-label">Cancelled</div></div>
+                        <div class="stat-card" style="border-color: #E0E7FF;"><div class="stat-value" id="statSentToday" style="color:#4F46E5;">--</div><div class="stat-label">Sent Today</div></div>
+                    </div>
+
+                    <div class="tabs">
+                        <button class="tab-btn active" data-tab="queue">Queue</button>
+                        <button class="tab-btn" data-tab="templates">Templates</button>
+                        <button class="tab-btn" data-tab="failed">Failed</button>
+                        <button class="tab-btn" data-tab="audit">Audit Logs</button>
+                        <button class="tab-btn" data-tab="actions">Actions</button>
+                    </div>
+
+                    <div class="tab-content active" id="tabQueue">
+                        <div style="margin-bottom:1rem;display:flex;gap:0.5rem;flex-wrap:wrap;">
+                            <button class="btn btn-secondary btn-sm" onclick="loadQueue('pending')">Pending</button>
+                            <button class="btn btn-secondary btn-sm" onclick="loadQueue('processing')">Processing</button>
+                            <button class="btn btn-secondary btn-sm" onclick="loadQueue('sent')">Sent</button>
+                            <button class="btn btn-secondary btn-sm" onclick="loadQueue('failed')">Failed</button>
+                            <button class="btn btn-secondary btn-sm" onclick="loadQueue('retrying')">Retrying</button>
+                            <button class="btn btn-secondary btn-sm" onclick="loadQueue()">All</button>
+                        </div>
+                        <div style="overflow-x:auto;">
+                            <table class="data-table">
+                                <thead>
+                                    <tr><th>Date</th><th>To</th><th>Subject</th><th>Type</th><th>Status</th><th>Retries</th><th>Actions</th></tr>
+                                </thead>
+                                <tbody id="queueBody">
+                                    <tr><td colspan="7" class="empty-state"><div class="empty-icon"><i class="fas fa-inbox"></i></div><div>No emails in queue</div></td></tr>
+                                </tbody>
+                            </table>
+                        </div>
+                    </div>
+
+                    <div class="tab-content" id="tabTemplates">
+                        <div style="overflow-x:auto;">
+                            <table class="data-table">
+                                <thead>
+                                    <tr><th>Name</th><th>Category</th><th>Subject</th><th>Active</th><th>Updated</th></tr>
+                                </thead>
+                                <tbody id="templatesBody">
+                                    <tr><td colspan="5" class="empty-state"><div class="empty-icon"><i class="fas fa-file-alt"></i></div><div>No templates loaded</div></td></tr>
+                                </tbody>
+                            </table>
+                        </div>
+                    </div>
+
+                    <div class="tab-content" id="tabFailed">
+                        <div style="margin-bottom:1rem;">
+                            <button class="btn btn-warning btn-sm" onclick="retryAllFailed()"><i class="fas fa-redo"></i> Retry All Failed</button>
+                        </div>
+                        <div style="overflow-x:auto;">
+                            <table class="data-table">
+                                <thead>
+                                    <tr><th>Date</th><th>To</th><th>Subject</th><th>Error</th><th>Retries</th><th>Actions</th></tr>
+                                </thead>
+                                <tbody id="failedBody">
+                                    <tr><td colspan="6" class="empty-state"><div class="empty-icon"><i class="fas fa-check-circle"></i></div><div>No failed emails</div></td></tr>
+                                </tbody>
+                            </table>
+                        </div>
+                    </div>
+
+                    <div class="tab-content" id="tabAudit">
+                        <div style="overflow-x:auto;">
+                            <table class="data-table">
+                                <thead>
+                                    <tr><th>Date</th><th>Mail ID</th><th>Event Type</th><th>Details</th></tr>
+                                </thead>
+                                <tbody id="auditBody">
+                                    <tr><td colspan="4" class="empty-state"><div class="empty-icon"><i class="fas fa-history"></i></div><div>No audit logs</div></td></tr>
+                                </tbody>
+                            </table>
+                        </div>
+                    </div>
+
+                    <div class="tab-content" id="tabActions">
+                        <div style="display:grid;grid-template-columns:repeat(auto-fit,minmax(300px,1fr));gap:1.5rem;">
+                            <div style="padding:1.5rem;border:1px solid var(--border-color);border-radius:var(--radius-md);">
+                                <h3 style="font-size:1rem;margin-bottom:1rem;"><i class="fas fa-play" style="color:var(--primary-color);"></i> Process Queue</h3>
+                                <p style="font-size:0.8rem;color:var(--text-secondary);margin-bottom:1rem;">Manually trigger queue processing for pending and retrying emails.</p>
+                                <button class="btn btn-primary" onclick="processQueue()"><i class="fas fa-play"></i> Process Now</button>
+                            </div>
+                            <div style="padding:1.5rem;border:1px solid var(--border-color);border-radius:var(--radius-md);">
+                                <h3 style="font-size:1rem;margin-bottom:1rem;"><i class="fas fa-plug" style="color:var(--success-color);"></i> Connection Test</h3>
+                                <p style="font-size:0.8rem;color:var(--text-secondary);margin-bottom:1rem;">Test connectivity to all configured SMTP providers.</p>
+                                <button class="btn btn-success" onclick="testConnection()"><i class="fas fa-plug"></i> Test Connection</button>
+                                <div id="connectionResults" style="margin-top:1rem;font-size:0.8rem;"></div>
+                            </div>
+                            <div style="padding:1.5rem;border:1px solid var(--border-color);border-radius:var(--radius-md);">
+                                <h3 style="font-size:1rem;margin-bottom:1rem;"><i class="fas fa-paper-plane" style="color:var(--warning-color);"></i> Send Test Email</h3>
+                                <p style="font-size:0.8rem;color:var(--text-secondary);margin-bottom:1rem;">Send a test email to verify end-to-end delivery.</p>
+                                <input type="email" id="testRecipient" placeholder="recipient@example.com" style="width:100%;padding:0.5rem;border:1px solid var(--border-color);border-radius:var(--radius-sm);margin-bottom:0.5rem;font-size:0.8rem;">
+                                <select id="testTemplate" style="width:100%;padding:0.5rem;border:1px solid var(--border-color);border-radius:var(--radius-sm);margin-bottom:0.5rem;font-size:0.8rem;">
+                                    <option value="voucher_delivery">Voucher Delivery</option>
+                                    <option value="demo_confirmation">Demo Confirmation</option>
+                                    <option value="password_reset">Password Reset</option>
+                                    <option value="account_activation">Account Activation</option>
+                                    <option value="attendance_notification">Attendance Notification</option>
+                                    <option value="institution_announcement">Announcement</option>
+                                    <option value="system_alert">System Alert</option>
+                                </select>
+                                <button class="btn btn-warning" onclick="sendTestEmail()"><i class="fas fa-paper-plane"></i> Send Test</button>
+                                <div id="testResult" style="margin-top:1rem;font-size:0.8rem;"></div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </main>
+        </div>
+    </div>
+
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
+    <script>
+        function toggleSidebar() { document.querySelector('.sidebar').classList.toggle('open'); }
+
+        function currentTime() {
+            var now = new Date();
+            document.getElementById('currentTime').textContent = now.toLocaleString();
+        }
+        setInterval(currentTime, 1000);
+        currentTime();
+
+        document.querySelectorAll('.tab-btn').forEach(function(btn) {
+            btn.addEventListener('click', function() {
+                document.querySelectorAll('.tab-btn').forEach(function(b) { b.classList.remove('active'); });
+                document.querySelectorAll('.tab-content').forEach(function(t) { t.classList.remove('active'); });
+                this.classList.add('active');
+                document.getElementById('tab' + this.dataset.tab.charAt(0).toUpperCase() + this.dataset.tab.slice(1)).classList.add('active');
+            });
+        });
+
+        function loadStats() {
+            fetch('/admin/mail/api/stats').then(function(r) { return r.json(); }).then(function(data) {
+                document.getElementById('statTotal').textContent = data.total || 0;
+                document.getElementById('statPending').textContent = data.pending || 0;
+                document.getElementById('statProcessing').textContent = data.processing || 0;
+                document.getElementById('statSent').textContent = data.sent || 0;
+                document.getElementById('statFailed').textContent = data.failed || 0;
+                document.getElementById('statRetrying').textContent = data.retrying || 0;
+                document.getElementById('statCancelled').textContent = data.cancelled || 0;
+                document.getElementById('statSentToday').textContent = data.sent_today || 0;
+            });
+        }
+
+        function statusBadge(status) {
+            var cls = 'badge-pending';
+            if (status === 'sent') cls = 'badge-sent';
+            else if (status === 'failed') cls = 'badge-failed';
+            else if (status === 'processing') cls = 'badge-processing';
+            else if (status === 'retrying') cls = 'badge-retrying';
+            else if (status === 'cancelled') cls = 'badge-cancelled';
+            return '<span class="badge ' + cls + '">' + status + '</span>';
+        }
+
+        function loadQueue(status) {
+            var url = '/admin/mail/api/queue?limit=50';
+            if (status) url += '&status=' + status;
+            fetch(url).then(function(r) { return r.json(); }).then(function(data) {
+                var tbody = document.getElementById('queueBody');
+                if (!data || data.length === 0) {
+                    tbody.innerHTML = '<tr><td colspan="7" class="empty-state"><div class="empty-icon"><i class="fas fa-inbox"></i></div><div>No emails in queue</div></td></tr>';
+                    return;
+                }
+                var html = '';
+                data.forEach(function(m) {
+                    var date = m.created_at ? new Date(m.created_at).toLocaleString() : '--';
+                    var retries = m.retry_count + '/' + m.max_retries;
+                    html += '<tr>' +
+                        '<td style="font-size:0.75rem;color:var(--text-secondary);">' + date + '</td>' +
+                        '<td>' + (m.recipient_name ? m.recipient_name + '<br>' : '') + '<span style="font-size:0.75rem;color:var(--text-secondary);">' + m.recipient_email + '</span></td>' +
+                        '<td style="max-width:200px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;">' + m.subject + '</td>' +
+                        '<td><span style="font-size:0.7rem;color:var(--text-secondary);">' + (m.template_type || '--') + '</span></td>' +
+                        '<td>' + statusBadge(m.status) + '</td>' +
+                        '<td style="font-size:0.75rem;">' + retries + '</td>' +
+                        '<td>';
+                    if (m.status === 'pending' || m.status === 'retrying') {
+                        html += '<button class="btn btn-danger btn-sm" onclick="cancelEmail(\'' + m.id + '\')" title="Cancel">&#10005;</button> ';
+                    }
+                    if (m.status === 'failed') {
+                        html += '<button class="btn btn-success btn-sm" onclick="retryEmail(\'' + m.id + '\')" title="Retry">&#8635;</button>';
+                    }
+                    html += '</td></tr>';
+                });
+                tbody.innerHTML = html;
+            });
+        }
+
+        function loadTemplates() {
+            fetch('/admin/mail/api/templates').then(function(r) { return r.json(); }).then(function(data) {
+                var tbody = document.getElementById('templatesBody');
+                if (!data || data.length === 0) {
+                    tbody.innerHTML = '<tr><td colspan="5" class="empty-state"><div class="empty-icon"><i class="fas fa-file-alt"></i></div><div>No templates loaded</div></td></tr>';
+                    return;
+                }
+                var html = '';
+                data.forEach(function(t) {
+                    var date = t.updated_at ? new Date(t.updated_at).toLocaleString() : '--';
+                    html += '<tr>' +
+                        '<td><strong>' + t.template_name + '</strong></td>' +
+                        '<td><span style="font-size:0.75rem;color:var(--text-secondary);">' + t.category + '</span></td>' +
+                        '<td style="max-width:250px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;">' + t.subject_template + '</td>' +
+                        '<td>' + (t.is_active ? '<span class="badge badge-sent">Active</span>' : '<span class="badge badge-cancelled">Inactive</span>') + '</td>' +
+                        '<td style="font-size:0.75rem;color:var(--text-secondary);">' + date + '</td>' +
+                        '</tr>';
+                });
+                tbody.innerHTML = html;
+            });
+        }
+
+        function loadFailed() {
+            fetch('/admin/mail/api/queue?status=failed&limit=50').then(function(r) { return r.json(); }).then(function(data) {
+                var tbody = document.getElementById('failedBody');
+                if (!data || data.length === 0) {
+                    tbody.innerHTML = '<tr><td colspan="6" class="empty-state"><div class="empty-icon"><i class="fas fa-check-circle"></i></div><div>No failed emails</div></td></tr>';
+                    return;
+                }
+                var html = '';
+                data.forEach(function(m) {
+                    var date = m.created_at ? new Date(m.created_at).toLocaleString() : '--';
+                    html += '<tr>' +
+                        '<td style="font-size:0.75rem;color:var(--text-secondary);">' + date + '</td>' +
+                        '<td>' + m.recipient_email + '</td>' +
+                        '<td style="max-width:200px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;">' + m.subject + '</td>' +
+                        '<td style="font-size:0.75rem;color:var(--error-color);max-width:200px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;">' + (m.error_message || '--') + '</td>' +
+                        '<td>' + m.retry_count + '/' + m.max_retries + '</td>' +
+                        '<td><button class="btn btn-success btn-sm" onclick="retryEmail(\'' + m.id + '\')">&#8635; Retry</button></td>' +
+                        '</tr>';
+                });
+                tbody.innerHTML = html;
+            });
+        }
+
+        function loadAudit() {
+            fetch('/admin/mail/api/audit').then(function(r) { return r.json(); }).then(function(data) {
+                var tbody = document.getElementById('auditBody');
+                if (!data || data.length === 0) {
+                    tbody.innerHTML = '<tr><td colspan="4" class="empty-state"><div class="empty-icon"><i class="fas fa-history"></i></div><div>No audit logs</div></td></tr>';
+                    return;
+                }
+                var html = '';
+                data.forEach(function(log) {
+                    var date = log.created_at ? new Date(log.created_at).toLocaleString() : '--';
+                    var details = log.details ? JSON.stringify(log.details).substring(0, 100) : '--';
+                    html += '<tr>' +
+                        '<td style="font-size:0.75rem;color:var(--text-secondary);">' + date + '</td>' +
+                        '<td style="font-size:0.75rem;font-family:monospace;">' + (log.mail_id ? log.mail_id.substring(0, 8) + '...' : '--') + '</td>' +
+                        '<td>' + statusBadge(log.event_type) + '</td>' +
+                        '<td style="font-size:0.75rem;color:var(--text-secondary);max-width:300px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;">' + details + '</td>' +
+                        '</tr>';
+                });
+                tbody.innerHTML = html;
+            });
+        }
+
+        function processQueue() {
+            fetch('/admin/mail/api/process', { method: 'POST' }).then(function(r) { return r.json(); }).then(function(data) {
+                alert('Processed ' + data.processed + ' emails');
+                loadStats(); loadQueue();
+            });
+        }
+
+        function retryAllFailed() {
+            fetch('/admin/mail/api/retry', { method: 'POST', headers: {'Content-Type': 'application/json'}, body: '{}' }).then(function(r) { return r.json(); }).then(function(data) {
+                alert('Retrying ' + data.retried + ' failed emails');
+                loadStats(); loadFailed(); loadQueue();
+            });
+        }
+
+        function retryEmail(mailId) {
+            fetch('/admin/mail/api/retry', { method: 'POST', headers: {'Content-Type': 'application/json'}, body: JSON.stringify({mail_ids: [mailId]}) }).then(function(r) { return r.json(); }).then(function(data) {
+                alert('Retry queued');
+                loadFailed(); loadQueue();
+            });
+        }
+
+        function cancelEmail(mailId) {
+            if (!confirm('Cancel this email?')) return;
+            fetch('/admin/mail/api/cancel/' + mailId, { method: 'POST' }).then(function(r) { return r.json(); }).then(function() {
+                loadQueue();
+            });
+        }
+
+        function testConnection() {
+            var el = document.getElementById('connectionResults');
+            el.innerHTML = '<span style="color:var(--text-secondary);">Testing...</span>';
+            fetch('/admin/mail/api/test', { method: 'POST' }).then(function(r) { return r.json(); }).then(function(data) {
+                var html = '';
+                for (var key in data.providers) {
+                    var p = data.providers[key];
+                    html += '<div style="margin-top:0.5rem;padding:0.5rem;border-radius:var(--radius-sm);background:' + (p.success ? '#D1FAE5' : '#FEE2E2') + ';color:' + (p.success ? '#065F46' : '#991B1B') + ';font-size:0.75rem;">';
+                    html += '<strong>' + key + '</strong>: ' + (p.success ? '&#10003;' : '&#10007;') + ' ' + p.message;
+                    html += '</div>';
+                }
+                el.innerHTML = html;
+            });
+        }
+
+        function sendTestEmail() {
+            var recipient = document.getElementById('testRecipient').value.trim();
+            var template = document.getElementById('testTemplate').value;
+            var el = document.getElementById('testResult');
+            if (!recipient) { el.innerHTML = '<span style="color:var(--error-color);">Please enter a recipient email</span>'; return; }
+            el.innerHTML = '<span style="color:var(--text-secondary);">Sending...</span>';
+            fetch('/admin/mail/api/send-test', { method: 'POST', headers: {'Content-Type': 'application/json'}, body: JSON.stringify({recipient_email: recipient, template_name: template}) }).then(function(r) { return r.json(); }).then(function(data) {
+                if (data.error) { el.innerHTML = '<span style="color:var(--error-color);">' + data.error + '</span>'; }
+                else { el.innerHTML = '<span style="color:var(--success-color);">&#10003; Sent! Mail ID: ' + data.mail_id + '</span>'; }
+                loadStats(); loadQueue();
+            });
+        }
+
+        loadStats();
+        loadQueue();
+        loadTemplates();
+        loadFailed();
+        loadAudit();
+
+        setInterval(function() { loadStats(); }, 10000);
+    </script>
+</body>
+</html>
