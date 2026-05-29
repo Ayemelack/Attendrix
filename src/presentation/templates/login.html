@@ -471,13 +471,6 @@
                 </button>
             </div>
 
-            <div class="input-group-custom">
-                <label for="institutionId">Institution ID</label>
-                <i class="fas fa-building input-icon"></i>
-                <input type="text" class="form-control" id="institutionId" name="institutionId"
-                       placeholder="e.g., inst_001" required value="inst_001">
-            </div>
-
             <div class="form-check-custom">
                 <input type="checkbox" id="rememberMe" name="rememberMe">
                 <label for="rememberMe" data-i18n="remember_me">Remember this device</label>
@@ -520,14 +513,12 @@
     function checkLoginForm() {
         const email = document.getElementById('email').value.trim();
         const password = document.getElementById('password').value;
-        const institutionId = document.getElementById('institutionId').value.trim();
 
         const validEmail = email && /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email) && !hasMaliciousInput(email);
         const validPassword = password.length > 0;
-        const validInstId = institutionId.length > 0 && !hasMaliciousInput(institutionId);
 
         const btn = document.getElementById('loginBtn');
-        btn.disabled = !(validEmail && validPassword && validInstId);
+        btn.disabled = !(validEmail && validPassword);
     }
 
     // ── Device Fingerprint ──
@@ -617,17 +608,11 @@
     document.getElementById('password').addEventListener('input', function () {
         checkLoginForm();
     });
-    document.getElementById('institutionId').addEventListener('input', function () {
-        this.value = this.value.replace(/[\0\x08\x0B\x0C\x0E-\x1F<>]/g, '');
-        checkLoginForm();
-    });
-
     // ── Form Submit ──
     document.getElementById('loginForm').addEventListener('submit', async function (e) {
         e.preventDefault();
         const email = document.getElementById('email').value.trim();
         const password = document.getElementById('password').value;
-        const institutionId = document.getElementById('institutionId').value.trim();
 
         if (!email || !/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email)) {
             showAlert('Please enter a valid email address', 'error'); return;
@@ -635,10 +620,7 @@
         if (!password) {
             showAlert('Please enter your password', 'error'); return;
         }
-        if (!institutionId) {
-            showAlert('Please enter your institution ID', 'error'); return;
-        }
-        if (hasMaliciousInput(email) || hasMaliciousInput(institutionId)) {
+        if (hasMaliciousInput(email)) {
             showAlert('Invalid input detected', 'error'); return;
         }
 
@@ -650,7 +632,6 @@
                 body: JSON.stringify({
                     email: email,
                     password: password,
-                    institutionId: institutionId,
                     remember_me: document.getElementById('rememberMe').checked,
                     device_fingerprint: deviceFingerprint
                 })

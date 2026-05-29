@@ -140,7 +140,7 @@ class AuthenticationService:
 
     def authenticate_user(self, email: str, password: str, remember_me: bool = False,
                          device_fingerprint: str = None, ip_address: str = None,
-                         user_agent: str = None) -> Optional[Dict[str, Any]]:
+                         user_agent: str = None, institution_id: str = None) -> Optional[Dict[str, Any]]:
         try:
             if not email or not password:
                 return {'success': False, 'message': 'Invalid email or password'}
@@ -156,6 +156,11 @@ class AuthenticationService:
                 return {'success': False, 'message': 'Invalid email or password'}
 
             user_data = users[0]
+
+            # If institution_id was provided in the login form, validate it matches the DB record.
+            # Never allow institution switching through login form inputs.
+            if institution_id is not None and institution_id != user_data.get('institution_id'):
+                return {'success': False, 'message': 'Invalid email or password'}
 
             stored_hash = user_data.get('password_hash')
             if not stored_hash or not self.verify_password(password, stored_hash):

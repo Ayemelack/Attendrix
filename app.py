@@ -1298,7 +1298,7 @@ def create_app():
     @require_role('institutional_admin', 'super_admin', 'lecturer')
     @log_access
     def institutional_activity_feed():
-        institution_id = request.current_user.get('institution_id', 'inst_001')
+        institution_id = request.current_user.get('institution_id')
         events = dashboard_service.get_activity_feed(institution_id) if dashboard_service else []
         return jsonify({'events': events})
 
@@ -1307,7 +1307,7 @@ def create_app():
     @require_role('institutional_admin', 'super_admin', 'lecturer')
     @log_access
     def institutional_security_alerts():
-        institution_id = request.current_user.get('institution_id', 'inst_001')
+        institution_id = request.current_user.get('institution_id')
         alerts = dashboard_service.get_security_alerts(institution_id) if dashboard_service else []
         return jsonify({'alerts': alerts})
 
@@ -1316,7 +1316,7 @@ def create_app():
     @require_role('institutional_admin', 'super_admin', 'lecturer')
     @log_access
     def institutional_network_status():
-        institution_id = request.current_user.get('institution_id', 'inst_001')
+        institution_id = request.current_user.get('institution_id')
         data = dashboard_service.get_network_status(institution_id) if dashboard_service else {}
         return jsonify(data)
 
@@ -1325,7 +1325,7 @@ def create_app():
     @require_role('institutional_admin', 'super_admin', 'lecturer')
     @log_access
     def institutional_session_health():
-        institution_id = request.current_user.get('institution_id', 'inst_001')
+        institution_id = request.current_user.get('institution_id')
         page = request.args.get('page', 1, type=int)
         per_page = request.args.get('per_page', 20, type=int)
         data = dashboard_service.get_session_health(institution_id, page=page, per_page=per_page) if dashboard_service else {'active_sessions': 0, 'total_sessions': 0, 'sessions': [], 'total': 0, 'page': 1, 'per_page': 20, 'total_pages': 1}
@@ -1336,7 +1336,7 @@ def create_app():
     @require_role('institutional_admin', 'super_admin', 'lecturer')
     @log_access
     def institutional_attendance_trends():
-        institution_id = request.current_user.get('institution_id', 'inst_001')
+        institution_id = request.current_user.get('institution_id')
         data = dashboard_service.get_attendance_trends(institution_id) if dashboard_service else {'daily_rates': [], 'dates': [], 'average': 0, 'faculty_comparison': []}
         return jsonify(data)
 
@@ -1345,7 +1345,7 @@ def create_app():
     @require_role('institutional_admin', 'super_admin', 'lecturer')
     @log_access
     def institutional_students():
-        institution_id = request.current_user.get('institution_id', 'inst_001')
+        institution_id = request.current_user.get('institution_id')
         page = request.args.get('page', 1, type=int)
         per_page = request.args.get('per_page', 12, type=int)
         search = request.args.get('search', '', type=str)
@@ -1357,7 +1357,7 @@ def create_app():
     @require_role('institutional_admin', 'super_admin', 'lecturer')
     @log_access
     def institutional_student_detail(student_id):
-        institution_id = request.current_user.get('institution_id', 'inst_001')
+        institution_id = request.current_user.get('institution_id')
         detail = dashboard_service.get_student_detail(institution_id, student_id) if dashboard_service else None
         if not detail:
             return jsonify({'error': 'Student not found'}), 404
@@ -1368,7 +1368,7 @@ def create_app():
     @require_role('institutional_admin', 'super_admin', 'lecturer')
     @log_access
     def institutional_offline_log():
-        institution_id = request.current_user.get('institution_id', 'inst_001')
+        institution_id = request.current_user.get('institution_id')
         data = dashboard_service.get_offline_log(institution_id) if dashboard_service else {'total_offline_sessions': 0, 'pending_syncs': 0, 'last_sync': '—', 'sync_success_rate': 100, 'nodes_offline': 0, 'queue': []}
         return jsonify(data)
 
@@ -1377,7 +1377,7 @@ def create_app():
     @require_role('institutional_admin', 'super_admin')
     @log_access
     def institutional_infrastructure():
-        institution_id = request.current_user.get('institution_id', 'inst_001')
+        institution_id = request.current_user.get('institution_id')
         data = dashboard_service.get_infrastructure_status(institution_id) if dashboard_service else {}
         return jsonify(data)
 
@@ -1419,7 +1419,7 @@ def create_app():
     @require_role('institutional_admin', 'super_admin')
     @log_access
     def institutional_compliance():
-        institution_id = request.current_user.get('institution_id', 'inst_001')
+        institution_id = request.current_user.get('institution_id')
         data = dashboard_service.get_compliance_status(institution_id) if dashboard_service else {}
         return jsonify(data)
 
@@ -1428,7 +1428,7 @@ def create_app():
     @require_role('institutional_admin', 'super_admin')
     @log_access
     def institutional_payments():
-        institution_id = request.current_user.get('institution_id', 'inst_001')
+        institution_id = request.current_user.get('institution_id')
         page = request.args.get('page', 1, type=int)
         per_page = request.args.get('per_page', 10, type=int)
         data = dashboard_service.get_payment_status(institution_id, page=page, per_page=per_page) if dashboard_service else {}
@@ -1439,7 +1439,7 @@ def create_app():
     @require_role('institutional_admin', 'super_admin')
     @log_access
     def institutional_p2p_sync():
-        institution_id = request.current_user.get('institution_id', 'inst_001')
+        institution_id = request.current_user.get('institution_id')
         data = dashboard_service.get_p2p_sync_status(institution_id) if dashboard_service else {}
         return jsonify(data)
 
@@ -1450,7 +1450,7 @@ def create_app():
     def download_attendance_report():
         """Generate and download attendance report as PDF or XLS"""
         try:
-            institution_id = request.current_user.get('institution_id', 'inst_001')
+            institution_id = request.current_user.get('institution_id')
             report_type = request.args.get('type', 'summary')
 
             from src.application.report_service import ReportService
@@ -1494,7 +1494,7 @@ def create_app():
     @log_access
     def download_network_report():
         try:
-            institution_id = request.current_user.get('institution_id', 'inst_001')
+            institution_id = request.current_user.get('institution_id')
             from src.application.report_service import ReportService
             report_svc = ReportService(firebase_service)
             csv_bytes = report_svc.generate_network_report(institution_id)
@@ -1516,7 +1516,7 @@ def create_app():
     @log_access
     def download_security_log():
         try:
-            institution_id = request.current_user.get('institution_id', 'inst_001')
+            institution_id = request.current_user.get('institution_id')
             from src.application.report_service import ReportService
             report_svc = ReportService(firebase_service)
             csv_bytes = report_svc.generate_security_log(institution_id)
@@ -1567,11 +1567,11 @@ def create_app():
                 payload = auth_service.verify_token(token)
                 if payload:
                     user_id = payload.get('user_id')
-                    institution_id = payload.get('institution_id', 'inst_001')
+                    institution_id = payload.get('institution_id')
             except Exception as e:
                 logger.warning(f"SSE token validation failed: {e}")
         elif app.config.get('ENVIRONMENT', 'development') == 'development':
-            inst_arg = request.args.get('institution_id', 'inst_001')
+            inst_arg = request.args.get('institution_id')
             user_id = f"dev_user_{inst_arg}"
             institution_id = inst_arg
             logger.warning(f"SSE dev fallback — no token, auto-created user={user_id}")
@@ -1611,12 +1611,12 @@ def create_app():
                 payload = auth_service.verify_token(token)
                 if payload:
                     user_id = payload.get('user_id')
-                    institution_id = payload.get('institution_id', 'inst_001')
+                    institution_id = payload.get('institution_id')
             except Exception as e:
                 logger.warning(f"Student SSE auth failed: {e}")
         elif app.config.get('ENVIRONMENT', 'development') == 'development':
             user_id = request.args.get('user_id', 'dev_student')
-            institution_id = request.args.get('institution_id', 'inst_001')
+            institution_id = request.args.get('institution_id')
             logger.warning(f"Student SSE dev fallback — user={user_id}")
 
         if not user_id or not institution_id:
@@ -1712,7 +1712,7 @@ def create_app():
     @log_access
     def list_leave_requests():
         user_id = request.current_user.get('user_id')
-        institution_id = request.current_user.get('institution_id', 'inst_001')
+        institution_id = request.current_user.get('institution_id')
         role = request.current_user.get('role')
         if role in ('super_admin', 'institutional_admin'):
             data = leave_request_repo.get_by_institution(institution_id)
@@ -1727,7 +1727,7 @@ def create_app():
         data = request.get_json()
         doc_id = leave_request_repo.create({
             'user_id': request.current_user.get('user_id'),
-            'institution_id': request.current_user.get('institution_id', 'inst_001'),
+            'institution_id': request.current_user.get('institution_id'),
             'leave_type': data.get('leave_type', ''),
             'start_date': data.get('start_date', ''),
             'end_date': data.get('end_date', ''),
@@ -1741,7 +1741,7 @@ def create_app():
     @require_role('institutional_admin', 'super_admin')
     @log_access
     def create_activity_log():
-        institution_id = request.current_user.get('institution_id', 'inst_001')
+        institution_id = request.current_user.get('institution_id')
         data = request.get_json()
         doc_id = dashboard_service.create_activity_log(
             institution_id=institution_id,
@@ -1757,7 +1757,7 @@ def create_app():
     @require_role('institutional_admin', 'super_admin')
     @log_access
     def create_security_alert():
-        institution_id = request.current_user.get('institution_id', 'inst_001')
+        institution_id = request.current_user.get('institution_id')
         data = request.get_json()
         doc_id = dashboard_service.create_security_alert(
             institution_id=institution_id,
@@ -1773,7 +1773,7 @@ def create_app():
     @require_role('institutional_admin', 'super_admin')
     @log_access
     def upsert_network_node():
-        institution_id = request.current_user.get('institution_id', 'inst_001')
+        institution_id = request.current_user.get('institution_id')
         data = request.get_json()
         doc_id = dashboard_service.upsert_network_node(
             institution_id=institution_id,
@@ -1791,7 +1791,7 @@ def create_app():
     @require_role('institutional_admin', 'super_admin')
     @log_access
     def create_session():
-        institution_id = request.current_user.get('institution_id', 'inst_001')
+        institution_id = request.current_user.get('institution_id')
         data = request.get_json()
         doc_id = dashboard_service.create_attendance_session(
             institution_id=institution_id,
@@ -1807,7 +1807,7 @@ def create_app():
     @require_role('institutional_admin', 'super_admin', 'lecturer')
     @log_access
     def enqueue_offline_sync():
-        institution_id = request.current_user.get('institution_id', 'inst_001')
+        institution_id = request.current_user.get('institution_id')
         data = request.get_json()
         doc_id = dashboard_service.enqueue_offline_sync(
             institution_id=institution_id,
@@ -1823,7 +1823,7 @@ def create_app():
     @require_role('institutional_admin', 'super_admin', 'lecturer')
     @log_access
     def offline_queue_stats():
-        institution_id = request.current_user.get('institution_id', 'inst_001')
+        institution_id = request.current_user.get('institution_id')
         if not offline_queue_service:
             return jsonify({'error': 'Offline queue service unavailable'}), 503
         stats = offline_queue_service.get_queue_stats(institution_id)
@@ -1834,7 +1834,7 @@ def create_app():
     @require_role('institutional_admin', 'super_admin')
     @log_access
     def offline_queue_process():
-        institution_id = request.current_user.get('institution_id', 'inst_001')
+        institution_id = request.current_user.get('institution_id')
         if not offline_queue_service:
             return jsonify({'error': 'Offline queue service unavailable'}), 503
         
@@ -1932,7 +1932,7 @@ def create_app():
     @require_role('institutional_admin', 'super_admin', 'lecturer')
     @log_access
     def offline_queue_pending():
-        institution_id = request.current_user.get('institution_id', 'inst_001')
+        institution_id = request.current_user.get('institution_id')
         if not offline_queue_service:
             return jsonify({'error': 'Offline queue service unavailable'}), 503
         pending = offline_queue_service.get_pending(institution_id)
@@ -1943,7 +1943,7 @@ def create_app():
     @require_role('institutional_admin', 'super_admin')
     @log_access
     def offline_queue_failed():
-        institution_id = request.current_user.get('institution_id', 'inst_001')
+        institution_id = request.current_user.get('institution_id')
         if not offline_queue_service:
             return jsonify({'error': 'Offline queue service unavailable'}), 503
         failed = offline_queue_service.get_failed(institution_id)
@@ -1954,7 +1954,7 @@ def create_app():
     @require_role('institutional_admin', 'super_admin')
     @log_access
     def offline_queue_retry():
-        institution_id = request.current_user.get('institution_id', 'inst_001')
+        institution_id = request.current_user.get('institution_id')
         data = request.get_json() or {}
         entry_id = data.get('entry_id')
         if not offline_queue_service:
@@ -1967,7 +1967,7 @@ def create_app():
     @require_role('institutional_admin', 'super_admin')
     @log_access
     def offline_queue_clear():
-        institution_id = request.current_user.get('institution_id', 'inst_001')
+        institution_id = request.current_user.get('institution_id')
         data = request.get_json() or {}
         older_than = data.get('older_than_hours', 24)
         if not offline_queue_service:
@@ -1980,7 +1980,7 @@ def create_app():
     @require_role('institutional_admin', 'super_admin', 'lecturer')
     @log_access
     def offline_queue_estimate():
-        institution_id = request.current_user.get('institution_id', 'inst_001')
+        institution_id = request.current_user.get('institution_id')
         if not offline_queue_service:
             return jsonify({'error': 'Offline queue service unavailable'}), 503
         estimate = offline_queue_service.estimate_sync_duration(institution_id)
@@ -1991,7 +1991,7 @@ def create_app():
     @require_role('institutional_admin', 'super_admin')
     @log_access
     def offline_queue_nodes():
-        institution_id = request.current_user.get('institution_id', 'inst_001')
+        institution_id = request.current_user.get('institution_id')
         if not offline_queue_service:
             return jsonify({'error': 'Offline queue service unavailable'}), 503
         nodes = offline_queue_service.get_node_sync_status(institution_id)
@@ -2002,7 +2002,7 @@ def create_app():
     @require_role('institutional_admin', 'super_admin', 'lecturer')
     @log_access
     def offline_queue_enqueue():
-        institution_id = request.current_user.get('institution_id', 'inst_001')
+        institution_id = request.current_user.get('institution_id')
         data = request.get_json()
         if not data or not data.get('operation_type') or not data.get('payload'):
             return jsonify({'error': 'operation_type and payload are required'}), 400
@@ -2022,7 +2022,7 @@ def create_app():
     @require_role('institutional_admin', 'super_admin')
     @log_access
     def upsert_ups():
-        institution_id = request.current_user.get('institution_id', 'inst_001')
+        institution_id = request.current_user.get('institution_id')
         data = request.get_json()
         doc_id = dashboard_service.upsert_ups_status(
             institution_id=institution_id,
@@ -2040,7 +2040,7 @@ def create_app():
     @require_role('institutional_admin', 'super_admin')
     @log_access
     def upsert_isp():
-        institution_id = request.current_user.get('institution_id', 'inst_001')
+        institution_id = request.current_user.get('institution_id')
         data = request.get_json()
         doc_id = dashboard_service.upsert_isp(
             institution_id=institution_id,
@@ -2057,7 +2057,7 @@ def create_app():
     @require_role('institutional_admin', 'super_admin')
     @log_access
     def set_exam_mode():
-        institution_id = request.current_user.get('institution_id', 'inst_001')
+        institution_id = request.current_user.get('institution_id')
         data = request.get_json()
         doc_id = dashboard_service.set_exam_mode(
             institution_id=institution_id,
@@ -2073,7 +2073,7 @@ def create_app():
     @require_role('institutional_admin', 'super_admin')
     @log_access
     def create_transaction():
-        institution_id = request.current_user.get('institution_id', 'inst_001')
+        institution_id = request.current_user.get('institution_id')
         data = request.get_json()
         doc_id = dashboard_service.create_transaction(
             institution_id=institution_id,
@@ -2089,7 +2089,7 @@ def create_app():
     @require_role('institutional_admin', 'super_admin')
     @log_access
     def upsert_p2p_peer():
-        institution_id = request.current_user.get('institution_id', 'inst_001')
+        institution_id = request.current_user.get('institution_id')
         data = request.get_json()
         doc_id = dashboard_service.upsert_p2p_peer(
             institution_id=institution_id,
@@ -2109,7 +2109,7 @@ def create_app():
         """Seed comprehensive demo data for the dashboard."""
         try:
             from src.application.dashboard_seeder import seed_comprehensive_demo_data
-            institution_id = request.current_user.get('institution_id', 'inst_001')
+            institution_id = request.current_user.get('institution_id')
             result = seed_comprehensive_demo_data(firebase_service, institution_id)
             return jsonify(result), 201
         except Exception as e:
@@ -2123,7 +2123,7 @@ def create_app():
     @require_role('institutional_admin', 'super_admin')
     @log_access
     def institutional_users():
-        institution_id = request.current_user.get('institution_id', 'inst_001')
+        institution_id = request.current_user.get('institution_id')
         page = request.args.get('page', 1, type=int)
         per_page = request.args.get('per_page', 20, type=int)
         search = request.args.get('search', '', type=str)
@@ -2135,7 +2135,7 @@ def create_app():
     @require_role('institutional_admin', 'super_admin')
     @log_access
     def institutional_create_user():
-        institution_id = request.current_user.get('institution_id', 'inst_001')
+        institution_id = request.current_user.get('institution_id')
         data = request.get_json()
         if not data:
             return jsonify({'error': 'No data provided'}), 400
@@ -2149,10 +2149,11 @@ def create_app():
     @require_role('institutional_admin', 'super_admin')
     @log_access
     def institutional_update_user(user_id):
+        institution_id = request.current_user.get('institution_id')
         data = request.get_json()
         if not data:
             return jsonify({'error': 'No data provided'}), 400
-        ok = dashboard_service.update_user(user_id, data) if dashboard_service else False
+        ok = dashboard_service.update_user(institution_id, user_id, data) if dashboard_service else False
         if not ok:
             return jsonify({'error': 'User not found'}), 404
         return jsonify({'message': 'User updated'})
@@ -2162,7 +2163,8 @@ def create_app():
     @require_role('institutional_admin', 'super_admin')
     @log_access
     def institutional_toggle_user(user_id):
-        ok = dashboard_service.toggle_user_status(user_id) if dashboard_service else False
+        institution_id = request.current_user.get('institution_id')
+        ok = dashboard_service.toggle_user_status(institution_id, user_id) if dashboard_service else False
         if not ok:
             return jsonify({'error': 'User not found'}), 404
         return jsonify({'message': 'User status toggled'})
@@ -2173,7 +2175,8 @@ def create_app():
     def institutional_delete_user(user_id):
         """Delete a user"""
         try:
-            ok = dashboard_service.delete_user(user_id) if dashboard_service else False
+            institution_id = request.current_user.get('institution_id')
+            ok = dashboard_service.delete_user(institution_id, user_id) if dashboard_service else False
             if not ok:
                 return jsonify({'error': 'User not found'}), 404
             return jsonify({'message': 'User deleted'}), 200
@@ -2189,7 +2192,7 @@ def create_app():
     @require_role('institutional_admin', 'super_admin', 'lecturer')
     @log_access
     def institutional_courses():
-        institution_id = request.current_user.get('institution_id', 'inst_001')
+        institution_id = request.current_user.get('institution_id')
         page = request.args.get('page', 1, type=int)
         per_page = request.args.get('per_page', 20, type=int)
         search = request.args.get('search', '', type=str)
@@ -2201,7 +2204,7 @@ def create_app():
     @require_role('institutional_admin', 'super_admin')
     @log_access
     def institutional_create_course():
-        institution_id = request.current_user.get('institution_id', 'inst_001')
+        institution_id = request.current_user.get('institution_id')
         data = request.get_json()
         if not data:
             return jsonify({'error': 'No data provided'}), 400
@@ -2215,10 +2218,11 @@ def create_app():
     @require_role('institutional_admin', 'super_admin')
     @log_access
     def institutional_update_course(course_id):
+        institution_id = request.current_user.get('institution_id')
         data = request.get_json()
         if not data:
             return jsonify({'error': 'No data provided'}), 400
-        ok = dashboard_service.update_course(course_id, data) if dashboard_service else False
+        ok = dashboard_service.update_course(institution_id, course_id, data) if dashboard_service else False
         if not ok:
             return jsonify({'error': 'Course not found'}), 404
         return jsonify({'message': 'Course updated'})
@@ -2228,7 +2232,8 @@ def create_app():
     @require_role('institutional_admin', 'super_admin')
     @log_access
     def institutional_delete_course(course_id):
-        ok = dashboard_service.delete_course(course_id) if dashboard_service else False
+        institution_id = request.current_user.get('institution_id')
+        ok = dashboard_service.delete_course(institution_id, course_id) if dashboard_service else False
         if not ok:
             return jsonify({'error': 'Course not found'}), 404
         return jsonify({'message': 'Course deleted'})
@@ -2240,7 +2245,7 @@ def create_app():
     @require_role('institutional_admin', 'super_admin')
     @log_access
     def institutional_departments():
-        institution_id = request.current_user.get('institution_id', 'inst_001')
+        institution_id = request.current_user.get('institution_id')
         page = request.args.get('page', 1, type=int)
         per_page = request.args.get('per_page', 20, type=int)
         search = request.args.get('search', '', type=str)
@@ -2252,7 +2257,7 @@ def create_app():
     @require_role('institutional_admin', 'super_admin')
     @log_access
     def institutional_create_department():
-        institution_id = request.current_user.get('institution_id', 'inst_001')
+        institution_id = request.current_user.get('institution_id')
         data = request.get_json()
         if not data:
             return jsonify({'error': 'No data provided'}), 400
@@ -2266,10 +2271,11 @@ def create_app():
     @require_role('institutional_admin', 'super_admin')
     @log_access
     def institutional_update_department(dept_id):
+        institution_id = request.current_user.get('institution_id')
         data = request.get_json()
         if not data:
             return jsonify({'error': 'No data provided'}), 400
-        ok = dashboard_service.update_department(dept_id, data) if dashboard_service else False
+        ok = dashboard_service.update_department(institution_id, dept_id, data) if dashboard_service else False
         if not ok:
             return jsonify({'error': 'Department not found'}), 404
         return jsonify({'message': 'Department updated'})
@@ -2279,7 +2285,8 @@ def create_app():
     @require_role('institutional_admin', 'super_admin')
     @log_access
     def institutional_delete_department(dept_id):
-        ok = dashboard_service.delete_department(dept_id) if dashboard_service else False
+        institution_id = request.current_user.get('institution_id')
+        ok = dashboard_service.delete_department(institution_id, dept_id) if dashboard_service else False
         if not ok:
             return jsonify({'error': 'Department not found'}), 404
         return jsonify({'message': 'Department deleted'})
@@ -2291,7 +2298,7 @@ def create_app():
     @require_role('institutional_admin', 'super_admin')
     @log_access
     def institutional_enrollments():
-        institution_id = request.current_user.get('institution_id', 'inst_001')
+        institution_id = request.current_user.get('institution_id')
         page = request.args.get('page', 1, type=int)
         per_page = request.args.get('per_page', 20, type=int)
         search = request.args.get('search', '', type=str)
@@ -2303,7 +2310,7 @@ def create_app():
     @require_role('institutional_admin', 'super_admin')
     @log_access
     def institutional_create_enrollment():
-        institution_id = request.current_user.get('institution_id', 'inst_001')
+        institution_id = request.current_user.get('institution_id')
         data = request.get_json()
         if not data:
             return jsonify({'error': 'No data provided'}), 400
@@ -2317,7 +2324,8 @@ def create_app():
     @require_role('institutional_admin', 'super_admin')
     @log_access
     def institutional_delete_enrollment(enrollment_id):
-        ok = dashboard_service.delete_enrollment(enrollment_id) if dashboard_service else False
+        institution_id = request.current_user.get('institution_id')
+        ok = dashboard_service.delete_enrollment(institution_id, enrollment_id) if dashboard_service else False
         if not ok:
             return jsonify({'error': 'Enrollment not found'}), 404
         return jsonify({'message': 'Enrollment deleted'})
@@ -2329,7 +2337,7 @@ def create_app():
     @require_role('institutional_admin', 'super_admin')
     @log_access
     def institutional_lookup_lecturers():
-        institution_id = request.current_user.get('institution_id', 'inst_001')
+        institution_id = request.current_user.get('institution_id')
         lecturers = dashboard_service.list_lecturers(institution_id) if dashboard_service else []
         return jsonify({'lecturers': lecturers})
 
@@ -2338,7 +2346,7 @@ def create_app():
     @require_role('institutional_admin', 'super_admin')
     @log_access
     def institutional_lookup_departments():
-        institution_id = request.current_user.get('institution_id', 'inst_001')
+        institution_id = request.current_user.get('institution_id')
         result = dashboard_service.list_departments(institution_id, per_page=999) if dashboard_service else {'departments': []}
         return jsonify(result)
 
@@ -2347,7 +2355,7 @@ def create_app():
     @require_role('institutional_admin', 'super_admin')
     @log_access
     def institutional_lookup_courses():
-        institution_id = request.current_user.get('institution_id', 'inst_001')
+        institution_id = request.current_user.get('institution_id')
         result = dashboard_service.list_courses(institution_id, per_page=999) if dashboard_service else {'courses': []}
         return jsonify(result)
 
@@ -2356,7 +2364,7 @@ def create_app():
     @require_role('institutional_admin', 'super_admin')
     @log_access
     def institutional_lookup_students():
-        institution_id = request.current_user.get('institution_id', 'inst_001')
+        institution_id = request.current_user.get('institution_id')
         search = request.args.get('search', '', type=str)
         result = dashboard_service.list_users(institution_id, search=search, per_page=50) if dashboard_service else {'users': []}
         # Filter to students only
@@ -2370,7 +2378,7 @@ def create_app():
     @require_role('institutional_admin', 'super_admin', 'lecturer')
     @log_access
     def minesec_xml_report():
-        institution_id = request.current_user.get('institution_id', 'inst_001')
+        institution_id = request.current_user.get('institution_id')
         from src.application.report_service import ReportService
         rs = ReportService(firebase_service)
         xml_bytes = rs.generate_minesec_xml(institution_id)
@@ -2444,7 +2452,7 @@ def create_app():
         if not data or not data.get('provider') or not data.get('phone') or not data.get('amount'):
             return jsonify({'error': 'Provider, phone, and amount are required'}), 400
         if payment_service:
-            institution_id = request.current_user.get('institution_id', 'inst_001')
+            institution_id = request.current_user.get('institution_id')
             result = payment_service.initiate_payment(
                 provider=data['provider'],
                 phone=data['phone'],
@@ -3439,7 +3447,7 @@ def create_app():
                 email=email, password=password,
                 first_name=first_name, last_name=last_name,
                 role=UserRole.SUPER_ADMIN,
-                institution_id='inst_001',
+                institution_id=None,
                 voucher_code=None
             )
 

@@ -28,6 +28,9 @@
 
         async startCamera() {
             if (this.stream) this.stopCamera();
+            if (!navigator.mediaDevices || typeof navigator.mediaDevices.getUserMedia !== 'function') {
+                throw new Error('Camera API not available on this device');
+            }
             this.stream = await navigator.mediaDevices.getUserMedia({
                 video: { facingMode: 'user', width: 640, height: 480 }
             });
@@ -80,6 +83,9 @@
 
         async checkCameraAvailability() {
             try {
+                if (!navigator.mediaDevices || typeof navigator.mediaDevices.enumerateDevices !== 'function') {
+                    return false;
+                }
                 var devices = await navigator.mediaDevices.enumerateDevices();
                 return devices.some(function (d) { return d.kind === 'videoinput'; });
             } catch (e) {

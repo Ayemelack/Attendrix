@@ -521,11 +521,12 @@
                     <input type="text" class="form-control" id="institutionName" name="institution_name"
                            placeholder="University of Technology">
                 </div>
-                <div class="input-group-custom">
-                    <label for="institutionIdDisplay">Institution ID</label>
-                    <i class="fas fa-fingerprint input-icon"></i>
-                    <input type="text" class="form-control" id="institutionIdDisplay"
-                           readonly style="color:rgba(255,255,255,0.4)">
+                <div style="display:flex;align-items:center;gap:0.75rem;padding:0.85rem 1rem;background:rgba(255,255,255,0.05);border:1.5px solid rgba(255,255,255,0.1);border-radius:12px;margin-bottom:1.25rem;">
+                    <i class="fas fa-fingerprint" style="color:rgba(255,255,255,0.3);font-size:1rem;"></i>
+                    <div>
+                        <div style="color:rgba(255,255,255,0.6);font-size:0.75rem;font-weight:600;margin-bottom:0.15rem;">Institution ID</div>
+                        <div id="institutionIdDisplay" style="color:rgba(255,255,255,0.8);font-size:0.9rem;">—</div>
+                    </div>
                 </div>
             </div>
 
@@ -722,7 +723,7 @@
                 document.getElementById('studentFields').style.display = 'none';
                 if (result.role === 'institutional_admin') {
                     document.getElementById('institutionFields').style.display = 'block';
-                    document.getElementById('institutionIdDisplay').value = result.institution_id;
+                    document.getElementById('institutionIdDisplay').textContent = result.institution_id;
                 } else if (result.role === 'student') {
                     document.getElementById('studentFields').style.display = 'block';
                 }

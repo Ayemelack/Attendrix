@@ -129,7 +129,8 @@ def login():
             remember_me=data.get('remember_me', False),
             device_fingerprint=data.get('device_fingerprint'),
             ip_address=request.remote_addr,
-            user_agent=request.headers.get('User-Agent')
+            user_agent=request.headers.get('User-Agent'),
+            institution_id=data.get('institutionId') or data.get('institution_id')
         )
 
         if result and isinstance(result, dict):

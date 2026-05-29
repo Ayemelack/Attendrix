@@ -200,7 +200,12 @@ def logout_page():
 
 @pages_bp.route('/login', methods=['GET'])
 def login_page():
-    return render_template('login.html')
+    response = render_template('login.html')
+    resp = make_response(response)
+    resp.headers['Cache-Control'] = 'no-cache, no-store, must-revalidate'
+    resp.headers['Pragma'] = 'no-cache'
+    resp.headers['Expires'] = '0'
+    return resp
 
 
 @pages_bp.route('/signup', methods=['GET'])

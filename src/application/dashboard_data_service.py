@@ -1058,8 +1058,11 @@ class DashboardDataService:
             user_profile_repo.firebase_service.create_document('user_profiles', profile, profile['id'])
         return user_id
 
-    def update_user(self, user_id: str, data: Dict[str, Any]) -> bool:
+    def update_user(self, institution_id: str, user_id: str, data: Dict[str, Any]) -> bool:
         from src.infrastructure.repositories import user_repo
+        user = user_repo.get_by_id(user_id)
+        if not user or user.get('institution_id') != institution_id:
+            return False
         update = {}
         for k in ('first_name', 'last_name', 'email', 'phone', 'role'):
             if k in data:
@@ -1069,18 +1072,18 @@ class DashboardDataService:
         update['updated_at'] = self._now()
         return user_repo.update(user_id, update)
 
-    def toggle_user_status(self, user_id: str) -> bool:
+    def toggle_user_status(self, institution_id: str, user_id: str) -> bool:
         from src.infrastructure.repositories import user_repo
         user = user_repo.get_by_id(user_id)
-        if not user:
+        if not user or user.get('institution_id') != institution_id:
             return False
         return user_repo.update(user_id, {'is_active': not user.get('is_active', True), 'updated_at': self._now()})
 
-    def delete_user(self, user_id: str) -> bool:
+    def delete_user(self, institution_id: str, user_id: str) -> bool:
         """Delete a user and their Firebase Auth account"""
         from src.infrastructure.repositories import user_repo
         user = user_repo.get_by_id(user_id)
-        if not user:
+        if not user or user.get('institution_id') != institution_id:
             return False
         try:
             self.fb.delete_user(user_id)
@@ -1154,16 +1157,22 @@ class DashboardDataService:
         course_repo.firebase_service.create_document('courses', doc, course_id)
         return course_id
 
-    def update_course(self, course_id: str, data: Dict[str, Any]) -> bool:
+    def update_course(self, institution_id: str, course_id: str, data: Dict[str, Any]) -> bool:
         from src.infrastructure.repositories import course_repo
+        course = course_repo.get_by_id(course_id)
+        if not course or course.get('institution_id') != institution_id:
+            return False
         update = {}
         for k in ('code', 'name', 'department_id', 'lecturer_id', 'description', 'credits', 'is_active'):
             if k in data:
                 update[k] = data[k]
         return course_repo.update(course_id, update)
 
-    def delete_course(self, course_id: str) -> bool:
+    def delete_course(self, institution_id: str, course_id: str) -> bool:
         from src.infrastructure.repositories import course_repo
+        course = course_repo.get_by_id(course_id)
+        if not course or course.get('institution_id') != institution_id:
+            return False
         return course_repo.delete(course_id)
 
     # ── DEPARTMENT MANAGEMENT ──
@@ -1219,16 +1228,22 @@ class DashboardDataService:
         department_repo.firebase_service.create_document('departments', doc, dept_id)
         return dept_id
 
-    def update_department(self, dept_id: str, data: Dict[str, Any]) -> bool:
+    def update_department(self, institution_id: str, dept_id: str, data: Dict[str, Any]) -> bool:
         from src.infrastructure.repositories import department_repo
+        dept = department_repo.get_by_id(dept_id)
+        if not dept or dept.get('institution_id') != institution_id:
+            return False
         update = {}
         for k in ('name', 'code', 'head_id', 'description', 'is_active'):
             if k in data:
                 update[k] = data[k]
         return department_repo.update(dept_id, update)
 
-    def delete_department(self, dept_id: str) -> bool:
+    def delete_department(self, institution_id: str, dept_id: str) -> bool:
         from src.infrastructure.repositories import department_repo
+        dept = department_repo.get_by_id(dept_id)
+        if not dept or dept.get('institution_id') != institution_id:
+            return False
         return department_repo.delete(dept_id)
 
     # ── ENROLLMENT MANAGEMENT ──
@@ -1280,8 +1295,11 @@ class DashboardDataService:
         course_enrollment_repo.firebase_service.create_document('course_enrollments', doc, enrollment_id)
         return enrollment_id
 
-    def delete_enrollment(self, enrollment_id: str) -> bool:
+    def delete_enrollment(self, institution_id: str, enrollment_id: str) -> bool:
         from src.infrastructure.repositories import course_enrollment_repo
+        enrollment = course_enrollment_repo.get_by_id(enrollment_id)
+        if not enrollment or enrollment.get('institution_id') != institution_id:
+            return False
         return course_enrollment_repo.delete(enrollment_id)
 
     # ── LOOKUP HELPERS ──

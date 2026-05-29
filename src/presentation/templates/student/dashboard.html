@@ -1330,8 +1330,22 @@
         status.className = 'face-att-status';
         status.innerHTML = '<i class="fas fa-spinner fa-pulse"></i> <span>Loading face models...</span>';
         document.getElementById('flowStatus').textContent = 'Session verified. Starting face capture...';
-        // Show the scan result card so the video, status, and flowStatus are visible
         document.getElementById('scanResult').style.display = 'block';
+
+        // Early guard: camera API unavailable on this device (e.g. HTTP on mobile)
+        if (!navigator.mediaDevices || typeof navigator.mediaDevices.getUserMedia !== 'function') {
+            if (window.isSecureContext === false) {
+                status.innerHTML = '<i class="fas fa-video-slash"></i> <span>Camera requires HTTPS connection. Please access this system via a secure URL.</span>';
+                document.getElementById('flowStatus').textContent = 'Camera unavailable: insecure connection (HTTP). Use HTTPS to enable camera access.';
+            } else {
+                status.innerHTML = '<i class="fas fa-video-slash"></i> <span>Camera not available on this browser or device.</span>';
+                document.getElementById('flowStatus').textContent = 'Camera unavailable on this device.';
+                btn.style.display = 'block';
+                btn.querySelector('span').textContent = 'Retry';
+            }
+            status.className = 'face-att-status failed';
+            return;
+        }
 
         startFaceVerification();
     }
@@ -1616,7 +1630,33 @@
         try {
             if (!window.faceapi) { throw new Error('Face API not loaded'); }
 
-            // Step 1: Pre-load ML models
+            // Step 1: Show video element BEFORE starting camera
+            console.log('Face capture: Starting camera...');
+            var video = document.getElementById('attFaceVideo');
+            video.style.display = 'block';
+            video.hidden = false;
+            video.muted = true;
+
+            // Step 2: Guard — mediaDevices API may be undefined on non-HTTPS or unsupported mobile browsers
+            if (!navigator.mediaDevices || typeof navigator.mediaDevices.getUserMedia !== 'function') {
+                throw new Error('Camera API not available on this device or browser');
+            }
+
+            // Step 3: Start camera IMMEDIATELY — critical for iOS Safari user gesture
+            console.log('Face capture: Starting camera...');
+            status.innerHTML = '<i class="fas fa-spinner fa-pulse"></i> <span>Starting camera...</span>';
+            var constraints = { video: { facingMode: 'user', width: { ideal: 640 }, height: { ideal: 480 } } };
+            attFaceStream = await navigator.mediaDevices.getUserMedia(constraints);
+            video.srcObject = attFaceStream;
+            await video.play();
+            if (video.readyState < 2) {
+                await new Promise(function(resolve) {
+                    video.addEventListener('canplay', resolve, { once: true });
+                });
+            }
+            console.log('Camera stream started');
+
+            // Step 3: Pre-load ML models (camera already live — models load in background)
             console.log('Face capture: Loading models...');
             status.innerHTML = '<i class="fas fa-spinner fa-pulse"></i> <span>Loading face models...</span>';
             var modelUrl = 'https://cdn.jsdelivr.net/npm/@vladmandic/face-api/model/';
@@ -1624,7 +1664,7 @@
             await window.faceapi.nets.faceRecognitionNet.loadFromUri(modelUrl);
             await window.faceapi.nets.faceLandmark68Net.loadFromUri(modelUrl);
 
-            // Step 2: Load ALL enrolled student descriptors BEFORE verification
+            // Step 4: Load ALL enrolled student descriptors BEFORE verification
             console.log('Face capture: Loading descriptors...');
             status.innerHTML = '<i class="fas fa-spinner fa-pulse"></i> <span>Loading enrolled face data...</span>';
             var descriptors = await loadAllFaceDescriptors();
@@ -1636,37 +1676,17 @@
                 );
             });
 
-            // Step 3: Create FaceMatcher with fixed threshold 0.45
+            // Step 5: Create FaceMatcher with fixed threshold 0.45
             faceMatcher = new window.faceapi.FaceMatcher(labeledDescriptors, 0.45);
 
-            // Step 4: Show video element BEFORE starting camera
-            console.log('Face capture: Starting camera...');
-            var video = document.getElementById('attFaceVideo');
-            video.style.display = 'block';
-            video.hidden = false;
-            video.muted = true;
-
-            // Start camera stream
-            status.innerHTML = '<i class="fas fa-spinner fa-pulse"></i> <span>Starting camera...</span>';
-            attFaceStream = await navigator.mediaDevices.getUserMedia({ video: { width: 640, height: 480, facingMode: 'user' } });
-            video.srcObject = attFaceStream;
-            await video.play();
-            if (video.readyState < 2) {
-                await new Promise(function(resolve) {
-                    video.addEventListener('canplay', resolve, { once: true });
-                });
-            }
-            console.log('Camera stream started');
-            console.log('Camera stream active');
-
-            // Step 5: Camera is live — user sees themselves
+            // Step 6: Camera is live — user sees themselves
             console.log('Video preview rendered');
             status.className = 'face-att-status';
             status.innerHTML = '<i class="fas fa-camera"></i> <span>Camera Ready</span>';
             document.getElementById('flowStatus').textContent = 'Camera ready. Detecting face...';
             await new Promise(function(r) { setTimeout(r, 500); });
 
-            // Step 6: Start face detection loop (Promise-based polling)
+            // Step 7: Start face detection loop (Promise-based polling)
             console.log('Face detection started');
             status.innerHTML = '<i class="fas fa-spinner fa-pulse"></i> <span>Detecting face...</span>';
             document.getElementById('flowStatus').textContent = 'Detecting face...';
@@ -1677,12 +1697,12 @@
                 throw new Error('No face detected after multiple attempts');
             }
 
-            // Step 7: Face detected — show matching status (camera stays ON)
+            // Step 8: Face detected — show matching status (camera stays ON)
             console.log('Face detected');
             status.innerHTML = '<i class="fas fa-spinner fa-pulse"></i> <span>Matching Face...</span>';
             document.getElementById('flowStatus').textContent = 'Face detected. Matching...';
 
-            // Step 8: Match face using FaceMatcher
+            // Step 9: Match face using FaceMatcher
             var capturedDescriptor = Array.from(detected.descriptor);
             var bestMatch = faceMatcher.findBestMatch(detected.descriptor);
 
@@ -1691,7 +1711,7 @@
 
             console.log('[FaceCapture] Best match:', matchLabel, 'distance:', matchDistance);
 
-            // Step 9: RULE — If distance > 0.45 (threshold), deny
+            // Step 10: RULE — If distance > 0.45 (threshold), deny
             if (matchDistance > 0.45) {
                 stopCamera();
                 attendanceFaceDescriptor = null;
@@ -1704,7 +1724,7 @@
                 return;
             }
 
-            // Step 10: RULE — If label is "unknown", block attendance
+            // Step 11: RULE — If label is "unknown", block attendance
             if (matchLabel === 'unknown') {
                 stopCamera();
                 attendanceFaceDescriptor = null;
@@ -1717,7 +1737,7 @@
                 return;
             }
 
-            // Step 11: RULE — If confidence < 0.55, reject
+            // Step 12: RULE — If confidence < 0.55, reject
             var confidence = Math.max(0, 1 - matchDistance);
             if (confidence < 0.55) {
                 stopCamera();
@@ -1731,7 +1751,7 @@
                 return;
             }
 
-            // Step 12: Face matched — camera stays ON until onFaceVerified stops it
+            // Step 13: Face matched — camera stays ON until onFaceVerified stops it
             console.log('Face matched');
             attendanceFaceDescriptor = capturedDescriptor;
             onFaceVerified(capturedDescriptor, confidence);
@@ -1742,9 +1762,26 @@
             status.className = 'face-att-status failed';
             var errorName = e.name || 'Error';
             console.error('[FaceCapture] Failed:', errorName + ':', e.message, e);
-            status.innerHTML = '<i class="fas fa-exclamation-triangle"></i> <span>Face capture failed: ' + errorName + ': ' + e.message + '</span>';
-            btn.style.display = 'block';
-            btn.querySelector('span').textContent = 'Retry';
+            if (e.message && e.message.indexOf('Camera API not available') !== -1 && window.isSecureContext === false) {
+                status.innerHTML = '<i class="fas fa-video-slash"></i> <span>Camera requires HTTPS connection. Please access this system via a secure URL.</span>';
+                document.getElementById('flowStatus').textContent = 'Camera unavailable: insecure connection (HTTP). Use HTTPS to enable camera access.';
+            } else {
+                var errorMsg = '<i class="fas fa-exclamation-triangle"></i> <span>Face capture failed: ' + errorName + ': ' + e.message + '</span>';
+                if (e.name === 'NotAllowedError') {
+                    errorMsg = '<i class="fas fa-ban"></i> <span>Camera permission denied. Please allow camera access in your browser settings and try again.</span>';
+                } else if (e.name === 'NotFoundError') {
+                    errorMsg = '<i class="fas fa-video-slash"></i> <span>No camera found on this device.</span>';
+                } else if (e.name === 'NotReadableError') {
+                    errorMsg = '<i class="fas fa-exclamation-triangle"></i> <span>Camera is in use by another application. Please close other apps using the camera and try again.</span>';
+                } else if (e.name === 'OverconstrainedError') {
+                    errorMsg = '<i class="fas fa-exclamation-triangle"></i> <span>Camera does not support the required settings. Please try a different device or browser.</span>';
+                } else if (e.message && e.message.indexOf('Camera API not available') !== -1) {
+                    errorMsg = '<i class="fas fa-video-slash"></i> <span>Camera not available on this browser or device.</span>';
+                }
+                status.innerHTML = errorMsg;
+                btn.style.display = 'block';
+                btn.querySelector('span').textContent = 'Retry';
+            }
         }
     }
 
