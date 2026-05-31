@@ -3687,15 +3687,43 @@ def create_app():
 app = create_app()
 
 if __name__ == '__main__':
+    # --- Startup configuration ---
     port = int(os.environ.get('PORT', 5000))
     debug = os.environ.get('FLASK_DEBUG', 'False').lower() == 'true'
     # Force debug and reloader
     debug = True
     use_reloader = True
     
+    # --- Optional HTTPS for mobile LAN access ---
+    # Set HTTPS_PORT=5443 (or any port) to enable HTTPS with a self-signed cert.
+    # Mobile browsers require HTTPS (secure context) for camera/getUserMedia.
+    https_port = int(os.environ.get('HTTPS_PORT', '0'))
+    ssl_context = None
+    if https_port > 0:
+        port = https_port
+        base_dir = os.path.dirname(os.path.abspath(__file__))
+        cert_file = os.path.join(base_dir, 'tools', 'cert.pem')
+        key_file = os.path.join(base_dir, 'tools', 'key.pem')
+        from tools.gen_cert import ensure_cert_files, get_lan_ips
+        if ensure_cert_files(cert_file, key_file):
+            ssl_context = (cert_file, key_file)
+            lan_ips = get_lan_ips()
+            print(f'  HTTPS enabled on port {https_port}')
+            if lan_ips:
+                for ip in lan_ips:
+                    print(f'  Mobile access: https://{ip}:{https_port}')
+            else:
+                print(f'  Mobile access: https://YOUR_LAN_IP:{https_port}')
+            print(f'  Accept the self-signed cert warning in your mobile browser.')
+            print(f'  Camera (getUserMedia) will work on mobile over HTTPS.')
+        else:
+            print('  ERROR: Could not set up HTTPS. Falling back to HTTP.')
+    
+    # --- Start server ---
     app.run(
         host='0.0.0.0',
         port=port,
         debug=debug,
-        use_reloader=use_reloader
+        use_reloader=use_reloader,
+        ssl_context=ssl_context
     )

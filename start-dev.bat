@@ -53,6 +53,8 @@ echo Health check: http://localhost:5000/health
 echo API test: http://localhost:5000/api/test
 echo System info: http://localhost:5000/api/info
 echo.
+echo For mobile HTTPS (camera access), use: start-mobile.bat
+echo.
 echo Press Ctrl+C to stop the server
 echo.
 
