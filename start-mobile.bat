@@ -9,7 +9,7 @@ echo This starts Attendrix with HTTPS for mobile testing.
 echo Camera access on mobile browsers requires HTTPS.
 echo.
 
-REM Run HTTPS cert setup first (idempotent — safe to run every time)
+REM [1/3] HTTPS certificate setup (idempotent)
 echo [1/3] Setting up trusted HTTPS certificates...
 powershell -ExecutionPolicy Bypass -File "%~dp0tools\setup-https.ps1" -InstallCA
 if %errorlevel% neq 0 (
@@ -17,27 +17,17 @@ if %errorlevel% neq 0 (
 )
 echo.
 
-REM Detect and display all LAN IPs
-echo [2/3] Detecting network addresses...
-echo.
-echo Mobile access URLs:
-set COUNT=0
-for /f "tokens=2 delims=:" %%a in ('ipconfig ^| findstr /i "IPv4"') do (
-    set "IP=%%a"
-    set "IP=!IP: =!"
-    set /a COUNT+=1
-    echo   !COUNT!. https://!IP!:5443
+REM [2/3] Windows Firewall — ensure inbound TCP 5443 is open for LAN access
+echo [2/3] Configuring Windows Firewall for port 5443...
+netsh advfirewall firewall add rule name="Attendrix HTTPS 5443" dir=in action=allow protocol=TCP localport=5443 >nul 2>&1
+if %errorlevel% equ 0 (
+    echo   [OK] Firewall rule added/confirmed for TCP port 5443
+) else (
+    echo   [WARNING] Could not configure firewall. Try running as Administrator.
 )
 echo.
-echo NOTE: On first visit, your browser may show a warning.
-echo       This is normal for development certificates.
-echo.
-echo       Android Chrome: tap "Proceed to site" (unsafe)
-echo       iOS Safari:     tap "Show Details" ^> "Visit Website"
-echo       After first visit, the cert is cached and trusted.
-echo.
 
-REM Start HTTPS server
+REM Start HTTPS server — app.py will detect LAN IPs and print the URL
 echo [3/3] Starting Attendrix HTTPS server...
 echo.
 set HTTPS_PORT=5443

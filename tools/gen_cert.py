@@ -58,26 +58,52 @@ def generate_mkcert_certs(cert_path, key_path):
 
 
 def get_lan_ips():
-    """Detect LAN IP addresses on this machine (IPv4, non-loopback)."""
+    """Detect LAN IP addresses reachable from other devices (Wi-Fi/Ethernet only).
+
+    Filters out virtual adapters (VMware, Docker, WSL, VPN) by only returning
+    IPs from interfaces that have a default gateway.
+    """
     ips = set()
-    # Method 1: connect to a dummy UDP address to find the default interface IP
+    # Method 1 (preferred): use PowerShell to find interfaces with a default gateway.
+    # This automatically excludes VMware, Docker, WSL, VPN virtual adapters.
     try:
-        s = socket.socket(socket.AF_INET, socket.SOCK_DGRAM)
-        s.settimeout(0.1)
-        s.connect(("10.255.255.255", 1))
-        ips.add(s.getsockname()[0])
-        s.close()
+        ps_cmd = (
+            'Get-NetIPConfiguration | '
+            'Where-Object { $_.IPv4DefaultGateway -ne $null } | '
+            'Select-Object -ExpandProperty IPv4Address | '
+            'Select-Object -ExpandProperty IPAddress'
+        )
+        result = subprocess.run(
+            ['powershell', '-NoProfile', '-Command', ps_cmd],
+            capture_output=True, text=True, timeout=10
+        )
+        if result.returncode == 0:
+            for line in result.stdout.strip().splitlines():
+                ip = line.strip()
+                if ip and ':' not in ip:
+                    ips.add(ip)
     except Exception:
         pass
-    # Method 2: resolve hostname to all addresses
-    try:
-        hostname = socket.gethostname()
-        for info in socket.getaddrinfo(hostname, None):
-            ip = info[4][0]
-            if ':' not in ip and not ip.startswith('127.') and not ip.startswith('169.254.'):
-                ips.add(ip)
-    except Exception:
-        pass
+    # Method 2: fallback — connect to a dummy UDP address to find the default interface IP
+    if not ips:
+        try:
+            s = socket.socket(socket.AF_INET, socket.SOCK_DGRAM)
+            s.settimeout(0.1)
+            s.connect(("10.255.255.255", 1))
+            ips.add(s.getsockname()[0])
+            s.close()
+        except Exception:
+            pass
+    # Method 3: resolve hostname and filter out virtual ranges
+    if not ips:
+        try:
+            hostname = socket.gethostname()
+            for info in socket.getaddrinfo(hostname, None):
+                ip = info[4][0]
+                if ':' not in ip and not ip.startswith('127.') and not ip.startswith('169.254.'):
+                    ips.add(ip)
+        except Exception:
+            pass
     return sorted(ips)
 
 
