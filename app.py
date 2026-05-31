@@ -3692,7 +3692,7 @@ if __name__ == '__main__':
     debug = os.environ.get('FLASK_DEBUG', 'False').lower() == 'true'
     # Force debug and reloader
     debug = True
-    use_reloader = True
+    use_reloader = not (int(os.environ.get('HTTPS_PORT', '0')) > 0)
     
     # --- Optional HTTPS for mobile LAN access ---
     # Set HTTPS_PORT=5443 (or any port) to enable HTTPS with a self-signed cert.

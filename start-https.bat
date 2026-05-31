@@ -1,5 +1,15 @@
 @echo off
 title Attendrix HTTPS Server
+cd /d "%~dp0"
+
+REM Auto-elevate to Admin if not already (needed for CA install + firewall rule)
+net session >nul 2>&1
+if %errorlevel% neq 0 (
+    echo Requesting Administrator privileges...
+    powershell -Command "Start-Process '%~f0' -Verb RunAs -Wait"
+    exit /b %errorlevel%
+)
+
 echo ============================================
 echo  Attendrix - HTTPS Development Server
 echo ============================================

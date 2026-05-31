@@ -1,6 +1,16 @@
 @echo off
 setlocal enabledelayedexpansion
 title Attendrix Mobile Server
+cd /d "%~dp0"
+
+REM Auto-elevate to Admin if not already (needed for CA install + firewall rule)
+net session >nul 2>&1
+if %errorlevel% neq 0 (
+    echo Requesting Administrator privileges...
+    powershell -Command "Start-Process '%~f0' -Verb RunAs -Wait"
+    exit /b %errorlevel%
+)
+
 echo ============================================
 echo  Attendrix - Mobile LAN Access (HTTPS)
 echo ============================================
@@ -27,7 +37,7 @@ if %errorlevel% equ 0 (
 )
 echo.
 
-REM Start HTTPS server — app.py will detect LAN IPs and print the URL
+REM [3/3] Start HTTPS server — app.py will detect LAN IPs and print the URL
 echo [3/3] Starting Attendrix HTTPS server...
 echo.
 set HTTPS_PORT=5443

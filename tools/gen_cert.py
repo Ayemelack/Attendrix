@@ -22,7 +22,6 @@ def _find_mkcert():
                 return path
     except Exception:
         pass
-    # Common WinGet install location
     user_profile = os.environ.get('USERPROFILE', '')
     pattern = os.path.join(user_profile,
         'AppData', 'Local', 'Microsoft', 'WinGet', 'Packages',
@@ -34,13 +33,90 @@ def _find_mkcert():
     return None
 
 
-def generate_mkcert_certs(cert_path, key_path):
-    """Generate locally-trusted certs using mkcert."""
+def _mkcert_ca_thumbprint():
+    """Read the mkcert root CA thumbprint."""
+    caroot = os.environ.get('CAROOT',
+        os.path.join(os.environ.get('APPDATA', ''), 'mkcert'))
+    ca_path = os.path.join(caroot, 'rootCA.pem')
+    mkcert_dir = os.path.join(os.environ.get('LOCALAPPDATA', ''), 'mkcert')
+    alt_ca = os.path.join(mkcert_dir, 'rootCA.pem')
+    for path in [ca_path, alt_ca]:
+        if os.path.exists(path):
+            try:
+                from cryptography.hazmat.primitives import hashes
+                from cryptography.hazmat.backends import default_backend
+                with open(path, 'rb') as f:
+                    ca = x509.load_pem_x509_certificate(f.read(), default_backend())
+                ca_bytes = ca.public_bytes(serialization.Encoding.DER)
+                import hashlib
+                return hashlib.sha1(ca_bytes).hexdigest().upper()
+            except Exception:
+                pass
+    return None
+
+
+def _is_mkcert_ca_trusted():
+    """Check if mkcert root CA is installed in Windows trust store."""
+    thumbprint = _mkcert_ca_thumbprint()
+    if not thumbprint:
+        return False
+    try:
+        # Use single quotes around thumbprint to avoid cmd-line quote stripping
+        result = subprocess.run(
+            ['powershell', '-NoProfile', '-Command',
+             f'Get-ChildItem -Path Cert:\\LocalMachine\\Root, Cert:\\CurrentUser\\Root -Recurse | '
+             f'Where-Object {{ $_.Thumbprint -eq \'{thumbprint}\' }} | '
+             f'Measure-Object | Select-Object -ExpandProperty Count'],
+            capture_output=True, text=True, timeout=10
+        )
+        count = result.stdout.strip()
+        return count.isdigit() and int(count) > 0
+    except Exception:
+        return False
+
+
+def _install_mkcert_ca():
+    """Install mkcert CA into Windows trust store via admin elevation."""
     mkcert = _find_mkcert()
     if not mkcert:
         return False
-    # Ensure mkcert CA is installed
+    # Try without elevation first (may work on some systems)
+    try:
+        subprocess.run([mkcert, '-install'], capture_output=True, timeout=30)
+    except Exception:
+        pass
+    if _is_mkcert_ca_trusted():
+        return True
+    # If not trusted, attempt with admin elevation via certutil
+    caroot = os.environ.get('CAROOT',
+        os.path.join(os.environ.get('APPDATA', ''), 'mkcert'))
+    alt_caroot = os.path.join(os.environ.get('LOCALAPPDATA', ''), 'mkcert')
+    for dr in [caroot, alt_caroot]:
+        ca_pem = os.path.join(dr, 'rootCA.pem')
+        if os.path.exists(ca_pem):
+            try:
+                subprocess.run(
+                    ['certutil', '-addstore', 'Root', ca_pem],
+                    capture_output=True, timeout=30
+                )
+            except Exception:
+                pass
+            break
+    return _is_mkcert_ca_trusted()
+
+
+def generate_mkcert_certs(cert_path, key_path):
+    """Generate locally-trusted certs using mkcert.
+
+    Returns (success: bool, trusted: bool) where trusted indicates
+    whether the CA is installed in the Windows trust store.
+    """
+    mkcert = _find_mkcert()
+    if not mkcert:
+        return (False, False)
+    # Ensure CA is installed (best effort — may need admin)
     subprocess.run([mkcert, '-install'], capture_output=True, timeout=30)
+    trusted = _is_mkcert_ca_trusted()
     lan_ips = get_lan_ips()
     hosts = ['localhost'] + lan_ips
     try:
@@ -50,11 +126,17 @@ def generate_mkcert_certs(cert_path, key_path):
         )
         if result.returncode == 0:
             print(f'  mkcert certificate generated for: {", ".join(hosts)}')
-            print(f'  Trusted by the system (no browser warning)')
-            return True
+            if trusted:
+                print(f'  Certificate source: mkcert')
+                print(f'  Status: TRUSTED')
+            else:
+                print(f'  Certificate source: mkcert')
+                print(f'  Status: NOT TRUSTED — CA not in Windows trust store')
+                print(f'  Run: start-mobile.bat as Administrator to install the CA')
+            return (True, trusted)
     except Exception:
         pass
-    return False
+    return (False, False)
 
 
 def get_lan_ips():
@@ -194,41 +276,68 @@ def cert_has_current_lan_ips(cert_path):
 
 
 def ensure_cert_files(cert_path, key_path):
-    # Prefer mkcert (system-trusted certs) over self-signed
-    if _find_mkcert():
-        if not (os.path.exists(cert_path) and os.path.exists(key_path)):
-            print("  mkcert found — generating locally-trusted certificate...")
-            if generate_mkcert_certs(cert_path, key_path):
-                lan_ips = get_lan_ips()
-                if lan_ips:
-                    print(f"  Certificate valid for IPs: {', '.join(lan_ips)}")
-                return True
-            print("  mkcert generation failed, falling back to self-signed...")
-        else:
-            lan_ips = get_lan_ips()
-            if lan_ips:
-                print(f"  Certificate valid for LAN IPs: {', '.join(lan_ips)}")
-            return True
-    else:
-        print("  mkcert not found — using self-signed certificate (browser warning will appear)")
+    """Ensure valid mkcert certificate exists. Returns True if ready.
 
-    # Fallback: self-signed certificate
-    if os.path.exists(cert_path) and os.path.exists(key_path):
+    Uses mkcert ONLY — self-signed fallback is removed to prevent
+    certificate ambiguity and browser trust errors.
+    If mkcert is not available or the CA is not trusted, prints
+    a clear error and returns False (server startup should abort).
+    """
+    if not _find_mkcert():
+        print("  ERROR: mkcert not found. Install it: winget install FiloSottile.mkcert")
+        print("  Then run: start-mobile.bat as Administrator")
+        return False
+
+    # Generate certs if missing or IPs changed
+    if not (os.path.exists(cert_path) and os.path.exists(key_path)):
+        print("  Generating mkcert certificate...")
+        success, trusted = generate_mkcert_certs(cert_path, key_path)
+        if not success:
+            print("  ERROR: Failed to generate mkcert certificate")
+            return False
+        if not trusted:
+            print("  ERROR: mkcert CA not installed in Windows trust store.")
+            print("  Run this script as Administrator once: start-mobile.bat")
+            return False
+        lan_ips = get_lan_ips()
+        if lan_ips:
+            print(f"  Certificate valid for IPs: {', '.join(lan_ips)}")
+        return True
+    else:
+        # Existing certs — validate they are from mkcert (not self-signed)
+        try:
+            from cryptography.hazmat.backends import default_backend
+            with open(cert_path, 'rb') as f:
+                cert = x509.load_pem_x509_certificate(f.read(), default_backend())
+            # mkcert-signed certs have issuer != subject
+            is_mkcert = cert.issuer != cert.subject
+            if not is_mkcert:
+                print("  Existing certificate is self-signed. Regenerating with mkcert...")
+                os.remove(cert_path)
+                os.remove(key_path)
+                return ensure_cert_files(cert_path, key_path)
+        except Exception:
+            pass
+
+        # Check CA is trusted
+        trusted = _is_mkcert_ca_trusted()
+        if not trusted:
+            print("  WARNING: mkcert CA not in Windows trust store.")
+            print("  Run start-mobile.bat as Administrator once to install.")
+            print("  Continuing anyway — browser will show security warning.")
+        else:
+            print("  Certificate source: mkcert")
+            print("  Status: TRUSTED")
+
         if cert_has_current_lan_ips(cert_path):
             lan_ips = get_lan_ips()
             if lan_ips:
                 print(f"  Certificate valid for LAN IPs: {', '.join(lan_ips)}")
             return True
-        print("  LAN IPs changed. Regenerating self-signed certificate...")
-    else:
-        print("  Generating self-signed SSL certificate...")
-    try:
-        generate_self_signed_cert(cert_path, key_path)
-        return True
-    except Exception as e:
-        print(f"  ERROR: Failed to generate certificate: {e}")
-        print("  Make sure 'cryptography' is installed: pip install cryptography")
-        return False
+        print("  LAN IPs changed. Regenerating certificate...")
+        os.remove(cert_path)
+        os.remove(key_path)
+        return ensure_cert_files(cert_path, key_path)
 
 
 if __name__ == "__main__":
