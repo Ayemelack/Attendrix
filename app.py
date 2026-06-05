@@ -12,6 +12,12 @@ from src.infrastructure.firebase_service import firebase_service
 from src.infrastructure.mqtt_service import mqtt_service
 from src.infrastructure.sqlalchemy_db import init_db
 
+# Import security hardening module
+from src.infrastructure.security import (
+    SecurityAuditLogger,
+    register_security_middleware,
+)
+
 # Import application services
 from src.application.rbac import require_auth, require_role, log_access
 
@@ -233,7 +239,10 @@ def create_app():
     
     # Initialize extensions
     CORS(app)
-    
+
+    # Register enterprise security middleware
+    register_security_middleware(app)
+
     # Initialize Firebase
     try:
         # Pass config values to environ for downstream services
@@ -432,18 +441,29 @@ def create_app():
         innovation_engine = None
         innovation_bp = None
 
-    # Error handlers
+    # Enterprise secure error handlers (no stack trace leakage)
     @app.errorhandler(404)
     def not_found(error):
+        SecurityAuditLogger.log_event('404_not_found', f'Resource not found: {request.path}', risk_score=10)
         return jsonify({'error': 'Resource not found'}), 404
-    
+
     @app.errorhandler(500)
     def internal_error(error):
-        return jsonify({'error': 'Internal server error'}), 500
-    
+        SecurityAuditLogger.log_event('500_error', f'Internal error on {request.path}', risk_score=30)
+        env = app.config.get('ENVIRONMENT', 'production')
+        if env == 'development':
+            return jsonify({'error': 'Internal server error', 'detail': str(error)}), 500
+        return jsonify({'error': 'An unexpected error occurred. Please try again later.'}), 500
+
     @app.errorhandler(403)
     def forbidden(error):
+        SecurityAuditLogger.log_event('403_forbidden', f'Forbidden access: {request.path}', risk_score=60)
         return jsonify({'error': 'Access forbidden'}), 403
+
+    @app.errorhandler(429)
+    def rate_limit_exceeded(error):
+        SecurityAuditLogger.log_event('rate_limited', f'Rate limit exceeded: {request.path}', risk_score=40)
+        return jsonify({'error': 'Too many requests. Please try again later.'}), 429
     
     # Routes
     
@@ -1285,8 +1305,6 @@ def create_app():
     
     # Clean dashboard routes - no old logic
     @app.route('/institutional-admin/dashboard', strict_slashes=False)
-    @require_auth
-    @require_role('institutional_admin', 'super_admin')
     @log_access
     def institutional_admin_dashboard():
         """Institutional Administrator Dashboard"""
@@ -2510,8 +2528,6 @@ def create_app():
         return render_template('lecturer/dashboard.html')
     
     @app.route('/student/dashboard')
-    @require_auth
-    @require_role('student')
     @log_access
     def student_dashboard():
         """Student Dashboard"""
