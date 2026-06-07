@@ -162,7 +162,11 @@ class ProductionHardeningManager:
             csp_script = ' '.join(csp_script_parts)
 
             csp_style_parts = csp_style_src_raw.split()
-            if "'unsafe-inline'" not in csp_style_parts:
+            style_nonce = getattr(request, '_csp_nonce', None)
+            if style_nonce and "'unsafe-inline'" in csp_style_parts:
+                csp_style_parts.remove("'unsafe-inline'")
+                csp_style_parts.append(f"'nonce-{style_nonce}'")
+            elif "'unsafe-inline'" not in csp_style_parts:
                 csp_style_parts.append("'unsafe-inline'")
             csp_style = ' '.join(csp_style_parts)
 

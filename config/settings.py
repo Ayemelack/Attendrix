@@ -37,6 +37,7 @@ class Config:
         'CLOUDFLARE_TURNSTILE_SITE_KEY',
         'CLOUDFLARE_TURNSTILE_SECRET_KEY',
         'SECURITY_ALERT_WEBHOOK',
+        'BOOTSTRAP_ADMIN_PASSWORD',
     ]
 
     # Basic Flask configuration
@@ -181,7 +182,7 @@ class Config:
     HSTS_MAX_AGE = config('HSTS_MAX_AGE', default=31536000, cast=int)
     HSTS_INCLUDE_SUBDOMAINS = config('HSTS_INCLUDE_SUBDOMAINS', default=True, cast=bool)
     CSP_DEFAULT_SRC = config('CSP_DEFAULT_SRC', default="'self'")
-    CSP_SCRIPT_SRC = config('CSP_SCRIPT_SRC', default="'self' 'unsafe-inline' 'unsafe-eval' https://cdnjs.cloudflare.com https://maxcdn.bootstrapcdn.com https://challenges.cloudflare.com https://www.google.com https://www.gstatic.com")
+    CSP_SCRIPT_SRC = config('CSP_SCRIPT_SRC', default="'self' 'strict-dynamic' 'unsafe-inline' https://cdnjs.cloudflare.com https://maxcdn.bootstrapcdn.com https://challenges.cloudflare.com https://www.google.com https://www.gstatic.com")
     CSP_STYLE_SRC = config('CSP_STYLE_SRC', default="'self' 'unsafe-inline' https://cdnjs.cloudflare.com https://maxcdn.bootstrapcdn.com https://fonts.googleapis.com")
     CSP_FONT_SRC = config('CSP_FONT_SRC', default="'self' https://fonts.gstatic.com https://cdnjs.cloudflare.com https://maxcdn.bootstrapcdn.com")
     CSP_IMG_SRC = config('CSP_IMG_SRC', default="'self' data: blob: https: http:")
@@ -224,7 +225,7 @@ class Config:
     APPLICATION_URL = config('APPLICATION_URL', default='https://attendrix.app')
     ADMIN_URL = config('ADMIN_URL', default='https://admin.attendrix.app')
     API_URL = config('API_URL', default='https://api.attendrix.app')
-    BOOTSTRAP_ADMIN_PASSWORD = config('BOOTSTRAP_ADMIN_PASSWORD', default='D3f@ultCh4ng3Me!')
+    BOOTSTRAP_ADMIN_PASSWORD = config('BOOTSTRAP_ADMIN_PASSWORD', default='')
 
     # Demo and onboarding configuration
     DEMO_SESSION_EXPIRY_MINUTES = config('DEMO_SESSION_EXPIRY_MINUTES', default=60, cast=int)
@@ -415,6 +416,10 @@ class ProductionConfig(Config):
 
     # Production security (strict)
     SESSION_COOKIE_SECURE = True
+    USE_MOCK_FIREBASE = False
+
+    # Override bootstrap password default — must be explicitly set in env
+    BOOTSTRAP_ADMIN_PASSWORD = config('BOOTSTRAP_ADMIN_PASSWORD', default='')
 
     @classmethod
     def init_app(cls, app):

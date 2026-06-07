@@ -80,12 +80,22 @@ class FirebaseService:
         if self._initialized:
             return
         try:
-            # Force mock mode for local development regardless of environment
-            if True or os.environ.get('USE_MOCK_FIREBASE', 'true').lower() == 'true':
-                logger.info("Using mock Firebase service for development")
-                self._mock_mode = True
-                self._initialized = True
-                return
+        mock_env = os.environ.get('USE_MOCK_FIREBASE', 'true').lower()
+        if mock_env == 'true':
+            env = os.environ.get('ENVIRONMENT', os.environ.get('FLASK_ENV', 'production'))
+            if env == 'production':
+                logger.error(
+                    "USE_MOCK_FIREBASE=true in production environment. "
+                    "Set USE_MOCK_FIREBASE=false and configure real Firebase credentials."
+                )
+                raise RuntimeError(
+                    "Refusing to run with mock Firebase in production. "
+                    "Set USE_MOCK_FIREBASE=false and configure Firestore credentials."
+                )
+            logger.info("Using mock Firebase service (USE_MOCK_FIREBASE=true)")
+            self._mock_mode = True
+            self._initialized = True
+            return
 
             if credentials_path and os.path.exists(credentials_path):
                 cred = credentials.Certificate(credentials_path)
@@ -168,8 +178,8 @@ class FirebaseService:
             if hasattr(_flask_request, 'current_user') and _flask_request.current_user:
                 return _flask_request.current_user
         except (RuntimeError, ImportError, Exception):
-            pass
-        return None
+            logger.debug("No Flask request context — skipping current_user lookup")
+            return None
 
     @staticmethod
     def _enforce_query_filters(collection: str, filters: Optional[List[Dict[str, Any]]]) -> List[Dict[str, Any]]:

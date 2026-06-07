@@ -86,6 +86,8 @@ celerybeat-schedule
 
 # Environments
 .env
+.env.dev
+.env.*
 .venv
 env/
 venv/
@@ -118,7 +120,9 @@ temp/
 
 # Firebase
 firebase-credentials.json
+config/firebase-credentials.json
 firebase-dev.json
+firebase*.json
 *.pem
 
 # IDE
@@ -139,6 +143,9 @@ logs/
 # Database
 *.db
 *.sqlite3
+mock_database.json
+mock_database.json.bak
+mock_database*.json
 
 # Node modules (if using npm for frontend)
 node_modules/

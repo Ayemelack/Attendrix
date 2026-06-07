@@ -3641,7 +3641,9 @@ def create_app():
 
             data = request.get_json() or {}
             email = data.get('email', 'admin@attendrix.demo')
-            password = data.get('password', os.environ.get('BOOTSTRAP_ADMIN_PASSWORD', 'D3f@ultCh4ng3Me!'))
+            password = data.get('password', os.environ.get('BOOTSTRAP_ADMIN_PASSWORD'))
+            if not password:
+                return jsonify({'error': 'Bootstrap admin password must be configured via BOOTSTRAP_ADMIN_PASSWORD environment variable or request body'}), 400
             first_name = data.get('first_name', 'Admin')
             last_name = data.get('last_name', 'User')
 
@@ -3712,12 +3714,15 @@ def create_app():
 
             test_vouchers = voucher_seeder.get_test_vouchers()
 
+            app_env = os.environ.get('FLASK_DEBUG', 'False')
+            demo_password = os.environ.get('DEMO_USER_PASSWORD', 'password123')
+
             return jsonify({
                 'success': True,
                 'message': f'Seeded {result["vouchers_created"]} vouchers and {len(created_users)} demo users',
                 'vouchers_created': result['vouchers_created'],
                 'demo_users_created': len(created_users),
-                'demo_credentials': {'password': 'password123'},
+                'demo_credentials': {'password': demo_password},
                 'test_vouchers': test_vouchers,
                 'voucher_details': result['vouchers']
             }), 200
