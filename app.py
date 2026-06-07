@@ -430,6 +430,17 @@ def create_app():
         logger.error(f"Authentication service initialization failed: {str(e)}")
         auth_service = None
 
+    # Phase 3 — Zero-Trust Engine initialization
+    try:
+        from src.infrastructure.security.zerotrust_engine import zerotrust
+        zerotrust.initialize(
+            app=app,
+            firebase_service=firebase_service,
+        )
+        logger.info("Zero-Trust Engine (Phase 3) initialized")
+    except Exception as e:
+        logger.error(f"Zero-Trust Engine initialization failed: {str(e)}", exc_info=True)
+
     # Initialize dashboard data service (replaces mock_data_provider)
     try:
         from src.application.dashboard_data_service import DashboardDataService

@@ -72,6 +72,12 @@ geopy==2.4.0
 # Device fingerprinting
 user-agents==2.2.0
 
+# WebAuthn/FIDO2 passwordless authentication
+cbor2==5.6.2
+
+# TOTP/MFA for admin lockdown and backup auth
+pyotp==2.9.0
+
 # MQTT broker for real-time messaging
 paho-mqtt>=2.0.0,<3.0.0
 

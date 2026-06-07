@@ -66,6 +66,75 @@ from .production_hardening import (
     apply_production_hardening,
 )
 
+# Phase 3 — Zero-Trust Enterprise Security
+from .webauthn_service import (
+    WebAuthnService,
+    WebAuthnCredential,
+    WebAuthnRegistrationOptions,
+    WebAuthnAuthenticationOptions,
+    webauthn_service,
+)
+
+from .device_session import (
+    DeviceSessionManager,
+    DeviceProfile,
+    BoundSession,
+    SessionBindingLevel,
+    device_session_manager,
+)
+
+from .abac_engine import (
+    ABACEngine,
+    AccessRequest,
+    AccessDecision,
+    Policy,
+    PolicyRule,
+    Condition,
+    Effect,
+    abac_engine,
+)
+
+from .anomaly_detection import (
+    AnomalyDetector,
+    AnomalyEvent,
+    BaselineProfile,
+    FeatureVector,
+    AnomalySeverity,
+    AnomalyCategory,
+    anomaly_detector,
+)
+
+from .mitre_attack import (
+    MitreAttackFramework,
+    Incident,
+    IncidentStatus,
+    IncidentSeverity,
+    MitreTechnique,
+    mitre_framework,
+)
+
+from .forensic_logging import (
+    ForensicLogger,
+    LogEntry,
+    LogLevel,
+    LogCategory,
+    forensic_logger,
+)
+
+from .admin_lockdown import (
+    AdminLockdownManager,
+    AdminSession,
+    AdminSessionType,
+    LockdownLevel,
+    admin_lockdown,
+)
+
+from .zerotrust_engine import (
+    ZeroTrustEngine,
+    ModuleHealth,
+    zerotrust,
+)
+
 __all__ = [
     'GeolocationValidator',
     'LocationProofOfWork',
@@ -89,4 +158,49 @@ __all__ = [
     'MFAMethod',
     'ProductionHardeningManager',
     'apply_production_hardening',
+    # Phase 3 — Zero-Trust
+    'WebAuthnService',
+    'WebAuthnCredential',
+    'WebAuthnRegistrationOptions',
+    'WebAuthnAuthenticationOptions',
+    'webauthn_service',
+    'DeviceSessionManager',
+    'DeviceProfile',
+    'BoundSession',
+    'SessionBindingLevel',
+    'device_session_manager',
+    'ABACEngine',
+    'AccessRequest',
+    'AccessDecision',
+    'Policy',
+    'PolicyRule',
+    'Condition',
+    'Effect',
+    'abac_engine',
+    'AnomalyDetector',
+    'AnomalyEvent',
+    'BaselineProfile',
+    'FeatureVector',
+    'AnomalySeverity',
+    'AnomalyCategory',
+    'anomaly_detector',
+    'MitreAttackFramework',
+    'Incident',
+    'IncidentStatus',
+    'IncidentSeverity',
+    'MitreTechnique',
+    'mitre_framework',
+    'ForensicLogger',
+    'LogEntry',
+    'LogLevel',
+    'LogCategory',
+    'forensic_logger',
+    'AdminLockdownManager',
+    'AdminSession',
+    'AdminSessionType',
+    'LockdownLevel',
+    'admin_lockdown',
+    'ZeroTrustEngine',
+    'ModuleHealth',
+    'zerotrust',
 ]
