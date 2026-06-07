@@ -11,7 +11,7 @@ from flask import Blueprint, request, jsonify, session
 
 from src.infrastructure.security.webauthn_service import webauthn_service
 from src.application.auth_service import auth_service
-from src.application.rbac import require_auth, require_role
+from src.application.rbac import require_auth, require_role, require_admin_webauthn
 from src.infrastructure.security_legacy import rate_limit_endpoint
 
 logger = logging.getLogger(__name__)
@@ -113,6 +113,7 @@ def register_complete():
 
 
 @webauthn_bp.route('/authenticate/begin', methods=['POST'])
+@rate_limit_endpoint(limit=20, window=300, scope='ip', block_duration=600)
 def authenticate_begin():
     """Generate authentication options for a passkey login."""
     if not webauthn_service.is_available():
@@ -143,6 +144,7 @@ def authenticate_begin():
 
 
 @webauthn_bp.route('/authenticate/complete', methods=['POST'])
+@rate_limit_endpoint(limit=10, window=300, scope='ip', block_duration=600)
 def authenticate_complete():
     """Verify a passkey assertion and log the user in."""
     if not webauthn_service.is_available():
@@ -239,6 +241,7 @@ def revoke_all_credentials():
 @webauthn_bp.route('/admin/list', methods=['GET'])
 @require_auth
 @require_role('super_admin', 'institutional_admin')
+@require_admin_webauthn
 def admin_list():
     """Admin: list credentials for any user."""
     current_user = request.current_user
@@ -258,6 +261,7 @@ def admin_list():
 @webauthn_bp.route('/admin/revoke', methods=['POST'])
 @require_auth
 @require_role('super_admin', 'institutional_admin')
+@require_admin_webauthn
 def admin_revoke():
     """Admin: revoke a credential for any user."""
     current_user = request.current_user

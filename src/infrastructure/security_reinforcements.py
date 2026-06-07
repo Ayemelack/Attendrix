@@ -27,6 +27,7 @@ from functools import wraps
 from urllib.parse import urlparse
 
 from flask import request, jsonify, current_app, g, redirect, url_for, render_template_string
+from src.infrastructure.security import rate_limit_endpoint
 
 logger = logging.getLogger(__name__)
 
@@ -625,6 +626,7 @@ security_reinforcement_bp = Blueprint('security_reinforcements', __name__,
 
 
 @security_reinforcement_bp.route('/forgot-password', methods=['POST'])
+@rate_limit_endpoint(limit=5, window=900, scope='ip', block_duration=1800)
 def forgot_password():
     try:
         data = request.get_json(silent=True) or {}
@@ -657,6 +659,7 @@ def forgot_password():
 
 
 @security_reinforcement_bp.route('/reset-password', methods=['POST'])
+@rate_limit_endpoint(limit=5, window=900, scope='ip', block_duration=1800)
 def reset_password_confirm():
     try:
         data = request.get_json(silent=True) or {}

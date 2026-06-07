@@ -126,6 +126,15 @@ def login():
             SecurityAuditLogger.log_event('login_invalid_format', 'Invalid JSON body', risk_score=40)
             return jsonify({'success': False, 'message': 'Invalid request format'}), 400
 
+        ok, err = InputSanitizer.validate_json_body(
+            data,
+            allowed_fields={'email', 'password', 'remember_me', 'device_fingerprint', 'institutionId', 'institution_id'},
+            required_fields={'email', 'password'}
+        )
+        if not ok:
+            SecurityAuditLogger.log_event('login_invalid_fields', f'Invalid fields: {err}', risk_score=40)
+            return jsonify({'success': False, 'message': err}), 400
+
         sanitized_email = InputSanitizer.sanitize_email(data.get('email', ''))
         if not sanitized_email or not data.get('password'):
             SecurityAuditLogger.log_event('login_missing_fields', 'Missing email/password', risk_score=40)

@@ -775,8 +775,33 @@ class SecurityAuditLogger:
             log_level = logging.WARNING if risk_score >= 50 else logging.INFO
             logger.log(log_level, f"Security event [{event_type}]: {description} - User: {user_id} - IP: {ip_address}")
 
+            if risk_score >= 50:
+                SecurityAuditLogger._dispatch_alert(event_type, description, risk_score, event_data)
+
         except Exception as e:
             logger.error(f"Failed to log security event: {e}")
+
+    @staticmethod
+    def _dispatch_alert(event_type: str, description: str, risk_score: int, event_data: dict):
+        """Dispatch a real-time alert for high-risk events via configured webhook."""
+        webhook = os.environ.get('SECURITY_ALERT_WEBHOOK', '').strip()
+        if not webhook:
+            return
+        try:
+            import urllib.request
+            payload = json.dumps({
+                'text': f'[Attendrix Security Alert] {event_type}\n'
+                        f'Risk: {risk_score}/100\n'
+                        f'Description: {description}\n'
+                        f'Time: {event_data["created_at"]}\n'
+                        f'IP: {event_data.get("ip_address", "unknown")}\n'
+                        f'User: {event_data.get("user_id", "anonymous")}'
+            }).encode('utf-8')
+            req = urllib.request.Request(webhook, data=payload,
+                                         headers={'Content-Type': 'application/json'})
+            urllib.request.urlopen(req, timeout=5)
+        except Exception as e:
+            logger.error(f"Failed to dispatch security alert to webhook: {e}")
 
     @staticmethod
     def log_unauthorized_access(endpoint: str):

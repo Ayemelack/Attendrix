@@ -1,0 +1,37 @@
+name: Security Scan
+
+on:
+  push:
+    branches: [master, main]
+  pull_request:
+    branches: [master, main]
+  schedule:
+    - cron: '0 6 * * 1'  # Every Monday 06:00 UTC
+
+jobs:
+  pip-audit:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: '3.11'
+      - name: Install pip-audit
+        run: pip install pip-audit
+      - name: Run vulnerability scan
+        run: pip-audit --requirement requirements.txt 2>&1 || true
+
+  secrets-scan:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+      - name: Check for committed credentials
+        run: |
+          echo "=== Checking for .env files ==="
+          git ls-files --cached | grep -E '\.env$|\.env\.' || echo "None found"
+          echo "=== Checking for service account JSON ==="
+          git ls-files --cached | grep -iE 'firebase|credential|service.?account|adminsdk' || echo "None found"
+          echo "=== Checking for key/PEM files ==="
+          git ls-files --cached | grep -iE '\.pem$|\.key$|\.p12$|\.pfx$' || echo "None found"

@@ -258,6 +258,46 @@ def require_role(*allowed_roles):
     return decorator
 
 
+def require_admin_webauthn(f):
+    """Require admin users to have at least one WebAuthn passkey enrolled.
+
+    Applied after @require_auth and @require_role so that only authenticated
+    admin users reach this check.  Routes needed for *enrolling* the first
+    passkey (register_begin, register_complete) must NOT use this decorator.
+    """
+    _admin_roles = {UserRole.SUPER_ADMIN, UserRole.INSTITUTIONAL_ADMIN}
+
+    @wraps(f)
+    def decorated_function(*args, **kwargs):
+        if not hasattr(request, 'current_user'):
+            return jsonify({'error': 'Authentication required'}), 401
+
+        role = request.current_user.get('role')
+        if isinstance(role, str):
+            try:
+                role = UserRole(role)
+            except ValueError:
+                return jsonify({'error': 'Invalid user role'}), 403
+
+        if role not in _admin_roles:
+            return f(*args, **kwargs)
+
+        from src.infrastructure.security.webauthn_service import webauthn_service
+        user_id = request.current_user.get('user_id')
+        if not webauthn_service.has_active_credentials(user_id):
+            logger.warning(f"Admin 2FA block: user {user_id} has no passkey enrolled")
+            return jsonify({
+                'error': 'Passkey required',
+                'message': 'Enroll a passkey before performing admin actions',
+                'setup_required': True,
+                'setup_url': '/auth/webauthn/register/begin',
+            }), 403
+
+        return f(*args, **kwargs)
+
+    return decorated_function
+
+
 def require_permission(*permissions: str):
     """Decorator to require specific permissions"""
     def decorator(f):
