@@ -2281,9 +2281,7 @@
         var token = getToken();
         if (!token) return;
 
-        var url = '/api/student/events/stream?token=' + encodeURIComponent(token) +
-                  '&user_id=' + encodeURIComponent('dev_student') +
-                  '&institution_id=' + encodeURIComponent('inst_001');
+        var url = '/api/student/events/stream?token=' + encodeURIComponent(token);
 
         if (sseClient) sseClient.close();
 

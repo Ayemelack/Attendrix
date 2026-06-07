@@ -582,21 +582,24 @@ class SuperAdminService:
         try:
             import os, time
             return round((time.time() - os.path.getmtime(__file__)) / 3600, 1)
-        except:
+        except Exception as e:
+            logger.debug(f"Failed to get uptime: {e}")
             return 0
 
     def _parse_date(self, date_str):
         try:
             if isinstance(date_str, datetime): return date_str.date()
             return datetime.fromisoformat(date_str.replace('Z', '')).date()
-        except:
+        except Exception as e:
+            logger.debug(f"Failed to parse date {date_str}: {e}")
             return None
 
     def _parse_datetime(self, date_str):
         try:
             if isinstance(date_str, datetime): return date_str
             return datetime.fromisoformat(date_str.replace('Z', ''))
-        except:
+        except Exception as e:
+            logger.debug(f"Failed to parse datetime {date_str}: {e}")
             return datetime.min
 
 

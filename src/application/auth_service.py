@@ -341,9 +341,24 @@ class AuthenticationService:
             logger.error(f"Token verification failed: {str(e)}")
             return None
 
-    def logout_user(self, user_id: str, ip_address: str = None,
+    def logout_user(self, user_id: str, token: str = None, ip_address: str = None,
                    user_agent: str = None) -> bool:
         try:
+            if token:
+                try:
+                    payload = jwt.decode(
+                        token,
+                        current_app.config['JWT_SECRET_KEY'],
+                        algorithms=['HS256']
+                    )
+                    jti = payload.get('jti')
+                    exp = payload.get('exp', 0)
+                    if jti:
+                        redis_token_blacklist.blacklist(jti, exp)
+                        logger.info(f"Token blacklisted: jti={jti[:16]}")
+                except (jwt.ExpiredSignatureError, jwt.InvalidTokenError, Exception) as decode_err:
+                    logger.warning(f"Could not decode token for jti blacklist: {decode_err}")
+
             self._log_security_event(
                 user_id,
                 None,

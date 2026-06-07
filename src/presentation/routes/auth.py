@@ -212,8 +212,12 @@ def refresh_token():
 def logout():
     try:
         user_id = request.current_user.get('user_id')
+        auth_header = request.headers.get('Authorization', '')
+        token = (auth_header.replace('Bearer ', '', 1) if auth_header.startswith('Bearer ')
+                 else request.cookies.get('auth_token', ''))
         success = _auth_service.logout_user(
             user_id=user_id,
+            token=token,
             ip_address=request.remote_addr,
             user_agent=request.headers.get('User-Agent')
         )

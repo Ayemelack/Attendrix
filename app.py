@@ -30,7 +30,7 @@ from src.infrastructure.cloudflare_security import (
 )
 
 # Import application services
-from src.application.rbac import require_auth, require_role, log_access
+from src.application.rbac import require_auth, require_role, log_access, require_admin_webauthn
 # Import comprehensive security infrastructure
 from src.infrastructure.security.integration import init_security as init_comprehensive_security
 
@@ -1202,7 +1202,14 @@ def create_app():
 
             # Normalize IMMEDIATELY — before any lookup or comparison
             session_code = raw_code.strip().upper()
-            user_id = data.get('studentId') or request.current_user.get('user_id')
+            auth_user_id = request.current_user.get('user_id')
+            student_id_from_body = data.get('studentId')
+            if student_id_from_body and str(student_id_from_body) != str(auth_user_id):
+                logger.warning(
+                    f"Attendance marking IDOR blocked: body studentId={student_id_from_body} "
+                    f"!= auth user_id={auth_user_id}"
+                )
+            user_id = auth_user_id
 
             # Step 1-4: Load session from SERVER & validate
             from src.application.attendance_security_service import AttendanceSecurityService
@@ -2385,6 +2392,7 @@ def create_app():
     @app.route('/api/institutional/users', methods=['POST'])
     @require_auth
     @require_role('institutional_admin', 'super_admin')
+    @require_admin_webauthn
     @log_access
     def institutional_create_user():
         institution_id = request.current_user.get('institution_id')
@@ -2399,6 +2407,7 @@ def create_app():
     @app.route('/api/institutional/users/<user_id>', methods=['PUT'])
     @require_auth
     @require_role('institutional_admin', 'super_admin')
+    @require_admin_webauthn
     @log_access
     def institutional_update_user(user_id):
         institution_id = request.current_user.get('institution_id')
@@ -3428,7 +3437,16 @@ def create_app():
         try:
             data = request.get_json()
             role = data.get('role')
-            institution_id = data.get('institution_id')
+            user = request.current_user
+            # Enforce institution_id from authenticated user, not request body
+            institution_id = user.get('institution_id') or data.get('institution_id')
+            if user.get('role') != 'super_admin':
+                institution_id = user.get('institution_id')
+                if data.get('institution_id') and str(data['institution_id']) != str(institution_id):
+                    logger.warning(
+                        f"Voucher generation IDOR blocked: body institution_id={data['institution_id']} "
+                        f"!= auth institution_id={institution_id} (user={user.get('user_id')})"
+                    )
             quantity = data.get('quantity', 10)
             email_binding = data.get('email_binding')  # Optional
             

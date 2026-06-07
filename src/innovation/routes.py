@@ -71,6 +71,8 @@ def predict_risk():
 
 
 @innovation_bp.route('/risk/heatmap', methods=['POST'])
+@require_auth
+@rate_limit_endpoint(limit=30, window=60, scope='ip', block_duration=120)
 def risk_heatmap():
     """Generate department/faculty risk heatmap."""
     if not _engine or not _engine.risk_engine:
@@ -88,6 +90,7 @@ def risk_heatmap():
 
 @innovation_bp.route('/risk/exam-eligibility', methods=['POST'])
 @require_auth
+@rate_limit_endpoint(limit=30, window=60, scope='ip', block_duration=120)
 def exam_eligibility():
     """Predict exam eligibility from attendance trajectory."""
     if not _engine or not _engine.risk_engine:
@@ -103,6 +106,7 @@ def exam_eligibility():
 
 @innovation_bp.route('/risk/burnout', methods=['POST'])
 @require_auth
+@rate_limit_endpoint(limit=30, window=60, scope='ip', block_duration=120)
 def detect_burnout():
     """Detect burnout patterns from attendance records."""
     if not _engine or not _engine.risk_engine:
@@ -119,6 +123,7 @@ def detect_burnout():
 
 @innovation_bp.route('/participation/classify', methods=['POST'])
 @require_auth
+@rate_limit_endpoint(limit=30, window=60, scope='ip', block_duration=120)
 def classify_engagement():
     """Classify engagement level for a student session."""
     if not _engine or not _engine.participation:
@@ -141,6 +146,7 @@ def classify_engagement():
 
 @innovation_bp.route('/participation/lecturer-report', methods=['POST'])
 @require_auth
+@rate_limit_endpoint(limit=30, window=60, scope='ip', block_duration=120)
 def lecturer_report():
     """Generate lecturer effectiveness report."""
     if not _engine or not _engine.participation:
@@ -155,6 +161,7 @@ def lecturer_report():
 
 @innovation_bp.route('/participation/heatmap', methods=['POST'])
 @require_auth
+@rate_limit_endpoint(limit=30, window=60, scope='ip', block_duration=120)
 def participation_heatmap():
     """Generate participation heatmap."""
     if not _engine or not _engine.participation:
@@ -170,6 +177,7 @@ def participation_heatmap():
 
 @innovation_bp.route('/participation/silent-students', methods=['POST'])
 @require_auth
+@rate_limit_endpoint(limit=30, window=60, scope='ip', block_duration=120)
 def silent_students():
     """Detect silently disengaged students."""
     if not _engine or not _engine.participation:
@@ -190,6 +198,7 @@ def silent_students():
 
 @innovation_bp.route('/classroom/intelligence', methods=['POST'])
 @require_auth
+@rate_limit_endpoint(limit=30, window=60, scope='ip', block_duration=120)
 def classroom_intelligence():
     """Get classroom intelligence metrics."""
     if not _engine or not _engine.classroom:
@@ -215,6 +224,7 @@ def classroom_intelligence():
 
 @innovation_bp.route('/classroom/underutilized', methods=['POST'])
 @require_auth
+@rate_limit_endpoint(limit=30, window=60, scope='ip', block_duration=120)
 def underutilized_halls():
     """Find underutilized classrooms."""
     if not _engine or not _engine.classroom:
@@ -233,6 +243,7 @@ def underutilized_halls():
 
 @innovation_bp.route('/classroom/overcrowding-prediction', methods=['POST'])
 @require_auth
+@rate_limit_endpoint(limit=30, window=60, scope='ip', block_duration=120)
 def predict_overcrowding():
     """Predict classroom overcrowding."""
     if not _engine or not _engine.classroom:
@@ -249,6 +260,7 @@ def predict_overcrowding():
 
 @innovation_bp.route('/validation/pattern', methods=['POST'])
 @require_auth
+@rate_limit_endpoint(limit=30, window=60, scope='ip', block_duration=120)
 def build_pattern():
     """Build behavioral pattern for a student."""
     if not _engine or not _engine.validation:
@@ -271,6 +283,7 @@ def build_pattern():
 
 @innovation_bp.route('/validation/verify', methods=['POST'])
 @require_auth
+@rate_limit_endpoint(limit=30, window=60, scope='ip', block_duration=120)
 def validate_attendance():
     """Multi-factor contextual attendance validation."""
     if not _engine or not _engine.validation:
@@ -286,6 +299,7 @@ def validate_attendance():
 
 @innovation_bp.route('/validation/continuous-presence', methods=['POST'])
 @require_auth
+@rate_limit_endpoint(limit=30, window=60, scope='ip', block_duration=120)
 def continuous_presence():
     """Verify continuous presence throughout a session."""
     if not _engine or not _engine.validation:
@@ -302,6 +316,7 @@ def continuous_presence():
 
 @innovation_bp.route('/digital-twin/snapshot', methods=['POST'])
 @require_auth
+@rate_limit_endpoint(limit=30, window=60, scope='ip', block_duration=120)
 def twin_snapshot():
     """Generate digital twin snapshot."""
     if not _engine or not _engine.digital_twin:
@@ -327,6 +342,7 @@ def twin_snapshot():
 
 @innovation_bp.route('/digital-twin/heatmap', methods=['POST'])
 @require_auth
+@rate_limit_endpoint(limit=30, window=60, scope='ip', block_duration=120)
 def twin_heatmap():
     """Generate campus heatmap data."""
     if not _engine or not _engine.digital_twin:
@@ -341,6 +357,7 @@ def twin_heatmap():
 
 @innovation_bp.route('/digital-twin/performance', methods=['POST'])
 @require_auth
+@rate_limit_endpoint(limit=30, window=60, scope='ip', block_duration=120)
 def twin_performance():
     """Calculate institutional performance intelligence."""
     if not _engine or not _engine.digital_twin:
@@ -376,6 +393,7 @@ def verify_full_chain(chain_id: str):
 
 @innovation_bp.route('/trust/attest', methods=['POST'])
 @require_auth
+@rate_limit_endpoint(limit=30, window=60, scope='ip', block_duration=120)
 def attest_record():
     """Create cryptographically attested record."""
     if not _engine or not _engine.trust_chain:
@@ -394,6 +412,7 @@ def attest_record():
 
 @innovation_bp.route('/intervention/create', methods=['POST'])
 @require_auth
+@rate_limit_endpoint(limit=30, window=60, scope='ip', block_duration=120)
 def create_intervention():
     """Create an intervention (manual or auto)."""
     if not _engine or not _engine.intervention:
@@ -428,6 +447,7 @@ def create_intervention():
 
 @innovation_bp.route('/intervention/resolve', methods=['POST'])
 @require_auth
+@rate_limit_endpoint(limit=30, window=60, scope='ip', block_duration=120)
 def resolve_intervention():
     """Resolve an intervention."""
     if not _engine or not _engine.intervention:
@@ -456,6 +476,7 @@ def pending_interventions():
 
 @innovation_bp.route('/reputation/student', methods=['POST'])
 @require_auth
+@rate_limit_endpoint(limit=30, window=60, scope='ip', block_duration=120)
 def student_reputation():
     """Compute student reputation score."""
     if not _engine or not _engine.reputation:
@@ -477,6 +498,7 @@ def student_reputation():
 
 @innovation_bp.route('/reputation/lecturer', methods=['POST'])
 @require_auth
+@rate_limit_endpoint(limit=30, window=60, scope='ip', block_duration=120)
 def lecturer_reputation():
     """Compute lecturer reputation score."""
     if not _engine or not _engine.reputation:
@@ -497,6 +519,7 @@ def lecturer_reputation():
 
 @innovation_bp.route('/reputation/department-rankings', methods=['POST'])
 @require_auth
+@rate_limit_endpoint(limit=30, window=60, scope='ip', block_duration=120)
 def department_rankings():
     """Rank departments by attendance discipline."""
     if not _engine or not _engine.reputation:
@@ -516,6 +539,7 @@ def department_rankings():
 
 @innovation_bp.route('/security/emergency/activate', methods=['POST'])
 @require_auth
+@rate_limit_endpoint(limit=30, window=60, scope='ip', block_duration=120)
 def activate_emergency():
     """Activate emergency protocol."""
     if not _engine or not _engine.security:
@@ -536,6 +560,7 @@ def activate_emergency():
 
 @innovation_bp.route('/security/emergency/resolve', methods=['POST'])
 @require_auth
+@rate_limit_endpoint(limit=30, window=60, scope='ip', block_duration=120)
 def resolve_emergency():
     """Resolve active emergency."""
     if not _engine or not _engine.security:
@@ -549,6 +574,7 @@ def resolve_emergency():
 
 @innovation_bp.route('/security/emergency/reconcile', methods=['POST'])
 @require_auth
+@rate_limit_endpoint(limit=30, window=60, scope='ip', block_duration=120)
 def reconcile_evacuation():
     """Reconcile evacuation attendance."""
     if not _engine or not _engine.security:
@@ -587,6 +613,7 @@ def network_status():
 
 @innovation_bp.route('/infrastructure/node/register', methods=['POST'])
 @require_auth
+@rate_limit_endpoint(limit=30, window=60, scope='ip', block_duration=120)
 def register_node():
     """Register an edge node."""
     if not _engine or not _engine.infrastructure:

@@ -79,24 +79,35 @@ class FirebaseService:
     def initialize(self, credentials_path: str = None, project_id: str = None):
         if self._initialized:
             return
+
+        # Read USE_MOCK_FIREBASE from Flask app config first, then env var
         try:
-        mock_env = os.environ.get('USE_MOCK_FIREBASE', 'true').lower()
+            from flask import current_app
+            use_mock_raw = current_app.config.get('USE_MOCK_FIREBASE', os.environ.get('USE_MOCK_FIREBASE', 'true'))
+        except (RuntimeError, ImportError):
+            use_mock_raw = os.environ.get('USE_MOCK_FIREBASE', 'true')
+
+        mock_env = str(use_mock_raw).lower()
+
+        # Production guard: refuse mock mode entirely when ENVIRONMENT=production
+        env = os.environ.get('ENVIRONMENT', os.environ.get('FLASK_ENV', 'production'))
+        if env == 'production' and mock_env == 'true':
+            logger.error(
+                "USE_MOCK_FIREBASE=true in production environment. "
+                "Set USE_MOCK_FIREBASE=false and configure real Firebase credentials."
+            )
+            raise RuntimeError(
+                "Refusing to run with mock Firebase in production. "
+                "Set USE_MOCK_FIREBASE=false and configure Firestore credentials."
+            )
+
         if mock_env == 'true':
-            env = os.environ.get('ENVIRONMENT', os.environ.get('FLASK_ENV', 'production'))
-            if env == 'production':
-                logger.error(
-                    "USE_MOCK_FIREBASE=true in production environment. "
-                    "Set USE_MOCK_FIREBASE=false and configure real Firebase credentials."
-                )
-                raise RuntimeError(
-                    "Refusing to run with mock Firebase in production. "
-                    "Set USE_MOCK_FIREBASE=false and configure Firestore credentials."
-                )
             logger.info("Using mock Firebase service (USE_MOCK_FIREBASE=true)")
             self._mock_mode = True
             self._initialized = True
             return
 
+        try:
             if credentials_path and os.path.exists(credentials_path):
                 cred = credentials.Certificate(credentials_path)
             else:
@@ -122,12 +133,14 @@ class FirebaseService:
 
         except Exception as e:
             logger.error(f"Failed to initialize Firebase: {str(e)}")
+            if env == 'production':
+                raise RuntimeError("Firebase initialization failed in production") from e
             if os.environ.get('USE_MOCK_FIREBASE', 'true').lower() == 'false':
                 logger.error("USE_MOCK_FIREBASE=false but Firebase credentials could not be loaded.")
                 logger.error("Place your Firebase service account JSON at: firebase-dev.json")
                 logger.error("See: https://console.firebase.google.com/ → Project Settings → Service Accounts")
                 raise
-            logger.info("Falling back to mock Firebase service")
+            logger.warning("Falling back to mock Firebase service")
             self._mock_mode = True
             self._initialized = True
 

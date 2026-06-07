@@ -233,7 +233,8 @@ class VoucherManagementService:
                             v['used_by_email'] = user_doc.get('email', v['used_by'])
                         else:
                             v['used_by_email'] = v['used_by']
-                    except:
+                    except Exception as e:
+                        logger.warning(f"Failed to resolve used_by email for {v['used_by']}: {e}")
                         v['used_by_email'] = v['used_by']
             
             if search:
