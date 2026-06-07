@@ -36,63 +36,229 @@ class CaptchaVerifier:
     """
     Multi-provider CAPTCHA verification supporting Cloudflare Turnstile and Google reCAPTCHA.
     Configure via environment: TURNSTILE_SECRET_KEY or RECAPTCHA_SECRET_KEY.
+
+    Phase 2B upgrade: real verification with replay protection, token caching,
+    score-based reCAPTCHA v3 evaluation, hostname validation, and fallback chaining.
     """
 
+    TURNSTILE_URL = 'https://challenges.cloudflare.com/turnstile/v0/siteverify'
+    RECAPTCHA_URL = 'https://www.google.com/recaptcha/api/siteverify'
+    DEFAULT_CACHE_TTL = 300
+
     def __init__(self):
-        self._cache = {}
+        self._cache: Dict[str, tuple[bool, float]] = {}
+        self._used_tokens: Set[str] = set()
+
+    def _get_turnstile_secret(self) -> str:
+        return (current_app.config.get('CLOUDFLARE_TURNSTILE_SECRET_KEY')
+                or current_app.config.get('TURNSTILE_SECRET_KEY')
+                or '')
+
+    def _get_recaptcha_secret(self) -> str:
+        return current_app.config.get('RECAPTCHA_SECRET_KEY') or ''
+
+    def _get_recaptcha_threshold(self) -> float:
+        return current_app.config.get('RECAPTCHA_SCORE_THRESHOLD', 0.5)
+
+    def _get_allowed_domains(self) -> List[str]:
+        return current_app.config.get('TURNSTILE_ALLOWED_DOMAINS', [])
+
+    def _is_dev(self) -> bool:
+        return current_app.config.get('ENV') == 'development' or current_app.debug
+
+    def _cache_key(self, token: str) -> str:
+        return f"captcha:{hashlib.sha256(token.encode()).hexdigest()}"
 
     def verify_turnstile(self, token: str, ip: str = None) -> bool:
-        """Verify Cloudflare Turnstile token."""
+        """Verify Cloudflare Turnstile token with replay protection and hostname validation."""
         import requests as _req
-        # Prefer explicit Cloudflare-named secret, fall back to generic TURNSTILE_SECRET_KEY
-        secret = current_app.config.get('CLOUDFLARE_TURNSTILE_SECRET_KEY') or current_app.config.get('TURNSTILE_SECRET_KEY', '')
-        if not secret:
-            logger.warning("Turnstile secret key not configured - blocking request")
+
+        if not token:
+            logger.warning("Turnstile: empty token")
             return False
+
+        if token in self._used_tokens:
+            logger.warning(f"Turnstile: replay attack detected - token already used from {ip}")
+            return False
+
+        cache_key = self._cache_key(token)
+        cached = self._cache.get(cache_key)
+        if cached is not None:
+            result, expiry = cached
+            if time.time() < expiry:
+                return result
+            del self._cache[cache_key]
+
+        secret = self._get_turnstile_secret()
+        if not secret:
+            logger.warning("Turnstile: secret key not configured - blocking request")
+            return False
+
         try:
             resp = _req.post(
-                'https://challenges.cloudflare.com/turnstile/v0/siteverify',
+                self.TURNSTILE_URL,
                 data={'secret': secret, 'response': token, 'remoteip': ip},
                 timeout=10
             )
             result = resp.json()
-            # Explicitly reject on success==False and log error codes for auditing
             success = result.get('success', False)
+            error_codes = result.get('error-codes', [])
+
             if not success:
-                logger.warning(f"Turnstile verification response: {result}")
-            return bool(success)
+                logger.warning(
+                    f"Turnstile: verification failed | ip={ip} | errors={error_codes} | "
+                    f"response={json.dumps(result)}"
+                )
+                self._cache[cache_key] = (False, time.time() + 60)
+                return False
+
+            hostname = result.get('hostname', '')
+            allowed = self._get_allowed_domains()
+            if allowed and hostname and hostname not in allowed:
+                logger.warning(
+                    f"Turnstile: hostname '{hostname}' not in allowed domains {allowed} | ip={ip}"
+                )
+                self._cache[cache_key] = (False, time.time() + 60)
+                return False
+
+            self._used_tokens.add(token)
+            self._cache[cache_key] = (True, time.time() + self.DEFAULT_CACHE_TTL)
+
+            logger.info(f"Turnstile: verification succeeded | ip={ip} | hostname={hostname}")
+            return True
+
+        except _req.exceptions.Timeout:
+            logger.error(f"Turnstile: request timed out | ip={ip}")
+            return False
+        except _req.exceptions.RequestException as e:
+            logger.error(f"Turnstile: request failed | ip={ip} | error={e}")
+            return False
         except Exception as e:
-            logger.error(f"Turnstile verification failed: {e}")
+            logger.error(f"Turnstile: unexpected error | ip={ip} | error={e}")
             return False
 
     def verify_recaptcha(self, token: str, ip: str = None) -> bool:
-        """Verify Google reCAPTCHA v2/v3 token."""
+        """Verify Google reCAPTCHA v3 token with score threshold evaluation."""
         import requests as _req
-        secret = current_app.config.get('RECAPTCHA_SECRET_KEY', '')
-        if not secret:
-            logger.warning("reCAPTCHA secret key not configured - blocking request")
+
+        if not token:
+            logger.warning("reCAPTCHA: empty token")
             return False
+
+        cache_key = self._cache_key(token)
+        cached = self._cache.get(cache_key)
+        if cached is not None:
+            result, expiry = cached
+            if time.time() < expiry:
+                return result
+            del self._cache[cache_key]
+
+        secret = self._get_recaptcha_secret()
+        if not secret:
+            logger.warning("reCAPTCHA: secret key not configured - blocking request")
+            return False
+
         try:
             resp = _req.post(
-                'https://www.google.com/recaptcha/api/siteverify',
+                self.RECAPTCHA_URL,
                 data={'secret': secret, 'response': token, 'remoteip': ip},
                 timeout=10
             )
             result = resp.json()
-            return result.get('success', False)
-        except Exception as e:
-            logger.error(f"reCAPTCHA verification failed: {e}")
+            success = result.get('success', False)
+            score = result.get('score', 0.0)
+            threshold = self._get_recaptcha_threshold()
+
+            if not success:
+                error_codes = result.get('error-codes', [])
+                logger.warning(
+                    f"reCAPTCHA: verification failed | ip={ip} | errors={error_codes} | "
+                    f"response={json.dumps(result)}"
+                )
+                self._cache[cache_key] = (False, time.time() + 60)
+                return False
+
+            if score < threshold:
+                logger.warning(
+                    f"reCAPTCHA: score {score} below threshold {threshold} | ip={ip}"
+                )
+                self._cache[cache_key] = (False, time.time() + 60)
+                return False
+
+            if score < 0.7:
+                logger.info(
+                    f"reCAPTCHA: suspicious activity | score={score} | ip={ip}"
+                )
+
+            self._cache[cache_key] = (True, time.time() + self.DEFAULT_CACHE_TTL)
+
+            logger.info(f"reCAPTCHA: verification succeeded | score={score} | ip={ip}")
+            return True
+
+        except _req.exceptions.Timeout:
+            logger.error(f"reCAPTCHA: request timed out | ip={ip}")
             return False
+        except _req.exceptions.RequestException as e:
+            logger.error(f"reCAPTCHA: request failed | ip={ip} | error={e}")
+            return False
+        except Exception as e:
+            logger.error(f"reCAPTCHA: unexpected error | ip={ip} | error={e}")
+            return False
+
+    def get_provider(self) -> str:
+        """Return the active provider name: 'turnstile', 'recaptcha', or 'none'."""
+        if self._get_turnstile_secret():
+            return 'turnstile'
+        if self._get_recaptcha_secret():
+            return 'recaptcha'
+        return 'none'
+
+    def is_configured(self) -> bool:
+        """Check if any CAPTCHA provider is configured."""
+        return bool(self._get_turnstile_secret() or self._get_recaptcha_secret())
 
     def verify(self, token: str = None, ip: str = None) -> bool:
         """Verify CAPTCHA token - auto-selects provider based on configuration."""
         if not token:
             return False
-        if current_app.config.get('TURNSTILE_SECRET_KEY'):
-            return self.verify_turnstile(token, ip)
-        if current_app.config.get('RECAPTCHA_SECRET_KEY'):
-            return self.verify_recaptcha(token, ip)
-        logger.warning("No CAPTCHA provider configured - blocking request")
+
+        provider = self.get_provider()
+
+        if provider == 'turnstile':
+            result = self.verify_turnstile(token, ip)
+            logger.info(f"CaptchaVerifier: used turnstile | result={result} | ip={ip}")
+            return result
+
+        if provider == 'recaptcha':
+            result = self.verify_recaptcha(token, ip)
+            logger.info(f"CaptchaVerifier: used recaptcha | result={result} | ip={ip}")
+            return result
+
+        if self._is_dev():
+            logger.warning("No CAPTCHA provider configured - allowing in development mode")
+            return True
+
+        logger.warning("No CAPTCHA provider configured - blocking request in production")
+        return False
+
+    def verify_with_fallback(self, token: str, ip: str = None,
+                             providers: List[str] = None) -> bool:
+        """Try multiple providers in order, returning True on first success."""
+        if providers is None:
+            providers = ['turnstile', 'recaptcha']
+
+        if not token:
+            return False
+
+        for provider in providers:
+            if provider == 'turnstile' and self._get_turnstile_secret():
+                if self.verify_turnstile(token, ip):
+                    return True
+            elif provider == 'recaptcha' and self._get_recaptcha_secret():
+                if self.verify_recaptcha(token, ip):
+                    return True
+
+        logger.warning(f"verify_with_fallback: all providers failed | providers={providers} | ip={ip}")
         return False
 
 

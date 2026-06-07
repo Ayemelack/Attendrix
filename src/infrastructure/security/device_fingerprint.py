@@ -7,7 +7,9 @@ Device identification, emulator detection, shared device detection, and device b
 
 import hashlib
 import logging
-from typing import Dict, Any, Tuple, Optional
+import math
+from datetime import datetime, timedelta
+from typing import Dict, Any, Tuple, Optional, List
 from dataclasses import dataclass
 from flask import request
 
@@ -53,6 +55,8 @@ class DeviceFingerprintAnalyzer:
     def __init__(self):
         """Initialize device fingerprint analyzer."""
         self.device_cache = {}  # {user_id: [fingerprints]}
+        self.persistent_store = {}  # {user_id: [(timestamp, fingerprint_dict)]}
+        self.location_cache = {}  # {user_id: (timestamp, lat, lon)}
 
     def generate_fingerprint(
         self,
@@ -206,6 +210,126 @@ class DeviceFingerprintAnalyzer:
             return False, message, metadata
 
         return True, None, metadata
+
+    def persist_device(self, user_id: str, fingerprint: DeviceFingerprint):
+        """Store device fingerprint to persistent store."""
+        if user_id not in self.persistent_store:
+            self.persistent_store[user_id] = []
+        self.persistent_store[user_id].append({
+            'timestamp': datetime.utcnow(),
+            'fingerprint': fingerprint.to_dict(),
+        })
+        logger.info(f'Device fingerprint persisted for user {user_id}')
+
+    def get_device_history(self, user_id: str, limit: int = 10) -> List[Dict[str, Any]]:
+        """Get device history for a user."""
+        records = self.persistent_store.get(user_id, [])
+        return records[-limit:]
+
+    def calculate_device_trust_score(self, user_id: str, fingerprint: DeviceFingerprint) -> float:
+        """Calculate trust score (0-1) based on device history and characteristics."""
+        score = 0.5
+        history = self.persistent_store.get(user_id, [])
+
+        times_seen = sum(1 for r in history if r['fingerprint']['fingerprint_id'] == fingerprint.fingerprint_id)
+        score += min(times_seen * 0.1, 0.2)
+
+        if history:
+            first_seen = history[0]['timestamp']
+            days_used = (datetime.utcnow() - first_seen).days
+            score += min(days_used * 0.01, 0.1)
+
+        if fingerprint.is_emulator or fingerprint.is_rooted_jailbroken:
+            score -= 0.2
+
+        if fingerprint.entropy_score < 0.3:
+            score -= 0.15
+
+        suspicious_count = sum(
+            1 for r in history
+            if r.get('flagged_suspicious', False)
+        )
+        score -= suspicious_count * 0.1
+
+        return max(0.0, min(score, 1.0))
+
+    def is_device_suspicious(self, user_id: str, fingerprint: DeviceFingerprint) -> bool:
+        """Check if device is suspicious based on trust score and heuristics."""
+        if self.calculate_device_trust_score(user_id, fingerprint) < 0.4:
+            return True
+        if fingerprint.is_emulator or fingerprint.is_rooted_jailbroken:
+            return True
+        if fingerprint.entropy_score < 0.2:
+            return True
+        return False
+
+    def is_impossible_travel(self, user_id: str, current_location: Dict[str, Any]) -> bool:
+        """Detect if user logged in from geographically impossible distance since last request."""
+        if user_id not in self.location_cache:
+            self.location_cache[user_id] = (datetime.utcnow(), current_location.get('lat'), current_location.get('lon'))
+            return False
+
+        prev_time, prev_lat, prev_lon = self.location_cache[user_id]
+        cur_time = datetime.utcnow()
+        cur_lat = current_location.get('lat')
+        cur_lon = current_location.get('lon')
+
+        if None in (prev_lat, prev_lon, cur_lat, cur_lon):
+            self.location_cache[user_id] = (cur_time, cur_lat, cur_lon)
+            return False
+
+        time_diff = (cur_time - prev_time).total_seconds() / 3600
+        if time_diff <= 0:
+            return False
+
+        R = 6371
+        dlat = math.radians(cur_lat - prev_lat)
+        dlon = math.radians(cur_lon - prev_lon)
+        a = math.sin(dlat / 2) ** 2 + math.cos(math.radians(prev_lat)) * math.cos(math.radians(cur_lat)) * math.sin(dlon / 2) ** 2
+        c = 2 * math.asin(math.sqrt(a))
+        distance_km = R * c
+
+        speed_kph = distance_km / time_diff
+
+        self.location_cache[user_id] = (cur_time, cur_lat, cur_lon)
+
+        if speed_kph > 900:
+            logger.warning(f'Impossible travel detected for user {user_id}: {speed_kph:.0f} km/h')
+            return True
+        return False
+
+    def get_device_reputation_summary(self, user_id: str) -> str:
+        """Get text summary of device trust status."""
+        history = self.persistent_store.get(user_id, [])
+        if not history:
+            return 'No device history available for this user.'
+
+        total_devices = len(set(r['fingerprint']['fingerprint_id'] for r in history))
+        total_requests = len(history)
+        latest = history[-1]['fingerprint']
+        trust_score = self.calculate_device_trust_score(user_id, DeviceFingerprint(
+            fingerprint_id=latest['fingerprint_id'],
+            device_model=latest.get('device_model'),
+            device_type=latest.get('device_type'),
+            os=latest.get('os'),
+            is_emulator=latest.get('is_emulator', False),
+            is_shared_device=latest.get('is_shared_device', False),
+            is_rooted_jailbroken=latest.get('is_rooted_jailbroken', False),
+            entropy_score=latest.get('entropy_score', 0.0),
+        ))
+
+        summary = (
+            f'Device reputation for user {user_id}: '
+            f'{total_devices} unique device(s) seen across {total_requests} request(s). '
+            f'Trust score: {trust_score:.2f}. '
+        )
+        if trust_score >= 0.7:
+            summary += 'Device is trusted.'
+        elif trust_score >= 0.4:
+            summary += 'Device has moderate trust. Additional verification recommended.'
+        else:
+            summary += 'Device is LOW trust. Review account security.'
+        return summary
 
     def _parse_user_agent(self, ua: str, fp: DeviceFingerprint) -> DeviceFingerprint:
         """Parse User-Agent string to extract device info."""

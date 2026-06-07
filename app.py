@@ -1,6 +1,7 @@
 from flask import Flask, request, jsonify, render_template, redirect
 from flask_cors import CORS
 import os
+import secrets
 from datetime import datetime, timedelta
 import logging
 
@@ -49,6 +50,28 @@ from src.infrastructure.comprehensive_security import (
     AdminPanelSecurity, SecurityLogger, security_logger,
     log_security_event, DatabaseQuerySecurity, db_query_security,
     require_action, require_session,
+)
+
+# Phase 2H — Security Monitoring and Incident Response
+from src.infrastructure.security.security_monitor import (
+    SecurityMonitor, ThreatScorer, ForensicAuditLogger,
+    security_monitor, threat_scorer, forensic_logger,
+)
+
+# Phase 2E — Redis-backed persistent storage
+from src.infrastructure.security.redis_session_store import (
+    RedisSessionStore, RedisRateLimiter, RedisSessionManager,
+    RedisTokenBlacklist, redis_store, redis_rate_limiter,
+    redis_session_manager, redis_token_blacklist,
+)
+
+# Phase 2J — API security hardening
+from src.infrastructure.security.api_security import (
+    RequestSignatureValidator, AntiReplayProtector,
+    SchemaValidator, JWTRotationManager,
+    SecurityMiddlewareChain, AttackThrottler,
+    schema_validator, anti_replay, jwt_rotation,
+    attack_throttler,
 )
 
 
@@ -222,20 +245,48 @@ def create_app():
     app.config.from_object(config)
     config.init_app(app)
 
-    # Startup security configuration validation
-    _insecure_defaults = {
-        'SECRET_KEY': ('', 'dev-secret-key'),
-        'JWT_SECRET_KEY': ('', 'jwt-secret-key', 'dev-secret-key-change-in-production'),
-    }
-    for _key, _bad_values in _insecure_defaults.items():
-        _val = app.config.get(_key, '')
-        if _val in _bad_values or not _val:
+    # PHASE 2A — Production environment validation (upgraded)
+    env = app.config.get('ENVIRONMENT', 'production')
+    if env not in ('development', 'staging', 'production'):
+        raise RuntimeError(f"Invalid ENVIRONMENT setting: {env}")
+
+    # Validate environment readiness (from upgraded settings.py)
+    try:
+        from config.settings import ProductionConfig
+        readiness = ProductionConfig.validate_production_readiness(app.config)
+        for setting, status in readiness.items():
+            if status == 'CRITICAL':
+                raise RuntimeError(
+                    f"Production startup blocked: {setting} is not set or is insecure. "
+                    f"Set a secure value in environment variables before starting."
+                )
+            elif status == 'WARNING':
+                logger.warning(f"Production configuration warning: {setting} - {status}")
+    except ImportError:
+        pass
+
+    # Validate secret key entropy and strength
+    _secret_key = app.config.get('SECRET_KEY', '')
+    _jwt_key = app.config.get('JWT_SECRET_KEY', '')
+    _placeholder_patterns = ['must-set-', 'change-me', 'your-', 'CHANGE', 'default', 'changethis', 'secret', 'placeholder']
+
+    for _key_name, _key_val in [('SECRET_KEY', _secret_key), ('JWT_SECRET_KEY', _jwt_key)]:
+        if not _key_val or len(_key_val) < 32:
+            raise RuntimeError(f"{_key_name} must be at least 32 characters long. Generate a secure random value.")
+        _lower = _key_val.lower()
+        if any(p in _lower for p in _placeholder_patterns):
             raise RuntimeError(
-                f"{_key} is not set or is set to an insecure default. "
-                f"Set a unique, secure value in environment variables."
+                f"{_key_name} contains a placeholder pattern. "
+                f"Generate a unique, secure random value for production."
             )
-    if app.config.get('ENVIRONMENT', 'production') not in ('development', 'staging', 'production'):
-        raise RuntimeError(f"Invalid ENVIRONMENT setting: {app.config.get('ENVIRONMENT')}")
+
+    # Phase 2A — Auto-generate keys if in development and missing
+    if env == 'development' and (not _secret_key or _secret_key == 'dev-secret-key'):
+        app.config['SECRET_KEY'] = secrets.token_hex(32)
+        logger.info("Auto-generated SECRET_KEY for development")
+    if env == 'development' and (not _jwt_key or 'dev' in _jwt_key.lower()):
+        app.config['JWT_SECRET_KEY'] = secrets.token_hex(64)
+        logger.info("Auto-generated JWT_SECRET_KEY for development")
 
     # Import SQL models before init_db so they register on Base.metadata
     try:
@@ -267,7 +318,28 @@ def create_app():
     app.config['JWT_SECRET_KEY'] = jwt_secret
     app.config['JWT_ACCESS_TOKEN_EXPIRES'] = timedelta(hours=1)
     app.config['JWT_REFRESH_TOKEN_EXPIRES'] = timedelta(days=30)
-    
+
+    # Phase 2E — Initialize Redis-backed session store if enabled
+    _redis_enabled = app.config.get('REDIS_SESSION_ENABLED', False)
+    if _redis_enabled:
+        try:
+            _redis_store = RedisSessionStore(
+                redis_url=app.config.get('REDIS_URL', 'redis://localhost:6379/0'),
+                prefix='attendrix:',
+            )
+            if _redis_store.health_check():
+                logger.info("Redis session store: CONNECTED")
+                app.extensions['redis_store'] = _redis_store
+                app.extensions['redis_rate_limiter'] = RedisRateLimiter(_redis_store)
+                app.extensions['redis_session_manager'] = RedisSessionManager(_redis_store)
+                app.extensions['redis_token_blacklist'] = RedisTokenBlacklist(_redis_store)
+            else:
+                logger.warning("Redis session store: unavailable, falling back to in-memory")
+        except Exception as e:
+            logger.warning(f"Redis session store initialization failed: {e}, falling back to in-memory")
+    else:
+        logger.info("Redis session store: disabled, using in-memory storage")
+
     # Initialize extensions
     allowed_origins = os.environ.get('CORS_ALLOWED_ORIGINS', 'https://attendrix.app,https://admin.attendrix.app').split(',')
     CORS(app, origins=allowed_origins, supports_credentials=True)
@@ -283,6 +355,48 @@ def create_app():
 
     # Register security reinforcements (15 security gaps)
     register_security_reinforcements(app)
+
+    # Phase 2H — Initialize Security Monitoring
+    try:
+        _monitor_redis = app.extensions.get('redis_store')
+        if _monitor_redis:
+            security_monitor.initialize(redis_store=_monitor_redis)
+        else:
+            security_monitor.initialize()
+        app.extensions['security_monitor'] = security_monitor
+        logger.info("Security monitor initialized")
+        # Log startup as security event
+        security_monitor.record_event(
+            event_type='system_startup',
+            severity='info',
+            risk_score=0,
+            details={'environment': env}
+        )
+    except Exception as e:
+        logger.warning(f"Security monitor initialization failed: {e}")
+
+    # Phase 2J — Initialize API Security Services
+    try:
+        app.extensions['anti_replay'] = AntiReplayProtector()
+        app.extensions['schema_validator'] = SchemaValidator()
+        app.extensions['jwt_rotation'] = JWTRotationManager()
+        app.extensions['attack_throttler'] = AttackThrottler()
+        # Build security middleware chain
+        _chain = SecurityMiddlewareChain()
+        _chain.build_default_chain()
+        app.extensions['security_chain'] = _chain
+        logger.info("API security services initialized")
+    except Exception as e:
+        logger.warning(f"API security services initialization failed: {e}")
+
+    # Phase 2F — Initialize Geofence Manager
+    try:
+        from src.infrastructure.security.geolocation_security import GeofenceManager
+        _gf_manager = GeofenceManager()
+        app.extensions['geofence_manager'] = _gf_manager
+        logger.info("Geofence manager initialized")
+    except Exception as e:
+        logger.warning(f"Geofence manager initialization failed: {e}")
 
     # Initialize Firebase
     try:
@@ -688,6 +802,110 @@ def create_app():
     def mqtt_status():
         """MQTT broker connection status (mock or real)."""
         return jsonify(mqtt_service.status)
+
+    # ── PHASE 2H — SECURITY MONITORING API ──
+    @app.route('/api/security/events', methods=['GET'])
+    @require_auth
+    @require_role('super_admin', 'institutional_admin')
+    def security_events():
+        """Get security events for monitoring dashboard."""
+        try:
+            event_type = request.args.get('event_type')
+            severity = request.args.get('severity')
+            limit = int(request.args.get('limit', 100))
+            events = security_monitor.get_recent_events(
+                limit=limit, event_type=event_type, severity=severity
+            )
+            return jsonify({'events': events, 'count': len(events)}), 200
+        except Exception as e:
+            logger.error(f"Security events error: {e}")
+            return jsonify({'error': 'Failed to retrieve security events'}), 500
+
+    @app.route('/api/security/dashboard', methods=['GET'])
+    @require_auth
+    @require_role('super_admin')
+    def security_dashboard():
+        """Get security monitoring dashboard summary."""
+        try:
+            from src.infrastructure.security.security_monitor import SecurityDashboard
+            dashboard = SecurityDashboard()
+            summary = dashboard.get_dashboard_summary()
+            threats = dashboard.get_threat_overview(hours=24)
+            blocked = dashboard.get_blocked_ips_count()
+            alerts = dashboard.get_recent_alerts(limit=20)
+            auth_summary = dashboard.get_authentication_summary(hours=24)
+            top_ips = dashboard.get_top_threat_ips(limit=10)
+            score = dashboard.get_security_score()
+            return jsonify({
+                'summary': summary,
+                'threats': threats,
+                'blocked_ips_count': blocked,
+                'recent_alerts': alerts,
+                'authentication': auth_summary,
+                'top_threat_ips': top_ips,
+                'security_score': score,
+                'timestamp': datetime.utcnow().isoformat(),
+            }), 200
+        except Exception as e:
+            logger.error(f"Security dashboard error: {e}")
+            return jsonify({'error': 'Failed to retrieve security dashboard'}), 500
+
+    @app.route('/api/security/blocked-ips', methods=['GET'])
+    @require_auth
+    @require_role('super_admin')
+    def security_blocked_ips():
+        """Get list of blocked IPs."""
+        try:
+            blocked = security_monitor.get_blocked_ips()
+            return jsonify({'blocked_ips': blocked, 'count': len(blocked)}), 200
+        except Exception as e:
+            logger.error(f"Blocked IPs error: {e}")
+            return jsonify({'error': 'Failed to retrieve blocked IPs'}), 500
+
+    @app.route('/api/security/unblock-ip', methods=['POST'])
+    @require_auth
+    @require_role('super_admin')
+    def security_unblock_ip():
+        """Unblock an IP address."""
+        try:
+            data = request.get_json() or {}
+            ip = data.get('ip', '')
+            if not ip:
+                return jsonify({'error': 'IP address required'}), 400
+            security_monitor.unblock_ip(ip)
+            return jsonify({'success': True, 'message': f'IP {ip} unblocked'}), 200
+        except Exception as e:
+            logger.error(f"Unblock IP error: {e}")
+            return jsonify({'error': 'Failed to unblock IP'}), 500
+
+    @app.route('/api/security/audit-log', methods=['GET'])
+    @require_auth
+    @require_role('super_admin')
+    def security_audit_log():
+        """Get forensic audit log entries."""
+        try:
+            user_id = request.args.get('user_id')
+            event_type = request.args.get('event_type')
+            limit = int(request.args.get('limit', 100))
+            trail = forensic_logger.get_audit_trail(
+                user_id=user_id, event_type=event_type
+            )
+            return jsonify({'entries': trail[-limit:] if trail else [], 'count': min(len(trail or []), limit)}), 200
+        except Exception as e:
+            logger.error(f"Audit log error: {e}")
+            return jsonify({'error': 'Failed to retrieve audit log'}), 500
+
+    @app.route('/api/security/threats', methods=['GET'])
+    @require_auth
+    @require_role('super_admin')
+    def security_active_threats():
+        """Get currently active security threats."""
+        try:
+            threats = security_monitor.get_active_threats()
+            return jsonify({'threats': threats, 'count': len(threats)}), 200
+        except Exception as e:
+            logger.error(f"Active threats error: {e}")
+            return jsonify({'error': 'Failed to retrieve threats'}), 500
 
     @app.route('/api/demo/request', methods=['POST'])
     @log_access
