@@ -2,6 +2,7 @@ import logging
 from flask import Blueprint, request, jsonify, render_template
 from src.infrastructure.mail_service import mail_service
 from src.application.rbac import require_auth, require_role, log_access
+from src.infrastructure.comprehensive_security import AdminPanelSecurity, log_security_event
 
 
 logger = logging.getLogger(__name__)

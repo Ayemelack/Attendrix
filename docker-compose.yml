@@ -159,10 +159,10 @@ services:
       context: .
       dockerfile: Dockerfile
     container_name: attendrix-flower
-    command: celery -A app.celery flower --port=5555 --basic_auth=${FLOWER_USER:-admin}:${FLOWER_PASSWORD:-admin123}
+    command: celery -A app.celery flower --port=5555 --basic_auth=${FLOWER_USER}:${FLOWER_PASSWORD}
     environment:
       - ENVIRONMENT=production
-      - REDIS_URL=redis://:${REDIS_PASSWORD:-redis_password_123}@redis:6379/0
+      - REDIS_URL=redis://:${REDIS_PASSWORD}@redis:6379/0
     ports:
       - "5555:5555"
     depends_on:

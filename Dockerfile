@@ -37,17 +37,18 @@ ENV PYTHONDONTWRITEBYTECODE=1 \
 RUN apt-get update && apt-get install -y \
     curl \
     && rm -rf /var/lib/apt/lists/* \
-    && apt-get clean
+    && apt-get clean \
+    && rm -rf /tmp/*
 
 # Copy virtual environment from builder stage
 COPY --from=builder /opt/venv /opt/venv
 
-# Create app user
+# Create app user with no login shell and no home directory
 RUN groupadd -r attendrix && \
-    useradd -r -g attendrix -d /app -s /bin/bash attendrix
-
-# Create app directories
-RUN mkdir -p /app/config /app/uploads /app/logs /app/static && \
+    useradd -r -g attendrix -d /app -s /usr/sbin/nologin attendrix && \
+    mkdir -p /app/config /app/uploads /app/logs /app/static && \
+    mkdir -p src/presentation/static/css src/presentation/static/js src/presentation/static/images && \
+    mkdir -p logs uploads && \
     chown -R attendrix:attendrix /app
 
 # Copy application code
@@ -56,15 +57,17 @@ COPY --chown=attendrix:attendrix . /app
 # Set working directory
 WORKDIR /app
 
-# Create necessary directories
-RUN mkdir -p src/presentation/static/css src/presentation/static/js src/presentation/static/images && \
-    mkdir -p logs uploads
+# Securely set permissions on sensitive files
+RUN chmod 640 /app/.env 2>/dev/null || true && \
+    chmod 640 /app/firebase-credentials.json 2>/dev/null || true && \
+    find /app -name "*.py" -exec chmod 440 {} \; && \
+    find /app -name "*.pyc" -delete 2>/dev/null || true
 
 # Install gunicorn
-RUN pip install gunicorn
+RUN pip install --no-cache-dir --no-compile gunicorn
 
-# Switch to non-root user
-USER attendrix
+# Switch to non-root user (drop all privileges)
+USER attendrix:attendrix
 
 # Expose port
 EXPOSE 8000

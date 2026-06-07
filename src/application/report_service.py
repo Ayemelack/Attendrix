@@ -188,7 +188,10 @@ class ReportService:
             'attendance_sessions',
             filters=[{'field': 'institution_id', 'value': institution_id}],
         )
-        records = self.fb.query_documents('attendance_records')
+        records = self.fb.query_documents(
+            'attendance_records',
+            filters=[{'field': 'institution_id', 'value': institution_id}]
+        )
         session_ids = set(s['id'] for s in sessions)
         relevant_records = [r for r in records
                             if r.get('attendance_session_id') in session_ids]

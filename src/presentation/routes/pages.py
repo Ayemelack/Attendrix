@@ -1,6 +1,9 @@
 """Page route blueprints — static pages, demo flows, brochure."""
 
 from flask import Blueprint, render_template, request, jsonify, make_response, send_file
+from src.infrastructure.comprehensive_security import (
+    log_security_event, SecureErrorHandler, RouteProtector,
+)
 
 pages_bp = Blueprint('pages', __name__)
 
@@ -200,7 +203,11 @@ def logout_page():
 
 @pages_bp.route('/login', methods=['GET'])
 def login_page():
-    response = render_template('login.html')
+    from flask import current_app
+    # Use configured TURNSTILE_SITE_KEY (mapped from CLOUDFLARE_TURNSTILE_SITE_KEY if provided).
+    # Do NOT fall back to the Cloudflare demo key — that causes the "For testing only" banner.
+    turnstile_key = current_app.config.get('TURNSTILE_SITE_KEY', '')
+    response = render_template('login.html', turnstile_site_key=turnstile_key)
     resp = make_response(response)
     resp.headers['Cache-Control'] = 'no-cache, no-store, must-revalidate'
     resp.headers['Pragma'] = 'no-cache'
@@ -210,7 +217,9 @@ def login_page():
 
 @pages_bp.route('/signup', methods=['GET'])
 def signup_page():
-    return render_template('signup.html')
+    from flask import current_app
+    turnstile_key = current_app.config.get('TURNSTILE_SITE_KEY', '')
+    return render_template('signup.html', turnstile_site_key=turnstile_key)
 
 
 @pages_bp.route('/email-diagnostics')

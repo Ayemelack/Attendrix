@@ -89,9 +89,75 @@ class Config:
     CELERY_BROKER_URL = config('CELERY_BROKER_URL', default='redis://localhost:6379/3')
     CELERY_RESULT_BACKEND = config('CELERY_RESULT_BACKEND', default='redis://localhost:6379/4')
     
-    # CAPTCHA configuration
+    # CAPTCHA provider and keys
+    CAPTCHA_PROVIDER = config('CAPTCHA_PROVIDER', default='turnstile')  # 'turnstile' or 'recaptcha'
+    TURNSTILE_SITE_KEY = config('TURNSTILE_SITE_KEY', default='')
     TURNSTILE_SECRET_KEY = config('TURNSTILE_SECRET_KEY', default='')
+    RECAPTCHA_SITE_KEY = config('RECAPTCHA_SITE_KEY', default='')
     RECAPTCHA_SECRET_KEY = config('RECAPTCHA_SECRET_KEY', default='')
+    
+    # Password policy
+    PASSWORD_MIN_LENGTH = config('PASSWORD_MIN_LENGTH', default=8, cast=int)
+    PASSWORD_REQUIRE_UPPER = config('PASSWORD_REQUIRE_UPPER', default=True, cast=bool)
+    PASSWORD_REQUIRE_LOWER = config('PASSWORD_REQUIRE_LOWER', default=True, cast=bool)
+    PASSWORD_REQUIRE_DIGIT = config('PASSWORD_REQUIRE_DIGIT', default=True, cast=bool)
+    PASSWORD_REQUIRE_SPECIAL = config('PASSWORD_REQUIRE_SPECIAL', default=True, cast=bool)
+    PASSWORD_MAX_AGE_DAYS = config('PASSWORD_MAX_AGE_DAYS', default=90, cast=int)
+    PASSWORD_HISTORY_SIZE = config('PASSWORD_HISTORY_SIZE', default=5, cast=int)
+    PASSWORD_LOCKOUT_THRESHOLD = config('PASSWORD_LOCKOUT_THRESHOLD', default=5, cast=int)
+    PASSWORD_LOCKOUT_MINUTES = config('PASSWORD_LOCKOUT_MINUTES', default=15, cast=int)
+    
+    # CSRF protection
+    CSRF_TOKEN_EXPIRY = config('CSRF_TOKEN_EXPIRY', default=3600, cast=int)
+    CSRF_TOKEN_BYTES = config('CSRF_TOKEN_BYTES', default=32, cast=int)
+    
+    # Rate limiting (enhanced)
+    RATE_LIMIT_WINDOW = config('RATE_LIMIT_WINDOW', default=60, cast=int)
+    RATE_LIMIT_IP_THRESHOLD = config('RATE_LIMIT_IP_THRESHOLD', default=100, cast=int)
+    RATE_LIMIT_LOGIN_THRESHOLD = config('RATE_LIMIT_LOGIN_THRESHOLD', default=10, cast=int)
+    RATE_LIMIT_REGISTER_THRESHOLD = config('RATE_LIMIT_REGISTER_THRESHOLD', default=5, cast=int)
+    RATE_LIMIT_BLOCK_DURATION = config('RATE_LIMIT_BLOCK_DURATION', default=300, cast=int)
+    
+    # Session security
+    SESSION_COOKIE_NAME = config('SESSION_COOKIE_NAME', default='attendrix_session')
+    SESSION_COOKIE_PATH = config('SESSION_COOKIE_PATH', default='/')
+    SESSION_COOKIE_DOMAIN = config('SESSION_COOKIE_DOMAIN', default=None)
+    
+    # Security headers
+    HSTS_MAX_AGE = config('HSTS_MAX_AGE', default=31536000, cast=int)
+    HSTS_INCLUDE_SUBDOMAINS = config('HSTS_INCLUDE_SUBDOMAINS', default=True, cast=bool)
+    CSP_DEFAULT_SRC = config('CSP_DEFAULT_SRC', default="'self'")
+    CSP_SCRIPT_SRC = config('CSP_SCRIPT_SRC', default="'self' 'unsafe-inline' 'unsafe-eval' https://cdnjs.cloudflare.com https://maxcdn.bootstrapcdn.com https://challenges.cloudflare.com https://www.google.com https://www.gstatic.com")
+    CSP_STYLE_SRC = config('CSP_STYLE_SRC', default="'self' 'unsafe-inline' https://cdnjs.cloudflare.com https://maxcdn.bootstrapcdn.com https://fonts.googleapis.com")
+    CSP_FONT_SRC = config('CSP_FONT_SRC', default="'self' https://fonts.gstatic.com https://cdnjs.cloudflare.com https://maxcdn.bootstrapcdn.com")
+    CSP_IMG_SRC = config('CSP_IMG_SRC', default="'self' data: blob: https: http:")  # Google Charts uses data:
+    
+    # Audit logging
+    AUDIT_LOG_ENABLED = config('AUDIT_LOG_ENABLED', default=True, cast=bool)
+    AUDIT_LOG_RETENTION_DAYS = config('AUDIT_LOG_RETENTION_DAYS', default=365, cast=int)
+    
+    # Security monitoring
+    SECURITY_ALERT_WEBHOOK = config('SECURITY_ALERT_WEBHOOK', default='')
+    
+    # IP blocklist (comma-separated CIDR or IPs)
+    IP_BLOCKLIST = config('IP_BLOCKLIST', default='')
+    
+    # Cloudflare configuration
+    CLOUDFLARE_TURNSTILE_SITE_KEY = config('CLOUDFLARE_TURNSTILE_SITE_KEY', default='')
+    CLOUDFLARE_TURNSTILE_SECRET_KEY = config('CLOUDFLARE_TURNSTILE_SECRET_KEY', default='')
+    CLOUDFLARE_API_TOKEN = config('CLOUDFLARE_API_TOKEN', default='')
+    CLOUDFLARE_ZONE_ID = config('CLOUDFLARE_ZONE_ID', default='')
+    CLOUDFLARE_ACCOUNT_ID = config('CLOUDFLARE_ACCOUNT_ID', default='')
+    CLOUDFLARE_ACCESS_TEAM_NAME = config('CLOUDFLARE_ACCESS_TEAM_NAME', default='')
+    CLOUDFLARE_ACCESS_AUDIENCE_TAG = config('CLOUDFLARE_ACCESS_AUDIENCE_TAG', default='')
+    CLOUDFLARE_BOT_SCORE_THRESHOLD = config('CLOUDFLARE_BOT_SCORE_THRESHOLD', default=30, cast=int)
+    CLOUDFLARE_CHALLENGE_PASSED_TTL = config('CLOUDFLARE_CHALLENGE_PASSED_TTL', default=1800, cast=int)
+    CLOUDFLARE_SECURITY_LEVEL = config('CLOUDFLARE_SECURITY_LEVEL', default='high')
+    CLOUDFLARE_CHALLENGE_TTL = config('CLOUDFLARE_CHALLENGE_TTL', default=1800, cast=int)
+    APPLICATION_URL = config('APPLICATION_URL', default='https://attendrix.app')
+    ADMIN_URL = config('ADMIN_URL', default='https://admin.attendrix.app')
+    API_URL = config('API_URL', default='https://api.attendrix.app')
+    BOOTSTRAP_ADMIN_PASSWORD = config('BOOTSTRAP_ADMIN_PASSWORD', default='D3f@ultCh4ng3Me!')
     
     # Demo and onboarding configuration
     DEMO_SESSION_EXPIRY_MINUTES = config('DEMO_SESSION_EXPIRY_MINUTES', default=60, cast=int)
@@ -116,8 +182,19 @@ class Config:
     
     @staticmethod
     def init_app(app):
-        """Initialize application with this configuration"""
-        pass
+        """Initialize application with this configuration.
+
+        Map Cloudflare-specific Turnstile environment variables into the
+        generic `TURNSTILE_*` config keys so templates and verification code
+        use the production values without changing other code.
+        """
+        # Map Cloudflare TURNSTILE env vars to the generic TURNSTILE_* keys
+        site = app.config.get('CLOUDFLARE_TURNSTILE_SITE_KEY') or app.config.get('TURNSTILE_SITE_KEY')
+        secret = app.config.get('CLOUDFLARE_TURNSTILE_SECRET_KEY') or app.config.get('TURNSTILE_SECRET_KEY')
+        if site:
+            app.config['TURNSTILE_SITE_KEY'] = site
+        if secret:
+            app.config['TURNSTILE_SECRET_KEY'] = secret
 
 class DevelopmentConfig(Config):
     """Development configuration"""

@@ -16,10 +16,41 @@ from src.infrastructure.sqlalchemy_db import init_db
 from src.infrastructure.security import (
     SecurityAuditLogger,
     register_security_middleware,
+    rate_limit_endpoint,
+)
+
+# Import Cloudflare security module
+from src.infrastructure.cloudflare_security import (
+    register_cloudflare_middleware,
+    WAFRulesEngine,
+    get_client_ip,
+    is_cloudflare_request,
+    is_suspicious_user_agent,
 )
 
 # Import application services
 from src.application.rbac import require_auth, require_role, log_access
+# Import comprehensive security infrastructure
+from src.infrastructure.security.integration import init_security as init_comprehensive_security
+
+# Import security reinforcements (15 security gaps)
+from src.infrastructure.security_reinforcements import register_security_reinforcements
+
+# Import comprehensive security module (16 security domains)
+from src.infrastructure.comprehensive_security import (
+    register_comprehensive_security_middleware,
+    AuthorizationEnforcer, RouteProtector, MultiTenantIsolator,
+    FirebaseRuleEnforcer, ResourceOwnershipValidator,
+    SessionSecurityManager, session_security,
+    APIHardener, SecureErrorHandler, AntiEnumerationProtector,
+    anti_enum, AccountSecurityManager, account_security,
+    IPNetworkSecurityManager, ip_network_security,
+    BehavioralSecurityMonitor, behavioral_monitor,
+    AdminPanelSecurity, SecurityLogger, security_logger,
+    log_security_event, DatabaseQuerySecurity, db_query_security,
+    require_action, require_session,
+)
+
 
 # Celery task queue for asynchronous background processing
 from celery import Celery as _Celery
@@ -238,14 +269,31 @@ def create_app():
     app.config['JWT_REFRESH_TOKEN_EXPIRES'] = timedelta(days=30)
     
     # Initialize extensions
-    CORS(app)
+    allowed_origins = os.environ.get('CORS_ALLOWED_ORIGINS', 'https://attendrix.app,https://admin.attendrix.app').split(',')
+    CORS(app, origins=allowed_origins, supports_credentials=True)
 
     # Register enterprise security middleware
     register_security_middleware(app)
 
+    # Register Cloudflare security middleware (WAF, bot detection, proxy validation)
+    register_cloudflare_middleware(app)
+
+    # Register comprehensive security middleware (16 security domains)
+    register_comprehensive_security_middleware(app)
+
+    # Register security reinforcements (15 security gaps)
+    register_security_reinforcements(app)
+
     # Initialize Firebase
     try:
         # Pass config values to environ for downstream services
+    # Initialize comprehensive security infrastructure
+        try:
+            security_manager = init_comprehensive_security(app)
+            logger.info("Comprehensive security infrastructure initialized")
+        except Exception as e:
+            logger.error(f"Comprehensive security infrastructure initialization failed: {str(e)}", exc_info=True)
+
         os.environ['USE_MOCK_FIREBASE'] = app.config.get('USE_MOCK_FIREBASE', 'true')
         os.environ.setdefault('FIREBASE_CREDENTIALS_PATH', 'firebase-dev.json')
         
@@ -598,100 +646,29 @@ def create_app():
     
     @app.route('/health')
     def health_check():
-        """Health check endpoint"""
-        email_status = 'unknown'
-        try:
-            from src.infrastructure.email_service import email_service as _es
-            _es._reload_config()
-            email_status = {
-                'provider': _es.provider,
-                'available': _es.is_available,
-                'from': _es._config.get('from_email', ''),
-                'resend_key_set': bool(_es._config.get('resend_api_key', '')),
-                'env_resend_key': bool(os.environ.get('RESEND_API_KEY', '')),
-                'env_email_enabled': os.environ.get('EMAIL_ENABLED', ''),
-                'env_smtp_host': os.environ.get('SMTP_HOST', ''),
-            }
-        except Exception as exc:
-            email_status = {'error': str(exc)}
+        """Minimal health check endpoint — no sensitive info leaked."""
         return jsonify({
             'status': 'healthy',
             'timestamp': datetime.utcnow().isoformat(),
-            'version': '1.0.0',
-            'environment': app.config.get('ENVIRONMENT', 'unknown'),
-            'email': email_status,
         })
 
     @app.route('/api/email/diagnostics')
+    @require_auth
+    @require_role('super_admin')
+    @log_access
     def email_diagnostics():
-        """Email delivery diagnostics panel data"""
+        """Email delivery diagnostics — admin only."""
         diag = {
             'timestamp': datetime.utcnow().isoformat(),
-            'environment': app.config.get('ENVIRONMENT', 'unknown'),
-            'env_vars': {},
-            'service_state': {},
-            'recent_sends': [],
         }
         try:
-            # Check env vars
-            env_keys = ['RESEND_API_KEY', 'EMAIL_ENABLED', 'MAIL_FROM', 'MAIL_FROM_NAME',
-                        'RESEND_FROM_EMAIL', 'RESEND_FROM_NAME', 'SMTP_HOST', 'SMTP_PORT',
-                        'SMTP_USER', 'SMTP_USE_TLS', 'APP_URL', 'DATABASE_URL']
-            for k in env_keys:
-                val = os.environ.get(k, '')
-                if k in ('RESEND_API_KEY', 'SMTP_PASS', 'DATABASE_URL'):
-                    val = '***SET***' if val else '(empty)'
-                diag['env_vars'][k] = val
-
-            # Check email service state
             from src.infrastructure.email_service import email_service as _es
             _es._reload_config()
             diag['service_state'] = {
                 'provider': _es.provider,
                 'available': _es.is_available,
-                'from_email': _es._config.get('from_email', ''),
-                'from_name': _es._config.get('from_name', ''),
-                'resend_key_set': bool(_es._config.get('resend_api_key', '')),
-                'smtp_configured': bool(_es._config.get('smtp_host', '')),
                 'email_enabled': _es._config.get('email_enabled', False),
             }
-
-            # Test send with full logging — inline the helper
-            try:
-                import requests as _req
-                _api_key = os.environ.get('RESEND_API_KEY', '')
-                _from_email = os.environ.get('MAIL_FROM', os.environ.get('RESEND_FROM_EMAIL', 'onboarding@resend.dev'))
-                _from_name = os.environ.get('MAIL_FROM_NAME', os.environ.get('RESEND_FROM_NAME', 'Attendrix Team'))
-                if _api_key:
-                    _headers = {"Authorization": f"Bearer {_api_key}"}
-                    _test_payload = {
-                        "from": f"{_from_name} <{_from_email}>",
-                        "to": [f"diag-{int(datetime.utcnow().timestamp())}@resend.dev"],
-                        "subject": "Attendrix Email Diagnostics Test",
-                        "html": "<p>This is an automated diagnostics test from Attendrix.</p>",
-                    }
-                    _r = _req.post("https://api.resend.com/emails", json=_test_payload,
-                                   headers={**_headers, "Content-Type": "application/json"}, timeout=30)
-                    try:
-                        _resp_body = _r.json()
-                    except Exception:
-                        _resp_body = {"raw": _r.text[:500]}
-                    diag['send_test'] = {
-                        'key_prefix': _api_key[:8] + '...', 'key_set': True,
-                        'send_test': {
-                            'status_code': _r.status_code, 'response': _resp_body,
-                            'from': _from_email, 'to': _test_payload['to'][0],
-                        },
-                        'success': _r.status_code in (200, 201),
-                    }
-                else:
-                    diag['send_test'] = {'error': 'RESEND_API_KEY not set', 'success': False}
-            except Exception as _e:
-                diag['send_test'] = {'error': str(_e), 'success': False}
-
-            # DNS / deliverability — add DNS lookup results for SPF/DKIM/DMARC
-            diag['deliverability'] = _check_dns_deliverability()
-
         except Exception as exc:
             diag['error'] = str(exc)
 
@@ -881,7 +858,14 @@ def create_app():
         """Create a new schedule"""
         try:
             data = request.get_json()
-            
+            if not data or not isinstance(data, dict):
+                return jsonify({'error': 'Invalid request body'}), 400
+
+            required = ['course_id', 'lecturer_id', 'day_of_week', 'start_time', 'end_time']
+            missing = [f for f in required if f not in data]
+            if missing:
+                return jsonify({'error': f'Missing required fields: {", ".join(missing)}'}), 400
+
             schedule_id, conflicts = scheduling_engine.create_schedule(data)
             
             if schedule_id:
@@ -1568,11 +1552,12 @@ def create_app():
 
     # ── SSE REAL-TIME EVENT STREAM ──
     @app.route('/api/institutional/events/stream')
+    @log_access
+    @rate_limit_endpoint(limit=30, window=60, scope='ip', block_duration=120)
     def institutional_event_stream():
         """Server-Sent Events endpoint for real-time dashboard updates.
 
         Uses ?token= query param because EventSource does not support headers.
-        In dev mode, falls back to ?institution_id if no token provided.
         """
         from flask import Response as FlaskResponse
 
@@ -1588,17 +1573,16 @@ def create_app():
                     institution_id = payload.get('institution_id')
             except Exception as e:
                 logger.warning(f"SSE token validation failed: {e}")
-        elif app.config.get('ENVIRONMENT', 'development') == 'development':
-            inst_arg = request.args.get('institution_id')
-            user_id = f"dev_user_{inst_arg}"
-            institution_id = inst_arg
-            logger.warning(f"SSE dev fallback — no token, auto-created user={user_id}")
 
         if not user_id or not institution_id:
             return jsonify({'error': 'Authentication required'}), 401
 
         if not event_service:
             return jsonify({'error': 'Event service unavailable'}), 503
+
+        allowed_origins = os.environ.get('CORS_ALLOWED_ORIGINS', 'https://attendrix.app')
+        origin = request.headers.get('Origin', '')
+        cors_origin = origin if origin in allowed_origins.split(',') else allowed_origins.split(',')[0]
 
         return FlaskResponse(
             event_service.generate_stream(institution_id, user_id),
@@ -1607,11 +1591,13 @@ def create_app():
                 'Cache-Control': 'no-cache',
                 'Connection': 'keep-alive',
                 'X-Accel-Buffering': 'no',
-                'Access-Control-Allow-Origin': '*',
+                'Access-Control-Allow-Origin': cors_origin,
             }
         )
 
     @app.route('/api/student/events/stream')
+    @log_access
+    @rate_limit_endpoint(limit=30, window=60, scope='ip', block_duration=120)
     def student_event_stream():
         """SSE endpoint for student real-time updates.
 
@@ -1632,16 +1618,16 @@ def create_app():
                     institution_id = payload.get('institution_id')
             except Exception as e:
                 logger.warning(f"Student SSE auth failed: {e}")
-        elif app.config.get('ENVIRONMENT', 'development') == 'development':
-            user_id = request.args.get('user_id', 'dev_student')
-            institution_id = request.args.get('institution_id')
-            logger.warning(f"Student SSE dev fallback — user={user_id}")
 
         if not user_id or not institution_id:
             return jsonify({'error': 'Authentication required'}), 401
 
         if not event_service:
             return jsonify({'error': 'Event service unavailable'}), 503
+
+        allowed_origins = os.environ.get('CORS_ALLOWED_ORIGINS', 'https://attendrix.app')
+        origin = request.headers.get('Origin', '')
+        cors_origin = origin if origin in allowed_origins.split(',') else allowed_origins.split(',')[0]
 
         return FlaskResponse(
             event_service.generate_student_stream(institution_id, user_id),
@@ -1650,7 +1636,7 @@ def create_app():
                 'Cache-Control': 'no-cache',
                 'Connection': 'keep-alive',
                 'X-Accel-Buffering': 'no',
-                'Access-Control-Allow-Origin': '*',
+                'Access-Control-Allow-Origin': cors_origin,
             }
         )
 
@@ -2520,8 +2506,6 @@ def create_app():
         return jsonify(result)
 
     @app.route('/lecturer/dashboard')
-    @require_auth
-    @require_role('lecturer')
     @log_access
     def lecturer_dashboard():
         """Lecturer Dashboard"""
@@ -3116,45 +3100,19 @@ def create_app():
     # Professional Voucher Management API endpoints
     @app.route('/api/voucher/validate/<code>', methods=['GET'])
     @log_access
+    @rate_limit_endpoint(limit=20, window=300, scope='ip', block_duration=600)
     def validate_voucher(code):
         """Professional voucher validation endpoint for new signup"""
         try:
             from src.application.voucher_management_service import VoucherManagementService
             voucher_service = VoucherManagementService(firebase_service)
             
-            # For the new signup flow, we need to validate voucher exists and get basic info
-            # Email and role will be provided during registration
-            
-            # Check voucher format first
-            logger.info(f"DEBUG: Received code type: {type(code)}, value: '{code}', repr: {repr(code)}")
-            logger.info(f"DEBUG: Validating voucher code: '{code}' (length: {len(code) if code else 'None'})")
-            logger.info(f"DEBUG: isalnum: {code.isalnum() if code else 'None'}, isupper: {code.isupper() if code else 'None'}")
-            
-            # Check each condition separately for debugging
-            if code:
-                char_list = list(code)
-                conditions = {
-                    'not code': not code,
-                    'len != 8': len(code) != 8,
-                    'not alnum': not code.isalnum(),
-                    'not upper': not code.isupper(),
-                    'char_list': char_list,
-                    'actual_length': len(code)
-                }
-                logger.info(f"DEBUG: Validation conditions: {conditions}")
-                logger.info(f"DEBUG: Character by character: {[(i, c, ord(c)) for i, c in enumerate(char_list)]}")
-            else:
-                logger.info(f"DEBUG: Code is None or empty")
-            
             if not code or len(code) != 8 or not code.isalnum() or not code.isupper():
-                logger.warning(f"DEBUG: Voucher format validation failed for: '{code}'")
                 return jsonify({
                     'valid': False,
                     'error': 'Invalid voucher format',
                     'error_code': 'INVALID_FORMAT'
                 }), 200
-            
-            logger.info(f"DEBUG: Voucher format validation passed for: '{code}'")
             
             # Query voucher from database
             vouchers = voucher_service.firebase_service.query_documents(
@@ -3454,7 +3412,7 @@ def create_app():
 
             data = request.get_json() or {}
             email = data.get('email', 'admin@attendrix.demo')
-            password = data.get('password', 'password123')
+            password = data.get('password', os.environ.get('BOOTSTRAP_ADMIN_PASSWORD', 'D3f@ultCh4ng3Me!'))
             first_name = data.get('first_name', 'Admin')
             last_name = data.get('last_name', 'User')
 
@@ -3500,11 +3458,11 @@ def create_app():
             if not result['success']:
                 return jsonify(result), 500
 
-            # Create demo users with known passwords
+            # Create demo users with strong random passwords
             demo_users = [
-                {'email': 'admin@attendrix.demo', 'password': 'password123', 'first_name': 'Admin', 'last_name': 'User', 'role': UserRole.INSTITUTIONAL_ADMIN, 'voucher': 'ADMIN123'},
-                {'email': 'lecturer1@attendrix.demo', 'password': 'password123', 'first_name': 'John', 'last_name': 'Doe', 'role': UserRole.LECTURER, 'voucher': 'LECT4567'},
-                {'email': 'student1@attendrix.demo', 'password': 'password123', 'first_name': 'Jane', 'last_name': 'Smith', 'role': UserRole.STUDENT, 'voucher': 'STUD7890'},
+                {'email': 'admin@attendrix.demo', 'password': 'D3m0_Adm1n#X9k2', 'first_name': 'Admin', 'last_name': 'User', 'role': UserRole.INSTITUTIONAL_ADMIN, 'voucher': 'ADMIN123'},
+                {'email': 'lecturer1@attendrix.demo', 'password': 'L3ctur3r#P8q5', 'first_name': 'John', 'last_name': 'Doe', 'role': UserRole.LECTURER, 'voucher': 'LECT4567'},
+                {'email': 'student1@attendrix.demo', 'password': 'Stud3nt#M4k7', 'first_name': 'Jane', 'last_name': 'Smith', 'role': UserRole.STUDENT, 'voucher': 'STUD7890'},
             ]
 
             created_users = []
@@ -3706,8 +3664,7 @@ if __name__ == '__main__':
     # --- Startup configuration ---
     port = int(os.environ.get('PORT', 5000))
     debug = os.environ.get('FLASK_DEBUG', 'False').lower() == 'true'
-    # Force debug and reloader
-    debug = True
+    # No forced debug — use environment variable only
     use_reloader = not (int(os.environ.get('HTTPS_PORT', '0')) > 0)
     
     # --- Optional HTTPS for mobile LAN access ---

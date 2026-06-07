@@ -1,9 +1,9 @@
-<!DOCTYPE html>
+﻿<!DOCTYPE html>
 <html lang="en">
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>System Command Center — Attendrix</title>
+<title>System Command Center â€” Attendrix</title>
 <link rel="icon" type="image/svg+xml" href="/static/images/favicon.svg">
 <script>
     if ('serviceWorker' in navigator) {
@@ -17,7 +17,7 @@
     }
 </script>
 <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
-<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+<link rel="stylesheet" href="/static/css/all.min.css">
 <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800;900&display=swap" rel="stylesheet">
 <style>
 :root {
@@ -256,13 +256,13 @@ tr:hover td { background: var(--bg-hover); }
 .sidebar-overlay { display: none; position: fixed; inset: 0; background: rgba(0,0,0,0.5); z-index: 99; }
 .menu-toggle { display: none; background: none; border: 1px solid var(--border); color: var(--text-secondary); font-size: 1.1rem; padding: 0.4rem 0.6rem; border-radius: 6px; cursor: pointer; font-family: 'Inter', sans-serif; }
 
-/* ── Laptops / medium screens ── */
+/* â”€â”€ Laptops / medium screens â”€â”€ */
 @media (max-width: 1200px) {
   .stats-grid { grid-template-columns: repeat(3, 1fr); }
   .four-col { grid-template-columns: repeat(3, 1fr); }
 }
 
-/* ── Tablets landscape ── */
+/* â”€â”€ Tablets landscape â”€â”€ */
 @media (max-width: 1024px) {
   .sidebar { width: 220px; }
   .main-content { margin-left: 220px; }
@@ -276,7 +276,7 @@ tr:hover td { background: var(--bg-hover); }
   th, td { padding: 0.5rem 0.7rem; }
 }
 
-/* ── Tablets portrait / large phones ── */
+/* â”€â”€ Tablets portrait / large phones â”€â”€ */
 @media (max-width: 768px) {
   .menu-toggle { display: inline-flex; align-items: center; }
   .sidebar-overlay.active { display: block; }
@@ -355,7 +355,7 @@ tr:hover td { background: var(--bg-hover); }
   .gov-rule-card .gov-count { font-size: 1.2rem; }
 }
 
-/* ── Medium phones (640px) ── */
+/* â”€â”€ Medium phones (640px) â”€â”€ */
 @media (max-width: 640px) {
   .stats-grid { grid-template-columns: repeat(2, 1fr); gap: 0.5rem; }
   .stat-card { padding: 0.65rem; }
@@ -406,7 +406,7 @@ tr:hover td { background: var(--bg-hover); }
   .status-badge { min-height: 1.65rem; padding: 0.15rem 0.5rem; font-size: 0.65rem; }
 }
 
-/* ── Small phones (480px) ── */
+/* â”€â”€ Small phones (480px) â”€â”€ */
 @media (max-width: 480px) {
   .stats-grid { grid-template-columns: 1fr 1fr; gap: 0.45rem; }
   .stat-card { padding: 0.5rem; }
@@ -477,7 +477,7 @@ tr:hover td { background: var(--bg-hover); }
   .node-card { padding: 0.45rem; gap: 0.4rem; }
 }
 
-/* ── Compact phones (425px) ── */
+/* â”€â”€ Compact phones (425px) â”€â”€ */
 @media (max-width: 425px) {
   .main-content { padding: 0.65rem; }
   .topbar { align-items: stretch; gap: 0.5rem; }
@@ -506,7 +506,7 @@ tr:hover td { background: var(--bg-hover); }
   .status-badge { min-height: 1.3rem; padding: 0.1rem 0.35rem; font-size: 0.52rem; }
 }
 
-/* ── Smallest phones (375px and below, down to 320px) ── */
+/* â”€â”€ Smallest phones (375px and below, down to 320px) â”€â”€ */
 @media (max-width: 375px) {
   .main-content { padding: 0.5rem; }
   .topbar-right { flex-direction: column; align-items: stretch; gap: 0.35rem; }
@@ -574,7 +574,7 @@ tr:hover td { background: var(--bg-hover); }
   .nav-item { padding: 0.35rem 0.35rem; font-size: 0.55rem; gap: 0.3rem; }
 }
 
-/* ── Desktop safety ── */
+/* â”€â”€ Desktop safety â”€â”€ */
 @media (min-width: 769px) {
   .sidebar { transform: none !important; }
 }
@@ -633,7 +633,7 @@ tr:hover td { background: var(--bg-hover); }
       </div>
     </div>
 
-    <!-- ═══ OVERVIEW ═══ -->
+    <!-- â•â•â• OVERVIEW â•â•â• -->
     <div class="tab-content active" id="tab-overview">
       <div class="stats-grid" id="overviewStats"></div>
       <div class="two-col">
@@ -648,13 +648,13 @@ tr:hover td { background: var(--bg-hover); }
       </div>
     </div>
 
-    <!-- ═══ INSTITUTIONS ═══ -->
+    <!-- â•â•â• INSTITUTIONS â•â•â• -->
     <div class="tab-content" id="tab-institutions">
       <div class="section-header"><h2><i class="fas fa-building-columns"></i> All Institutions</h2><span class="badge-count" id="instCount">0</span></div>
       <div class="table-wrap"><table><thead><tr><th>Name</th><th>Code</th><th>Status</th><th>Admins</th><th>Lecturers</th><th>Students</th><th>Employees</th><th>Attendance</th><th>Security</th><th>Actions</th></tr></thead><tbody id="instTableBody"></tbody></table></div>
     </div>
 
-    <!-- ═══ USERS ═══ -->
+    <!-- â•â•â• USERS â•â•â• -->
     <div class="tab-content" id="tab-users">
       <div class="section-header">
         <h2><i class="fas fa-users-gear"></i> System Users</h2>
@@ -667,71 +667,71 @@ tr:hover td { background: var(--bg-hover); }
       <div class="table-wrap"><table><thead><tr><th>Name</th><th>Email</th><th>Role</th><th>Institution</th><th>Status</th><th>Verified</th><th>Last Login</th><th>Actions</th></tr></thead><tbody id="userTableBody"></tbody></table></div>
     </div>
 
-    <!-- ═══ ROLE GOVERNANCE ═══ -->
+    <!-- â•â•â• ROLE GOVERNANCE â•â•â• -->
     <div class="tab-content" id="tab-governance">
       <div id="governanceContent"></div>
     </div>
 
-    <!-- ═══ ATTENDANCE ═══ -->
+    <!-- â•â•â• ATTENDANCE â•â•â• -->
     <div class="tab-content" id="tab-attendance">
       <div id="attendanceContent"></div>
     </div>
 
-    <!-- ═══ NETWORK INFRASTRUCTURE ═══ -->
+    <!-- â•â•â• NETWORK INFRASTRUCTURE â•â•â• -->
     <div class="tab-content" id="tab-network">
       <div id="networkContent"></div>
     </div>
 
-    <!-- ═══ SYSTEM HEALTH ═══ -->
+    <!-- â•â•â• SYSTEM HEALTH â•â•â• -->
     <div class="tab-content" id="tab-health">
       <div id="healthContent"></div>
     </div>
 
-    <!-- ═══ SOC / SECURITY CENTER ═══ -->
+    <!-- â•â•â• SOC / SECURITY CENTER â•â•â• -->
     <div class="tab-content" id="tab-security">
       <div id="securityContent"></div>
     </div>
 
-    <!-- ═══ ANTI-PROXY INTELLIGENCE ═══ -->
+    <!-- â•â•â• ANTI-PROXY INTELLIGENCE â•â•â• -->
     <div class="tab-content" id="tab-anti-proxy">
       <div id="antiProxyContent"></div>
     </div>
 
-    <!-- ═══ SUSPICIOUS ACTIVITY ═══ -->
+    <!-- â•â•â• SUSPICIOUS ACTIVITY â•â•â• -->
     <div class="tab-content" id="tab-suspicious">
       <div class="section-header"><h2><i class="fas fa-triangle-exclamation"></i> Suspicious Attendance</h2><span class="badge-count" id="suspiciousCount">0</span></div>
       <div class="table-wrap"><table><thead><tr><th>Student</th><th>Email</th><th>Institution</th><th>Status</th><th>Reason</th><th>IP</th><th>Time</th></tr></thead><tbody id="suspiciousTableBody"></tbody></table></div>
     </div>
 
-    <!-- ═══ AI RISK INTELLIGENCE ═══ -->
+    <!-- â•â•â• AI RISK INTELLIGENCE â•â•â• -->
     <div class="tab-content" id="tab-ai-risk">
       <div id="aiRiskContent"></div>
     </div>
 
-    <!-- ═══ ACTIVITY FEED ═══ -->
+    <!-- â•â•â• ACTIVITY FEED â•â•â• -->
     <div class="tab-content" id="tab-activity">
       <div class="section-header"><h2><i class="fas fa-rss"></i> Real-Time Activity</h2><span class="badge-count" id="activityCount">0</span></div>
       <div class="table-wrap"><div class="feed-list" id="activityFeedList"></div></div>
     </div>
 
-    <!-- ═══ AUDIT LOGS ═══ -->
+    <!-- â•â•â• AUDIT LOGS â•â•â• -->
     <div class="tab-content" id="tab-audit">
       <div class="section-header"><h2><i class="fas fa-list"></i> Audit Logs</h2><select id="auditActionFilter" onchange="loadAudit()"><option value="">All Actions</option><option value="API_ACCESS">API Access</option><option value="LOGIN">Login</option><option value="CREATE">Create</option><option value="UPDATE">Update</option><option value="DELETE">Delete</option></select></div>
       <div class="table-wrap"><table><thead><tr><th>Action</th><th>Resource</th><th>Institution</th><th>User</th><th>IP</th><th>Timestamp</th></tr></thead><tbody id="auditTableBody"></tbody></table></div>
     </div>
 
-    <!-- ═══ ANALYTICS ═══ -->
+    <!-- â•â•â• ANALYTICS â•â•â• -->
     <div class="tab-content" id="tab-analytics">
       <div id="analyticsContent"></div>
     </div>
 
-    <!-- ═══ DEMO BOOKINGS ═══ -->
+    <!-- â•â•â• DEMO BOOKINGS â•â•â• -->
     <div class="tab-content" id="tab-bookings">
       <div class="section-header"><h2><i class="fas fa-calendar-check"></i> Demo Bookings</h2><span class="badge-count" id="bookingCount">0</span></div>
       <div class="table-wrap"><table><thead><tr><th>Name</th><th>Email</th><th>Institution</th><th>Type</th><th>Students</th><th>Status</th><th>Date</th><th>Onboarding</th></tr></thead><tbody id="bookingTableBody"></tbody></table></div>
     </div>
 
-    <!-- ═══ FEEDBACK INTELLIGENCE CENTER ═══ -->
+    <!-- â•â•â• FEEDBACK INTELLIGENCE CENTER â•â•â• -->
     <div class="tab-content" id="tab-feedback">
       <div id="feedbackContent"></div>
     </div>
@@ -803,7 +803,7 @@ function loadTab(tab) {
 function refreshAll() { loadTab(currentTab); }
 
 
-/* ═══════════════════════════ OVERVIEW ═══════════════════════════ */
+/* â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â• OVERVIEW â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â• */
 function loadOverview() {
   var statsEl = document.getElementById('overviewStats');
   statsEl.innerHTML = skeletonCards(6);
@@ -853,7 +853,7 @@ function loadOverviewSecurity() {
 }
 
 
-/* ═══════════════════════════ INSTITUTIONS ═══════════════════════════ */
+/* â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â• INSTITUTIONS â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â• */
 function loadInstitutions() {
   var el = document.getElementById('instTableBody');
   el.innerHTML = '<tr><td colspan="10" class="loading-state"><div class="spinner"></div></td></tr>';
@@ -878,7 +878,7 @@ function toggleInstitution(id) {
 }
 
 
-/* ═══════════════════════════ USERS ═══════════════════════════ */
+/* â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â• USERS â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â• */
 function loadUsers() {
   var role = document.getElementById('userRoleFilter').value;
   var search = document.getElementById('userSearch').value;
@@ -909,7 +909,7 @@ function toggleUser(id) {
 }
 
 
-/* ═══════════════════════════ ROLE GOVERNANCE ═══════════════════════════ */
+/* â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â• ROLE GOVERNANCE â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â• */
 function loadGovernance() {
   var el = document.getElementById('governanceContent');
   el.innerHTML = spinner();
@@ -942,7 +942,7 @@ function loadGovernance() {
 }
 
 
-/* ═══════════════════════════ ATTENDANCE ═══════════════════════════ */
+/* â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â• ATTENDANCE â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â• */
 function loadAttendance() {
   var el = document.getElementById('attendanceContent');
   el.innerHTML = spinner();
@@ -971,7 +971,7 @@ function loadAttendance() {
 }
 
 
-/* ═══════════════════════════ NETWORK ═══════════════════════════ */
+/* â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â• NETWORK â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â• */
 function loadNetwork() {
   var el = document.getElementById('networkContent');
   el.innerHTML = spinner();
@@ -997,7 +997,7 @@ function loadNetwork() {
 }
 
 
-/* ═══════════════════════════ SYSTEM HEALTH ═══════════════════════════ */
+/* â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â• SYSTEM HEALTH â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â• */
 function loadHealth() {
   var el = document.getElementById('healthContent');
   el.innerHTML = spinner();
@@ -1023,7 +1023,7 @@ function loadHealth() {
 }
 
 
-/* ═══════════════════════════ SOC / SECURITY ═══════════════════════════ */
+/* â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â• SOC / SECURITY â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â• */
 function loadSecurity() {
   var el = document.getElementById('securityContent');
   el.innerHTML = spinner();
@@ -1070,7 +1070,7 @@ function resolveSecurity(id) {
 }
 
 
-/* ═══════════════════════════ ANTI-PROXY INTELLIGENCE ═══════════════════════════ */
+/* â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â• ANTI-PROXY INTELLIGENCE â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â• */
 function loadAntiProxy() {
   var el = document.getElementById('antiProxyContent');
   el.innerHTML = spinner();
@@ -1101,7 +1101,7 @@ function loadAntiProxy() {
 }
 
 
-/* ═══════════════════════════ SUSPICIOUS ACTIVITY ═══════════════════════════ */
+/* â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â• SUSPICIOUS ACTIVITY â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â• */
 function loadSuspicious() {
   var el = document.getElementById('suspiciousTableBody');
   el.innerHTML = '<tr><td colspan="7" class="loading-state"><div class="spinner"></div></td></tr>';
@@ -1121,7 +1121,7 @@ function loadSuspicious() {
 }
 
 
-/* ═══════════════════════════ AI RISK INTELLIGENCE ═══════════════════════════ */
+/* â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â• AI RISK INTELLIGENCE â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â• */
 function loadAiRisk() {
   var el = document.getElementById('aiRiskContent');
   el.innerHTML = spinner();
@@ -1156,7 +1156,7 @@ function loadAiRisk() {
 }
 
 
-/* ═══════════════════════════ ACTIVITY ═══════════════════════════ */
+/* â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â• ACTIVITY â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â• */
 function loadActivity() {
   var el = document.getElementById('activityFeedList');
   el.innerHTML = spinner();
@@ -1178,7 +1178,7 @@ function loadActivity() {
 }
 
 
-/* ═══════════════════════════ AUDIT ═══════════════════════════ */
+/* â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â• AUDIT â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â• */
 function loadAudit() {
   var action = (document.getElementById('auditActionFilter') || {}).value;
   var url = API_BASE + '/audit-logs';
@@ -1196,7 +1196,7 @@ function loadAudit() {
 }
 
 
-/* ═══════════════════════════ ANALYTICS ═══════════════════════════ */
+/* â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â• ANALYTICS â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â• */
 function loadAnalytics() {
   var el = document.getElementById('analyticsContent');
   el.innerHTML = spinner();
@@ -1231,7 +1231,7 @@ function loadAnalytics() {
 }
 
 
-/* ═══════════════════════════ DEMO BOOKINGS ═══════════════════════════ */
+/* â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â• DEMO BOOKINGS â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â• */
 function loadBookings() {
   var el = document.getElementById('bookingTableBody');
   el.innerHTML = '<tr><td colspan="8" class="loading-state"><div class="spinner"></div></td></tr>';
@@ -1254,8 +1254,8 @@ function loadBookings() {
 }
 
 
-/* ═══════════════════════════ FEEDBACK INTELLIGENCE CENTER ═══════════════════════════ */
-/* ─── Enterprise SaaS Feedback Control Center ─── */
+/* â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â• FEEDBACK INTELLIGENCE CENTER â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â• */
+/* â”€â”€â”€ Enterprise SaaS Feedback Control Center â”€â”€â”€ */
 var fbSSESource = null;
 
 function loadFeedback() {
@@ -1658,13 +1658,13 @@ function moderateFeedback(id, action) {
 }
 
 
-/* ═══════════════════════════ AUTO-REFRESH ═══════════════════════════ */
+/* â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â• AUTO-REFRESH â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â• */
 setInterval(function() {
   if (document.visibilityState !== 'hidden') loadTab(currentTab);
 }, REFRESH_MS);
 
 
-/* ═══════════════════════════ INIT ═══════════════════════════ */
+/* â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â• INIT â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â• */
 loadOverview();
 </script>
 </body>

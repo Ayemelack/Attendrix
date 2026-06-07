@@ -111,6 +111,7 @@ class AttendanceSecurityService:
                 'id': record_id,
                 'session_id': session['id'],
                 'student_id': student_id,
+                'institution_id': session.get('institution_id'),
                 'mark_time': now.isoformat(),
                 'status': AttendanceStatus.PRESENT.value,
                 'location': location,

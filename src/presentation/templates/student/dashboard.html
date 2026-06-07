@@ -1,4 +1,4 @@
-<!DOCTYPE html>
+﻿<!DOCTYPE html>
 <html lang="en">
 <head>
     <meta charset="UTF-8">
@@ -6,7 +6,7 @@
     <title>Attendrix Student</title>
     <link rel="manifest" href="/static/manifest.json">
     <link rel="icon" type="image/svg+xml" href="/static/images/favicon.svg">
-    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <link rel="stylesheet" href="/static/css/all.min.css">
     <link rel="stylesheet" href="/static/css/responsive.css">
     <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.0/dist/chart.umd.min.js"></script>
     <script src="https://cdn.jsdelivr.net/npm/@vladmandic/face-api/dist/face-api.js"></script>
@@ -57,7 +57,7 @@
 
         .app-wrap { display: flex; min-height: 100vh; }
 
-        /* ── SIDEBAR ── */
+        /* â”€â”€ SIDEBAR â”€â”€ */
         .sidebar { position: fixed; top: 0; left: 0; width: var(--sidebar-w); height: 100vh; background: var(--bg-sidebar); border-right: 1px solid var(--border); display: flex; flex-direction: column; z-index: 1000; transition: transform .25s cubic-bezier(.4,0,.2,1); }
         .sidebar-brand { display: flex; align-items: center; gap: 10px; padding: 18px 16px; font-size: .95rem; font-weight: 700; background: linear-gradient(135deg,var(--accent),#a78bfa); -webkit-background-clip: text; -webkit-text-fill-color: transparent; border-bottom: 1px solid var(--border); }
         .sidebar-brand i { -webkit-text-fill-color: var(--accent); font-size: 1.1rem; }
@@ -76,10 +76,10 @@
         .sidebar-footer a:hover { color: var(--text-secondary); }
         .sidebar-overlay { display: none; position: fixed; inset: 0; background: rgba(0,0,0,.6); z-index: 999; }
 
-        /* ── MAIN ── */
+        /* â”€â”€ MAIN â”€â”€ */
         .main { flex: 1; margin-left: var(--sidebar-w); display: flex; flex-direction: column; min-height: 100vh; }
 
-        /* ── TOPBAR ── */
+        /* â”€â”€ TOPBAR â”€â”€ */
         .topbar { position: sticky; top: 0; height: var(--topbar-h); background: rgba(7,8,14,.85); backdrop-filter: blur(14px); -webkit-backdrop-filter: blur(14px); border-bottom: 1px solid var(--border); display: flex; align-items: center; justify-content: space-between; padding: 0 20px; z-index: 100; }
         .topbar-left { display: flex; align-items: center; gap: 12px; }
         .sidebar-toggle { display: none; background: none; border: none; color: var(--text-secondary); font-size: 1rem; cursor: pointer; padding: 4px; }
@@ -94,7 +94,7 @@
         .topbar-avatar { width: 30px; height: 30px; border-radius: 50%; background: linear-gradient(135deg,var(--accent),#a78bfa); color: #fff; display: flex; align-items: center; justify-content: center; font-size: .7rem; font-weight: 700; }
         .topbar-name { font-size: .75rem; font-weight: 500; color: var(--text-secondary); }
 
-        /* ── NETWORK BAR ── */
+        /* â”€â”€ NETWORK BAR â”€â”€ */
         .network-bar { display: flex; align-items: center; gap: 16px; padding: 6px 20px; background: var(--bg-card); border-bottom: 1px solid var(--border); font-size: .68rem; color: var(--text-dim); overflow-x: auto; }
         .network-bar .item { display: flex; align-items: center; gap: 5px; white-space: nowrap; }
         .network-bar .dot { width: 5px; height: 5px; border-radius: 50%; flex-shrink: 0; }
@@ -103,7 +103,7 @@
         .network-bar .dot.red { background: var(--danger); }
         .network-bar .dot.gray { background: var(--text-dim); }
 
-        /* ── CONTENT ── */
+        /* â”€â”€ CONTENT â”€â”€ */
         .content { flex: 1; padding: 20px 24px; max-width: 1400px; width: 100%; margin: 0 auto; overflow-y: auto; }
         .section { display: none; }
         .section.active { display: block; animation: fadeUp .3s ease; }
@@ -112,7 +112,7 @@
         .section-title { font-size: 1rem; font-weight: 700; margin-bottom: 16px; display: flex; align-items: center; gap: 8px; }
         .section-sub { font-size: .75rem; color: var(--text-dim); margin-bottom: 18px; }
 
-        /* ── STATS GRID ── */
+        /* â”€â”€ STATS GRID â”€â”€ */
         .stats-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(180px, 1fr)); gap: 12px; margin-bottom: 20px; }
         .stat-card { background: var(--bg-card); border: 1px solid var(--border); border-radius: var(--radius); padding: 16px 18px; position: relative; overflow: hidden; }
         .stat-card .stat-icon { font-size: 1.2rem; margin-bottom: 6px; }
@@ -126,7 +126,7 @@
         .stat-trend.up { color: var(--success); }
         .stat-trend.down { color: var(--danger); }
 
-        /* ── STATUS BADGE ── */
+        /* â”€â”€ STATUS BADGE â”€â”€ */
         .status-badge { display: inline-flex; align-items: center; gap: 5px; padding: 3px 12px; border-radius: 20px; font-size: .68rem; font-weight: 700; text-transform: uppercase; letter-spacing: .04em; }
         .status-badge.safe { background: var(--success-soft); color: var(--success); }
         .status-badge.at-risk { background: var(--warning-soft); color: var(--warning); }
@@ -136,7 +136,7 @@
         .status-badge.at-risk .dot { background: var(--warning); }
         .status-badge.critical .dot { background: var(--danger); }
 
-        /* ── CARDS ── */
+        /* â”€â”€ CARDS â”€â”€ */
         .card { background: var(--bg-card); border: 1px solid var(--border); border-radius: var(--radius); margin-bottom: 14px; }
         .card-header { display: flex; align-items: center; justify-content: space-between; padding: 13px 16px; border-bottom: 1px solid var(--border); font-size: .78rem; font-weight: 600; }
         .card-body { padding: 13px 16px; }
@@ -144,14 +144,14 @@
         .grid-2col { display: grid; grid-template-columns: 1fr 1fr; gap: 14px; }
         .empty-muted { padding: 24px; text-align: center; color: var(--text-dim); font-size: .78rem; }
 
-        /* ── FEED ── */
+        /* â”€â”€ FEED â”€â”€ */
         .feed-item { display: flex; align-items: center; gap: 10px; padding: 9px 0; border-bottom: 1px solid var(--border); }
         .feed-item:last-child { border-bottom: none; }
         .feed-dot { width: 7px; height: 7px; border-radius: 50%; flex-shrink: 0; }
         .feed-msg { flex: 1; font-size: .75rem; color: var(--text-secondary); line-height: 1.4; }
         .feed-time { font-size: .65rem; color: var(--text-dim); white-space: nowrap; }
 
-        /* ── TABLE ── */
+        /* â”€â”€ TABLE â”€â”€ */
         .table-wrap { overflow-x: auto; }
         .lec-table { width: 100%; border-collapse: collapse; font-size: .75rem; }
         .lec-table th { text-align: left; padding: 10px 12px; color: var(--text-dim); font-weight: 600; font-size: .65rem; text-transform: uppercase; letter-spacing: .05em; border-bottom: 1px solid var(--border); }
@@ -159,14 +159,14 @@
         .lec-table tr:hover td { background: var(--bg-card-alt); }
         .lec-table .cell-name { font-weight: 500; color: var(--text); }
 
-        /* ── PILLS ── */
+        /* â”€â”€ PILLS â”€â”€ */
         .pill { display: inline-block; padding: 2px 10px; border-radius: 12px; font-size: .65rem; font-weight: 600; }
         .pill-green { background: var(--success-soft); color: var(--success); }
         .pill-yellow { background: var(--warning-soft); color: var(--warning); }
         .pill-red { background: var(--danger-soft); color: var(--danger); }
         .pill-gray { background: rgba(85,91,122,.15); color: var(--text-dim); }
 
-        /* ── COURSE GRID ── */
+        /* â”€â”€ COURSE GRID â”€â”€ */
         .course-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(240px, 1fr)); gap: 12px; }
         .course-card { background: var(--bg-card); border: 1px solid var(--border); border-radius: var(--radius); padding: 16px; transition: border-color .2s; }
         .course-card:hover { border-color: var(--border-light); }
@@ -181,13 +181,13 @@
         .bar-fill.bad { background: var(--danger); }
         .course-card .cc-footer { display: flex; justify-content: space-between; font-size: .68rem; color: var(--text-dim); margin-top: 4px; }
 
-        /* ── RISK PILL ── */
+        /* â”€â”€ RISK PILL â”€â”€ */
         .risk-badge { display: inline-block; padding: 1px 9px; border-radius: 12px; font-size: .6rem; font-weight: 700; text-transform: uppercase; letter-spacing: .04em; }
         .risk-badge.low { background: var(--success-soft); color: var(--success); }
         .risk-badge.medium { background: var(--warning-soft); color: var(--warning); }
         .risk-badge.high { background: var(--danger-soft); color: var(--danger); }
 
-        /* ── SCANNER ── */
+        /* â”€â”€ SCANNER â”€â”€ */
         .scanner-card { max-width: 520px; background: var(--bg-card); border: 1px solid var(--border); border-radius: var(--radius); padding: 28px; text-align: center; }
         .scanner-card .sc-icon { width: 56px; height: 56px; border-radius: 16px; background: var(--accent-soft); display: flex; align-items: center; justify-content: center; margin: 0 auto 14px; font-size: 1.4rem; color: var(--accent); }
         .scanner-card h3 { font-size: .95rem; margin-bottom: 4px; }
@@ -203,7 +203,7 @@
         .btn-secondary { background: var(--bg-elevated); color: var(--text-secondary); border: 1px solid var(--border); }
         .btn-secondary:hover { background: var(--border-light); color: var(--text); }
 
-        /* ── SCAN RESULT ── */
+        /* â”€â”€ SCAN RESULT â”€â”€ */
         .scan-result { margin-top: 16px; text-align: left; display: none; }
         .scan-result .sr-card { background: var(--bg-card-alt); border: 1px solid var(--border); border-radius: var(--radius); padding: 16px; }
         .scan-result .sr-row { display: flex; justify-content: space-between; padding: 6px 0; font-size: .75rem; }
@@ -227,7 +227,7 @@
         .check-item .ck.pass { color: var(--success); }
         .check-item .ck.fail { color: var(--danger); }
 
-        /* ── SESSION LIST ── */
+        /* â”€â”€ SESSION LIST â”€â”€ */
         .session-list .s-item { display: flex; align-items: center; gap: 12px; padding: 11px 0; border-bottom: 1px solid var(--border); }
         .s-item:last-child { border-bottom: none; }
         .s-item .si-icon { width: 34px; height: 34px; border-radius: 10px; display: flex; align-items: center; justify-content: center; flex-shrink: 0; font-size: .8rem; }
@@ -238,7 +238,7 @@
         .s-item .si-sub { font-size: .68rem; color: var(--text-dim); }
         .s-item .si-right { text-align: right; flex-shrink: 0; }
 
-        /* ── TRUST GAUGE ── */
+        /* â”€â”€ TRUST GAUGE â”€â”€ */
         .trust-gauge { text-align: center; padding: 20px; }
         .trust-gauge .gauge-ring { width: 100px; height: 100px; margin: 0 auto 12px; position: relative; }
         .trust-gauge .gauge-ring svg { transform: rotate(-90deg); }
@@ -248,7 +248,7 @@
         .trust-gauge .gauge-ring .center .num { font-size: 1.4rem; font-weight: 700; }
         .trust-gauge .gauge-ring .center .lbl { font-size: .55rem; color: var(--text-dim); text-transform: uppercase; }
 
-        /* ── NOTIF PANEL ── */
+        /* â”€â”€ NOTIF PANEL â”€â”€ */
         .notif-panel { position: fixed; top: 0; right: -360px; width: 360px; height: 100vh; background: var(--bg-card); border-left: 1px solid var(--border); z-index: 1100; transition: right .3s cubic-bezier(.4,0,.2,1); display: flex; flex-direction: column; }
         .notif-panel.open { right: 0; }
         .notif-panel .np-header { display: flex; align-items: center; justify-content: space-between; padding: 16px 18px; border-bottom: 1px solid var(--border); }
@@ -264,19 +264,19 @@
         .notif-panel .np-item .np-msg { font-size: .75rem; color: var(--text-secondary); }
         .notif-panel .np-item .np-time { font-size: .62rem; color: var(--text-dim); margin-top: 2px; }
 
-        /* ── PAGINATION ── */
+        /* â”€â”€ PAGINATION â”€â”€ */
         .pagination { display: flex; align-items: center; justify-content: center; gap: 8px; padding: 12px 0; }
         .pagination button { background: var(--bg-card); border: 1px solid var(--border); border-radius: var(--radius-sm); padding: 6px 12px; color: var(--text-secondary); cursor: pointer; font-size: .72rem; transition: all .15s; }
         .pagination button:hover { background: var(--bg-elevated); }
         .pagination button:disabled { opacity: .35; cursor: default; }
 
-        /* ── TOAST ── */
+        /* â”€â”€ TOAST â”€â”€ */
         .toast-container { position: fixed; top: 16px; right: 16px; z-index: 9999; display: flex; flex-direction: column; gap: 8px; max-width: 340px; }
         .toast { padding: 11px 16px; border-radius: 8px; color: #fff; font-size: .78rem; box-shadow: 0 8px 24px rgba(0,0,0,.4); animation: slideIn .25s ease; display: flex; align-items: center; gap: 8px; }
         .toast i { font-size: .75rem; }
         @keyframes slideIn { from { transform: translateX(100%); opacity: 0; } to { transform: translateX(0); opacity: 1; } }
 
-        /* ── RESPONSIVE ── */
+        /* â”€â”€ RESPONSIVE â”€â”€ */
         @media (max-width: 768px) {
             .sidebar { transform: translateX(-100%); }
             .sidebar.open { transform: translateX(0); }
@@ -308,27 +308,27 @@
             .code-input-group { flex-direction: column; }
         }
 
-        /* ── TOPOLOGY ── */
+        /* â”€â”€ TOPOLOGY â”€â”€ */
         .topology-wrap { position: relative; width: 100%; height: 240px; background: var(--bg-card); border-radius: var(--radius); overflow: hidden; }
         .topology-wrap canvas { width: 100%; height: 100%; display: block; }
         .topology-legend { display: flex; gap: 12px; padding: 6px 12px; font-size: .62rem; color: var(--text-dim); flex-wrap: wrap; background: var(--bg-card); border-top: 1px solid var(--border); border-radius: 0 0 var(--radius) var(--radius); }
         .topology-legend span { display: flex; align-items: center; gap: 4px; }
         .topology-legend .dot { width: 6px; height: 6px; border-radius: 50%; display: inline-block; }
 
-        /* ── QUEUE INDICATOR ── */
+        /* â”€â”€ QUEUE INDICATOR â”€â”€ */
         .queue-pill { display: inline-flex; align-items: center; gap: 4px; font-size: .62rem; font-weight: 600; padding: 3px 10px; border-radius: 12px; white-space: nowrap; }
         .queue-pill.healthy { background: var(--success-soft); color: var(--success); border: 1px solid rgba(16,185,129,.15); }
         .queue-pill.degraded { background: var(--warning-soft); color: var(--warning); border: 1px solid rgba(245,158,11,.15); }
         .queue-pill.critical { background: var(--danger-soft); color: var(--danger); border: 1px solid rgba(239,68,68,.15); }
 
-        /* ── CONNECTION QUALITY ── */
+        /* â”€â”€ CONNECTION QUALITY â”€â”€ */
         .conn-quality { display: inline-flex; align-items: center; gap: 4px; font-size: .62rem; font-weight: 600; padding: 2px 10px; border-radius: 12px; cursor: default; white-space: nowrap; }
         .conn-quality .cq-dot { width: 5px; height: 5px; border-radius: 50%; }
         .conn-online { background: var(--success-soft); color: var(--success); border: 1px solid rgba(16,185,129,.15); }
         .conn-degraded { background: var(--warning-soft); color: var(--warning); border: 1px solid rgba(245,158,11,.15); }
         .conn-offline { background: var(--danger-soft); color: var(--danger); border: 1px solid rgba(239,68,68,.15); }
 
-        /* ── QUICK ACTIONS ── */
+        /* â”€â”€ QUICK ACTIONS â”€â”€ */
         .quick-actions { display: flex; gap: 6px; flex-wrap: wrap; padding: 6px 20px; background: var(--bg-card); border-bottom: 1px solid var(--border); }
         .qa-btn { display: inline-flex; align-items: center; gap: 5px; padding: 5px 12px; border-radius: var(--radius-sm); font-size: .7rem; font-weight: 600; border: none; cursor: pointer; transition: all .15s; color: var(--text-secondary); background: var(--bg-card-alt); }
         .qa-btn:hover { background: var(--bg-elevated); color: var(--text); transform: translateY(-1px); }
@@ -336,7 +336,7 @@
         .qa-btn.primary { background: var(--accent-soft); color: var(--accent); }
         .qa-btn.primary:hover { background: rgba(124,92,252,.18); }
 
-        /* ── DRAWER ── */
+        /* â”€â”€ DRAWER â”€â”€ */
         .drawer-overlay { position: fixed; inset: 0; background: rgba(0,0,0,.5); z-index: 2000; display: none; }
         .drawer-overlay.open { display: block; }
         .drawer-panel { position: fixed; top: 0; right: -380px; width: 380px; max-width: 100vw; height: 100vh; background: var(--bg-card); border-left: 1px solid var(--border); z-index: 2001; transition: right .3s cubic-bezier(.4,0,.2,1); display: flex; flex-direction: column; }
@@ -355,13 +355,13 @@
         .drawer-field .lbl { color: var(--text-dim); }
         .drawer-field .val { color: var(--text-secondary); font-weight: 500; text-align: right; }
 
-        /* ── HISTORY TABLE ── */
+        /* â”€â”€ HISTORY TABLE â”€â”€ */
         .history-table { width: 100%; border-collapse: collapse; font-size: .72rem; }
         .history-table th { text-align: left; padding: 8px 10px; color: var(--text-dim); font-weight: 600; font-size: .6rem; text-transform: uppercase; letter-spacing: .04em; border-bottom: 1px solid var(--border); }
         .history-table td { padding: 8px 10px; border-bottom: 1px solid var(--border); color: var(--text-secondary); }
         .history-table tr:hover td { background: var(--bg-card-alt); }
 
-        /* ── CALENDAR GRID ── */
+        /* â”€â”€ CALENDAR GRID â”€â”€ */
         .cal-grid { display: grid; grid-template-columns: repeat(7, 1fr); gap: 2px; }
         .cal-header { text-align: center; font-size: .6rem; font-weight: 600; color: var(--text-dim); padding: 4px 0; text-transform: uppercase; }
         .cal-day { aspect-ratio: 1; background: var(--bg-card-alt); border-radius: 4px; padding: 3px; font-size: .6rem; color: var(--text-dim); display: flex; flex-direction: column; align-items: center; justify-content: center; min-height: 44px; cursor: default; }
@@ -375,7 +375,7 @@
 <div class="app-wrap">
     <div class="sidebar-overlay" id="sidebarOverlay"></div>
 
-    <!-- ═══ SIDEBAR ═══ -->
+    <!-- â•â•â• SIDEBAR â•â•â• -->
     <aside class="sidebar" id="sidebar">
         <div class="sidebar-brand"><svg viewBox="0 0 24 24" width="1em" height="1em" fill="none" style="display:inline-block;vertical-align:-.125em"><path d="M12 6.5L3.5 21" stroke="currentColor" stroke-width="2.2" stroke-linecap="round"/><path d="M12 6.5L20.5 21" stroke="currentColor" stroke-width="2.2" stroke-linecap="round"/><path d="M5 14.5L11 14.5" stroke="currentColor" stroke-width="2" stroke-linecap="round"/><path d="M13 14.5L19 14.5" stroke="currentColor" stroke-width="2" stroke-linecap="round"/><path d="M9.5 9.5Q12 6.2 14.5 9.5" stroke="currentColor" stroke-width="1.2" stroke-linecap="round" fill="none" opacity=".6"/><circle cx="12" cy="3.5" r="3" fill="currentColor"/><circle cx="3.5" cy="21" r="2.5" fill="currentColor"/><circle cx="20.5" cy="21" r="2.5" fill="currentColor"/></svg> Attendrix</div>
         <nav class="sidebar-nav">
@@ -392,7 +392,7 @@
         </div>
     </aside>
 
-    <!-- ═══ MAIN ═══ -->
+    <!-- â•â•â• MAIN â•â•â• -->
     <div class="main">
         <header class="topbar">
             <div class="topbar-left">
@@ -414,7 +414,7 @@
 
         <!-- Network Status Bar -->
         <div class="network-bar" id="networkBar">
-            <span class="item"><span class="conn-quality conn-online" id="connQuality"><span class="cq-dot" id="connDot"></span> <span id="connLabel">Online</span> <span id="connLatency" style="font-weight:400;opacity:.6;">—ms</span></span></span>
+            <span class="item"><span class="conn-quality conn-online" id="connQuality"><span class="cq-dot" id="connDot"></span> <span id="connLabel">Online</span> <span id="connLatency" style="font-weight:400;opacity:.6;">â€”ms</span></span></span>
             <span class="item"><i class="fas fa-microchip" style="font-size:.6rem;"></i> <span id="netBroker">Broker</span></span>
             <span class="item"><i class="fas fa-sync-alt" style="font-size:.6rem;"></i> <span id="netSync" data-i18n="sync_active">Sync Active</span></span>
             <span class="item"><i class="fas fa-cloud-download-alt" style="font-size:.6rem;"></i> <span id="queuePill"></span></span>
@@ -430,7 +430,7 @@
 
         <div class="content">
 
-            <!-- ═══ OVERVIEW ═══ -->
+            <!-- â•â•â• OVERVIEW â•â•â• -->
             <div class="section active" id="secOverview">
                 <div style="display:flex;justify-content:space-between;align-items:center;flex-wrap:wrap;gap:8px;margin-bottom:16px;">
                     <div>
@@ -443,23 +443,23 @@
                 <div class="stats-grid" id="statsGrid">
                     <div class="stat-card">
                         <div class="stat-icon purple"><i class="fas fa-chart-line"></i></div>
-                        <div class="stat-value" id="ovRate">—</div>
+                        <div class="stat-value" id="ovRate">â€”</div>
                         <div class="stat-label" data-i18n="attendance_rate">Attendance Rate</div>
                         <div class="stat-trend" id="ovTrend"></div>
                     </div>
                     <div class="stat-card">
                         <div class="stat-icon green"><i class="fas fa-check-circle"></i></div>
-                        <div class="stat-value" id="ovPresent">—</div>
+                        <div class="stat-value" id="ovPresent">â€”</div>
                         <div class="stat-label" data-i18n="present">Present</div>
                     </div>
                     <div class="stat-card">
                         <div class="stat-icon yellow"><i class="fas fa-clock"></i></div>
-                        <div class="stat-value" id="ovLate">—</div>
+                        <div class="stat-value" id="ovLate">â€”</div>
                         <div class="stat-label" data-i18n="late_absent">Late / Absent</div>
                     </div>
                     <div class="stat-card">
                         <div class="stat-icon blue"><i class="fas fa-trophy"></i></div>
-                        <div class="stat-value" id="ovTrust">—</div>
+                        <div class="stat-value" id="ovTrust">â€”</div>
                         <div class="stat-label" data-i18n="trust_level">Trust Level</div>
                     </div>
                 </div>
@@ -517,19 +517,19 @@
                         <div class="card-body" id="queueStatsBody">
                             <div style="display:grid;grid-template-columns:1fr 1fr;gap:12px;">
                                 <div style="text-align:center;padding:8px;background:var(--bg-card-alt);border-radius:var(--radius-sm);">
-                                    <div style="font-size:.85rem;font-weight:700;color:var(--warning);" id="qPending">—</div>
+                                    <div style="font-size:.85rem;font-weight:700;color:var(--warning);" id="qPending">â€”</div>
                                     <div style="font-size:.6rem;color:var(--text-dim);" data-i18n="pending">Pending</div>
                                 </div>
                                 <div style="text-align:center;padding:8px;background:var(--bg-card-alt);border-radius:var(--radius-sm);">
-                                    <div style="font-size:.85rem;font-weight:700;color:var(--danger);" id="qFailed">—</div>
+                                    <div style="font-size:.85rem;font-weight:700;color:var(--danger);" id="qFailed">â€”</div>
                                     <div style="font-size:.6rem;color:var(--text-dim);" data-i18n="failed">Failed</div>
                                 </div>
                                 <div style="text-align:center;padding:8px;background:var(--bg-card-alt);border-radius:var(--radius-sm);">
-                                    <div style="font-size:.85rem;font-weight:700;color:var(--success);" id="qSynced">—</div>
+                                    <div style="font-size:.85rem;font-weight:700;color:var(--success);" id="qSynced">â€”</div>
                                     <div style="font-size:.6rem;color:var(--text-dim);" data-i18n="synced">Synced</div>
                                 </div>
                                 <div style="text-align:center;padding:8px;background:var(--bg-card-alt);border-radius:var(--radius-sm);">
-                                    <div style="font-size:.85rem;font-weight:700;color:var(--info);" id="qEstimate">—</div>
+                                    <div style="font-size:.85rem;font-weight:700;color:var(--info);" id="qEstimate">â€”</div>
                                     <div style="font-size:.6rem;color:var(--text-dim);" data-i18n="recovery">Recovery</div>
                                 </div>
                             </div>
@@ -538,7 +538,7 @@
                 </div>
             </div>
 
-            <!-- ═══ MARK ATTENDANCE ═══ -->
+            <!-- â•â•â• MARK ATTENDANCE â•â•â• -->
             <div class="section" id="secMarkAttendance">
                 <h2 class="section-title"><i class="fas fa-qrcode" style="color:var(--accent);"></i> <span data-i18n="mark_attendance">Mark Attendance</span></h2>
                 <p class="section-sub" data-i18n="mark_attendance_sub">Enter your session code to mark attendance. The system will verify your identity and location automatically.</p>
@@ -583,7 +583,7 @@
                 </div>
             </div>
 
-            <!-- ═══ SCHEDULE ═══ -->
+            <!-- â•â•â• SCHEDULE â•â•â• -->
             <div class="section" id="secSchedule">
                 <h2 class="section-title"><i class="fas fa-calendar-alt" style="color:var(--info);"></i> <span data-i18n="schedule">Schedule</span></h2>
                 <p class="section-sub" data-i18n="schedule_sub">Your class schedule for this week</p>
@@ -597,7 +597,7 @@
                 </div>
             </div>
 
-            <!-- ═══ SESSIONS ═══ -->
+            <!-- â•â•â• SESSIONS â•â•â• -->
             <div class="section" id="secSessions">
                 <h2 class="section-title"><i class="fas fa-clock" style="color:var(--success);"></i> <span data-i18n="sessions">Sessions</span></h2>
                 <p class="section-sub" data-i18n="sessions_sub">Ongoing and recent attendance sessions</p>
@@ -611,14 +611,14 @@
                 </div>
             </div>
 
-            <!-- ═══ COURSES ═══ -->
+            <!-- â•â•â• COURSES â•â•â• -->
             <div class="section" id="secCourses">
                 <h2 class="section-title"><i class="fas fa-book" style="color:var(--accent);"></i> <span data-i18n="my_courses">My Courses</span></h2>
                 <p class="section-sub" data-i18n="courses_sub">Your enrolled courses with attendance performance</p>
                 <div class="course-grid" id="coursesGrid"><div class="empty-muted" data-i18n="loading">Loading...</div></div>
             </div>
 
-            <!-- ═══ ANALYTICS ═══ -->
+            <!-- â•â•â• ANALYTICS â•â•â• -->
             <div class="section" id="secAnalytics">
                 <h2 class="section-title"><i class="fas fa-chart-bar" style="color:var(--warning);"></i> <span data-i18n="analytics">Analytics</span></h2>
                 <p class="section-sub" data-i18n="analytics_sub">Your attendance trends, patterns, and insights</p>
@@ -638,7 +638,7 @@
                 </div>
             </div>
 
-            <!-- ═══ SECURITY ═══ -->
+            <!-- â•â•â• SECURITY â•â•â• -->
             <div class="section" id="secSecurity">
                 <h2 class="section-title"><i class="fas fa-shield-alt" style="color:var(--info);"></i> <span data-i18n="security">Security</span></h2>
                 <p class="section-sub" data-i18n="security_sub">Device trust, login activity, and security events</p>
@@ -652,7 +652,7 @@
                                         <circle class="bg" cx="50" cy="50" r="42"/>
                                         <circle class="fg" id="trustArcGauge" cx="50" cy="50" r="42" stroke-dasharray="263.9" stroke-dashoffset="263.9"/>
                                     </svg>
-                                    <div class="center"><span class="num" id="trustNum">—</span><span class="lbl" data-i18n="trust_score">Trust</span></div>
+                                    <div class="center"><span class="num" id="trustNum">â€”</span><span class="lbl" data-i18n="trust_score">Trust</span></div>
                                 </div>
                                 <div style="font-size:.78rem;font-weight:600;" id="trustLabel"></div>
                             </div>
@@ -672,7 +672,7 @@
         </div>
     </div>
 
-    <!-- ═══ NOTIF PANEL ═══ -->
+    <!-- â•â•â• NOTIF PANEL â•â•â• -->
     <div class="notif-panel" id="notifPanel">
         <div class="np-header">
             <h3 data-i18n="notifications">Notifications</h3>
@@ -681,7 +681,7 @@
         <div class="np-body" id="notifBody"><div class="empty-muted" data-i18n="no_notifications">No notifications</div></div>
     </div>
 
-    <!-- ═══ FACE ENROLLMENT MODAL ═══ -->
+    <!-- â•â•â• FACE ENROLLMENT MODAL â•â•â• -->
     <div class="modal-overlay" id="faceModal" style="display:none;">
         <div class="modal" style="max-width:420px;">
             <div class="modal-header">
@@ -731,7 +731,7 @@
         </div>
     </div>
 
-    <!-- ═══ COURSE DRAWER ═══ -->
+    <!-- â•â•â• COURSE DRAWER â•â•â• -->
     <div class="drawer-overlay" id="drawerOverlay" onclick="closeDrawer()"></div>
     <div class="drawer-panel" id="drawerPanel">
         <div class="drawer-header">
@@ -741,9 +741,9 @@
         <div class="drawer-body" id="drawerBody">
             <div class="drawer-section">
                 <div class="drawer-section-title" data-i18n="course_info">Course Info</div>
-                <div class="drawer-field"><span class="lbl" data-i18n="course_code">Code</span><span class="val" id="drawerCode">—</span></div>
-                <div class="drawer-field"><span class="lbl" data-i18n="lecturer">Lecturer</span><span class="val" id="drawerLecturer">—</span></div>
-                <div class="drawer-field"><span class="lbl" data-i18n="risk_level">Risk Level</span><span class="val" id="drawerRisk">—</span></div>
+                <div class="drawer-field"><span class="lbl" data-i18n="course_code">Code</span><span class="val" id="drawerCode">â€”</span></div>
+                <div class="drawer-field"><span class="lbl" data-i18n="lecturer">Lecturer</span><span class="val" id="drawerLecturer">â€”</span></div>
+                <div class="drawer-field"><span class="lbl" data-i18n="risk_level">Risk Level</span><span class="val" id="drawerRisk">â€”</span></div>
             </div>
             <div class="drawer-section">
                 <div class="drawer-section-title" data-i18n="attendance_breakdown">Attendance Breakdown</div>
@@ -751,7 +751,7 @@
                 <div class="drawer-field"><span class="lbl" data-i18n="late">Late</span><span class="val" style="color:var(--warning);" id="drawerLate">0</span></div>
                 <div class="drawer-field"><span class="lbl" data-i18n="absent">Absent</span><span class="val" style="color:var(--danger);" id="drawerAbsent">0</span></div>
                 <div class="drawer-field"><span class="lbl" data-i18n="suspicious">Suspicious</span><span class="val" style="color:var(--danger);" id="drawerSuspicious">0</span></div>
-                <div class="drawer-field" style="border-top:1px solid var(--border);padding-top:8px;margin-top:4px;"><span class="lbl" data-i18n="overall_rate">Overall Rate</span><span class="val" style="font-weight:700;" id="drawerRate">—</span></div>
+                <div class="drawer-field" style="border-top:1px solid var(--border);padding-top:8px;margin-top:4px;"><span class="lbl" data-i18n="overall_rate">Overall Rate</span><span class="val" style="font-weight:700;" id="drawerRate">â€”</span></div>
             </div>
             <div class="drawer-section">
                 <div class="drawer-section-title" data-i18n="recent_sessions">Recent Sessions</div>
@@ -863,7 +863,7 @@
     var verifiedSession = null;
     var trendChartInstance = null;
 
-    // ── PERSISTENT ATTENDANCE FLOW DATA (no cache/fallback) ──
+    // â”€â”€ PERSISTENT ATTENDANCE FLOW DATA (no cache/fallback) â”€â”€
     var currentStudent = null;       // from dashboard profile
     var activeSession = null;        // from dashboard upcoming (status === 'active')
     var institutionData = null;      // from /api/institution/extended
@@ -921,7 +921,7 @@
         } catch(e) { /* silently fail, use embedded translations */ }
     }
 
-    // ── INSTITUTION DATA (optional — never blocks attendance) ──
+    // â”€â”€ INSTITUTION DATA (optional â€” never blocks attendance) â”€â”€
     async function loadInstitutionData() {
         try {
             var token = getToken();
@@ -962,7 +962,7 @@
         setTimeout(function() { tEl.style.opacity = '0'; tEl.style.transition = 'opacity .3s'; setTimeout(function() { tEl.remove(); }, 300); }, 4000);
     }
 
-    // ── SIDEBAR ──
+    // â”€â”€ SIDEBAR â”€â”€
     document.getElementById('sidebarToggle').addEventListener('click', function() {
         document.getElementById('sidebar').classList.toggle('open');
         document.getElementById('sidebarOverlay').classList.toggle('show');
@@ -1000,7 +1000,7 @@
         document.getElementById('notifPanel').classList.toggle('open');
     }
 
-    // ── DASHBOARD DATA ──
+    // â”€â”€ DASHBOARD DATA â”€â”€
     async function loadDashboard() {
         var res = await apiFetch('/api/student/dashboard');
         if (!res || !res.ok) return;
@@ -1013,7 +1013,7 @@
             if (upcoming[i].is_active === true) { activeSession = upcoming[i]; break; }
         }
         renderAll();
-        // Institution data is OPTIONAL — fire-and-forget, never blocks attendance flow
+        // Institution data is OPTIONAL â€” fire-and-forget, never blocks attendance flow
         loadInstitutionData();
     }
 
@@ -1047,12 +1047,12 @@
     function renderStats() {
         if (!dashboardData) return;
         var s = dashboardData.stats || {};
-        document.getElementById('ovRate').textContent = s.rate !== undefined ? s.rate + '%' : '—';
+        document.getElementById('ovRate').textContent = s.rate !== undefined ? s.rate + '%' : 'â€”';
         document.getElementById('ovPresent').textContent = s.present || '0';
         var lateAbsent = (s.late || 0) + (s.absent || 0);
         document.getElementById('ovLate').textContent = lateAbsent;
         var tl = dashboardData.trust_level || {};
-        document.getElementById('ovTrust').textContent = tl.score !== undefined ? tl.score + '%' : '—';
+        document.getElementById('ovTrust').textContent = tl.score !== undefined ? tl.score + '%' : 'â€”';
         var trend = document.getElementById('ovTrend');
         var wr = s.weekly_rate;
         if (wr !== undefined && s.rate !== undefined && s.rate > 0) {
@@ -1086,7 +1086,7 @@
         list.innerHTML = today.map(function(s) {
             var isActive = s.is_active === true;
             var time = s.created_at ? new Date(s.created_at).toLocaleTimeString([], { hour:'2-digit', minute:'2-digit' }) : '';
-            return '<div class="s-item"><div class="si-icon ' + (isActive ? 'active' : 'past') + '"><i class="fas ' + (isActive ? 'fa-play' : 'fa-calendar') + '"></i></div><div class="si-body"><div class="si-title">' + (s.course_name || '') + '</div><div class="si-sub">' + (s.lecturer_name || '') + ' · ' + time + '</div></div><div class="si-right">' + (isActive ? '<span class="pill pill-green">' + t('active_now') + '</span>' : '') + '</div></div>';
+            return '<div class="s-item"><div class="si-icon ' + (isActive ? 'active' : 'past') + '"><i class="fas ' + (isActive ? 'fa-play' : 'fa-calendar') + '"></i></div><div class="si-body"><div class="si-title">' + (s.course_name || '') + '</div><div class="si-sub">' + (s.lecturer_name || '') + ' Â· ' + time + '</div></div><div class="si-right">' + (isActive ? '<span class="pill pill-green">' + t('active_now') + '</span>' : '') + '</div></div>';
         }).join('');
     }
 
@@ -1098,7 +1098,7 @@
             var clr = r.status === 'present' ? 'var(--success)' : r.status === 'late' ? 'var(--warning)' : r.status === 'suspicious' ? 'var(--danger)' : 'var(--text-dim)';
             var lbl = r.status === 'present' ? t('present_label') : r.status === 'late' ? t('late') : r.status === 'suspicious' ? t('suspicious') : t('absent');
             var time = r.marked_at ? new Date(r.marked_at).toLocaleDateString() : '';
-            return '<div class="feed-item"><span class="feed-dot" style="background:' + clr + '"></span><span class="feed-msg">' + (r.course_name || '') + ' — ' + lbl + '</span><span class="feed-time">' + time + '</span></div>';
+            return '<div class="feed-item"><span class="feed-dot" style="background:' + clr + '"></span><span class="feed-msg">' + (r.course_name || '') + ' â€” ' + lbl + '</span><span class="feed-time">' + time + '</span></div>';
         }).join('');
     }
 
@@ -1136,14 +1136,14 @@
             html += '<div class="card"><div class="card-header" style="color:var(--success);"><i class="fas fa-play-circle"></i> ' + t('active_now') + ' <span class="pill pill-green" style="margin-left:auto;">' + active.length + '</span></div><div class="card-body session-list">' +
                 active.map(function(s) {
                     var time = s.created_at ? new Date(s.created_at).toLocaleString() : '';
-                    return '<div class="s-item"><div class="si-icon active"><i class="fas fa-play"></i></div><div class="si-body"><div class="si-title">' + (s.course_name || '') + '</div><div class="si-sub">' + (s.lecturer_name || '') + ' · ' + time + '</div></div><div class="si-right"><span class="pill pill-green">' + t('active_now') + '</span></div></div>';
+                    return '<div class="s-item"><div class="si-icon active"><i class="fas fa-play"></i></div><div class="si-body"><div class="si-title">' + (s.course_name || '') + '</div><div class="si-sub">' + (s.lecturer_name || '') + ' Â· ' + time + '</div></div><div class="si-right"><span class="pill pill-green">' + t('active_now') + '</span></div></div>';
                 }).join('') + '</div></div>';
         }
         if (past.length) {
             html += '<div class="card"><div class="card-header">' + t('past') + ' <span style="margin-left:auto;font-weight:400;font-size:.7rem;color:var(--text-dim);">' + past.length + '</span></div><div class="card-body session-list">' +
                 past.map(function(s) {
                     var time = s.created_at ? new Date(s.created_at).toLocaleString() : '';
-                    return '<div class="s-item"><div class="si-icon past"><i class="fas fa-check"></i></div><div class="si-body"><div class="si-title">' + (s.course_name || '') + '</div><div class="si-sub">' + (s.lecturer_name || '') + ' · ' + time + '</div></div></div>';
+                    return '<div class="s-item"><div class="si-icon past"><i class="fas fa-check"></i></div><div class="si-body"><div class="si-title">' + (s.course_name || '') + '</div><div class="si-sub">' + (s.lecturer_name || '') + ' Â· ' + time + '</div></div></div>';
                 }).join('') + '</div></div>';
         }
         container.innerHTML = html;
@@ -1240,14 +1240,14 @@
         }
     }
 
-    // ── MARK ATTENDANCE ──
+    // â”€â”€ MARK ATTENDANCE â”€â”€
     var pendingVerification = null;
     var attendanceFaceDescriptor = null;
     var faceEnrolled = false;
     var allLabeledDescriptors = null;
     var faceMatcher = null;
 
-    // ── PHASE 1: SESSION VERIFICATION ONLY (no API calls) ──
+    // â”€â”€ PHASE 1: SESSION VERIFICATION ONLY (no API calls) â”€â”€
     // VERIFY button just validates session exists client-side,
     // stores session data, and enables face capture.
     // verify_scan API is called AFTER face capture (Phase 3).
@@ -1275,7 +1275,7 @@
                 _institution_id: (institutionData && institutionData.id) || (activeSession && activeSession.institution_id) || ''
             };
 
-            console.log('PHASE 1 — Session verified:', code);
+            console.log('PHASE 1 â€” Session verified:', code);
             console.log('SESSION:', pendingVerification._session_id);
             console.log('STUDENT:', pendingVerification._student_id);
             console.log('SESSION CODE:', pendingVerification._verified_code);
@@ -1288,7 +1288,7 @@
         }
     }
 
-    // ── PHASE 2: FACE CAPTURE (starts automatically after Phase 1) ──
+    // â”€â”€ PHASE 2: FACE CAPTURE (starts automatically after Phase 1) â”€â”€
     function onSessionVerified() {
         console.log("PHASE 1 COMPLETE");
         lockVerifyButton();
@@ -1350,7 +1350,7 @@
         startFaceVerification();
     }
 
-    // ── FACE VERIFIED SUCCESS HANDLER ──
+    // â”€â”€ FACE VERIFIED SUCCESS HANDLER â”€â”€
     function onFaceVerified(capturedDescriptor, confidence) {
         console.log('Face matched');
         console.log('Success callback executed');
@@ -1367,7 +1367,7 @@
         submitVerifyScan(capturedDescriptor);
     }
 
-    // ── FACE DETECTION LOOP (polling) ──
+    // â”€â”€ FACE DETECTION LOOP (polling) â”€â”€
     async function startFaceDetection() {
         var status = document.getElementById('faceAttStatus');
         var video = document.getElementById('attFaceVideo');
@@ -1414,9 +1414,9 @@
         });
     }
 
-    // ── PHASE 3: SUBMIT VERIFY SCAN (called AFTER face capture succeeds) ──
+    // â”€â”€ PHASE 3: SUBMIT VERIFY SCAN (called AFTER face capture succeeds) â”€â”€
     async function submitVerifyScan(faceData) {
-        // FIX 2 — BLOCK NULL FACE DATA
+        // FIX 2 â€” BLOCK NULL FACE DATA
         if (!faceData) {
             console.error('face_data is required before verify_scan');
             return;
@@ -1432,7 +1432,7 @@
             return;
         }
 
-        console.log('PHASE 3 — Submitting verify_scan with face data');
+        console.log('PHASE 3 â€” Submitting verify_scan with face data');
 
         var payload = {
             studentId: studentId,
@@ -1482,8 +1482,8 @@
 
     var CHECK_TRANSLATIONS = {
         'Campus WiFi': { en: 'Campus WiFi', fr: 'WiFi Campus' },
-        'Secure Session': { en: 'Secure Session', fr: 'Session Sécurisée' },
-        'Device Verified': { en: 'Device Verified', fr: 'Appareil Vérifié' },
+        'Secure Session': { en: 'Secure Session', fr: 'Session SÃ©curisÃ©e' },
+        'Device Verified': { en: 'Device Verified', fr: 'Appareil VÃ©rifiÃ©' },
         'Location Match': { en: 'Location Match', fr: 'Localisation Correspond' },
         'Time Valid': { en: 'Time Valid', fr: 'Heure Valide' },
     };
@@ -1512,7 +1512,7 @@
     }
 
     async function confirmMark() {
-        // ── FIX 3 — VALIDATE BEFORE SUBMIT ──
+        // â”€â”€ FIX 3 â€” VALIDATE BEFORE SUBMIT â”€â”€
         var studentId = pendingVerification ? pendingVerification._student_id : null;
         var sessionId = pendingVerification ? pendingVerification._session_id : null;
         var sessionCode = pendingVerification ? pendingVerification._verified_code : null;
@@ -1524,7 +1524,7 @@
             return;
         }
 
-        // ── FIX 4 — ONLY SUBMIT IF ALL CHECKS PASS ──
+        // â”€â”€ FIX 4 â€” ONLY SUBMIT IF ALL CHECKS PASS â”€â”€
         var sessionValid = !!pendingVerification;
         var faceMatched = !!faceDescriptor;
         var serverReady = true;
@@ -1541,7 +1541,7 @@
 
             var token = getToken();
 
-            // ── FIX 1 — SHOW REAL BACKEND ERROR ──
+            // â”€â”€ FIX 1 â€” SHOW REAL BACKEND ERROR â”€â”€
             var response = await fetch('/api/attendance/mark', {
                 method: 'POST',
                 headers: {
@@ -1551,7 +1551,7 @@
                 body: body
             });
 
-            // ── FIX 2 — NEVER HIDE SERVER RESPONSE ──
+            // â”€â”€ FIX 2 â€” NEVER HIDE SERVER RESPONSE â”€â”€
             console.log('STATUS:', response.status);
 
             var data = await response.json();
@@ -1580,7 +1580,7 @@
         }
     }
 
-    // ── FACE VERIFICATION FOR ATTENDANCE ──
+    // â”€â”€ FACE VERIFICATION FOR ATTENDANCE â”€â”€
     var attFaceStream = null;
 
     async function checkFaceForAttendance() {
@@ -1637,12 +1637,12 @@
             video.hidden = false;
             video.muted = true;
 
-            // Step 2: Guard — mediaDevices API may be undefined on non-HTTPS or unsupported mobile browsers
+            // Step 2: Guard â€” mediaDevices API may be undefined on non-HTTPS or unsupported mobile browsers
             if (!navigator.mediaDevices || typeof navigator.mediaDevices.getUserMedia !== 'function') {
                 throw new Error('Camera API not available on this device or browser');
             }
 
-            // Step 3: Start camera IMMEDIATELY — critical for iOS Safari user gesture
+            // Step 3: Start camera IMMEDIATELY â€” critical for iOS Safari user gesture
             console.log('Face capture: Starting camera...');
             status.innerHTML = '<i class="fas fa-spinner fa-pulse"></i> <span>Starting camera...</span>';
             var constraints = { video: { facingMode: 'user', width: { ideal: 640 }, height: { ideal: 480 } } };
@@ -1656,7 +1656,7 @@
             }
             console.log('Camera stream started');
 
-            // Step 3: Pre-load ML models (camera already live — models load in background)
+            // Step 3: Pre-load ML models (camera already live â€” models load in background)
             console.log('Face capture: Loading models...');
             status.innerHTML = '<i class="fas fa-spinner fa-pulse"></i> <span>Loading face models...</span>';
             var modelUrl = 'https://cdn.jsdelivr.net/npm/@vladmandic/face-api/model/';
@@ -1679,7 +1679,7 @@
             // Step 5: Create FaceMatcher with fixed threshold 0.45
             faceMatcher = new window.faceapi.FaceMatcher(labeledDescriptors, 0.45);
 
-            // Step 6: Camera is live — user sees themselves
+            // Step 6: Camera is live â€” user sees themselves
             console.log('Video preview rendered');
             status.className = 'face-att-status';
             status.innerHTML = '<i class="fas fa-camera"></i> <span>Camera Ready</span>';
@@ -1697,7 +1697,7 @@
                 throw new Error('No face detected after multiple attempts');
             }
 
-            // Step 8: Face detected — show matching status (camera stays ON)
+            // Step 8: Face detected â€” show matching status (camera stays ON)
             console.log('Face detected');
             status.innerHTML = '<i class="fas fa-spinner fa-pulse"></i> <span>Matching Face...</span>';
             document.getElementById('flowStatus').textContent = 'Face detected. Matching...';
@@ -1711,20 +1711,20 @@
 
             console.log('[FaceCapture] Best match:', matchLabel, 'distance:', matchDistance);
 
-            // Step 10: RULE — If distance > 0.45 (threshold), deny
+            // Step 10: RULE â€” If distance > 0.45 (threshold), deny
             if (matchDistance > 0.45) {
                 stopCamera();
                 attendanceFaceDescriptor = null;
                 status.className = 'face-att-status failed';
-                status.innerHTML = '<i class="fas fa-exclamation-triangle"></i> <span>Face mismatch → Attendance denied</span>';
-                document.getElementById('flowStatus').textContent = 'Face mismatch → Attendance denied';
+                status.innerHTML = '<i class="fas fa-exclamation-triangle"></i> <span>Face mismatch â†’ Attendance denied</span>';
+                document.getElementById('flowStatus').textContent = 'Face mismatch â†’ Attendance denied';
                 document.getElementById('confirmAttBtn').disabled = true;
                 btn.style.display = 'block';
                 btn.querySelector('span').textContent = 'Retry';
                 return;
             }
 
-            // Step 11: RULE — If label is "unknown", block attendance
+            // Step 11: RULE â€” If label is "unknown", block attendance
             if (matchLabel === 'unknown') {
                 stopCamera();
                 attendanceFaceDescriptor = null;
@@ -1737,21 +1737,21 @@
                 return;
             }
 
-            // Step 12: RULE — If confidence < 0.55, reject
+            // Step 12: RULE â€” If confidence < 0.55, reject
             var confidence = Math.max(0, 1 - matchDistance);
             if (confidence < 0.55) {
                 stopCamera();
                 attendanceFaceDescriptor = null;
                 status.className = 'face-att-status failed';
-                status.innerHTML = '<i class="fas fa-exclamation-triangle"></i> <span>Face mismatch → Attendance denied</span>';
-                document.getElementById('flowStatus').textContent = 'Face mismatch → Attendance denied';
+                status.innerHTML = '<i class="fas fa-exclamation-triangle"></i> <span>Face mismatch â†’ Attendance denied</span>';
+                document.getElementById('flowStatus').textContent = 'Face mismatch â†’ Attendance denied';
                 document.getElementById('confirmAttBtn').disabled = true;
                 btn.style.display = 'block';
                 btn.querySelector('span').textContent = 'Retry';
                 return;
             }
 
-            // Step 13: Face matched — camera stays ON until onFaceVerified stops it
+            // Step 13: Face matched â€” camera stays ON until onFaceVerified stops it
             console.log('Face matched');
             attendanceFaceDescriptor = capturedDescriptor;
             onFaceVerified(capturedDescriptor, confidence);
@@ -1806,7 +1806,7 @@
         return btoa(navigator.userAgent + navigator.language + screen.width + 'x' + screen.height + canvas.toDataURL()).substring(0, 32);
     }
 
-    // ── ANALYTICS ──
+    // â”€â”€ ANALYTICS â”€â”€
     async function loadAnalytics() {
         try {
             var res = await apiFetch('/api/student/analytics');
@@ -1875,16 +1875,16 @@
             html += '<div class="feed-item"><span class="feed-dot" style="background:var(--warning);"></span><span class="feed-msg"><strong>' + (worst.course_name || '') + '</strong> ' + (currentLang === 'fr' ? 'a le plus faible taux' : 'has the lowest rate') + ': ' + worst.rate + '%</span></div>';
         }
         if (totalLate > 0) {
-            html += '<div class="feed-item"><span class="feed-dot" style="background:var(--warning);"></span><span class="feed-msg">' + (currentLang === 'fr' ? 'Vous avez été en retard' : 'You\'ve been late') + ' ' + totalLate + ' ' + (currentLang === 'fr' ? 'fois' : 'times') + '</span></div>';
+            html += '<div class="feed-item"><span class="feed-dot" style="background:var(--warning);"></span><span class="feed-msg">' + (currentLang === 'fr' ? 'Vous avez Ã©tÃ© en retard' : 'You\'ve been late') + ' ' + totalLate + ' ' + (currentLang === 'fr' ? 'fois' : 'times') + '</span></div>';
         }
         if (totalSuspicious > 0) {
-            html += '<div class="feed-item"><span class="feed-dot" style="background:var(--danger);"></span><span class="feed-msg">' + (currentLang === 'fr' ? totalSuspicious + ' entrée(s) suspecte(s) détectée(s)' : totalSuspicious + ' suspicious entr' + (totalSuspicious > 1 ? 'ies' : 'y') + ' detected') + '</span></div>';
+            html += '<div class="feed-item"><span class="feed-dot" style="background:var(--danger);"></span><span class="feed-msg">' + (currentLang === 'fr' ? totalSuspicious + ' entrÃ©e(s) suspecte(s) dÃ©tectÃ©e(s)' : totalSuspicious + ' suspicious entr' + (totalSuspicious > 1 ? 'ies' : 'y') + ' detected') + '</span></div>';
         }
         if (!html) html = '<div class="empty-muted">' + (currentLang === 'fr' ? 'Bonne performance!' : 'Good performance!') + '</div>';
         body.innerHTML = html;
     }
 
-    // ── SECURITY ──
+    // â”€â”€ SECURITY â”€â”€
     async function loadSecurity() {
         try {
             var res = await apiFetch('/api/student/security');
@@ -1914,8 +1914,8 @@
         var trusted = securityData.trusted_device;
         var vpn = securityData.vpn_detected;
         var trustedColor = trusted === true ? 'var(--success)' : trusted === false ? 'var(--danger)' : 'var(--text-dim)';
-        var trustedLabel = trusted === true ? t('trusted') : trusted === false ? t('not_trusted') : (currentLang === 'fr' ? 'Non évalué' : 'Not Evaluated');
-        deviceBody.innerHTML = '<div class="feed-item"><span class="feed-dot" style="background:' + trustedColor + '"></span><span class="feed-msg">' + (currentLang === 'fr' ? 'Appareil de confiance' : 'Trusted Device') + '</span><span style="font-size:.7rem;font-weight:600;color:' + trustedColor + '">' + trustedLabel + '</span></div><div class="feed-item"><span class="feed-dot" style="background:' + (vpn ? 'var(--warning)' : 'var(--success)') + '"></span><span class="feed-msg">VPN ' + (currentLang === 'fr' ? 'Détecté' : 'Detected') + '</span><span style="font-size:.7rem;font-weight:600;color:' + (vpn ? 'var(--warning)' : 'var(--success)') + '">' + (vpn ? t('high') : t('low')) + '</span></div><div class="feed-item"><span class="feed-dot" style="background:var(--info);"></span><span class="feed-msg">' + (currentLang === 'fr' ? 'Dernière connexion' : 'Last Login') + '</span><span style="font-size:.7rem;color:var(--text-dim);">' + (securityData.last_login ? new Date(securityData.last_login).toLocaleDateString() : '—') + '</span></div>';
+        var trustedLabel = trusted === true ? t('trusted') : trusted === false ? t('not_trusted') : (currentLang === 'fr' ? 'Non Ã©valuÃ©' : 'Not Evaluated');
+        deviceBody.innerHTML = '<div class="feed-item"><span class="feed-dot" style="background:' + trustedColor + '"></span><span class="feed-msg">' + (currentLang === 'fr' ? 'Appareil de confiance' : 'Trusted Device') + '</span><span style="font-size:.7rem;font-weight:600;color:' + trustedColor + '">' + trustedLabel + '</span></div><div class="feed-item"><span class="feed-dot" style="background:' + (vpn ? 'var(--warning)' : 'var(--success)') + '"></span><span class="feed-msg">VPN ' + (currentLang === 'fr' ? 'DÃ©tectÃ©' : 'Detected') + '</span><span style="font-size:.7rem;font-weight:600;color:' + (vpn ? 'var(--warning)' : 'var(--success)') + '">' + (vpn ? t('high') : t('low')) + '</span></div><div class="feed-item"><span class="feed-dot" style="background:var(--info);"></span><span class="feed-msg">' + (currentLang === 'fr' ? 'DerniÃ¨re connexion' : 'Last Login') + '</span><span style="font-size:.7rem;color:var(--text-dim);">' + (securityData.last_login ? new Date(securityData.last_login).toLocaleDateString() : 'â€”') + '</span></div>';
 
         var eventsBody = document.getElementById('securityEventsBody');
         var events = securityData.events || [];
@@ -1923,7 +1923,7 @@
             eventsBody.innerHTML = events.map(function(e) {
                 var clr = e.severity === 'critical' ? 'var(--danger)' : e.severity === 'high' ? 'var(--warning)' : 'var(--info)';
                 var time = e.created_at ? new Date(e.created_at).toLocaleDateString() : '';
-                return '<div class="feed-item"><span class="feed-dot" style="background:' + clr + '"></span><span class="feed-msg">' + (e.description || e.event_type || '—') + '</span><span class="feed-time">' + time + '</span></div>';
+                return '<div class="feed-item"><span class="feed-dot" style="background:' + clr + '"></span><span class="feed-msg">' + (e.description || e.event_type || 'â€”') + '</span><span class="feed-time">' + time + '</span></div>';
             }).join('');
         } else {
             eventsBody.innerHTML = '<div class="empty-muted">' + t('no_events') + '</div>';
@@ -1933,7 +1933,7 @@
         if (events.length) secBadge.style.display = 'inline-block'; else secBadge.style.display = 'none';
     }
     
-    // ── FACE RECOGNITION ──
+    // â”€â”€ FACE RECOGNITION â”€â”€
     var faceCapture = null;
 
     async function loadFaceStatus() {
@@ -1971,16 +1971,16 @@
         document.getElementById('faceEnrollStep2').style.display = 'none';
         document.getElementById('faceEnrollDone').style.display = 'none';
         document.getElementById('faceEnrollError').style.display = 'none';
-        document.getElementById('faceCaptureStatus').textContent = (currentLang === 'fr' ? 'Initialisation de la caméra...' : 'Initializing camera...');
+        document.getElementById('faceCaptureStatus').textContent = (currentLang === 'fr' ? 'Initialisation de la camÃ©ra...' : 'Initializing camera...');
         try {
             faceCapture = Object.create(window.FaceCapture);
             await faceCapture.init('faceVideo');
             await faceCapture.loadModels();
             await faceCapture.startCamera();
-            document.getElementById('faceCaptureStatus').textContent = (currentLang === 'fr' ? 'Caméra prête. Regardez la caméra.' : 'Camera ready. Look at the camera.');
+            document.getElementById('faceCaptureStatus').textContent = (currentLang === 'fr' ? 'CamÃ©ra prÃªte. Regardez la camÃ©ra.' : 'Camera ready. Look at the camera.');
             document.getElementById('faceCaptureBtn').disabled = false;
         } catch(e) {
-            document.getElementById('faceCaptureStatus').textContent = (currentLang === 'fr' ? 'Erreur caméra: ' : 'Camera error: ') + e.message;
+            document.getElementById('faceCaptureStatus').textContent = (currentLang === 'fr' ? 'Erreur camÃ©ra: ' : 'Camera error: ') + e.message;
         }
     }
 
@@ -1999,7 +1999,7 @@
             if (!descriptor) {
                 document.getElementById('faceEnrollStep1').style.display = 'none';
                 document.getElementById('faceEnrollError').style.display = 'block';
-                document.getElementById('faceEnrollErrorText').textContent = (currentLang === 'fr' ? 'Aucun visage détecté. Assurez-vous d\'être bien éclairé.' : 'No face detected. Make sure you are well lit.');
+                document.getElementById('faceEnrollErrorText').textContent = (currentLang === 'fr' ? 'Aucun visage dÃ©tectÃ©. Assurez-vous d\'Ãªtre bien Ã©clairÃ©.' : 'No face detected. Make sure you are well lit.');
                 btn.disabled = false;
                 return;
             }
@@ -2016,7 +2016,7 @@
             var data = await res.json();
             document.getElementById('faceEnrollStep2').style.display = 'none';
             document.getElementById('faceEnrollDone').style.display = 'block';
-            document.getElementById('faceEnrollConfidence').textContent = (currentLang === 'fr' ? 'Visage inscrit avec succès' : 'Face enrolled successfully');
+            document.getElementById('faceEnrollConfidence').textContent = (currentLang === 'fr' ? 'Visage inscrit avec succÃ¨s' : 'Face enrolled successfully');
             loadFaceStatus();
         } catch(e) {
             document.getElementById('faceEnrollStep1').style.display = 'none';
@@ -2044,7 +2044,7 @@
         } catch(e) { console.warn('revokeFace:', e); }
     }
 
-    // ── ATTENDANCE HISTORY (Gap 8) ──
+    // â”€â”€ ATTENDANCE HISTORY (Gap 8) â”€â”€
     var historyPage = 1;
     var historyTotalPages = 1;
 
@@ -2074,7 +2074,7 @@
         tbody.innerHTML = data.history.map(function(r) {
             var statusLabel = r.status === 'present' ? t('present_label') : r.status === 'late' ? t('late') : r.status === 'suspicious' ? t('suspicious') : r.status === 'absent' ? t('absent') : r.status;
             var statusClass = r.status === 'present' ? 'pill-green' : r.status === 'late' ? 'pill-yellow' : r.status === 'suspicious' || r.status === 'absent' ? 'pill-red' : 'pill-gray';
-            var date = r.marked_at ? new Date(r.marked_at).toLocaleDateString(currentLang === 'fr' ? 'fr' : 'en', { day:'numeric', month:'short' }) : '—';
+            var date = r.marked_at ? new Date(r.marked_at).toLocaleDateString(currentLang === 'fr' ? 'fr' : 'en', { day:'numeric', month:'short' }) : 'â€”';
             return '<tr><td>' + date + '</td><td class="cell-name">' + (r.course_name || '') + '</td><td><span class="pill ' + statusClass + '">' + statusLabel + '</span></td><td>' + (r.lecturer_name || '') + '</td></tr>';
         }).join('');
         if (data.total_pages > 1) {
@@ -2085,7 +2085,7 @@
         }
     }
 
-    // ── SCHEDULE / CALENDAR (Gap 9) ──
+    // â”€â”€ SCHEDULE / CALENDAR (Gap 9) â”€â”€
     async function loadSchedule() {
         try {
             var res = await apiFetch('/api/student/schedule');
@@ -2102,7 +2102,7 @@
         if (!calEl) return;
         var now = new Date();
         var dayNames = { en: ['Sun','Mon','Tue','Wed','Thu','Fri','Sat'], fr: ['Dim','Lun','Mar','Mer','Jeu','Ven','Sam'] };
-        var monthNames = { en: ['Jan','Feb','Mar','Apr','May','Jun','Jul','Aug','Sep','Oct','Nov','Dec'], fr: ['Jan','Fév','Mar','Avr','Mai','Juin','Juil','Août','Sep','Oct','Nov','Déc'] };
+        var monthNames = { en: ['Jan','Feb','Mar','Apr','May','Jun','Jul','Aug','Sep','Oct','Nov','Dec'], fr: ['Jan','FÃ©v','Mar','Avr','Mai','Juin','Juil','AoÃ»t','Sep','Oct','Nov','DÃ©c'] };
         var days = dayNames[currentLang] || dayNames.en;
         var months = monthNames[currentLang] || monthNames.en;
 
@@ -2110,7 +2110,7 @@
         startOfWeek.setDate(now.getDate() - now.getDay());
         var weekEnd = new Date(startOfWeek);
         weekEnd.setDate(startOfWeek.getDate() + 6);
-        if (weekLabel) weekLabel.textContent = startOfWeek.getDate() + ' ' + months[startOfWeek.getMonth()] + ' — ' + weekEnd.getDate() + ' ' + months[weekEnd.getMonth()];
+        if (weekLabel) weekLabel.textContent = startOfWeek.getDate() + ' ' + months[startOfWeek.getMonth()] + ' â€” ' + weekEnd.getDate() + ' ' + months[weekEnd.getMonth()];
 
         var eventsByDay = {};
         sessions.forEach(function(s) {
@@ -2138,14 +2138,14 @@
             listEl.innerHTML = sessions.slice(0, 10).map(function(s) {
                 var time = s.created_at ? new Date(s.created_at).toLocaleString(currentLang === 'fr' ? 'fr' : 'en', { weekday:'short', month:'short', day:'numeric', hour:'2-digit', minute:'2-digit' }) : '';
                 var isActive = s.is_active === true;
-                return '<div class="s-item"><div class="si-icon ' + (isActive ? 'active' : 'past') + '"><i class="fas ' + (isActive ? 'fa-play' : 'fa-calendar-check') + '"></i></div><div class="si-body"><div class="si-title">' + (s.course_name || '') + '</div><div class="si-sub">' + (s.lecturer_name || '') + ' · ' + time + '</div></div><div class="si-right">' + (isActive ? '<span class="pill pill-green">' + t('active_now') + '</span>' : '') + '</div></div>';
+                return '<div class="s-item"><div class="si-icon ' + (isActive ? 'active' : 'past') + '"><i class="fas ' + (isActive ? 'fa-play' : 'fa-calendar-check') + '"></i></div><div class="si-body"><div class="si-title">' + (s.course_name || '') + '</div><div class="si-sub">' + (s.lecturer_name || '') + ' Â· ' + time + '</div></div><div class="si-right">' + (isActive ? '<span class="pill pill-green">' + t('active_now') + '</span>' : '') + '</div></div>';
             }).join('');
         } else {
             listEl.innerHTML = '<div class="empty-muted">' + t('no_sessions') + '</div>';
         }
     }
 
-    // ── LIVE BADGE (Gap 10) ──
+    // â”€â”€ LIVE BADGE (Gap 10) â”€â”€
     function updateLiveBadge() {
         var sessions = dashboardData && dashboardData.upcoming ? dashboardData.upcoming : [];
         var active = sessions.filter(function(s) { return s.is_active === true; });
@@ -2160,17 +2160,17 @@
         }
     }
 
-    // ── COURSE DRAWER (Gap 11) ──
+    // â”€â”€ COURSE DRAWER (Gap 11) â”€â”€
     function openCourseDrawer(course) {
         if (!course) return;
         document.getElementById('drawerTitle').textContent = course.course_name || '';
-        document.getElementById('drawerCode').textContent = course.course_id || '—';
+        document.getElementById('drawerCode').textContent = course.course_id || 'â€”';
         document.getElementById('drawerLecturer').textContent = course.lecturer_name || '';
         document.getElementById('drawerPresent').textContent = course.present || 0;
         document.getElementById('drawerLate').textContent = course.late || 0;
         document.getElementById('drawerAbsent').textContent = course.absent || 0;
         document.getElementById('drawerSuspicious').textContent = course.suspicious || 0;
-        document.getElementById('drawerRate').textContent = course.rate !== undefined ? course.rate + '%' : '—';
+        document.getElementById('drawerRate').textContent = course.rate !== undefined ? course.rate + '%' : 'â€”';
         var riskEl = document.getElementById('drawerRisk');
         var riskClass = course.risk === 'low' ? 'pill-green' : course.risk === 'medium' ? 'pill-yellow' : 'pill-red';
         var riskText = t(course.risk || 'low');
@@ -2183,7 +2183,7 @@
             sessionsEl.innerHTML = courseSessions.slice(0, 8).map(function(s) {
                 var time = s.created_at ? new Date(s.created_at).toLocaleDateString(currentLang === 'fr' ? 'fr' : 'en', { day:'numeric', month:'short' }) : '';
                 var active = s.is_active === true;
-                return '<div class="feed-item"><span class="feed-dot" style="background:' + (active ? 'var(--success)' : 'var(--text-dim)') + '"></span><span class="feed-msg">' + time + ' — ' + (active ? t('active_now') : t('past')) + '</span></div>';
+                return '<div class="feed-item"><span class="feed-dot" style="background:' + (active ? 'var(--success)' : 'var(--text-dim)') + '"></span><span class="feed-msg">' + time + ' â€” ' + (active ? t('active_now') : t('past')) + '</span></div>';
             }).join('');
         } else {
             sessionsEl.innerHTML = '<div class="empty-muted">' + t('no_records') + '</div>';
@@ -2197,7 +2197,7 @@
         document.getElementById('drawerPanel').classList.remove('open');
     }
 
-    // ── QUEUE STATS ──
+    // â”€â”€ QUEUE STATS â”€â”€
     function renderQueueStats() {
         if (!dashboardData || !dashboardData.queue_stats) return;
         var qs = dashboardData.queue_stats;
@@ -2207,7 +2207,7 @@
         var est = dashboardData.sync_estimate || {};
         var recoveryText = est.estimated_recovery_mins > 0.5
             ? '~' + Math.ceil(est.estimated_recovery_mins) + 'm'
-            : est.estimated_seconds > 0 ? '~' + Math.ceil(est.estimated_seconds) + 's' : '—';
+            : est.estimated_seconds > 0 ? '~' + Math.ceil(est.estimated_seconds) + 's' : 'â€”';
         document.getElementById('qEstimate').textContent = recoveryText;
         var pill = document.getElementById('queuePill');
         if (qs.total > 0) {
@@ -2231,7 +2231,7 @@
         }
     }
 
-    // ── NETWORK TOPOLOGY ──
+    // â”€â”€ NETWORK TOPOLOGY â”€â”€
     function renderTopology() {
         var legend = document.getElementById('topologyLegend');
         var net = dashboardData && dashboardData.network ? dashboardData.network : {};
@@ -2256,7 +2256,7 @@
         if (window.AttendrixTopology) AttendrixTopology.stop();
     }
 
-    // ── PING (backup for old measure) ──
+    // â”€â”€ PING (backup for old measure) â”€â”€
     async function measurePing() {
         try {
             var start = Date.now();
@@ -2264,7 +2264,7 @@
         } catch(e) {}
     }
 
-    // ── PATCH renderAll to include new sections ──
+    // â”€â”€ PATCH renderAll to include new sections â”€â”€
     var origRenderAll = renderAll;
     renderAll = function() {
         origRenderAll();
@@ -2273,7 +2273,7 @@
         updateLiveBadge();
     };
 
-    // ── SSE REAL-TIME CONNECTION ──
+    // â”€â”€ SSE REAL-TIME CONNECTION â”€â”€
     var sseClient = null;
     var sseFallbackInterval = null;
 
@@ -2310,7 +2310,7 @@
         };
     }
 
-    // ── FORCE VERIFY BUTTON BINDING ──
+    // â”€â”€ FORCE VERIFY BUTTON BINDING â”€â”€
     window.onload = function () {
         var btn = document.getElementById("verifyBtn");
         if (!btn) {
@@ -2321,7 +2321,7 @@
         console.log("Verify button bound successfully");
     };
 
-    // ── INIT ──
+    // â”€â”€ INIT â”€â”€
     applyTranslations();
     loadExtendedTranslations();
     document.getElementById('langToggle').textContent = currentLang === 'en' ? 'FR' : 'EN';

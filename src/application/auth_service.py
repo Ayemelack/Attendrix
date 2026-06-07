@@ -114,7 +114,11 @@ class AuthenticationService:
                 'phone_verified': user.phone_verified,
                 'last_login': user.last_login.isoformat() if user.last_login else None,
                 'created_at': user.created_at.isoformat(),
-                'updated_at': user.updated_at.isoformat()
+                'updated_at': user.updated_at.isoformat(),
+                'failed_login_attempts': 0,
+                'locked_until': None,
+                'password_history': [],
+                'password_updated_at': datetime.utcnow().isoformat(),
             }
 
             self.firebase_service.create_document('users', user_data, user.id)
@@ -138,6 +142,51 @@ class AuthenticationService:
         """Remove sensitive fields from user data before returning to client"""
         return {k: v for k, v in user_data.items() if k not in ['password_hash']}
 
+    def _increment_failed_attempts(self, user_data: Dict[str, Any]) -> int:
+        """Increment persistent failed login counter. Returns new count."""
+        user_id = user_data['id']
+        failed = user_data.get('failed_login_attempts', 0) + 1
+        threshold = current_app.config.get('PASSWORD_LOCKOUT_THRESHOLD', 5)
+        lockout_minutes = current_app.config.get('PASSWORD_LOCKOUT_MINUTES', 15)
+        updates = {'failed_login_attempts': failed}
+        if failed >= threshold:
+            locked_until = (datetime.utcnow() + timedelta(minutes=lockout_minutes)).isoformat()
+            updates['locked_until'] = locked_until
+        self.firebase_service.update_document('users', user_id, updates)
+        return failed
+
+    def _reset_failed_attempts(self, user_id: str):
+        """Reset failed login counter on successful authentication."""
+        self.firebase_service.update_document('users', user_id, {
+            'failed_login_attempts': 0,
+            'locked_until': None,
+        })
+
+    def _check_account_locked(self, user_data: Dict[str, Any]) -> Optional[Dict[str, Any]]:
+        """Check if account is locked. Returns error response dict if locked."""
+        locked_until = user_data.get('locked_until')
+        if locked_until:
+            try:
+                lock_time = datetime.fromisoformat(locked_until)
+                if datetime.utcnow() < lock_time:
+                    return {'success': False, 'message': 'Account temporarily locked due to too many failed attempts. Try again later.'}
+            except (ValueError, TypeError):
+                pass
+        return None
+
+    def _check_password_expired(self, user_data: Dict[str, Any]) -> Optional[Dict[str, Any]]:
+        """Check if password has expired. Returns error response dict if expired."""
+        max_age_days = current_app.config.get('PASSWORD_MAX_AGE_DAYS', 90)
+        password_updated = user_data.get('password_updated_at') or user_data.get('created_at')
+        if password_updated:
+            try:
+                updated_time = datetime.fromisoformat(password_updated)
+                if datetime.utcnow() - updated_time > timedelta(days=max_age_days):
+                    return {'success': False, 'message': 'Password has expired. Please reset your password.', 'password_expired': True}
+            except (ValueError, TypeError):
+                pass
+        return None
+
     def authenticate_user(self, email: str, password: str, remember_me: bool = False,
                          device_fingerprint: str = None, ip_address: str = None,
                          user_agent: str = None, institution_id: str = None) -> Optional[Dict[str, Any]]:
@@ -157,6 +206,11 @@ class AuthenticationService:
 
             user_data = users[0]
 
+            # Persistent account lockout check
+            locked = self._check_account_locked(user_data)
+            if locked:
+                return locked
+
             # If institution_id was provided in the login form, validate it matches the DB record.
             # Never allow institution switching through login form inputs.
             if institution_id is not None and institution_id != user_data.get('institution_id'):
@@ -164,6 +218,7 @@ class AuthenticationService:
 
             stored_hash = user_data.get('password_hash')
             if not stored_hash or not self.verify_password(password, stored_hash):
+                self._increment_failed_attempts(user_data)
                 self._log_security_event(
                     user_data['id'],
                     user_data['institution_id'],
@@ -177,8 +232,16 @@ class AuthenticationService:
             if not user_data.get('is_active', True):
                 return {'success': False, 'message': 'Account is disabled. Please contact administrator.'}
 
+            # Password expiry check
+            expired = self._check_password_expired(user_data)
+            if expired:
+                return expired
+
             if device_fingerprint and remember_me:
                 self._register_device(user_data['id'], device_fingerprint, user_agent)
+
+            # Reset failed attempts on successful login
+            self._reset_failed_attempts(user_data['id'])
 
             self.firebase_service.update_document('users', user_data['id'], {
                 'last_login': datetime.utcnow().isoformat()
@@ -294,10 +357,28 @@ class AuthenticationService:
             if not self.verify_password(current_password, user_data['password_hash']):
                 return False
 
+            if current_password == new_password:
+                logger.warning(f"Password change rejected — new password matches current for user {user_id}")
+                return False
+
+            # Check password history to prevent reuse
+            history_size = current_app.config.get('PASSWORD_HISTORY_SIZE', 5)
+            password_history = user_data.get('password_history', [])
+            for old_hash in password_history:
+                if self.verify_password(new_password, old_hash):
+                    logger.warning(f"Password change rejected — password previously used by user {user_id}")
+                    return False
+
             new_password_hash = self.hash_password(new_password)
+
+            # Update history: add current hash, trim to history_size
+            updated_history = password_history + [user_data['password_hash']]
+            updated_history = updated_history[-history_size:]
 
             self.firebase_service.update_document('users', user_id, {
                 'password_hash': new_password_hash,
+                'password_history': updated_history,
+                'password_updated_at': datetime.utcnow().isoformat(),
                 'updated_at': datetime.utcnow().isoformat()
             })
 

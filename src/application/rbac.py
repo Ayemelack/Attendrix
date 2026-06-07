@@ -1,7 +1,9 @@
 from functools import wraps
-from flask import request, jsonify, current_app
+from flask import request, jsonify, current_app, g
 from typing import Dict, Any, List, Set
 import logging
+import time
+from datetime import datetime
 
 from src.domain.entities import UserRole
 from src.application.auth_service import auth_service
@@ -11,44 +13,44 @@ logger = logging.getLogger(__name__)
 
 class Permission:
     """Permission class for defining access rights"""
-    
+
     # Institution permissions
     MANAGE_INSTITUTION = "manage_institution"
     VIEW_INSTITUTION_ANALYTICS = "view_institution_analytics"
-    
+
     # Department permissions
     MANAGE_DEPARTMENTS = "manage_departments"
     VIEW_DEPARTMENT_ANALYTICS = "view_department_analytics"
-    
+
     # User management permissions
     MANAGE_USERS = "manage_users"
     CREATE_USERS = "create_users"
     VIEW_USERS = "view_users"
-    
+
     # Course permissions
     MANAGE_COURSES = "manage_courses"
     VIEW_COURSES = "view_courses"
     ENROLL_STUDENTS = "enroll_students"
-    
+
     # Schedule permissions
     MANAGE_SCHEDULES = "manage_schedules"
     VIEW_SCHEDULES = "view_schedules"
-    
+
     # Attendance permissions
     MANAGE_ATTENDANCE = "manage_attendance"
     MARK_ATTENDANCE = "mark_attendance"
     VIEW_ATTENDANCE = "view_attendance"
     VIEW_ATTENDANCE_REPORTS = "view_attendance_reports"
-    
+
     # Leave permissions
     MANAGE_LEAVE_REQUESTS = "manage_leave_requests"
     SUBMIT_LEAVE_REQUEST = "submit_leave_request"
     APPROVE_LEAVE_REQUEST = "approve_leave_request"
-    
+
     # Analytics permissions
     VIEW_ANALYTICS = "view_analytics"
     VIEW_PREDICTIVE_ANALYTICS = "view_predictive_analytics"
-    
+
     # System permissions
     MANAGE_SYSTEM = "manage_system"
     VIEW_AUDIT_LOGS = "view_audit_logs"
@@ -57,7 +59,7 @@ class Permission:
 
 class RolePermissions:
     """Role-based permission mappings"""
-    
+
     PERMISSIONS = {
         UserRole.SUPER_ADMIN: [
             Permission.MANAGE_SYSTEM,
@@ -85,7 +87,7 @@ class RolePermissions:
             Permission.VIEW_AUDIT_LOGS,
             Permission.MANAGE_NOTIFICATIONS,
         ],
-        
+
         UserRole.INSTITUTIONAL_ADMIN: [
             Permission.MANAGE_DEPARTMENTS,
             Permission.VIEW_DEPARTMENT_ANALYTICS,
@@ -106,7 +108,7 @@ class RolePermissions:
             Permission.VIEW_AUDIT_LOGS,
             Permission.MANAGE_NOTIFICATIONS,
         ],
-        
+
         UserRole.LECTURER: [
             Permission.VIEW_COURSES,
             Permission.MANAGE_ATTENDANCE,
@@ -124,7 +126,7 @@ class RolePermissions:
             Permission.VIEW_SCHEDULES,
             Permission.SUBMIT_LEAVE_REQUEST,
         ],
-        
+
         UserRole.STUDENT: [
             Permission.VIEW_COURSES,
             Permission.MARK_ATTENDANCE,
@@ -134,23 +136,23 @@ class RolePermissions:
             Permission.VIEW_ANALYTICS,
         ]
     }
-    
+
     @classmethod
     def get_permissions(cls, role: UserRole) -> Set[str]:
         """Get permissions for a role"""
         return set(cls.PERMISSIONS.get(role, []))
-    
+
     @classmethod
     def has_permission(cls, role: UserRole, permission: str) -> bool:
         """Check if role has specific permission"""
         return permission in cls.PERMISSIONS.get(role, [])
-    
+
     @classmethod
     def has_any_permission(cls, role: UserRole, permissions: List[str]) -> bool:
         """Check if role has any of the specified permissions"""
         role_permissions = cls.get_permissions(role)
         return any(perm in role_permissions for perm in permissions)
-    
+
     @classmethod
     def has_all_permissions(cls, role: UserRole, permissions: List[str]) -> bool:
         """Check if role has all of the specified permissions"""
@@ -159,70 +161,63 @@ class RolePermissions:
 
 
 def require_auth(f):
-    """Decorator to require authentication"""
+    """Hardened decorator to require authentication with secure JWT validation.
+
+    Strict token verification — no dev bypass. All requests must present
+    a valid Authorization: Bearer <token> header. The token payload is
+    validated against the user store and checked for active status.
+    """
     @wraps(f)
     def decorated_function(*args, **kwargs):
-        token = None
-        
-        # Check for token in header first (real auth always takes priority)
         auth_header = request.headers.get('Authorization')
-        if auth_header:
-            try:
-                token = auth_header.split(' ')[1]  # Bearer <token>
-            except IndexError:
-                return jsonify({'error': 'Invalid authorization header format'}), 401
-        
-        if token:
-            # Verify token
-            payload = auth_service.verify_token(token)
-            if not payload:
-                return jsonify({'error': 'Invalid or expired token'}), 401
-            
-            # Add user info to request context
-            request.current_user = payload
-            return f(*args, **kwargs)
-        
-        # Dev bypass — only when no token AND in development mode
-        env = current_app.config.get('ENVIRONMENT', 'production') if current_app else 'production'
-        if env == 'development' and (
-            request.args.get('role') or
-            request.path.startswith(('/admin/', '/system/', '/institutional-admin/',
-                                     '/lecturer/', '/student/', '/employee/',
-                                     '/api/super-admin/', '/api/biometric/'))
-        ):
-            role = request.args.get('role')
-            
-            if not role:
-                if request.path.startswith('/api/super-admin/'):
-                    role = UserRole.SUPER_ADMIN.value
-                elif request.path.startswith('/system/'):
-                    role = UserRole.SUPER_ADMIN.value
-                elif request.path.startswith('/admin/'):
-                    role = UserRole.SUPER_ADMIN.value
-                elif request.path.startswith('/institutional-admin/'):
-                    role = UserRole.INSTITUTIONAL_ADMIN.value
-                elif request.path.startswith('/lecturer/'):
-                    role = UserRole.LECTURER.value
-                elif request.path.startswith('/student/'):
-                    role = UserRole.STUDENT.value
-                elif request.path.startswith('/employee/'):
-                    role = UserRole.EMPLOYEE.value
-                elif request.path.startswith('/api/biometric/'):
-                    role = UserRole.STUDENT.value
-                else:
-                    return jsonify({'error': 'Access denied - role parameter required for development mode'}), 403
-            
-            request.current_user = {
-                'user_id': f'dev_user_{role}',
-                'email': f'{role}@attendrix.dev',
-                'role': role,
-                'institution_id': 'dev_institution'
-            }
-            return f(*args, **kwargs)
-        
-        return jsonify({'error': 'Access token is required'}), 401
-    
+        if not auth_header:
+            log_security_alert('missing_auth_header', 'No Authorization header')
+            return jsonify({'error': 'Authentication required'}), 401
+
+        parts = auth_header.split()
+        if len(parts) != 2 or parts[0].lower() != 'bearer':
+            log_security_alert('bad_auth_format', f'Malformed Authorization header: {auth_header[:40]}')
+            return jsonify({'error': 'Invalid authorization header format'}), 401
+
+        token = parts[1]
+
+        if not token or len(token) < 20:
+            log_security_alert('short_token', 'Token too short, likely spoofed')
+            return jsonify({'error': 'Invalid token'}), 401
+
+        payload = auth_service.verify_token(token)
+        if not payload:
+            log_security_alert('invalid_token', 'Token verification failed')
+            return jsonify({'error': 'Invalid or expired token'}), 401
+
+        required_fields = ['user_id', 'email', 'role', 'institution_id']
+        for field in required_fields:
+            if field not in payload:
+                log_security_alert('incomplete_token_payload', f'Token missing field: {field}')
+                return jsonify({'error': 'Invalid token'}), 401
+
+        request.current_user = payload
+        return f(*args, **kwargs)
+
     return decorated_function
+
+
+def log_security_alert(event_type: str, description: str):
+    """Log security alerts without importing the full audit module."""
+    try:
+        from src.infrastructure.repositories import security_log_repo
+        from datetime import datetime
+        security_log_repo.create({
+            'user_id': getattr(request, 'current_user', {}).get('user_id') if hasattr(request, 'current_user') else None,
+            'event_type': event_type,
+            'description': description,
+            'ip_address': request.remote_addr,
+            'user_agent': request.headers.get('User-Agent', '')[:500],
+            'risk_score': 70,
+            'created_at': datetime.utcnow().isoformat()
+        })
+    except Exception:
+        pass
 
 
 def require_role(*allowed_roles):

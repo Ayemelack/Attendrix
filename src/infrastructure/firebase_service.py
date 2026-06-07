@@ -1,6 +1,6 @@
 import json
 import os
-from typing import Dict, Any, Optional, List
+from typing import Dict, Any, Optional, List, Tuple
 from datetime import datetime, timedelta
 import firebase_admin
 from firebase_admin import credentials, auth, firestore
@@ -8,6 +8,32 @@ from flask import current_app
 import logging
 
 logger = logging.getLogger(__name__)
+
+# Collections that require institution-scoped access for multi-tenant isolation
+REQUIRES_INSTITUTION_SCOPING = {
+    'users', 'user_profiles', 'attendance_records', 'attendance_sessions',
+    'courses', 'course_enrollments', 'departments', 'schedules',
+    'class_sessions', 'notifications', 'vouchers', 'activity_logs',
+    'security_logs', 'audit_logs', 'network_nodes', 'broker_status',
+    'p2p_peers', 'p2p_status', 'compliance_exam', 'compliance_audit',
+    'compliance_reports', 'ups_status', 'isp_status', 'generator_status',
+    'mobile_money_providers', 'payment_transactions', 'offline_sync_queue',
+    'offline_queue', 'biometric_enrollments', 'device_fingerprints',
+    'face_descriptors', 'sms_queue', 'mail_queue', 'leave_requests',
+    'activity_log', 'security_alerts', 'payments', 'sessions',
+    'attendance', 'enrollments', 'feedback', 'demo_bookings',
+}
+
+# Collections exempt from institution scoping (global/system-level)
+EXEMPT_FROM_SCOPING = {
+    'institutions', 'system_configurations', 'persistent_sessions',
+}
+
+# Collections that must be owned by a specific user (per-user documents)
+PER_USER_COLLECTIONS = {
+    'users', 'user_profiles', 'notifications', 'device_fingerprints',
+    'biometric_enrollments', 'face_descriptors', 'persistent_sessions'
+}
 
 # Mock database for development with file persistence
 _MOCK_DB_FILE = 'mock_database.json'
@@ -131,12 +157,185 @@ class FirebaseService:
     def is_mock(self) -> bool:
         return hasattr(self, '_mock_mode') and self._mock_mode
 
+    # ── AUTHORIZATION ENFORCEMENT ──
+
+    @staticmethod
+    def _get_current_user() -> Optional[Dict[str, Any]]:
+        """Get current authenticated user from request context if available.
+        Returns None outside of request context (background tasks, tests, bootstrap)."""
+        try:
+            from flask import request as _flask_request
+            if hasattr(_flask_request, 'current_user') and _flask_request.current_user:
+                return _flask_request.current_user
+        except (RuntimeError, ImportError, Exception):
+            pass
+        return None
+
+    @staticmethod
+    def _enforce_query_filters(collection: str, filters: Optional[List[Dict[str, Any]]]) -> List[Dict[str, Any]]:
+        """Enforce multi-tenant isolation by validating query filters.
+        Logs a security warning when a non-scoped query is detected so developers can fix it.
+        Does NOT auto-inject filters to avoid breaking records that lack institution_id."""
+        if collection in EXEMPT_FROM_SCOPING:
+            return filters or []
+
+        if collection not in REQUIRES_INSTITUTION_SCOPING:
+            return filters or []
+
+        user = FirebaseService._get_current_user()
+        if not user:
+            return filters or []
+
+        role = user.get('role', '')
+        if role == 'super_admin':
+            return filters or []
+
+        institution_id = user.get('institution_id')
+        if not institution_id:
+            return filters or []
+
+        safe_filters = list(filters) if filters else []
+
+        has_institution_filter = any(
+            f.get('field') == 'institution_id'
+            for f in safe_filters
+        )
+
+        # If the query is missing an institution filter for a collection that
+        # requires scoping, auto-inject the user's institution_id to prevent
+        # accidental cross-tenant reads. Log the augmentation for auditing.
+        if not has_institution_filter:
+            logger.warning(
+                f"SECURITY: Non-scoped query on {collection} by "
+                f"user={user.get('user_id', 'unknown')} role={role} "
+                f"inst={institution_id}. Injecting institution_id filter to enforce scoping."
+            )
+            safe_filters.append({'field': 'institution_id', 'value': institution_id})
+
+        return safe_filters
+
+    @staticmethod
+    def _enforce_document_read_access(document: Optional[Dict[str, Any]], collection: str) -> Optional[Dict[str, Any]]:
+        """After fetching a document, verify the user has access.
+        Returns None if access is denied."""
+        if not document:
+            return None
+
+        if collection in EXEMPT_FROM_SCOPING:
+            return document
+
+        user = FirebaseService._get_current_user()
+        if not user:
+            return document
+
+        role = user.get('role', '')
+        if role == 'super_admin':
+            return document
+
+        # Check institution_id on document
+        doc_inst_id = document.get('institution_id')
+        user_inst_id = user.get('institution_id')
+
+        if doc_inst_id and user_inst_id and str(doc_inst_id) != str(user_inst_id):
+            logger.warning(
+                f"Cross-institution read blocked: doc={document.get('id', 'unknown')} "
+                f"in {collection} inst={doc_inst_id} != user inst={user_inst_id} "
+                f"(user={user.get('user_id', 'unknown')})"
+            )
+            return None
+
+        # For student role, enforce strict user-level isolation on personal collections
+        if role == 'student':
+            doc_owner_id = document.get('user_id') or document.get('uid') or document.get('student_id')
+            user_id = user.get('user_id') or user.get('uid')
+            if doc_owner_id and user_id and str(doc_owner_id) != str(user_id):
+                sensitive_collections = {'notifications', 'device_fingerprints', 'biometric_enrollments'}
+                if collection in sensitive_collections:
+                    logger.warning(
+                        f"Student cross-user read blocked: doc owner={doc_owner_id} "
+                        f"!= user={user_id} in {collection}"
+                    )
+                    return None
+
+        return document
+
+    @staticmethod
+    def _enforce_write_access(collection: str, data: Dict[str, Any]) -> Dict[str, Any]:
+        """Enforce authorization on write operations.
+        Auto-injects institution_id and created_by/updated_by if missing."""
+        if collection in EXEMPT_FROM_SCOPING:
+            return data
+
+        user = FirebaseService._get_current_user()
+        # If no authenticated user context is available (background job or misused admin SDK),
+        # require explicit `institution_id` for institution-scoped collections to avoid blind writes.
+        if not user:
+            if collection in REQUIRES_INSTITUTION_SCOPING and 'institution_id' not in data:
+                logger.error(f"SECURITY: Attempted write to {collection} without user context or institution_id")
+                raise PermissionError("Writes to institution-scoped collections require institution_id when no authenticated user context is present")
+            # If write is to a per-user collection, require explicit owner field
+            if collection in PER_USER_COLLECTIONS:
+                if not any(k in data for k in ('user_id', 'uid', 'student_id')):
+                    logger.error(f"SECURITY: Per-user write to {collection} missing owner field and no user context")
+                    raise PermissionError("Per-user documents must include an owner identifier when no authenticated user is present")
+            return data
+
+        role = user.get('role', '')
+        if role == 'super_admin':
+            return data
+
+        user_inst_id = user.get('institution_id')
+        user_id = user.get('user_id') or user.get('uid')
+
+        # Verify existing institution_id matches user's institution
+        if 'institution_id' in data and user_inst_id:
+            if str(data['institution_id']) != str(user_inst_id):
+                logger.warning(
+                    f"Cross-institution write blocked: data inst={data['institution_id']} "
+                    f"!= user inst={user_inst_id} in {collection} "
+                    f"(user={user_id or 'unknown'})"
+                )
+                raise PermissionError("Cross-institution write denied")
+
+        # Auto-inject institution_id if missing and user has one
+        if 'institution_id' not in data and user_inst_id and collection in REQUIRES_INSTITUTION_SCOPING:
+            data['institution_id'] = user_inst_id
+
+        # Add ownership tracking metadata
+        if user_id:
+            if 'updated_by' not in data:
+                data['updated_by'] = user_id
+            if 'created_by' not in data:
+                data['created_by'] = user_id
+            if 'created_by_role' not in data and role:
+                data['created_by_role'] = role
+
+        # For per-user collections, ensure an owner identifier exists and matches the authenticated user
+        if collection in PER_USER_COLLECTIONS:
+            owner_keys = ('user_id', 'uid', 'student_id')
+            has_owner = any(k in data for k in owner_keys)
+            if not has_owner and user_id:
+                # Prefer `user_id` as canonical owner field
+                data['user_id'] = user_id
+            elif has_owner and user_id:
+                # Verify owner matches authenticated user for strict per-user collections
+                owner_val = next((data.get(k) for k in owner_keys if k in data), None)
+                if owner_val and str(owner_val) != str(user_id) and role != 'super_admin':
+                    logger.error(f"SECURITY: Attempted per-user write to {collection} for owner={owner_val} by user={user_id}")
+                    raise PermissionError("Cannot create or modify per-user documents for another user")
+
+        return data
+
     # ── GENERIC MOCK PERSISTENCE ──
 
     def create_document(self, collection: str, data: Dict[str, Any],
                       document_id: str = None) -> str:
         if not self._initialized:
             self.initialize()
+
+        # Enforce write access: validate + auto-inject ownership fields
+        data = self._enforce_write_access(collection, data.copy())
+
         if self.is_mock():
             global _mock_database
             _ensure_collection(collection)
@@ -173,13 +372,16 @@ class FirebaseService:
             _ensure_collection(collection)
             for doc in _mock_database.get(collection, []):
                 if doc.get('id') == document_id:
-                    return doc
+                    # Enforce multi-tenant isolation on document read
+                    return self._enforce_document_read_access(doc, collection)
             return None
 
         try:
             doc_ref = self.firestore_client.collection(collection).document(document_id)
             doc = doc_ref.get()
-            return doc.to_dict() if doc.exists else None
+            result = doc.to_dict() if doc.exists else None
+            # Enforce multi-tenant isolation on document read
+            return self._enforce_document_read_access(result, collection)
         except Exception as e:
             logger.error(f"Failed to get document from {collection}: {str(e)}")
             return None
@@ -188,6 +390,10 @@ class FirebaseService:
                        data: Dict[str, Any]) -> bool:
         if not self._initialized:
             self.initialize()
+
+        # Enforce write access on updates
+        data = self._enforce_write_access(collection, data.copy())
+
         if self.is_mock():
             global _mock_database
             _ensure_collection(collection)
@@ -209,6 +415,12 @@ class FirebaseService:
     def delete_document(self, collection: str, document_id: str) -> bool:
         if not self._initialized:
             self.initialize()
+
+        # Enforce access: verify user can access before deletion
+        doc = self.get_document(collection, document_id)
+        if doc is None:
+            return False
+
         if self.is_mock():
             global _mock_database
             _ensure_collection(collection)
@@ -242,12 +454,13 @@ class FirebaseService:
             docs = _mock_database.get(collection, [])
             for doc in docs:
                 if doc.get('id') == document_id:
-                    return doc
+                    return self._enforce_document_read_access(doc, collection)
             return None
         try:
             doc_ref = self.firestore_client.collection(collection).document(document_id)
             doc = doc_ref.get()
-            return doc.to_dict() if doc.exists else None
+            result = doc.to_dict() if doc.exists else None
+            return self._enforce_document_read_access(result, collection)
         except Exception as e:
             logger.error(f"Failed to get document from server {collection}: {str(e)}")
             return None
@@ -258,6 +471,10 @@ class FirebaseService:
         Always re-reads from disk to bypass in-memory cache, then applies filters."""
         if not self._initialized:
             self.initialize()
+
+        # Enforce multi-tenant isolation
+        enforced_filters = self._enforce_query_filters(collection, filters)
+
         if self.is_mock():
             global _mock_database
             fresh = load_mock_database()
@@ -265,8 +482,8 @@ class FirebaseService:
                 _mock_database = fresh
             _ensure_collection(collection)
             result = list(_mock_database.get(collection, []))
-            if filters:
-                for f in filters:
+            if enforced_filters:
+                for f in enforced_filters:
                     field = f.get('field')
                     value = f.get('value')
                     if field is not None:
@@ -277,8 +494,8 @@ class FirebaseService:
         try:
             from firebase_admin import firestore as _fs
             q = self.firestore_client.collection(collection)
-            if filters:
-                for f in filters:
+            if enforced_filters:
+                for f in enforced_filters:
                     q = q.where(f.get('field'), '==', f.get('value'))
             if limit:
                 q = q.limit(limit)
@@ -291,13 +508,23 @@ class FirebaseService:
                        limit: int = None, order_by: str = None) -> List[Dict[str, Any]]:
         if not self._initialized:
             self.initialize()
+
+        # Enforce multi-tenant isolation: auto-inject institution_id filter
+        enforced_filters = self._enforce_query_filters(collection, filters)
+        if enforced_filters != (filters or []) and filters is not None:
+            if enforced_filters != filters:
+                logger.info(
+                    f"Query filters augmented for {collection}: "
+                    f"original={filters} enforced={enforced_filters}"
+                )
+
         if self.is_mock():
             global _mock_database
             _ensure_collection(collection)
             result = list(_mock_database.get(collection, []))
 
-            if filters:
-                for f in filters:
+            if enforced_filters:
+                for f in enforced_filters:
                     field = f.get('field')
                     value = f.get('value')
                     if field is not None:
@@ -317,8 +544,8 @@ class FirebaseService:
 
         try:
             q = self.firestore_client.collection(collection)
-            if filters:
-                for f in filters:
+            if enforced_filters:
+                for f in enforced_filters:
                     q = q.where(f.get('field'), '==', f.get('value'))
             if order_by:
                 q = q.order_by(order_by)

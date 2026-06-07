@@ -324,7 +324,10 @@ class DashboardDataService:
                 filters=[{'field': 'institution_id', 'value': institution_id}]
             )
         )
-        all_records = self.fb.query_documents('attendance_records')
+        all_records = self.fb.query_documents(
+            'attendance_records',
+            filters=[{'field': 'institution_id', 'value': institution_id}]
+        )
         relevant = [r for r in all_records if r.get('attendance_session_id') in session_ids]
         if since:
             relevant = [r for r in relevant if r.get('created_at', '') > since or r.get('marked_at', '') > since]
@@ -362,7 +365,10 @@ class DashboardDataService:
 
     def get_attendance_trends(self, institution_id: str, days: int = 14) -> Dict[str, Any]:
         from collections import defaultdict
-        records = self.fb.query_documents('attendance_records')
+        records = self.fb.query_documents(
+            'attendance_records',
+            filters=[{'field': 'institution_id', 'value': institution_id}]
+        )
         # Filter to sessions belonging to this institution
         session_ids = set(
             s['id'] for s in self.fb.query_documents(
@@ -459,10 +465,16 @@ class DashboardDataService:
         students_page = all_students[start:start + per_page]
 
         student_ids = [s['id'] for s in students_page]
-        all_records = self.fb.query_documents('attendance_records')
+        all_records = self.fb.query_documents(
+            'attendance_records',
+            filters=[{'field': 'institution_id', 'value': institution_id}]
+        )
         relevant = [r for r in all_records if r.get('student_id') in student_ids]
 
-        alerts = self.fb.query_documents('security_logs')
+        alerts = self.fb.query_documents(
+            'security_logs',
+            filters=[{'field': 'institution_id', 'value': institution_id}]
+        )
         student_alerts = [a for a in alerts if a.get('user_id') in student_ids]
 
         result = []
@@ -511,7 +523,10 @@ class DashboardDataService:
         if not student or student.get('institution_id') != institution_id:
             return None
 
-        all_records = self.fb.query_documents('attendance_records')
+        all_records = self.fb.query_documents(
+            'attendance_records',
+            filters=[{'field': 'institution_id', 'value': institution_id}]
+        )
         student_records = [r for r in all_records if r.get('student_id') == student_id]
 
         session_ids = list(set(r.get('attendance_session_id') for r in student_records if r.get('attendance_session_id')))
@@ -521,7 +536,10 @@ class DashboardDataService:
             if session:
                 sessions.append(session)
 
-        all_security = self.fb.query_documents('security_logs')
+        all_security = self.fb.query_documents(
+            'security_logs',
+            filters=[{'field': 'institution_id', 'value': institution_id}]
+        )
         student_security = [s for s in all_security if s.get('user_id') == student_id]
 
         course_breakdown = {}

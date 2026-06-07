@@ -64,6 +64,28 @@ Attendrix is a multi-tenant, role-based attendance management system designed fo
 
 ## 2. Architecture
 
+### Figure 4.1: Attendrix Distributed Architecture
+
+Figure 4.1 illustrates the implementation architecture of the Attendrix system.
+
+> Insert Screenshot Here
+
+**Figure 4.1: Attendrix Distributed Architecture**
+
+#### Explanation
+
+The architecture consists of:
+- **Student devices** — mobile/web clients for attendance marking and status viewing
+- **Lecturer devices** — interfaces for session management and attendance verification
+- **Attendance servers** — core service handling attendance logic, validation, and storage
+- **Synchronization services** — distributed sync ensuring consistency across nodes
+- **Analytics engine** — processes attendance data for insights and reporting
+- **Database servers** — persistent storage for records, users, and configuration
+
+All attendance records are synchronized across nodes using distributed communication mechanisms.
+
+---
+
 ```
 attendrix/
 ├── app.py                              # Flask application factory & all routes

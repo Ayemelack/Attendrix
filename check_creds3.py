@@ -22,9 +22,8 @@ try:
 except Exception as e:
     print(f"\nVouchers query failed: {e}")
     try:
-        # Try collection directly
-        docs = fb.firestore_client.collection('vouchers').stream()
-        vouchers = [d.to_dict() for d in docs]
+        # Fallback: use the service query (avoids direct firestore client access)
+        vouchers = fb.query_documents_from_server('vouchers', [])
         print(f"\n=== VOUCHERS via firestore ({len(vouchers)} found) ===")
         for v in vouchers:
             print(json.dumps(v, indent=2))
