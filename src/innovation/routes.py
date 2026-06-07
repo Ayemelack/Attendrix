@@ -12,6 +12,9 @@ from flask import Blueprint, jsonify, request
 from datetime import datetime
 from typing import Dict, Any
 
+from src.application.rbac import require_auth
+from src.infrastructure.security_legacy import rate_limit_endpoint
+
 from .services import InnovationEngine
 from .models import RiskLevel, InterventionTier
 
@@ -44,6 +47,8 @@ def innovation_status():
 # ── Academic Risk Intelligence ──
 
 @innovation_bp.route('/risk/predict', methods=['POST'])
+@require_auth
+@rate_limit_endpoint(limit=30, window=60, scope='ip', block_duration=120)
 def predict_risk():
     """Predict dropout/academic risk for a student."""
     if not _engine or not _engine.risk_engine:
@@ -82,6 +87,7 @@ def risk_heatmap():
 
 
 @innovation_bp.route('/risk/exam-eligibility', methods=['POST'])
+@require_auth
 def exam_eligibility():
     """Predict exam eligibility from attendance trajectory."""
     if not _engine or not _engine.risk_engine:
@@ -96,6 +102,7 @@ def exam_eligibility():
 
 
 @innovation_bp.route('/risk/burnout', methods=['POST'])
+@require_auth
 def detect_burnout():
     """Detect burnout patterns from attendance records."""
     if not _engine or not _engine.risk_engine:
@@ -111,6 +118,7 @@ def detect_burnout():
 # ── Participation & Engagement ──
 
 @innovation_bp.route('/participation/classify', methods=['POST'])
+@require_auth
 def classify_engagement():
     """Classify engagement level for a student session."""
     if not _engine or not _engine.participation:
@@ -132,6 +140,7 @@ def classify_engagement():
 
 
 @innovation_bp.route('/participation/lecturer-report', methods=['POST'])
+@require_auth
 def lecturer_report():
     """Generate lecturer effectiveness report."""
     if not _engine or not _engine.participation:
@@ -145,6 +154,7 @@ def lecturer_report():
 
 
 @innovation_bp.route('/participation/heatmap', methods=['POST'])
+@require_auth
 def participation_heatmap():
     """Generate participation heatmap."""
     if not _engine or not _engine.participation:
@@ -159,6 +169,7 @@ def participation_heatmap():
 
 
 @innovation_bp.route('/participation/silent-students', methods=['POST'])
+@require_auth
 def silent_students():
     """Detect silently disengaged students."""
     if not _engine or not _engine.participation:
@@ -178,6 +189,7 @@ def silent_students():
 # ── Classroom Intelligence ──
 
 @innovation_bp.route('/classroom/intelligence', methods=['POST'])
+@require_auth
 def classroom_intelligence():
     """Get classroom intelligence metrics."""
     if not _engine or not _engine.classroom:
@@ -202,6 +214,7 @@ def classroom_intelligence():
 
 
 @innovation_bp.route('/classroom/underutilized', methods=['POST'])
+@require_auth
 def underutilized_halls():
     """Find underutilized classrooms."""
     if not _engine or not _engine.classroom:
@@ -219,6 +232,7 @@ def underutilized_halls():
 
 
 @innovation_bp.route('/classroom/overcrowding-prediction', methods=['POST'])
+@require_auth
 def predict_overcrowding():
     """Predict classroom overcrowding."""
     if not _engine or not _engine.classroom:
@@ -234,6 +248,7 @@ def predict_overcrowding():
 # ── Invisible Validation ──
 
 @innovation_bp.route('/validation/pattern', methods=['POST'])
+@require_auth
 def build_pattern():
     """Build behavioral pattern for a student."""
     if not _engine or not _engine.validation:
@@ -255,6 +270,7 @@ def build_pattern():
 
 
 @innovation_bp.route('/validation/verify', methods=['POST'])
+@require_auth
 def validate_attendance():
     """Multi-factor contextual attendance validation."""
     if not _engine or not _engine.validation:
@@ -269,6 +285,7 @@ def validate_attendance():
 
 
 @innovation_bp.route('/validation/continuous-presence', methods=['POST'])
+@require_auth
 def continuous_presence():
     """Verify continuous presence throughout a session."""
     if not _engine or not _engine.validation:
@@ -284,6 +301,7 @@ def continuous_presence():
 # ── Digital Twin ──
 
 @innovation_bp.route('/digital-twin/snapshot', methods=['POST'])
+@require_auth
 def twin_snapshot():
     """Generate digital twin snapshot."""
     if not _engine or not _engine.digital_twin:
@@ -308,6 +326,7 @@ def twin_snapshot():
 
 
 @innovation_bp.route('/digital-twin/heatmap', methods=['POST'])
+@require_auth
 def twin_heatmap():
     """Generate campus heatmap data."""
     if not _engine or not _engine.digital_twin:
@@ -321,6 +340,7 @@ def twin_heatmap():
 
 
 @innovation_bp.route('/digital-twin/performance', methods=['POST'])
+@require_auth
 def twin_performance():
     """Calculate institutional performance intelligence."""
     if not _engine or not _engine.digital_twin:
@@ -335,6 +355,7 @@ def twin_performance():
 # ── Trust Chain ──
 
 @innovation_bp.route('/trust/verify/<chain_id>/<int:block_height>', methods=['GET'])
+@require_auth
 def verify_chain_entry(chain_id: str, block_height: int):
     """Verify a specific chain entry."""
     if not _engine or not _engine.trust_chain:
@@ -344,6 +365,7 @@ def verify_chain_entry(chain_id: str, block_height: int):
 
 
 @innovation_bp.route('/trust/verify-chain/<chain_id>', methods=['GET'])
+@require_auth
 def verify_full_chain(chain_id: str):
     """Verify full chain integrity."""
     if not _engine or not _engine.trust_chain:
@@ -353,6 +375,7 @@ def verify_full_chain(chain_id: str):
 
 
 @innovation_bp.route('/trust/attest', methods=['POST'])
+@require_auth
 def attest_record():
     """Create cryptographically attested record."""
     if not _engine or not _engine.trust_chain:
@@ -370,6 +393,7 @@ def attest_record():
 # ── Intervention ──
 
 @innovation_bp.route('/intervention/create', methods=['POST'])
+@require_auth
 def create_intervention():
     """Create an intervention (manual or auto)."""
     if not _engine or not _engine.intervention:
@@ -403,6 +427,7 @@ def create_intervention():
 
 
 @innovation_bp.route('/intervention/resolve', methods=['POST'])
+@require_auth
 def resolve_intervention():
     """Resolve an intervention."""
     if not _engine or not _engine.intervention:
@@ -417,6 +442,7 @@ def resolve_intervention():
 
 
 @innovation_bp.route('/intervention/pending', methods=['GET'])
+@require_auth
 def pending_interventions():
     """Get all pending interventions."""
     if not _engine or not _engine.intervention:
@@ -429,6 +455,7 @@ def pending_interventions():
 # ── Reputation ──
 
 @innovation_bp.route('/reputation/student', methods=['POST'])
+@require_auth
 def student_reputation():
     """Compute student reputation score."""
     if not _engine or not _engine.reputation:
@@ -449,6 +476,7 @@ def student_reputation():
 
 
 @innovation_bp.route('/reputation/lecturer', methods=['POST'])
+@require_auth
 def lecturer_reputation():
     """Compute lecturer reputation score."""
     if not _engine or not _engine.reputation:
@@ -468,6 +496,7 @@ def lecturer_reputation():
 
 
 @innovation_bp.route('/reputation/department-rankings', methods=['POST'])
+@require_auth
 def department_rankings():
     """Rank departments by attendance discipline."""
     if not _engine or not _engine.reputation:
@@ -486,6 +515,7 @@ def department_rankings():
 # ── Security & Emergency ──
 
 @innovation_bp.route('/security/emergency/activate', methods=['POST'])
+@require_auth
 def activate_emergency():
     """Activate emergency protocol."""
     if not _engine or not _engine.security:
@@ -505,6 +535,7 @@ def activate_emergency():
 
 
 @innovation_bp.route('/security/emergency/resolve', methods=['POST'])
+@require_auth
 def resolve_emergency():
     """Resolve active emergency."""
     if not _engine or not _engine.security:
@@ -517,6 +548,7 @@ def resolve_emergency():
 
 
 @innovation_bp.route('/security/emergency/reconcile', methods=['POST'])
+@require_auth
 def reconcile_evacuation():
     """Reconcile evacuation attendance."""
     if not _engine or not _engine.security:
@@ -531,6 +563,7 @@ def reconcile_evacuation():
 
 
 @innovation_bp.route('/security/active', methods=['GET'])
+@require_auth
 def active_emergencies():
     """Get all active emergencies."""
     if not _engine or not _engine.security:
@@ -543,6 +576,7 @@ def active_emergencies():
 # ── Infrastructure & Networking ──
 
 @innovation_bp.route('/infrastructure/status', methods=['GET'])
+@require_auth
 def network_status():
     """Get network infrastructure status."""
     if not _engine or not _engine.infrastructure:
@@ -552,6 +586,7 @@ def network_status():
 
 
 @innovation_bp.route('/infrastructure/node/register', methods=['POST'])
+@require_auth
 def register_node():
     """Register an edge node."""
     if not _engine or not _engine.infrastructure:
@@ -567,6 +602,7 @@ def register_node():
 
 
 @innovation_bp.route('/infrastructure/load-balance', methods=['GET'])
+@require_auth
 def load_balance():
     """Get load balance recommendations."""
     if not _engine or not _engine.infrastructure:
@@ -578,6 +614,7 @@ def load_balance():
 # ── Ecosystem Integration ──
 
 @innovation_bp.route('/ecosystem/integrations', methods=['GET'])
+@require_auth
 def available_integrations():
     """List available system integrations."""
     if not _engine or not _engine.ecosystem:
@@ -587,6 +624,7 @@ def available_integrations():
 
 
 @innovation_bp.route('/ecosystem/campus-apis', methods=['GET'])
+@require_auth
 def campus_api_catalog():
     """Get smart campus API catalog."""
     if not _engine or not _engine.ecosystem:

@@ -140,5 +140,5 @@ class VoucherSeeder:
             return {
                 'exists': False,
                 'count': 0,
-                'error': str(e)
+                'error': 'Voucher lookup failed'
             }

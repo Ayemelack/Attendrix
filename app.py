@@ -1176,7 +1176,7 @@ def create_app():
                 
         except Exception as e:
             logger.error(f"Attendance session creation error: {str(e)}")
-            return jsonify({'error': f'Session creation failed: {str(e)}'}), 500
+            return jsonify({'error': 'Session creation failed'}), 500
     
     @app.route('/api/attendance/mark', methods=['POST'])
     @require_auth
@@ -1786,22 +1786,31 @@ def create_app():
     def institutional_event_stream():
         """Server-Sent Events endpoint for real-time dashboard updates.
 
-        Uses ?token= query param because EventSource does not support headers.
+        Reads token from: Authorization header > auth_token cookie > ?token= query param.
+        Query-param fallback logs a warning — prefer cookie or header.
         """
         from flask import Response as FlaskResponse
 
-        token = request.args.get('token')
+        auth_header = request.headers.get('Authorization', '')
+        token = (auth_header.replace('Bearer ', '', 1) if auth_header.startswith('Bearer ')
+                 else request.cookies.get('auth_token') or request.args.get('token'))
+
+        if not token:
+            return jsonify({'error': 'Authentication required'}), 401
+
+        if request.args.get('token'):
+            logger.warning("SSE token passed via query param — use cookie or Authorization header")
+
         user_id = None
         institution_id = None
 
-        if token:
-            try:
-                payload = auth_service.verify_token(token)
-                if payload:
-                    user_id = payload.get('user_id')
-                    institution_id = payload.get('institution_id')
-            except Exception as e:
-                logger.warning(f"SSE token validation failed: {e}")
+        try:
+            payload = auth_service.verify_token(token)
+            if payload:
+                user_id = payload.get('user_id')
+                institution_id = payload.get('institution_id')
+        except Exception as e:
+            logger.warning(f"SSE token validation failed: {e}")
 
         if not user_id or not institution_id:
             return jsonify({'error': 'Authentication required'}), 401
@@ -1832,21 +1841,31 @@ def create_app():
 
         Mirrors the institutional stream but filters events relevant to students:
         attendance confirmations, schedule changes, notifications.
+
+        Reads token from: Authorization header > auth_token cookie > ?token= query param.
         """
         from flask import Response as FlaskResponse
 
-        token = request.args.get('token')
+        auth_header = request.headers.get('Authorization', '')
+        token = (auth_header.replace('Bearer ', '', 1) if auth_header.startswith('Bearer ')
+                 else request.cookies.get('auth_token') or request.args.get('token'))
+
+        if not token:
+            return jsonify({'error': 'Authentication required'}), 401
+
+        if request.args.get('token'):
+            logger.warning("Student SSE token passed via query param — use cookie or Authorization header")
+
         user_id = None
         institution_id = None
 
-        if token:
-            try:
-                payload = auth_service.verify_token(token)
-                if payload:
-                    user_id = payload.get('user_id')
-                    institution_id = payload.get('institution_id')
-            except Exception as e:
-                logger.warning(f"Student SSE auth failed: {e}")
+        try:
+            payload = auth_service.verify_token(token)
+            if payload:
+                user_id = payload.get('user_id')
+                institution_id = payload.get('institution_id')
+        except Exception as e:
+            logger.warning(f"Student SSE auth failed: {e}")
 
         if not user_id or not institution_id:
             return jsonify({'error': 'Authentication required'}), 401
@@ -2347,7 +2366,7 @@ def create_app():
             return jsonify(result), 201
         except Exception as e:
             logger.error(f"Demo seed error: {str(e)}")
-            return jsonify({'error': f'Seeding failed: {str(e)}'}), 500
+            return jsonify({'error': 'Seeding failed'}), 500
 
     # ── USER MANAGEMENT API ──
 
@@ -3668,7 +3687,7 @@ def create_app():
 
         except Exception as e:
             logger.error(f"Bootstrap error: {str(e)}")
-            return jsonify({'error': f'Bootstrap failed: {str(e)}'}), 500
+            return jsonify({'error': 'Bootstrap failed'}), 500
 
     @app.route('/system/voucher/seed', methods=['POST'])
     @require_auth

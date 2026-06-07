@@ -9,6 +9,7 @@ import logging
 
 from src.domain.entities import User, UserRole, DeviceFingerprint, SecurityLog
 from src.infrastructure.firebase_service import firebase_service
+from src.infrastructure.security.redis_session_store import redis_token_blacklist
 
 logger = logging.getLogger(__name__)
 
@@ -33,6 +34,12 @@ class AuthenticationService:
     def register_user(self, email: str, password: str, first_name: str, last_name: str,
                     role: UserRole, institution_id: str, **kwargs) -> Optional[User]:
         try:
+            _allowed_extra = {'phone', 'profile_image_url', 'voucher_code'}
+            for key in kwargs:
+                if key not in _allowed_extra:
+                    logger.warning(f"Rejected disallowed registration field: {key}")
+                    raise ValueError(f"Unexpected field: {key}")
+
             email = email.strip().lower()
 
             # Defense-in-depth: server-side password strength validation
@@ -316,6 +323,10 @@ class AuthenticationService:
                 algorithms=['HS256']
             )
 
+            if redis_token_blacklist.is_blacklisted(payload.get('jti', '')):
+                logger.warning(f"Token blacklisted: jti={payload.get('jti', 'none')[:16]}")
+                return None
+
             user_data = self.firebase_service.get_document('users', payload.get('user_id'))
             if not user_data or not user_data.get('is_active'):
                 return None
@@ -421,6 +432,7 @@ class AuthenticationService:
     def _generate_access_token(self, user_data: Dict[str, Any]) -> str:
         payload = {
             'user_id': user_data['id'],
+            'jti': secrets.token_hex(16),
             'email': user_data['email'],
             'role': user_data['role'],
             'institution_id': user_data['institution_id'],

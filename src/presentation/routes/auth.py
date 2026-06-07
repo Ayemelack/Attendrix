@@ -93,7 +93,8 @@ def register():
         }), 201
 
     except ValueError as e:
-        return jsonify({'error': str(e)}), 400
+        logger.warning(f"Registration validation error: {str(e)}")
+        return jsonify({'error': 'Invalid registration data'}), 400
     except Exception as e:
         error_msg = str(e).lower()
         if 'firebase' in error_msg and 'credentials' in error_msg:

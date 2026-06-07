@@ -280,7 +280,6 @@
                         </div>
 
                         <input type="hidden" id="csrfToken" value="{{ csrf_token }}">
-                        <input type="hidden" id="sessionToken" value="{{ session_token or '' }}">
                         <input type="hidden" id="selectedDate" value="">
                         <input type="hidden" id="selectedTimezone" value="">
                     </div>
@@ -391,6 +390,7 @@
     </div>
     
     <script>
+        var _sessionTokenServer = "{{ session_token or '' }}";
         var slots = document.querySelectorAll('.slot-btn');
         var confirmBtn = document.getElementById('confirmBtn');
         var selectedSlot = null;
@@ -429,18 +429,11 @@
         });
 
         var timezone = Intl.DateTimeFormat().resolvedOptions().timeZone || 'UTC';
-        var sessionTokenInput = document.getElementById('sessionToken');
         document.getElementById('selectedTimezone').value = timezone;
-        if (!sessionTokenInput.value) {
-            var storedSession = sessionStorage.getItem('demoSessionToken');
-            if (storedSession) {
-                sessionTokenInput.value = storedSession;
-            }
-        } else {
-            sessionStorage.setItem('demoSessionToken', sessionTokenInput.value);
-        }
-        if (sessionTokenInput.value) {
-            document.cookie = 'demoSessionToken=' + encodeURIComponent(sessionTokenInput.value) + '; path=/; max-age=604800; sameSite=Lax' + (location.protocol === 'https:' ? '; Secure' : '');
+        var sessionToken = sessionStorage.getItem('demoSessionToken') || _sessionTokenServer || '';
+        if (sessionToken) {
+            sessionStorage.setItem('demoSessionToken', sessionToken);
+            document.cookie = 'demoSessionToken=' + encodeURIComponent(sessionToken) + '; path=/; max-age=604800; sameSite=Lax' + (location.protocol === 'https:' ? '; Secure' : '');
         }
         var selectedOption = dateOptions[Math.floor(Math.random() * dateOptions.length)];
         setDateOption(selectedOption);
@@ -492,7 +485,7 @@
                     time: selectedSlot,
                     date: selectedDateValue.value,
                     timezone: document.getElementById('selectedTimezone').value,
-                    sessionToken: document.getElementById('sessionToken').value,
+                    sessionToken: sessionToken,
                     csrfToken: csrf
                 })
             })
@@ -507,8 +500,8 @@
                 } else if (data._status === 409 || data.duplicate) {
                     document.getElementById('duplicateMsg').textContent = data.message;
                     var dupUrl = '/demo-prep?token=' + data.existing_token;
-                    if (sessionTokenInput.value) {
-                        dupUrl += '&sessionToken=' + encodeURIComponent(sessionTokenInput.value);
+                    if (sessionToken) {
+                        dupUrl += '&sessionToken=' + encodeURIComponent(sessionToken);
                     }
                     document.getElementById('dupPortalBtn').href = dupUrl;
                     document.getElementById('bookingForm').style.display = 'none';
@@ -609,7 +602,7 @@
             }
             if (data.session_token) {
                 sessionStorage.setItem('demoSessionToken', data.session_token);
-                sessionTokenInput.value = data.session_token;
+                sessionToken = data.session_token;
             }
 
             var calBtn = document.getElementById('addCalendarBtn');

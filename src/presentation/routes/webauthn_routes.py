@@ -11,6 +11,8 @@ from flask import Blueprint, request, jsonify, session
 
 from src.infrastructure.security.webauthn_service import webauthn_service
 from src.application.auth_service import auth_service
+from src.application.rbac import require_auth, require_role
+from src.infrastructure.security_legacy import rate_limit_endpoint
 
 logger = logging.getLogger(__name__)
 
@@ -26,17 +28,14 @@ def status():
 
 
 @webauthn_bp.route('/register/begin', methods=['POST'])
+@require_auth
+@rate_limit_endpoint(limit=10, window=60, scope='user', block_duration=300)
 def register_begin():
     """Generate registration options for creating a new passkey."""
     if not webauthn_service.is_available():
         return jsonify({'error': 'WebAuthn not available'}), 501
 
-    data = request.get_json(silent=True) or {}
-    user_id = data.get('user_id') or session.get('user_id')
-
-    if not user_id:
-        return jsonify({'error': 'Authentication required'}), 401
-
+    user_id = request.current_user['user_id']
     user = auth_service.get_user_by_id(user_id)
     if not user:
         return jsonify({'error': 'User not found'}), 404
@@ -73,17 +72,15 @@ def register_begin():
 
 
 @webauthn_bp.route('/register/complete', methods=['POST'])
+@require_auth
+@rate_limit_endpoint(limit=10, window=60, scope='user', block_duration=300)
 def register_complete():
     """Verify and store a new WebAuthn credential."""
     if not webauthn_service.is_available():
         return jsonify({'error': 'WebAuthn not available'}), 501
 
     data = request.get_json(silent=True) or {}
-    user_id = data.get('user_id') or session.get('user_id')
-
-    if not user_id:
-        return jsonify({'error': 'Authentication required'}), 401
-
+    user_id = request.current_user['user_id']
     challenge = data.get('challenge')
     credential_id = data.get('credential_id')
     attestation_object = data.get('attestation_object')
@@ -199,12 +196,10 @@ def authenticate_complete():
 
 
 @webauthn_bp.route('/credentials', methods=['GET'])
+@require_auth
 def list_credentials():
     """List all active WebAuthn credentials for the current user."""
-    user_id = session.get('user_id')
-    if not user_id:
-        return jsonify({'error': 'Authentication required'}), 401
-
+    user_id = request.current_user['user_id']
     credentials = webauthn_service.get_user_credentials(user_id)
     return jsonify({
         'credentials': credentials,
@@ -213,11 +208,10 @@ def list_credentials():
 
 
 @webauthn_bp.route('/credentials/<credential_id>', methods=['DELETE'])
+@require_auth
 def delete_credential(credential_id):
     """Revoke a specific WebAuthn credential."""
-    user_id = session.get('user_id')
-    if not user_id:
-        return jsonify({'error': 'Authentication required'}), 401
+    user_id = request.current_user['user_id']
 
     if not webauthn_service.verify_credential_id_ownership(credential_id, user_id):
         return jsonify({'error': 'Credential not found'}), 404
@@ -229,12 +223,10 @@ def delete_credential(credential_id):
 
 
 @webauthn_bp.route('/credentials/revoke-all', methods=['POST'])
+@require_auth
 def revoke_all_credentials():
     """Revoke all WebAuthn credentials for the current user."""
-    user_id = session.get('user_id')
-    if not user_id:
-        return jsonify({'error': 'Authentication required'}), 401
-
+    user_id = request.current_user['user_id']
     count = webauthn_service.revoke_all_credentials(user_id)
     logger.info(f"User {user_id} revoked all {count} WebAuthn credentials")
     return jsonify({
@@ -245,15 +237,11 @@ def revoke_all_credentials():
 
 
 @webauthn_bp.route('/admin/list', methods=['GET'])
+@require_auth
+@require_role('super_admin', 'institutional_admin')
 def admin_list():
     """Admin: list credentials for any user."""
-    current_user_id = session.get('user_id')
-    if not current_user_id:
-        return jsonify({'error': 'Authentication required'}), 401
-
-    current_user = auth_service.get_user_by_id(current_user_id)
-    if not current_user or current_user.get('role') not in ('super_admin', 'institutional_admin'):
-        return jsonify({'error': 'Admin access required'}), 403
+    current_user = request.current_user
 
     user_id = request.args.get('user_id')
     if not user_id:
@@ -268,15 +256,11 @@ def admin_list():
 
 
 @webauthn_bp.route('/admin/revoke', methods=['POST'])
+@require_auth
+@require_role('super_admin', 'institutional_admin')
 def admin_revoke():
     """Admin: revoke a credential for any user."""
-    current_user_id = session.get('user_id')
-    if not current_user_id:
-        return jsonify({'error': 'Authentication required'}), 401
-
-    current_user = auth_service.get_user_by_id(current_user_id)
-    if not current_user or current_user.get('role') not in ('super_admin', 'institutional_admin'):
-        return jsonify({'error': 'Admin access required'}), 403
+    current_user = request.current_user
 
     data = request.get_json(silent=True) or {}
     user_id = data.get('user_id')
@@ -286,7 +270,7 @@ def admin_revoke():
         return jsonify({'error': 'user_id and credential_id required'}), 400
 
     if webauthn_service.revoke_credential(user_id, credential_id):
-        logger.info(f"Admin {current_user_id} revoked credential {credential_id[:16]}... for user {user_id}")
+        logger.info(f"Admin {current_user['user_id']} revoked credential {credential_id[:16]}... for user {user_id}")
         return jsonify({'status': 'ok'})
     return jsonify({'error': 'Credential not found'}), 404
 

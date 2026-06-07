@@ -1,11 +1,13 @@
 from datetime import datetime, timedelta
-import uuid, json, re, math
+import uuid, json, re, math, logging
 from src.infrastructure.feedback_models import (
     Feedback, FeedbackReply, FeedbackReaction, ModerationLog,
     FeedbackDiagnostics, EscalationHistory,
     get_db_session, FeedbackStatus
 )
 from sqlalchemy import func, desc, or_, and_, case
+
+logger = logging.getLogger(__name__)
 
 CRITICAL_KEYWORDS = ['sync fail', 'not working', 'crash', 'data loss', 'security breach',
                      'unable to access', 'lost data', 'emergency', 'urgent', 'blocked']
@@ -129,7 +131,8 @@ class FeedbackService:
             return {'success': True, 'feedback_id': fb.id}
         except Exception as e:
             db.rollback()
-            return {'success': False, 'error': str(e)}
+            logger.error(f"Feedback create error: {str(e)}")
+            return {'success': False, 'error': 'Failed to create feedback'}
         finally:
             db.close()
 
@@ -305,7 +308,8 @@ class FeedbackService:
             return {'success': True, 'upvoted': True}
         except Exception as e:
             db.rollback()
-            return {'success': False, 'error': str(e)}
+            logger.error(f"Feedback upvote error: {str(e)}")
+            return {'success': False, 'error': 'Failed to upvote feedback'}
         finally:
             db.close()
 
@@ -325,7 +329,8 @@ class FeedbackService:
             return {'success': True, 'reply_id': reply.id}
         except Exception as e:
             db.rollback()
-            return {'success': False, 'error': str(e)}
+            logger.error(f"Feedback reply error: {str(e)}")
+            return {'success': False, 'error': 'Failed to add reply'}
         finally:
             db.close()
 
@@ -391,7 +396,8 @@ class FeedbackService:
             return {'success': True}
         except Exception as e:
             db.rollback()
-            return {'success': False, 'error': str(e)}
+            logger.error(f"Feedback admin notes error: {str(e)}")
+            return {'success': False, 'error': 'Failed to update admin notes'}
         finally:
             db.close()
 
@@ -432,7 +438,8 @@ class FeedbackService:
             return {'success': True}
         except Exception as e:
             db.rollback()
-            return {'success': False, 'error': str(e)}
+            logger.error(f"Feedback moderation error: {str(e)}")
+            return {'success': False, 'error': 'Failed to moderate feedback'}
         finally:
             db.close()
 

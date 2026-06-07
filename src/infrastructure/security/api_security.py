@@ -13,6 +13,7 @@ import hashlib
 import json
 import logging
 import threading
+import os
 import re
 from typing import Dict, Any, List, Tuple, Optional, Callable
 from datetime import datetime, timedelta
@@ -850,7 +851,11 @@ class SecurityMiddlewareChain:
         """Add CORS headers to response."""
         headers = response.get('headers', {})
         if 'Access-Control-Allow-Origin' not in headers:
-            headers['Access-Control-Allow-Origin'] = '*'
+            allowed = os.environ.get(
+                'CORS_ALLOWED_ORIGINS',
+                'https://attendrix.app'
+            )
+            headers['Access-Control-Allow-Origin'] = allowed.split(',')[0]
         headers.setdefault('Access-Control-Allow-Methods', 'GET, POST, PUT, DELETE, PATCH, OPTIONS')
         headers.setdefault('Access-Control-Allow-Headers', 'Content-Type, Authorization, X-Signature, X-Nonce')
         response['headers'] = headers

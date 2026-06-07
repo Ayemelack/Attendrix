@@ -248,8 +248,9 @@ class EventService:
                 'total_nodes': len(network.get('nodes', [])),
             }
         except Exception as e:
+            logger.error(f"Event service health error: {str(e)}")
             return {
                 'server_time': datetime.utcnow().isoformat(),
                 'healthy': False,
-                'error': str(e),
+                'error': 'Health check failed',
             }
