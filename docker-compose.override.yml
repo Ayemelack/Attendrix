@@ -1,0 +1,126 @@
+# Attendrix Docker Compose Override
+# Development environment configuration
+
+version: '3.8'
+
+services:
+  # Override web service for development
+  web:
+    build:
+      target: builder  # Use build stage for development
+    environment:
+      - DJANGO_SETTINGS_MODULE=attendrix.settings.development
+      - DEBUG=True
+      - ALLOWED_HOSTS=localhost,127.0.0.1,0.0.0.0
+    command: python manage.py runserver 0.0.0.0:8000
+    volumes:
+      - .:/app  # Mount source code for live reloading
+      - static_volume:/app/staticfiles
+      - media_volume:/app/media
+      - logs_volume:/app/logs
+      - uploads_volume:/app/uploads
+    ports:
+      - "8000:8000"
+
+  # Override celery worker for development
+  celery:
+    build:
+      target: builder  # Use build stage for development
+    environment:
+      - DJANGO_SETTINGS_MODULE=attendrix.settings.development
+      - DEBUG=True
+    command: celery -A attendrix worker --loglevel=debug --concurrency=2
+    volumes:
+      - .:/app  # Mount source code for live reloading
+      - logs_volume:/app/logs
+      - uploads_volume:/app/uploads
+
+  # Override celery beat for development
+  celery-beat:
+    build:
+      target: builder  # Use build stage for development
+    environment:
+      - DJANGO_SETTINGS_MODULE=attendrix.settings.development
+      - DEBUG=True
+    command: celery -A attendrix beat --loglevel=debug
+    volumes:
+      - .:/app  # Mount source code for live reloading
+      - logs_volume:/app/logs
+      - celerybeat_data:/tmp
+
+  # Override flower for development
+  flower:
+    build:
+      target: builder  # Use build stage for development
+    environment:
+      - DJANGO_SETTINGS_MODULE=attendrix.settings.development
+      - DEBUG=True
+    command: celery -A attendrix flower --port=5555 --debug=True
+    volumes:
+      - .:/app  # Mount source code for live reloading
+
+  # Development database admin
+  db-admin:
+    image: dpage/pgadmin4:latest
+    container_name: attendrix_db_admin
+    restart: unless-stopped
+    environment:
+      PGADMIN_DEFAULT_EMAIL: ${PGADMIN_EMAIL:-admin@attendrix.com}
+      PGADMIN_DEFAULT_PASSWORD: ${PGADMIN_PASSWORD:-admin123}
+      PGADMIN_CONFIG_SERVER_MODE: 'False'
+    volumes:
+      - pgadmin_data:/var/lib/pgadmin
+    ports:
+      - "${PGADMIN_PORT:-5050}:80"
+    networks:
+      - attendrix_network
+    depends_on:
+      - db
+
+  # Redis commander for Redis management
+  redis-commander:
+    image: rediscommander/redis-commander:latest
+    container_name: attendrix_redis_commander
+    restart: unless-stopped
+    environment:
+      REDIS_HOSTS: local:redis:6379:0:${REDIS_PASSWORD:-redis_secure_password_2024}
+    volumes:
+      - redis_commander_data:/redis-commander/data
+    ports:
+      - "${REDIS_COMMANDER_PORT:-8081}:8081"
+    networks:
+      - attendrix_network
+    depends_on:
+      - redis
+
+  # Mailhog for email testing in development
+  mailhog:
+    image: mailhog/mailhog:latest
+    container_name: attendrix_mailhog
+    restart: unless-stopped
+    ports:
+      - "${MAILHOG_SMTP_PORT:-1025}:1025"
+      - "${MAILHOG_WEB_PORT:-8025}:8025"
+    networks:
+      - attendrix_network
+
+  # Development tools
+  dev-tools:
+    build:
+      context: .
+      dockerfile: Dockerfile.dev
+    container_name: attendrix_dev_tools
+    restart: unless-stopped
+    volumes:
+      - .:/app
+    networks:
+      - attendrix_network
+    profiles:
+      - tools
+
+# Additional volumes for development
+volumes:
+  pgadmin_data:
+    driver: local
+  redis_commander_data:
+    driver: local

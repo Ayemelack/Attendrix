@@ -1,0 +1,151 @@
+# Attendrix Docker Ignore File
+# Excludes files and directories from Docker build context
+
+# Python
+__pycache__/
+*.py[cod]
+*$py.class
+*.so
+.Python
+build/
+develop-eggs/
+dist/
+downloads/
+eggs/
+.eggs/
+lib/
+lib64/
+parts/
+sdist/
+var/
+wheels/
+*.egg-info/
+.installed.cfg
+*.egg
+MANIFEST
+
+# Virtual environments
+.env
+.venv
+env/
+venv/
+ENV/
+env.bak/
+venv.bak/
+
+# IDE
+.vscode/
+.idea/
+*.swp
+*.swo
+*~
+
+# OS
+.DS_Store
+.DS_Store?
+._*
+.Spotlight-V100
+.Trashes
+ehthumbs.db
+Thumbs.db
+
+# Git
+.git/
+.gitignore
+
+# Docker
+.dockerignore
+Dockerfile*
+docker-compose*.yml
+docker-compose*.yaml
+
+# Node modules (if any)
+node_modules/
+npm-debug.log*
+yarn-debug.log*
+yarn-error.log*
+
+# Logs
+logs/
+*.log
+
+# Database
+*.db
+*.sqlite3
+*.sqlite
+
+# Media files (will be mounted as volume)
+media/
+uploads/
+
+# Static files (will be collected separately)
+staticfiles/
+static/
+
+# Coverage reports
+htmlcov/
+.coverage
+.coverage.*
+coverage.xml
+*.cover
+.hypothesis/
+.pytest_cache/
+
+# Jupyter Notebook
+.ipynb_checkpoints
+
+# pyenv
+.python-version
+
+# celery
+celerybeat-schedule
+
+# Sphinx documentation
+docs/_build/
+
+# Backup files
+*.bak
+*.backup
+
+# Temporary files
+tmp/
+temp/
+*.tmp
+
+# Environment files
+.env.local
+.env.development
+.env.test
+.env.production
+
+# SSL certificates
+*.pem
+*.key
+*.crt
+*.csr
+
+# Configuration files with secrets
+config/secrets.py
+config/local_settings.py
+
+# Test files
+test_*.py
+*_test.py
+tests/
+
+# Development tools
+.docker/
+scripts/dev/
+
+# Documentation
+README.md
+CHANGELOG.md
+LICENSE
+*.md
+
+# Package files
+requirements-dev.txt
+requirements-test.txt
+
+# Local development
+.local/
