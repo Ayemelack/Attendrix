@@ -457,13 +457,6 @@
 
     <div class="alert-custom" id="alertContainer"></div>
 
-        <!-- Dev Mode Hint -->
-        <div class="alert-custom alert-info" id="devHint"
-             style="display:none;font-size:0.8rem;text-align:center;margin-bottom:1.25rem;">
-            <i class="fas fa-flask me-2"></i>
-            <span data-i18n="demo_hint">Demo:</span> <strong>tech.admin@attendrix.demo</strong> / <strong>TechAdmin@2024</strong>
-        </div>
-
         <!-- Device Verification -->
         <div class="device-section" id="deviceSection">
             <div class="device-info">
@@ -541,6 +534,7 @@
 
     // â”€â”€ CAPTCHA State â”€â”€
     let captchaToken = null;
+    var turnstileSiteKey = '{{ turnstile_site_key }}';
 
     function onCaptchaSuccess(token) {
         captchaToken = token;
@@ -569,7 +563,7 @@
 
         const validEmail = email && /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email) && !hasMaliciousInput(email);
         const validPassword = password.length > 0;
-        const captchaOk = captchaToken !== null;
+        const captchaOk = !turnstileSiteKey || captchaToken !== null;
 
         const btn = document.getElementById('loginBtn');
         btn.disabled = !(validEmail && validPassword && captchaOk);
@@ -598,10 +592,6 @@
             }
         } else {
             await generateBasicFingerprint();
-        }
-        if (location.hostname === '127.0.0.1' || location.hostname === 'localhost') {
-            var hint = document.getElementById('devHint');
-            if (hint) hint.style.display = 'block';
         }
     });
 

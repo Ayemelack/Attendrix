@@ -479,7 +479,7 @@
                    oninput="document.getElementById('validateVoucherBtn').disabled=!this.value.trim();">
         </div>
 
-        <button class="btn-primary-custom" id="validateVoucherBtn" onclick="validateVoucher()" disabled>
+        <button class="btn-primary-custom" id="validateVoucherBtn" disabled>
             <span class="spinner" id="voucherSpinner"></span>
             <span id="voucherBtnText">Validate Voucher</span>
         </button>
@@ -568,7 +568,7 @@
             </div>
             <span class="validation-feedback" id="confirmPasswordFeedback"></span>
 
-            <div id="captchaContainer" class="cf-turnstile" data-sitekey="{{ turnstile_site_key }}" data-callback="onSignupCaptchaSuccess" data-expired-callback="onSignupCaptchaExpired" data-theme="dark" style="margin-bottom:1rem;"></div>
+            <div id="captchaContainer" data-sitekey="{{ turnstile_site_key }}" data-callback="onSignupCaptchaSuccess" data-expired-callback="onSignupCaptchaExpired" data-theme="dark" style="margin-bottom:1rem;"></div>
 
             <button type="submit" class="btn-primary-custom" id="submitRegistrationBtn" disabled>
                 <i class="fas fa-user-plus me-2"></i>
@@ -605,6 +605,27 @@
     let currentStep = 1;
     let validatedVoucher = null;
     let signupCaptchaToken = null;
+    let validatingVoucher = false;
+    let captchaRendered = false;
+    let submittingRegistration = false;
+
+    function renderSignupCaptcha() {
+        if (captchaRendered) return;
+        const container = document.getElementById('captchaContainer');
+        if (!container) return;
+        const sitekey = container.getAttribute('data-sitekey');
+        if (!sitekey) return;
+        if (typeof turnstile === 'undefined') return;
+        try {
+            turnstile.render('#captchaContainer', {
+                sitekey: sitekey,
+                callback: function(token) { onSignupCaptchaSuccess(token); },
+                'expired-callback': function() { onSignupCaptchaExpired(); },
+                theme: container.getAttribute('data-theme') || 'dark'
+            });
+            captchaRendered = true;
+        } catch (e) {}
+    }
 
     function onSignupCaptchaSuccess(token) {
         signupCaptchaToken = token;
@@ -660,6 +681,7 @@
     }
 
     function checkRegistrationForm() {
+        if (submittingRegistration) return;
         const fullName = document.getElementById('fullName').value;
         const email = document.getElementById('email').value;
         const password = document.getElementById('password').value;
@@ -683,7 +705,9 @@
             allValid = allValid && sid.length >= 3 && !hasMaliciousInput(sid);
         }
 
-        const captchaOk = signupCaptchaToken !== null;
+        const captchaContainer = document.getElementById('captchaContainer');
+        const hasCaptcha = captchaContainer && captchaContainer.getAttribute('data-sitekey');
+        const captchaOk = !hasCaptcha || signupCaptchaToken !== null;
 
         const btn = document.getElementById('submitRegistrationBtn');
         btn.disabled = !(allValid && captchaOk);
@@ -717,12 +741,14 @@
 
     // â”€â”€ Step 1: Voucher Validation â”€â”€
     async function validateVoucher() {
+        if (validatingVoucher) return;
         const code = document.getElementById('voucherCode').value.trim().toUpperCase();
         if (!code) { showAlert('Please enter a voucher code', 'error'); return; }
         if (code.length !== 8) { showAlert('Voucher code must be exactly 8 characters', 'error'); return; }
         if (!/^[A-Z0-9]+$/.test(code)) { showAlert('Voucher code contains invalid characters', 'error'); return; }
 
         try {
+            validatingVoucher = true;
             setLoading(true);
             const res = await fetch('/api/voucher/validate/' + code);
             const result = await res.json();
@@ -745,6 +771,8 @@
                 }
 
                 moveToStep(2);
+                renderSignupCaptcha();
+                checkRegistrationForm();
             } else {
                 showAlert(result.error || 'Invalid voucher code', 'error');
             }
@@ -752,6 +780,7 @@
             showAlert('Validation failed. Please try again.', 'error');
         } finally {
             setLoading(false);
+            validatingVoucher = false;
         }
     }
 
@@ -784,37 +813,44 @@
         const btn = document.getElementById('submitRegistrationBtn');
         if (btn.disabled) return;
 
-        const data = {
+        const payload = {
             voucher_code: document.getElementById('validatedVoucherCode').value,
             first_name: document.getElementById('fullName').value.trim().split(' ')[0] || '',
             last_name: document.getElementById('fullName').value.trim().split(' ').slice(1).join(' ') || '',
             email: document.getElementById('email').value.trim(),
             password: document.getElementById('password').value,
             role: document.getElementById('validatedRole').value,
-            institution_id: document.getElementById('validatedInstitutionId').value,
-            student_id: document.getElementById('studentId')?.value?.trim() || null
+            institution_id: document.getElementById('validatedInstitutionId').value
         };
 
-        if (hasMaliciousInput(data.email + data.first_name + data.last_name + (data.student_id || ''))) {
+        if (signupCaptchaToken) {
+            payload.captchaToken = signupCaptchaToken;
+        }
+
+        console.log('Registration payload:', payload);
+
+        if (hasMaliciousInput(payload.email + payload.first_name + payload.last_name)) {
             showAlert('Invalid input detected', 'error'); return;
         }
 
+        submittingRegistration = true;
         btn.disabled = true;
         btn.innerHTML = '<span class="spinner" style="display:inline-block;"></span> Creating Account...';
 
         fetch('/api/auth/register', {
             method: 'POST',
             headers: { 'Content-Type': 'application/json' },
-            body: JSON.stringify(Object.assign({}, data, { captchaToken: signupCaptchaToken }))
+            body: JSON.stringify(payload)
         })
         .then(r => r.json())
         .then(result => {
+            submittingRegistration = false;
             if (result.error) {
                 showAlert(result.error, 'error');
                 btn.disabled = false;
                 btn.innerHTML = '<i class="fas fa-user-plus me-2"></i>Complete Registration';
             } else {
-                if (data.role === 'institutional_admin') {
+                if (payload.role === 'institutional_admin') {
                     window.location.href = '/login';
                 } else {
                     moveToStep(3);
@@ -822,6 +858,7 @@
             }
         })
         .catch(() => {
+            submittingRegistration = false;
             showAlert('Registration failed. Please try again.', 'error');
             btn.disabled = false;
             btn.innerHTML = '<i class="fas fa-user-plus me-2"></i>Complete Registration';

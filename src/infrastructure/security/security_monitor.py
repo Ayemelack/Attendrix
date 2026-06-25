@@ -1009,3 +1009,9 @@ class ForensicAuditLogger:
             return socket.gethostname()
         except Exception:
             return 'unknown'
+
+
+# Module-level singleton instances
+security_monitor = SecurityMonitor()
+threat_scorer = ThreatScorer()
+forensic_logger = ForensicAuditLogger()

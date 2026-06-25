@@ -294,8 +294,9 @@ class FirebaseService:
         # require explicit `institution_id` for institution-scoped collections to avoid blind writes.
         if not user:
             if collection in REQUIRES_INSTITUTION_SCOPING and 'institution_id' not in data:
-                logger.error(f"SECURITY: Attempted write to {collection} without user context or institution_id")
-                raise PermissionError("Writes to institution-scoped collections require institution_id when no authenticated user context is present")
+                if collection not in ('security_logs', 'audit_logs'):
+                    logger.error(f"SECURITY: Attempted write to {collection} without user context or institution_id")
+                    raise PermissionError("Writes to institution-scoped collections require institution_id when no authenticated user context is present")
             # If write is to a per-user collection, require explicit owner field
             if collection in PER_USER_COLLECTIONS:
                 if not any(k in data for k in ('user_id', 'uid', 'student_id')):
@@ -361,6 +362,9 @@ class FirebaseService:
 
         if self.is_mock():
             global _mock_database
+            fresh = load_mock_database()
+            if fresh:
+                _mock_database = fresh
             _ensure_collection(collection)
             doc_data = data.copy()
             if document_id is None:
@@ -392,6 +396,9 @@ class FirebaseService:
             self.initialize()
         if self.is_mock():
             global _mock_database
+            fresh = load_mock_database()
+            if fresh:
+                _mock_database = fresh
             _ensure_collection(collection)
             for doc in _mock_database.get(collection, []):
                 if doc.get('id') == document_id:
@@ -414,11 +421,27 @@ class FirebaseService:
         if not self._initialized:
             self.initialize()
 
+        # Retrieve existing document to preserve/verify institution and owner context
+        existing_doc = self.get_document(collection, document_id)
+        if existing_doc:
+            if 'institution_id' in existing_doc:
+                data.setdefault('institution_id', existing_doc['institution_id'])
+            if collection in PER_USER_COLLECTIONS:
+                owner_id = existing_doc.get('user_id') or existing_doc.get('uid') or existing_doc.get('student_id') or existing_doc.get('id')
+                if owner_id:
+                    data.setdefault('user_id', owner_id)
+                for k in ('user_id', 'uid', 'student_id'):
+                    if k in existing_doc:
+                        data.setdefault(k, existing_doc[k])
+
         # Enforce write access on updates
         data = self._enforce_write_access(collection, data.copy())
 
         if self.is_mock():
             global _mock_database
+            fresh = load_mock_database()
+            if fresh:
+                _mock_database = fresh
             _ensure_collection(collection)
             for i, doc in enumerate(_mock_database.get(collection, [])):
                 if doc.get('id') == document_id:
@@ -446,6 +469,9 @@ class FirebaseService:
 
         if self.is_mock():
             global _mock_database
+            fresh = load_mock_database()
+            if fresh:
+                _mock_database = fresh
             _ensure_collection(collection)
             before = len(_mock_database.get(collection, []))
             _mock_database[collection] = [
@@ -543,6 +569,9 @@ class FirebaseService:
 
         if self.is_mock():
             global _mock_database
+            fresh = load_mock_database()
+            if fresh:
+                _mock_database = fresh
             _ensure_collection(collection)
             result = list(_mock_database.get(collection, []))
 

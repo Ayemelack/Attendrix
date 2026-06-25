@@ -28,22 +28,23 @@ def test(name, condition, detail=''):
         failed += 1
         print(f'  FAIL: {name}  -- {detail}')
 
-def login(email, password):
-    r = requests.post(f'{BASE_URL}/api/auth/login', json={
-        'email': email, 'password': password
-    })
+def login(email, password, institution_id=None):
+    payload = {'email': email, 'password': password}
+    if institution_id:
+        payload['institution_id'] = institution_id
+    r = requests.post(f'{BASE_URL}/api/auth/login', json=payload)
     if r.status_code == 200:
         data = r.json()
         return data.get('access_token') or data.get('token')
     return None
 
-def api_get(path, token=None, headers=None):
+def api_get(path, token=None, headers=None, **kwargs):
     hdrs = {'Content-Type': 'application/json'}
     if token:
         hdrs['Authorization'] = f'Bearer {token}'
     if headers:
         hdrs.update(headers)
-    return requests.get(f'{BASE_URL}{path}', headers=hdrs)
+    return requests.get(f'{BASE_URL}{path}', headers=hdrs, **kwargs)
 
 def api_post(path, data=None, token=None, headers=None):
     hdrs = {'Content-Type': 'application/json'}
@@ -61,19 +62,19 @@ print('=' * 62)
 print('ATTENDRIX SECURITY REGRESSION TEST SUITE')
 print('=' * 62)
 
-r = api_get('/ping')
+r = api_get('/api/ping')
 test('Server reachable', r.status_code == 200, str(r.status_code))
 
 # Attempt to get tokens for all roles
 tokens = {}
 test_users = [
-    {'email': 'super@attendrix.com', 'password': 'SuperAdmin123!', 'label': 'SuperAdmin'},
-    {'email': 'admin@institution-a.com', 'password': 'Admin123!', 'label': 'InstAdmin'},
-    {'email': 'lecturer@institution-a.com', 'password': 'Lecturer123!', 'label': 'Lecturer'},
-    {'email': 'student@institution-a.com', 'password': 'Student123!', 'label': 'Student'},
+    {'email': 'super@attendrix.com', 'password': 'SuperAdmin123!', 'label': 'SuperAdmin', 'institution_id': None},
+    {'email': 'admin@institution-a.com', 'password': 'Admin123!', 'label': 'InstAdmin', 'institution_id': 'institution-a'},
+    {'email': 'lecturer@institution-a.com', 'password': 'Lecturer123!', 'label': 'Lecturer', 'institution_id': 'institution-a'},
+    {'email': 'student@institution-a.com', 'password': 'Student123!', 'label': 'Student', 'institution_id': 'institution-a'},
 ]
 for u in test_users:
-    tok = login(u['email'], u['password'])
+    tok = login(u['email'], u['password'], u.get('institution_id'))
     if tok:
         tokens[u['label']] = tok
     print(f'  Login: {u["label"]} -> {"OK" if tok else "FAILED"}')
@@ -310,18 +311,20 @@ test('SSE -> 401 without token',
 
 # With Authorization header it should pass validation
 if has_any_token:
-    tok = list(tokens.values())[0]
-    R = api_get('/api/institutional/events/stream', token=tok)
+    tok = tokens.get('InstAdmin') or list(tokens.values())[0]
+    R = api_get('/api/institutional/events/stream', token=tok, stream=True)
     test('SSE accepts Bearer token',
          R.status_code in (200, 503), str(R.status_code))
+    R.close()
 
 # With query param (deprecated) it should still work but log a warning
 if has_any_token:
-    tok = list(tokens.values())[0]
+    tok = tokens.get('InstAdmin') or list(tokens.values())[0]
     R = requests.get(f'{BASE_URL}/api/institutional/events/stream?token={tok}',
-                     headers={'Content-Type': 'application/json'})
+                     headers={'Content-Type': 'application/json'}, stream=True)
     test('SSE accepts query-param token (deprecated fallback)',
          R.status_code in (200, 503), str(R.status_code))
+    R.close()
 
 
 # ===================================================================

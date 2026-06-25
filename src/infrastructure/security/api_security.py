@@ -1175,3 +1175,10 @@ class AttackThrottler:
 
         score = min(tamper_count / max(len(parameters), 1), 1.0)
         return tamper_count, score
+
+
+# Module-level singleton instances
+schema_validator = SchemaValidator()
+anti_replay = AntiReplayProtector()
+jwt_rotation = JWTRotationManager()
+attack_throttler = AttackThrottler()

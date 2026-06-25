@@ -23,7 +23,7 @@ def test_signup_functionality():
             else:
                 print("   ❌ Sign-Up link: Missing from navigation")
                 
-            if 'btn-success' in content:
+            if 'btn-success' in content or 'btn-signup-nav' in content:
                 print("   ✅ Sign-Up button: Styled correctly")
             else:
                 print("   ❌ Sign-Up button: Not styled")
@@ -54,14 +54,13 @@ def test_signup_functionality():
         if response.status_code == 200:
             content = response.text
             
-            # Check for all required fields
+            # Check for all required fields in the signup form
             required_fields = {
-                'Full Name': b'First Name' in content and b'Last Name' in content,
-                'Email Address': b'Email Address' in content,
-                'Password': b'Password' in content,
-                'Confirm Password': b'Confirm Password' in content,
-                'Role': b'Your Role' in content,
-                'Institution Name': b'Institution Name' in content
+                'Full Name': 'Full Name' in content,
+                'Email Address': 'Email Address' in content,
+                'Password': 'Password' in content,
+                'Confirm Password': 'Confirm Password' in content,
+                'Voucher Code': 'Voucher Code' in content
             }
             
             for field_name, present in required_fields.items():
@@ -70,20 +69,18 @@ def test_signup_functionality():
                 else:
                     print(f"   ❌ {field_name}: Missing")
             
-            # Check for all required roles
-            required_roles = {
-                'Super Administrator': b'Super_administrator' in content,
-                'Institutional Administrator': b'institutional_admin' in content,
-                'Lecturer': b'lecturer' in content,
-                'Student': b'student' in content,
-                'Employee': b'employee' in content
+            # Check for voucher-driven role tracking hidden fields
+            required_hidden_fields = {
+                'Role Hidden field': 'validatedRole' in content,
+                'Institution ID Hidden field': 'validatedInstitutionId' in content,
+                'Voucher Code Hidden field': 'validatedVoucherCode' in content
             }
             
-            for role_name, present in required_roles.items():
+            for field_name, present in required_hidden_fields.items():
                 if present:
-                    print(f"   ✅ Role {role_name}: Present")
+                    print(f"   ✅ {field_name}: Present")
                 else:
-                    print(f"   ❌ Role {role_name}: Missing")
+                    print(f"   ❌ {field_name}: Missing")
         else:
             print(f"   ❌ Sign-Up page failed: {response.status_code}")
     except Exception as e:
@@ -92,13 +89,13 @@ def test_signup_functionality():
     # Test 4: Check signup API endpoint
     print("4. Testing Sign-Up API...")
     try:
-        # Test valid signup data
+        import time
         signup_data = {
             'firstName': 'John',
             'lastName': 'Doe',
-            'email': 'john.doe@example.com',
-            'password': 'password123',
-            'confirmPassword': 'password123',
+            'email': f'john.doe_{int(time.time())}@example.com',
+            'password': 'Password123!',
+            'confirmPassword': 'Password123!',
             'role': 'student',
             'institutionName': 'Test University',
             'terms': 'on'
@@ -125,7 +122,7 @@ def test_signup_functionality():
     # Test 5: Check role-based login functionality
     print("5. Testing Role-Based Login...")
     test_emails = [
-        ('admin@attendrix.com', 'super_administrator'),
+        ('admin@attendrix.com', 'super_admin'),
         ('institution@attendrix.com', 'institutional_admin'),
         ('lecturer@attendrix.com', 'lecturer'),
         ('student@attendrix.com', 'student'),
@@ -158,7 +155,7 @@ def test_signup_functionality():
     # Test 6: Check dashboard accessibility
     print("6. Testing Dashboard Access...")
     try:
-        response = requests.get(f"{base_url}/dashboard", timeout=5)
+        response = requests.get(f"{base_url}/student/dashboard", timeout=5)
         if response.status_code == 200:
             print("   ✅ Dashboard: Accessible after login")
         else:

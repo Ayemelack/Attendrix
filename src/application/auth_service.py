@@ -34,7 +34,7 @@ class AuthenticationService:
     def register_user(self, email: str, password: str, first_name: str, last_name: str,
                     role: UserRole, institution_id: str, **kwargs) -> Optional[User]:
         try:
-            _allowed_extra = {'phone', 'profile_image_url', 'voucher_code'}
+            _allowed_extra = {'phone', 'profile_image_url', 'voucher_code', 'student_id'}
             for key in kwargs:
                 if key not in _allowed_extra:
                     logger.warning(f"Rejected disallowed registration field: {key}")
@@ -108,6 +108,7 @@ class AuthenticationService:
 
             user_data = {
                 'id': user.id,
+                'user_id': user.id,
                 'institution_id': user.institution_id,
                 'email': user.email,
                 'password_hash': user.password_hash,
@@ -198,6 +199,9 @@ class AuthenticationService:
                          device_fingerprint: str = None, ip_address: str = None,
                          user_agent: str = None, institution_id: str = None) -> Optional[Dict[str, Any]]:
         try:
+            import logging as _lg
+            _lg.getLogger(__name__).info(f"DEBUG authenticate_user called: email={email}")
+
             if not email or not password:
                 return {'success': False, 'message': 'Invalid email or password'}
 
@@ -207,6 +211,21 @@ class AuthenticationService:
                 'users',
                 filters=[{'field': 'email', 'value': email}]
             )
+
+            # Retry once with a 0.5s delay to handle eventual consistency replication delays for instant login redirects
+            if not users:
+                import time
+                time.sleep(0.5)
+                users = self.firebase_service.query_documents(
+                    'users',
+                    filters=[{'field': 'email', 'value': email}]
+                )
+
+            _lg.getLogger(__name__).info(f"DEBUG query_documents returned {len(users)} users for email={email}")
+            if users:
+                _lg.getLogger(__name__).info(f"DEBUG first user keys: {list(users[0].keys())}")
+                _lg.getLogger(__name__).info(f"DEBUG user email field: '{users[0].get('email')}'")
+                _lg.getLogger(__name__).info(f"DEBUG stored_hash exists: {bool(users[0].get('password_hash'))}")
 
             if not users:
                 return {'success': False, 'message': 'Invalid email or password'}
@@ -280,7 +299,7 @@ class AuthenticationService:
             }
 
         except Exception as e:
-            logger.error(f"Authentication error: {str(e)}")
+            logger.error(f"Authentication error: {str(e)}", exc_info=True)
             return {'success': False, 'message': 'Invalid email or password'}
 
     def refresh_token(self, refresh_token: str) -> Optional[Dict[str, Any]]:

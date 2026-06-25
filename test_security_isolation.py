@@ -23,10 +23,11 @@ def test(name, condition, detail=''):
         failed += 1
         print(f'  FAIL: {name} - {detail}')
 
-def login(email, password):
-    r = requests.post(f'{BASE_URL}/api/auth/login', json={
-        'email': email, 'password': password
-    })
+def login(email, password, institution_id=None):
+    payload = {'email': email, 'password': password}
+    if institution_id:
+        payload['institution_id'] = institution_id
+    r = requests.post(f'{BASE_URL}/api/auth/login', json=payload)
     if r.status_code == 200:
         data = r.json()
         return data.get('access_token') or data.get('token')
@@ -58,16 +59,16 @@ test('Server is reachable', r.status_code == 200, str(r.status_code))
 # Try login with demo credentials
 tokens = {}
 test_users = [
-    {'email': 'super@attendrix.com', 'password': 'SuperAdmin123!', 'role': 'super_admin', 'label': 'Super Admin'},
-    {'email': 'admin@institution-a.com', 'password': 'Admin123!', 'role': 'institutional_admin', 'label': 'Inst Admin A'},
-    {'email': 'lecturer@institution-a.com', 'password': 'Lecturer123!', 'role': 'lecturer', 'label': 'Lecturer A'},
-    {'email': 'student@institution-a.com', 'password': 'Student123!', 'role': 'student', 'label': 'Student A'},
-    {'email': 'admin@institution-b.com', 'password': 'Admin123!', 'role': 'institutional_admin', 'label': 'Inst Admin B'},
-    {'email': 'student@institution-b.com', 'password': 'Student123!', 'role': 'student', 'label': 'Student B'},
+    {'email': 'super@attendrix.com', 'password': 'SuperAdmin123!', 'role': 'super_admin', 'label': 'Super Admin', 'institution_id': None},
+    {'email': 'admin@institution-a.com', 'password': 'Admin123!', 'role': 'institutional_admin', 'label': 'Inst Admin A', 'institution_id': 'institution-a'},
+    {'email': 'lecturer@institution-a.com', 'password': 'Lecturer123!', 'role': 'lecturer', 'label': 'Lecturer A', 'institution_id': 'institution-a'},
+    {'email': 'student@institution-a.com', 'password': 'Student123!', 'role': 'student', 'label': 'Student A', 'institution_id': 'institution-a'},
+    {'email': 'admin@institution-b.com', 'password': 'Admin123!', 'role': 'institutional_admin', 'label': 'Inst Admin B', 'institution_id': 'institution-b'},
+    {'email': 'student@institution-b.com', 'password': 'Student123!', 'role': 'student', 'label': 'Student B', 'institution_id': 'institution-b'},
 ]
 
 for u in test_users:
-    token = login(u['email'], u['password'])
+    token = login(u['email'], u['password'], u.get('institution_id'))
     if token:
         tokens[u['label']] = token
         print(f'  Login OK: {u["label"]} ({u["email"]})')
@@ -100,7 +101,7 @@ if 'Student A' in tokens and 'Student B' in tokens:
 
 # Test: Inst Admin A should NOT access Inst Admin B's data
 if 'Inst Admin A' in tokens and 'Inst Admin B' in tokens:
-    r_a = api_get('/api/institutional/dashboard', tokens['Inst Admin A'])
+    r_a = api_get('/api/institutional/users', tokens['Inst Admin A'])
     test('Inst Admin A dashboard accessible', r_a.status_code in (200, 404), str(r_a.status_code))
     
     # Try to access the other institution's course data
@@ -117,7 +118,7 @@ if 'Inst Admin A' in tokens and 'Inst Admin B' in tokens:
 
 # Test: Student A cannot access lecturer-only endpoints
 if 'Student A' in tokens:
-    r = api_get('/api/institutional/dashboard', tokens['Student A'])
+    r = api_get('/api/institutional/users', tokens['Student A'])
     test('Student A blocked from institutional admin dashboard',
          r.status_code in (401, 403), str(r.status_code))
     
@@ -138,17 +139,17 @@ if 'Super Admin' in tokens:
     r = api_get('/api/super-admin/overview', tokens['Super Admin'])
     test('Super Admin can access overview', r.status_code == 200, str(r.status_code))
     
-    r = api_get('/api/institutional/dashboard', tokens['Super Admin'])
+    r = api_get('/api/institutional/users', tokens['Super Admin'])
     # Super admin should be able to access institutional endpoints too
     test('Super Admin can access institutional endpoints',
          r.status_code in (200, 404), str(r.status_code))
 
 # Test: invalid tokens are rejected
-r = api_get('/api/institutional/dashboard', 'invalid_token_here')
+r = api_get('/api/institutional/users', 'invalid_token_here')
 test('Invalid token rejected', r.status_code in (401, 403), str(r.status_code))
 
 # Test: missing auth header
-r = requests.get(f'{BASE_URL}/api/institutional/dashboard')
+r = requests.get(f'{BASE_URL}/api/institutional/users')
 test('Missing auth header rejected', r.status_code in (401, 403), str(r.status_code))
 
 print(f'\n[4] Testing institution-aware query scoping...')

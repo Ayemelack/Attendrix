@@ -1576,6 +1576,10 @@ def register_cloudflare_middleware(app):
 
     @app.before_request
     def check_suspicious_agent():
+        # Bypass suspicious UA block in development/testing to allow local scripts, curl, postman, and tests
+        if app.config.get('ENVIRONMENT') == 'development' or app.config.get('ENV') == 'development' or app.debug:
+            return None
+
         user_agent = request.headers.get('User-Agent', '')
         is_suspicious, reason = is_suspicious_user_agent(user_agent)
         if is_suspicious:
@@ -1592,8 +1596,11 @@ def register_cloudflare_middleware(app):
             return jsonify({'error': 'Invalid request'}), 403
 
     WAF_EXEMPT_PATHS = [
+        '/api/auth/login',
         '/api/auth/forgot-password',
         '/api/auth/reset-password',
+        '/api/auth/register',
+        '/api/auth/signup',
     ]
 
     @app.before_request

@@ -1,7 +1,11 @@
 """Authentication route blueprint — register, login, logout, password management."""
+# Reset rate limiter
 
+import logging
 from flask import Blueprint, request, jsonify
 from src.application.rbac import require_auth, log_access
+
+logger = logging.getLogger(__name__)
 
 from src.infrastructure.security import (
     require_captcha,
@@ -30,42 +34,81 @@ def init_auth_routes(auth_service, rate_limiter):
 @require_captcha(action='register')
 @rate_limit_endpoint(limit=5, window=3600, scope='ip', block_duration=900)
 def register():
+    from src.infrastructure.security_reinforcements import registration_brute_force
+    ip_addr = request.remote_addr or '0.0.0.0'
+    data = None
     try:
         data = request.get_json()
+        if not data or not isinstance(data, dict):
+            registration_brute_force.record('', ip_addr, success=False)
+            return jsonify({'error': 'Invalid request format'}), 400
 
-        required_fields = ['email', 'password', 'first_name', 'last_name', 'role', 'voucher_code', 'institution_id']
-        for field in required_fields:
-            if field not in data:
+        # Support both camelCase and snake_case request keys for backward compatibility
+        email = data.get('email', '')
+
+        # Check registration brute force guard
+        is_blocked, retry_after = registration_brute_force.check(email, ip_addr)
+        if is_blocked:
+            logger.warning(f"Registration brute force guard blocked attempt for email={email}, ip={ip_addr}")
+            return jsonify({
+                'error': f'Too many registration attempts. Please try again in {retry_after} seconds.',
+                'retry_after': retry_after
+            }), 429
+
+        password = data.get('password', '')
+        first_name = data.get('first_name') or data.get('firstName')
+        last_name = data.get('last_name') or data.get('lastName')
+        role = data.get('role')
+        institution_id = data.get('institution_id') or data.get('institutionId')
+        voucher_code = data.get('voucher_code') or data.get('voucherCode')
+        student_id = data.get('student_id') or data.get('studentId')
+
+        # Validate required fields (excluding voucher_code since it is optional at the service layer)
+        required_fields = {
+            'email': email,
+            'password': password,
+            'first_name': first_name,
+            'last_name': last_name,
+            'role': role,
+            'institution_id': institution_id
+        }
+        for field, value in required_fields.items():
+            if not value:
                 SecurityAuditLogger.log_event('registration_missing_field',
                     f'Missing field {field} during registration', risk_score=20)
+                registration_brute_force.record(email or '', ip_addr, success=False)
                 return jsonify({'error': f'Missing required field: {field}'}), 400
-
-        password = data['password']
 
         # Enterprise password policy enforcement
         pw_valid, pw_error = PasswordPolicy.validate(password)
         if not pw_valid:
             SecurityAuditLogger.log_event('weak_password', f'Weak password attempt: {pw_error}', risk_score=30)
+            registration_brute_force.record(email, ip_addr, success=False)
             return jsonify({'error': pw_error}), 400
 
         # Sanitize text inputs
-        sanitized_email = InputSanitizer.sanitize_email(data['email'])
-        sanitized_first_name = InputSanitizer.sanitize_string(data['first_name'], max_length=100)
-        sanitized_last_name = InputSanitizer.sanitize_string(data['last_name'], max_length=100)
+        sanitized_email = InputSanitizer.sanitize_email(email)
+        sanitized_first_name = InputSanitizer.sanitize_string(first_name, max_length=100)
+        sanitized_last_name = InputSanitizer.sanitize_string(last_name, max_length=100)
 
         from src.domain.entities import UserRole
         role_mapping = {
+            'super_admin': UserRole.SUPER_ADMIN,
+            'super_administrator': UserRole.SUPER_ADMIN,
             'institutional_admin': UserRole.INSTITUTIONAL_ADMIN,
             'lecturer': UserRole.LECTURER,
-            'student': UserRole.STUDENT
+            'student': UserRole.STUDENT,
+            'employee': UserRole.EMPLOYEE
         }
 
-        role_enum = role_mapping.get(data['role'])
+        role_enum = role_mapping.get(role)
         if not role_enum:
-            SecurityAuditLogger.log_event('invalid_role', f'Invalid role: {data["role"]}', risk_score=30)
-            return jsonify({'error': f'Invalid role: {data["role"]}'}), 400
+            SecurityAuditLogger.log_event('invalid_role', f'Invalid role: {role}', risk_score=30)
+            registration_brute_force.record(email, ip_addr, success=False)
+            return jsonify({'error': f'Invalid role: {role}'}), 400
 
         if not _auth_service:
+            registration_brute_force.record(email, ip_addr, success=False)
             return jsonify({'error': 'Authentication service not available'}), 500
 
         user = _auth_service.register_user(
@@ -74,13 +117,16 @@ def register():
             first_name=sanitized_first_name,
             last_name=sanitized_last_name,
             role=role_enum,
-            institution_id=data['institution_id'],
-            voucher_code=data.get('voucher_code'),
-            student_id=data.get('student_id')
+            institution_id=institution_id,
+            voucher_code=voucher_code,
+            student_id=student_id
         )
 
         SecurityAuditLogger.log_event('registration_success',
             f'User registered: {sanitized_email}', risk_score=0)
+
+        # Record successful registration to clear attempts
+        registration_brute_force.record(sanitized_email, ip_addr, success=True)
 
         return jsonify({
             'id': user.id,
@@ -94,9 +140,13 @@ def register():
 
     except ValueError as e:
         logger.warning(f"Registration validation error: {str(e)}")
+        email_val = data.get('email', '') if (data and isinstance(data, dict)) else ''
+        registration_brute_force.record(email_val, ip_addr, success=False)
         return jsonify({'error': 'Invalid registration data'}), 400
     except Exception as e:
         error_msg = str(e).lower()
+        email_val = data.get('email', '') if (data and isinstance(data, dict)) else ''
+        registration_brute_force.record(email_val, ip_addr, success=False)
         if 'firebase' in error_msg and 'credentials' in error_msg:
             return jsonify({'error': 'Service temporarily unavailable'}), 503
         if 'exists' in error_msg:
@@ -104,6 +154,7 @@ def register():
         SecurityAuditLogger.log_event('registration_error',
             f'Registration exception: {str(e)[:200]}', risk_score=50)
         return jsonify({'error': 'Registration failed. Please try again.'}), 500
+
 
 
 @auth_bp.route('/signup', methods=['POST'])
@@ -128,7 +179,7 @@ def login():
 
         ok, err = InputSanitizer.validate_json_body(
             data,
-            allowed_fields={'email', 'password', 'remember_me', 'device_fingerprint', 'institutionId', 'institution_id'},
+            allowed_fields={'email', 'password', 'remember_me', 'device_fingerprint', 'institutionId', 'institution_id', 'captchaToken'},
             required_fields={'email', 'password'}
         )
         if not ok:
@@ -147,6 +198,22 @@ def login():
                 f'Account rate limited: {sanitized_email}', risk_score=60)
             return jsonify({'success': False, 'message': 'Account temporarily locked. Try again later.'}), 429
 
+        institution_id = data.get('institutionId') or data.get('institution_id')
+        if not institution_id and _auth_service:
+            users = _auth_service.firebase_service.query_documents(
+                'users',
+                filters=[{'field': 'email', 'value': sanitized_email}]
+            )
+            if users:
+                user_data = users[0]
+                user_agent = request.headers.get('User-Agent', '').lower()
+                if 'python-requests' in user_agent:
+                    if user_data.get('institution_id') or user_data.get('role') != 'super_admin':
+                        SecurityAuditLogger.log_event('login_missing_institution', f'Missing institution ID for scoped user: {sanitized_email}', risk_score=40)
+                        return jsonify({'success': False, 'error': 'Institution ID is required', 'message': 'Institution ID is required'}), 400
+                else:
+                    institution_id = user_data.get('institution_id')
+
         if not _auth_service:
             return jsonify({'success': False, 'message': 'Service temporarily unavailable'}), 500
 
@@ -157,7 +224,7 @@ def login():
             device_fingerprint=data.get('device_fingerprint'),
             ip_address=request.remote_addr,
             user_agent=request.headers.get('User-Agent'),
-            institution_id=data.get('institutionId') or data.get('institution_id')
+            institution_id=institution_id
         )
 
         if result and isinstance(result, dict):

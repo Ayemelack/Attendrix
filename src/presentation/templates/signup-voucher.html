@@ -478,7 +478,7 @@
                    oninput="document.getElementById('validateVoucherBtn').disabled=!this.value.trim();">
         </div>
 
-        <button class="btn-primary-custom" id="validateVoucherBtn" onclick="validateVoucher()" disabled>
+        <button class="btn-primary-custom" id="validateVoucherBtn" disabled>
             <span class="spinner" id="voucherSpinner"></span>
             <span id="voucherBtnText">Validate Voucher</span>
         </button>
@@ -600,6 +600,8 @@
 <script>
     let currentStep = 1;
     let validatedVoucher = null;
+    let validatingVoucher = false;
+    let submittingRegistration = false;
 
     // â”€â”€ Input Security â”€â”€
     function hasMaliciousInput(value) {
@@ -645,6 +647,7 @@
     }
 
     function checkRegistrationForm() {
+        if (submittingRegistration) return;
         const fullName = document.getElementById('fullName').value;
         const email = document.getElementById('email').value;
         const password = document.getElementById('password').value;
@@ -699,12 +702,14 @@
     });
 
     async function validateVoucher() {
+        if (validatingVoucher) return;
         const code = document.getElementById('voucherCode').value.trim().toUpperCase();
         if (!code) { showAlert('Please enter a voucher code', 'error'); return; }
         if (code.length !== 8) { showAlert('Voucher code must be exactly 8 characters', 'error'); return; }
         if (!/^[A-Z0-9]+$/.test(code)) { showAlert('Voucher code contains invalid characters', 'error'); return; }
 
         try {
+            validatingVoucher = true;
             setLoading(true);
             const res = await fetch('/api/voucher/validate/' + code);
             const result = await res.json();
@@ -725,6 +730,7 @@
                     document.getElementById('studentFields').style.display = 'block';
                 }
                 moveToStep(2);
+                checkRegistrationForm();
             } else {
                 showAlert(result.error || 'Invalid voucher code', 'error');
             }
@@ -732,6 +738,7 @@
             showAlert('Validation failed. Please try again.', 'error');
         } finally {
             setLoading(false);
+            validatingVoucher = false;
         }
     }
 
@@ -757,31 +764,34 @@
         const btn = document.getElementById('submitRegistrationBtn');
         if (btn.disabled) return;
 
-        const data = {
+        const payload = {
             voucher_code: document.getElementById('validatedVoucherCode').value,
             first_name: document.getElementById('fullName').value.trim().split(' ')[0] || '',
             last_name: document.getElementById('fullName').value.trim().split(' ').slice(1).join(' ') || '',
             email: document.getElementById('email').value.trim(),
             password: document.getElementById('password').value,
             role: document.getElementById('validatedRole').value,
-            institution_id: document.getElementById('validatedInstitutionId').value,
-            student_id: document.getElementById('studentId')?.value?.trim() || null
+            institution_id: document.getElementById('validatedInstitutionId').value
         };
 
-        if (hasMaliciousInput(data.email + data.first_name + data.last_name + (data.student_id || ''))) {
+        console.log('Registration payload:', payload);
+
+        if (hasMaliciousInput(payload.email + payload.first_name + payload.last_name)) {
             showAlert('Invalid input detected', 'error'); return;
         }
 
+        submittingRegistration = true;
         btn.disabled = true;
         btn.innerHTML = '<span class="spinner" style="display:inline-block;"></span> Creating Account...';
 
         fetch('/api/auth/register', {
             method: 'POST',
             headers: { 'Content-Type': 'application/json' },
-            body: JSON.stringify(data)
+            body: JSON.stringify(payload)
         })
         .then(r => r.json())
         .then(result => {
+            submittingRegistration = false;
             if (result.error) {
                 showAlert(result.error, 'error');
                 btn.disabled = false;
@@ -791,6 +801,7 @@
             }
         })
         .catch(() => {
+            submittingRegistration = false;
             showAlert('Registration failed. Please try again.', 'error');
             btn.disabled = false;
             btn.innerHTML = '<i class="fas fa-user-plus me-2"></i>Complete Registration';

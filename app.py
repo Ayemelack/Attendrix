@@ -61,8 +61,8 @@ from src.infrastructure.security.security_monitor import (
 # Phase 2E — Redis-backed persistent storage
 from src.infrastructure.security.redis_session_store import (
     RedisSessionStore, RedisRateLimiter, RedisSessionManager,
-    RedisTokenBlacklist, redis_store, redis_rate_limiter,
-    redis_session_manager, redis_token_blacklist,
+    RedisTokenBlacklist, redis_session_store as redis_store,
+    redis_rate_limiter, redis_session_manager, redis_token_blacklist,
 )
 
 # Phase 2J — API security hardening
@@ -253,7 +253,7 @@ def create_app():
     # Validate environment readiness (from upgraded settings.py)
     try:
         from config.settings import ProductionConfig
-        readiness = ProductionConfig.validate_production_readiness(app.config)
+        readiness = ProductionConfig.validate_production_readiness()
         for setting, status in readiness.items():
             if status == 'CRITICAL':
                 raise RuntimeError(

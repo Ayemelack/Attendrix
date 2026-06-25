@@ -7,7 +7,9 @@ import requests
 import sys
 
 def test_complete_signup_login_flow():
+    import time
     base_url = "http://localhost:5000"
+    test_email = f"complete_{int(time.time())}@example.com"
     
     print("🔄 Complete Sign-Up and Login Flow Test")
     print("=" * 50)
@@ -18,9 +20,9 @@ def test_complete_signup_login_flow():
         signup_data = {
             'firstName': 'Complete',
             'lastName': 'Test',
-            'email': 'complete@example.com',
-            'password': 'password123',
-            'confirmPassword': 'password123',
+            'email': test_email,
+            'password': 'Password123!',
+            'confirmPassword': 'Password123!',
             'role': 'student',
             'institutionName': 'Complete Test University',
             'institutionId': 'COMPLETE-INST',  # User provides Institution ID
@@ -30,9 +32,8 @@ def test_complete_signup_login_flow():
         response = requests.post(f"{base_url}/api/auth/signup", json=signup_data, timeout=5)
         if response.status_code == 201:
             result = response.json()
-            user_info = result['user']
-            stored_institution_id = user_info.get('institutionId', 'user-inst')
-            stored_institution_name = user_info.get('institutionName', 'Complete Test University')
+            stored_institution_id = result.get('institution_id') or result.get('institutionId') or 'user-inst'
+            stored_institution_name = result.get('institution_name') or result.get('institutionName') or 'Complete Test University'
             print(f"   ✅ User created with institution_id: {stored_institution_id}")
             print(f"   ✅ User created with institution_name: {stored_institution_name}")
         else:
@@ -42,8 +43,8 @@ def test_complete_signup_login_flow():
         # Test 2: Try login with same credentials
         print("2. Testing Login with Same Credentials...")
         login_data = {
-            'email': 'complete@example.com',
-            'password': 'password123',
+            'email': test_email,
+            'password': 'Password123!',
             'institutionId': 'COMPLETE-INST'  # Same as during signup
         }
         
@@ -51,7 +52,7 @@ def test_complete_signup_login_flow():
         if response.status_code == 200:
             result = response.json()
             print("   ✅ Login with COMPLETE-INST: SUCCESS")
-            print(f"   ✅ User: {result['user']['name']}")
+            print(f"   ✅ User: {result['user'].get('first_name', '')} {result['user'].get('last_name', '')}")
             print(f"   ✅ Role: {result['user']['role']}")
         else:
             error_data = response.json() if response.headers.get('content-type', '').startswith('application/json') else {}
@@ -65,7 +66,7 @@ def test_complete_signup_login_flow():
         if response.status_code == 200:
             result = response.json()
             print("   ✅ Login with DIFFERENT-INST: SUCCESS")
-            print(f"   ✅ User: {result['user']['name']}")
+            print(f"   ✅ User: {result['user'].get('first_name', '')} {result['user'].get('last_name', '')}")
             print(f"   ✅ Role: {result['user']['role']}")
         else:
             error_data = response.json() if response.headers.get('content-type', '').startswith('application/json') else {}
@@ -74,8 +75,8 @@ def test_complete_signup_login_flow():
         # Test 4: Try login without institution ID
         print("4. Testing Login without Institution ID...")
         login_data = {
-            'email': 'complete@example.com',
-            'password': 'password123'
+            'email': test_email,
+            'password': 'Password123!'
         }
         
         response = requests.post(f"{base_url}/api/auth/login", json=login_data, timeout=5)
