@@ -1002,12 +1002,15 @@ def register_security_middleware(app):
         '/demo/', '/api/demo/',
         '/system/bootstrap',
         '/api/ping',
+        '/api/pin',
+        '/api/authentication/login',
         '/api/voucher/validate/',
     ]
 
     # Endpoint-specific rate limit configuration
     ENDPOINT_RATE_LIMITS = {
         '/api/auth/login': {'limit': 5, 'window': 60, 'block_duration': 900},
+        '/api/authentication/login': {'limit': 5, 'window': 60, 'block_duration': 900},
         '/api/auth/signup': {'limit': 3, 'window': 300, 'block_duration': 1800},
         '/api/auth/change-password': {'limit': 3, 'window': 300, 'block_duration': 1800},
         '/api/voucher/generate-batch': {'limit': 10, 'window': 60, 'block_duration': 600},
@@ -1071,7 +1074,7 @@ def register_security_middleware(app):
                 if result:
                     return result
 
-        if request.path.startswith('/api/') and not request.path.startswith('/api/ping'):
+        if request.path.startswith('/api/') and not request.path.startswith('/api/ping') and not request.path.startswith('/api/pin'):
             user_agent = request.headers.get('User-Agent', '')
             if len(user_agent) > 500:
                 return jsonify({'error': 'Invalid request'}), 400
@@ -1125,7 +1128,7 @@ def register_security_middleware(app):
 
     @app.before_request
     def check_suspicious_request_patterns():
-        if request.path.startswith('/api/') and not request.path.startswith('/api/ping'):
+        if request.path.startswith('/api/') and not request.path.startswith('/api/ping') and not request.path.startswith('/api/pin'):
             user_agent = request.headers.get('User-Agent', '')
             if len(user_agent) < 10 and request.method in ('POST', 'PUT', 'PATCH', 'DELETE'):
                 SecurityAuditLogger.log_event(

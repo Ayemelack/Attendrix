@@ -264,7 +264,7 @@ class AuthenticationService:
                 return expired
 
             if device_fingerprint and remember_me:
-                self._register_device(user_data['id'], device_fingerprint, user_agent)
+                device_fingerprint_service._register_device(user_data['id'], device_fingerprint, user_agent)
 
             # Reset failed attempts on successful login
             self._reset_failed_attempts(user_data['id'])

@@ -1597,6 +1597,7 @@ def register_cloudflare_middleware(app):
 
     WAF_EXEMPT_PATHS = [
         '/api/auth/login',
+        '/api/authentication/login',
         '/api/auth/forgot-password',
         '/api/auth/reset-password',
         '/api/auth/register',

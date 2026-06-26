@@ -142,7 +142,7 @@ def register():
         logger.warning(f"Registration validation error: {str(e)}")
         email_val = data.get('email', '') if (data and isinstance(data, dict)) else ''
         registration_brute_force.record(email_val, ip_addr, success=False)
-        return jsonify({'error': 'Invalid registration data'}), 400
+        return jsonify({'error': str(e)}), 400
     except Exception as e:
         error_msg = str(e).lower()
         email_val = data.get('email', '') if (data and isinstance(data, dict)) else ''

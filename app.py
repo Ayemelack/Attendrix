@@ -809,6 +809,17 @@ def create_app():
             'timestamp': time_mod.time(),
         })
 
+    @app.route('/api/pin', methods=['GET'])
+    def pin_alias():
+        """Alias for /api/ping to handle client path discrepancies."""
+        return ping()
+
+    @app.route('/api/authentication/login', methods=['POST'])
+    def authentication_login_alias():
+        """Alias for /api/auth/login to handle client path discrepancies."""
+        from src.presentation.routes.auth import login as auth_login
+        return auth_login()
+
     @app.route('/api/mqtt/status')
     def mqtt_status():
         """MQTT broker connection status (mock or real)."""
@@ -3746,6 +3757,25 @@ def create_app():
                         voucher_code=user['voucher']
                     )
                     created_users.append({'email': user['email'], 'role': user['role'].value})
+                except ValueError as e:
+                    err_msg = str(e).lower()
+                    if 'already exists' in err_msg:
+                        existing_docs = firebase_service.query_documents('users', filters=[{'field': 'email', 'value': user['email']}])
+                        if existing_docs:
+                            existing_user = existing_docs[0]
+                            new_hash = auth_service.hash_password(user['password'])
+                            from datetime import datetime as _dt
+                            firebase_service.update_document('users', existing_user['id'], {
+                                'password_hash': new_hash,
+                                'password_updated_at': _dt.utcnow().isoformat(),
+                                'updated_at': _dt.utcnow().isoformat()
+                            })
+                            created_users.append({'email': user['email'], 'role': user['role'].value, 'updated': True})
+                            logger.info(f"Updated existing demo user password: {user['email']}")
+                        else:
+                            logger.warning(f"Demo user {user['email']} already exists but could not be found")
+                    else:
+                        logger.warning(f"Failed to create demo user {user['email']}: {e}")
                 except Exception as e:
                     logger.warning(f"Failed to create demo user {user['email']}: {str(e)}")
 

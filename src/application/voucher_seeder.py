@@ -24,7 +24,7 @@ class VoucherSeeder:
             admin_voucher = self._generate_single_voucher(
                 role=UserRole.INSTITUTIONAL_ADMIN,
                 institution_id='inst_001',
-                email_binding='admin@attendrix.demo',
+                email_binding=None,
                 fixed_code='ADMIN123'
             )
             seed_vouchers.append(admin_voucher)
@@ -41,7 +41,7 @@ class VoucherSeeder:
                 lecturer_voucher = self._generate_single_voucher(
                     role=UserRole.LECTURER,
                     institution_id='inst_001',
-                    email_binding=email,
+                    email_binding=None,
                     fixed_code=lecturer_codes[i]
                 )
                 seed_vouchers.append(lecturer_voucher)
@@ -65,7 +65,7 @@ class VoucherSeeder:
                 student_voucher = self._generate_single_voucher(
                     role=UserRole.STUDENT,
                     institution_id='inst_001',
-                    email_binding=email,
+                    email_binding=None,
                     fixed_code=student_codes[i]
                 )
                 seed_vouchers.append(student_voucher)

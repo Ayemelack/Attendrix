@@ -44,7 +44,7 @@ SENSITIVE_ACTIONS = {'delete', 'destroy', 'ban', 'suspend', 'impersonate'}
 ADMIN_PREFIXES = ('/admin/', '/api/admin', '/api/super-admin', '/system/')
 AUTH_PREFIXES = ('/api/auth/', '/api/login', '/api/register', '/api/signup')
 API_PREFIX = '/api/'
-HEALTH_PREFIXES = ('/health', '/api/ping', '/favicon.ico')
+HEALTH_PREFIXES = ('/health', '/api/ping', '/api/pin', '/favicon.ico')
 
 # ─────────────────────────────────────────────────────────────────────────────
 # 1. STRICT BACKEND AUTHORIZATION
