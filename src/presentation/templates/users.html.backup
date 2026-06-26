@@ -1,0 +1,843 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Users - Attendrix | Institutional Paperless Attendance System</title>
+    <meta name="description" content="Manage users in the Attendrix system">
+    
+    <!-- Favicon -->
+    <link rel="icon" type="image/x-icon" href="/static/images/favicon.ico">
+    
+    <!-- Bootstrap CSS -->
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
+    <!-- Font Awesome -->
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <!-- Custom CSS -->
+    <link rel="stylesheet" href="{{ url_for('static', filename='css/landing.css') }}">
+    
+    <style>
+        .users-container {
+            background: linear-gradient(135deg, #f5f7fa 0%, #c3cfe2 100%);
+            min-height: 100vh;
+            padding-top: 100px;
+            padding-bottom: 2rem;
+        }
+        
+        .users-header {
+            background: rgba(255, 255, 255, 0.95);
+            backdrop-filter: blur(10px);
+            border-radius: 15px;
+            padding: 2rem;
+            margin-bottom: 2rem;
+            box-shadow: 0 10px 30px rgba(0, 0, 0, 0.1);
+            border: 1px solid rgba(102, 126, 234, 0.1);
+        }
+        
+        .users-section {
+            background: rgba(255, 255, 255, 0.95);
+            backdrop-filter: blur(10px);
+            border-radius: 15px;
+            padding: 2rem;
+            margin-bottom: 2rem;
+            box-shadow: 0 10px 30px rgba(0, 0, 0, 0.1);
+            border: 1px solid rgba(102, 126, 234, 0.1);
+        }
+        
+        .section-title {
+            color: #2c3e50;
+            font-size: 1.5rem;
+            font-weight: 600;
+            margin-bottom: 1.5rem;
+            display: flex;
+            align-items: center;
+        }
+        
+        .section-title i {
+            color: #667eea;
+            margin-right: 0.5rem;
+        }
+        
+        .user-card {
+            background: white;
+            border: 2px solid #e9ecef;
+            border-radius: 12px;
+            padding: 1.5rem;
+            margin-bottom: 1rem;
+            transition: all 0.3s ease;
+            box-shadow: 0 3px 10px rgba(0, 0, 0, 0.1);
+        }
+        
+        .user-card:hover {
+            border-color: #667eea;
+            transform: translateY(-2px);
+            box-shadow: 0 10px 25px rgba(102, 126, 234, 0.2);
+        }
+        
+        .user-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 1rem;
+        }
+        
+        .user-info {
+            display: flex;
+            align-items: center;
+            gap: 1rem;
+        }
+        
+        .user-avatar {
+            width: 50px;
+            height: 50px;
+            border-radius: 50%;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            color: white;
+            font-size: 1.2rem;
+        }
+        
+        .user-name {
+            font-size: 1.2rem;
+            font-weight: 600;
+            color: #2c3e50;
+        }
+        
+        .user-status {
+            padding: 0.25rem 0.75rem;
+            border-radius: 20px;
+            font-size: 0.875rem;
+            font-weight: 500;
+        }
+        
+        .status-active {
+            background: rgba(40, 167, 69, 0.1);
+            color: #28a745;
+        }
+        
+        .status-suspended {
+            background: rgba(255, 193, 7, 0.1);
+            color: #ffc107;
+        }
+        
+        .status-inactive {
+            background: rgba(220, 53, 69, 0.1);
+            color: #dc3545;
+        }
+        
+        .user-details {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+            gap: 1rem;
+            margin-bottom: 1rem;
+        }
+        
+        .detail-item {
+            display: flex;
+            flex-direction: column;
+        }
+        
+        .detail-label {
+            font-weight: 500;
+            color: #6c757d;
+            margin-bottom: 0.25rem;
+        }
+        
+        .detail-value {
+            color: #2c3e50;
+        }
+        
+        .user-actions {
+            display: flex;
+            gap: 0.5rem;
+            flex-wrap: wrap;
+        }
+        
+        .btn-user {
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: white;
+            border: none;
+            border-radius: 8px;
+            padding: 0.5rem 1rem;
+            font-size: 0.875rem;
+            font-weight: 500;
+            transition: all 0.3s ease;
+            box-shadow: 0 3px 10px rgba(102, 126, 234, 0.3);
+        }
+        
+        .btn-user:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 5px 15px rgba(102, 126, 234, 0.4);
+        }
+        
+        .btn-outline {
+            background: transparent;
+            color: #667eea;
+            border: 2px solid #667eea;
+        }
+        
+        .btn-outline:hover {
+            background: #667eea;
+            color: white;
+        }
+        
+        .btn-warning {
+            background: #ffc107;
+            color: #212529;
+        }
+        
+        .btn-warning:hover {
+            background: #e0a800;
+        }
+        
+        .btn-danger {
+            background: #dc3545;
+            color: white;
+        }
+        
+        .btn-danger:hover {
+            background: #c82333;
+        }
+        
+        .profile-avatar-small {
+            width: 32px;
+            height: 32px;
+            border-radius: 50%;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            color: white;
+            font-size: 0.875rem;
+            transition: transform 0.3s ease;
+        }
+        
+        .profile-avatar-small:hover {
+            transform: scale(1.1);
+        }
+        
+        .dropdown-menu {
+            border: 1px solid rgba(102, 126, 234, 0.1);
+            box-shadow: 0 10px 30px rgba(0, 0, 0, 0.1);
+            border-radius: 12px;
+            padding: 0.5rem;
+        }
+        
+        .dropdown-item {
+            border-radius: 8px;
+            padding: 0.75rem 1rem;
+            transition: all 0.3s ease;
+            color: #2c3e50;
+        }
+        
+        .dropdown-item:hover {
+            background: rgba(102, 126, 234, 0.1);
+            color: #667eea;
+        }
+        
+        .dropdown-divider {
+            margin: 0.5rem 0;
+            border-color: rgba(102, 126, 234, 0.1);
+        }
+        
+        .alert {
+            border-radius: 12px;
+            border: none;
+            padding: 1rem;
+        }
+        
+        .alert-success {
+            background: rgba(40, 167, 69, 0.1);
+            color: #28a745;
+        }
+        
+        .alert-danger {
+            background: rgba(220, 53, 69, 0.1);
+            color: #dc3545;
+        }
+        
+        .search-bar {
+            background: rgba(255, 255, 255, 0.95);
+            backdrop-filter: blur(10px);
+            border-radius: 15px;
+            padding: 1.5rem;
+            margin-bottom: 2rem;
+            box-shadow: 0 10px 30px rgba(0, 0, 0, 0.1);
+            border: 1px solid rgba(102, 126, 234, 0.1);
+        }
+        
+        .form-control {
+            border: 2px solid #e9ecef;
+            border-radius: 12px;
+            padding: 1rem;
+            transition: all 0.3s ease;
+        }
+        
+        .form-control:focus {
+            border-color: #667eea;
+            box-shadow: 0 0 0 0.2rem rgba(102, 126, 234, 0.25);
+        }
+    </style>
+</head>
+<body>
+    <div class="users-container">
+        <!-- Navigation -->
+        <nav class="navbar navbar-expand-lg navbar-dark fixed-top">
+            <div class="container">
+                <a class="navbar-brand" href="/">
+                    <i class="fas fa-graduation-cap me-2"></i>
+                    <strong>Attendrix</strong>
+                </a>
+                <div class="navbar-nav ms-auto">
+                    <a class="nav-link" href="/dashboard">
+                        <i class="fas fa-tachometer-alt me-1"></i>Dashboard
+                    </a>
+                    <a class="nav-link" href="/institutions">
+                        <i class="fas fa-building me-1"></i>Institutions
+                    </a>
+                    <a class="nav-link" href="/users">
+                        <i class="fas fa-users me-1"></i>Users
+                    </a>
+                    <a class="nav-link" href="/monitoring">
+                        <i class="fas fa-chart-line me-1"></i>Monitoring
+                    </a>
+                    <a class="nav-link" href="/security">
+                        <i class="fas fa-shield-alt me-1"></i>Security
+                    </a>
+                    <!-- Profile Dropdown -->
+                    <div class="nav-item dropdown">
+                        <a class="nav-link dropdown-toggle d-flex align-items-center" href="#" id="profileDropdown" role="button" data-bs-toggle="dropdown" aria-expanded="false">
+                            <div class="profile-avatar-small">
+                                <i class="fas fa-user"></i>
+                            </div>
+                            <span class="ms-2 d-none d-md-inline">Profile</span>
+                        </a>
+                        <ul class="dropdown-menu dropdown-menu-end" aria-labelledby="profileDropdown">
+                            <li><a class="dropdown-item" href="/profile">
+                                <i class="fas fa-user me-2"></i>Profile
+                            </a></li>
+                            <li><a class="dropdown-item" href="/settings">
+                                <i class="fas fa-cog me-2"></i>Settings
+                            </a></li>
+                            <li><hr class="dropdown-divider"></li>
+                            <li><a class="dropdown-item" href="#" onclick="showLogoutConfirm()">
+                                <i class="fas fa-sign-out-alt me-2"></i>Logout
+                            </a></li>
+                        </ul>
+                    </div>
+                </div>
+            </div>
+        </nav>
+        
+        <!-- Users Header -->
+        <div class="container">
+            <div class="users-header">
+                <h1>Global User Management</h1>
+                <div class="d-flex gap-2">
+                    <button class="btn btn-user" onclick="showCreateUserModal()">
+                        <i class="fas fa-user-plus me-2"></i>Create User
+                    </button>
+                    <button class="btn btn-user btn-outline" onclick="showRoleAssignmentModal()">
+                        <i class="fas fa-user-tag me-2"></i>Assign Roles
+                    </button>
+                </div>
+            </div>
+            
+            <!-- Search Bar -->
+            <div class="search-bar">
+                <div class="input-group">
+                    <input type="text" class="form-control" id="searchInput" placeholder="Search users by name, email, or role...">
+                    <button class="btn btn-user" onclick="searchUsers()">
+                        <i class="fas fa-search"></i>
+                    </button>
+                </div>
+            </div>
+            
+            <!-- Users List -->
+            <div class="users-section">
+                <h3 class="section-title">
+                    <i class="fas fa-users me-2"></i>
+                    All Users
+                </h3>
+                <div id="usersList">
+                    <!-- Users will be loaded here -->
+                </div>
+            </div>
+        </div>
+    </div>
+    
+    <!-- Create User Modal -->
+    <div class="modal fade" id="createUserModal" tabindex="-1">
+        <div class="modal-dialog modal-lg">
+            <div class="modal-content">
+                <div class="modal-header">
+                    <h5 class="modal-title">Create New User</h5>
+                    <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+                </div>
+                <div class="modal-body">
+                    <div id="createAlert"></div>
+                    <form id="createUserForm">
+                        <div class="row">
+                            <div class="col-md-6">
+                                <div class="form-floating mb-3">
+                                    <input type="text" class="form-control" id="userFirstName" placeholder="First Name" required>
+                                    <label for="userFirstName">First Name</label>
+                                </div>
+                            </div>
+                            <div class="col-md-6">
+                                <div class="form-floating mb-3">
+                                    <input type="text" class="form-control" id="userLastName" placeholder="Last Name" required>
+                                    <label for="userLastName">Last Name</label>
+                                </div>
+                            </div>
+                        </div>
+                        <div class="form-floating mb-3">
+                            <input type="email" class="form-control" id="userEmail" placeholder="Email Address" required>
+                            <label for="userEmail">Email Address</label>
+                        </div>
+                        <div class="form-floating mb-3">
+                            <select class="form-control" id="userRole" required>
+                                <option value="">Select Role</option>
+                                <option value="super_administrator">Super Administrator</option>
+                                <option value="institutional_admin">Institutional Administrator</option>
+                                <option value="lecturer">Lecturer</option>
+                                <option value="student">Student</option>
+                                <option value="employee">Employee</option>
+                            </select>
+                            <label for="userRole">Role</label>
+                        </div>
+                        <div class="form-floating mb-3">
+                            <input type="password" class="form-control" id="userPassword" placeholder="Password" required>
+                            <label for="userPassword">Password</label>
+                        </div>
+                        <div class="form-floating mb-3">
+                            <input type="text" class="form-control" id="userInstitution" placeholder="Institution" required>
+                            <label for="userInstitution">Institution</label>
+                        </div>
+                    </form>
+                </div>
+                <div class="modal-footer">
+                    <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancel</button>
+                    <button type="button" class="btn btn-user" onclick="createUser()">
+                        <i class="fas fa-user-plus me-2"></i>Create User
+                    </button>
+                </div>
+            </div>
+        </div>
+    </div>
+    
+    <!-- Role Assignment Modal -->
+    <div class="modal fade" id="roleAssignmentModal" tabindex="-1">
+        <div class="modal-dialog modal-lg">
+            <div class="modal-content">
+                <div class="modal-header">
+                    <h5 class="modal-title">Assign Roles</h5>
+                    <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+                </div>
+                <div class="modal-body">
+                    <div id="roleAlert"></div>
+                    <div class="table-responsive">
+                        <table class="table table-striped">
+                            <thead>
+                                <tr>
+                                    <th>User</th>
+                                    <th>Current Role</th>
+                                    <th>New Role</th>
+                                    <th>Actions</th>
+                                </tr>
+                            </thead>
+                            <tbody id="roleAssignmentTable">
+                                <!-- Role assignments will be loaded here -->
+                            </tbody>
+                        </table>
+                    </div>
+                </div>
+                <div class="modal-footer">
+                    <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Close</button>
+                    <button type="button" class="btn btn-user" onclick="saveRoleAssignments()">
+                        <i class="fas fa-save me-2"></i>Save Changes
+                    </button>
+                </div>
+            </div>
+        </div>
+    </div>
+    
+    <!-- Bootstrap JS -->
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
+    
+    <script>
+        // Get user info from localStorage
+        const userInfo = JSON.parse(localStorage.getItem('user_info') || '{}');
+        const accessToken = localStorage.getItem('access_token');
+        
+        // Load users
+        document.addEventListener('DOMContentLoaded', function() {
+            loadUsers();
+            loadRoleAssignments();
+            
+            // Check authentication
+            if (!accessToken) {
+                window.location.href = '/login';
+            }
+        });
+        
+        function loadUsers() {
+            // Fetch users from backend
+            fetch('/api/admin/users', {
+                headers: {
+                    'Authorization': `Bearer ${accessToken}`,
+                    'Content-Type': 'application/json'
+                }
+            })
+            .then(response => response.json())
+            .then(data => {
+                if (data.success) {
+                    displayUsers(data.users);
+                } else {
+                    displayUsers([]);
+                }
+            })
+            .catch(error => {
+                console.error('Error loading users:', error);
+                displayUsers([]);
+            });
+        }
+        
+        function displayUsers(users) {
+            const container = document.getElementById('usersList');
+            
+            if (users.length === 0) {
+                container.innerHTML = `
+                    <div class="text-center py-5">
+                        <i class="fas fa-users fa-3x text-muted mb-3"></i>
+                        <h4 class="text-muted">No users found</h4>
+                        <p class="text-muted">Create your first user to get started.</p>
+                    </div>
+                `;
+                return;
+            }
+            
+            container.innerHTML = users.map(user => `
+                <div class="user-card">
+                    <div class="user-header">
+                        <div class="user-info">
+                            <div class="user-avatar">
+                                <i class="fas fa-user"></i>
+                            </div>
+                            <div class="user-name">${user.firstName} ${user.lastName}</div>
+                        </div>
+                        <div class="user-status ${user.status === 'active' ? 'status-active' : user.status === 'suspended' ? 'status-suspended' : 'status-inactive'}">
+                            ${user.status.charAt(0).toUpperCase() + user.status.slice(1)}
+                        </div>
+                    </div>
+                    <div class="user-details">
+                        <div class="detail-item">
+                            <span class="detail-label">Email:</span>
+                            <span class="detail-value">${user.email}</span>
+                        </div>
+                        <div class="detail-item">
+                            <span class="detail-label">Role:</span>
+                            <span class="detail-value">${user.role.replace('_', ' ').toUpperCase()}</span>
+                        </div>
+                        <div class="detail-item">
+                            <span class="detail-label">Institution:</span>
+                            <span class="detail-value">${user.institution || 'N/A'}</span>
+                        </div>
+                        <div class="detail-item">
+                            <span class="detail-label">Created:</span>
+                            <span class="detail-value">${new Date(user.created_at).toLocaleDateString()}</span>
+                        </div>
+                        <div class="detail-item">
+                            <span class="detail-label">Last Login:</span>
+                            <span class="detail-value">${user.last_login ? new Date(user.last_login).toLocaleDateString() : 'Never'}</span>
+                        </div>
+                    </div>
+                    <div class="user-actions">
+                        <button class="btn btn-user btn-sm" onclick="editUser('${user.id}')">
+                            <i class="fas fa-edit me-1"></i>Edit
+                        </button>
+                        <button class="btn btn-user btn-sm" onclick="toggleUserStatus('${user.id}', '${user.status === 'active' ? 'suspend' : 'activate'}')">
+                            <i class="fas fa-${user.status === 'active' ? 'pause' : 'play'} me-1"></i>
+                            ${user.status === 'active' ? 'Suspend' : 'Activate'}
+                        </button>
+                        <button class="btn btn-danger btn-sm" onclick="deleteUser('${user.id}')">
+                            <i class="fas fa-trash me-1"></i>Delete
+                        </button>
+                    </div>
+                </div>
+            `).join('');
+        }
+        
+        function loadRoleAssignments() {
+            // Fetch role assignments from backend
+            fetch('/api/admin/role-assignments', {
+                headers: {
+                    'Authorization': `Bearer ${accessToken}`,
+                    'Content-Type': 'application/json'
+                }
+            })
+            .then(response => response.json())
+            .then(data => {
+                if (data.success) {
+                    displayRoleAssignments(data.assignments);
+                } else {
+                    displayRoleAssignments([]);
+                }
+            })
+            .catch(error => {
+                console.error('Error loading role assignments:', error);
+                displayRoleAssignments([]);
+            });
+        }
+        
+        function displayRoleAssignments(assignments) {
+            const container = document.getElementById('roleAssignmentTable');
+            
+            if (assignments.length === 0) {
+                container.innerHTML = `
+                    <tr>
+                        <td colspan="4" class="text-center text-muted">No role assignments found</td>
+                    </tr>
+                `;
+                return;
+            }
+            
+            container.innerHTML = assignments.map(assignment => `
+                <tr>
+                    <td>${assignment.firstName} ${assignment.lastName}</td>
+                    <td>
+                        <select class="form-control form-control-sm" id="role-${assignment.id}">
+                            <option value="super_administrator" ${assignment.role === 'super_administrator' ? 'selected' : ''}>Super Administrator</option>
+                            <option value="institutional_admin" ${assignment.role === 'institutional_admin' ? 'selected' : ''}>Institutional Administrator</option>
+                            <option value="lecturer" ${assignment.role === 'lecturer' ? 'selected' : ''}>Lecturer</option>
+                            <option value="student" ${assignment.role === 'student' ? 'selected' : ''}>Student</option>
+                            <option value="employee" ${assignment.role === 'employee' ? 'selected' : ''}>Employee</option>
+                        </select>
+                    </td>
+                    <td>
+                        <select class="form-control form-control-sm" id="status-${assignment.id}">
+                            <option value="active" ${assignment.status === 'active' ? 'selected' : ''}>Active</option>
+                            <option value="suspended" ${assignment.status === 'suspended' ? 'selected' : ''}>Suspended</option>
+                            <option value="inactive" ${assignment.status === 'inactive' ? 'selected' : ''}>Inactive</option>
+                        </select>
+                    </td>
+                    <td>
+                        <button class="btn btn-user btn-sm" onclick="saveRoleAssignment('${assignment.id}')">
+                            <i class="fas fa-save me-1"></i>Save
+                        </button>
+                    </td>
+                </tr>
+            `).join('');
+        }
+        
+        function showCreateUserModal() {
+            const modal = new bootstrap.Modal(document.getElementById('createUserModal'));
+            modal.show();
+        }
+        
+        function showRoleAssignmentModal() {
+            const modal = new bootstrap.Modal(document.getElementById('roleAssignmentModal'));
+            modal.show();
+        }
+        
+        function createUser() {
+            const form = document.getElementById('createUserForm');
+            const formData = {
+                firstName: document.getElementById('userFirstName').value,
+                lastName: document.getElementById('userLastName').value,
+                email: document.getElementById('userEmail').value,
+                role: document.getElementById('userRole').value,
+                password: document.getElementById('userPassword').value,
+                institution: document.getElementById('userInstitution').value
+            };
+            
+            // Validate form
+            if (!formData.firstName || !formData.lastName || !formData.email || !formData.role || !formData.password) {
+                showAlert('createAlert', 'Please fill in all required fields', 'danger');
+                return;
+            }
+            
+            // Create user
+            fetch('/api/admin/users', {
+                method: 'POST',
+                headers: {
+                    'Authorization': `Bearer ${accessToken}`,
+                    'Content-Type': 'application/json'
+                },
+                body: JSON.stringify(formData)
+            })
+            .then(response => response.json())
+            .then(data => {
+                if (data.success) {
+                    showAlert('createAlert', 'User created successfully!', 'success');
+                    bootstrap.Modal.getInstance(document.getElementById('createUserModal')).hide();
+                    form.reset();
+                    loadUsers();
+                } else {
+                    showAlert('createAlert', data.error || 'Failed to create user', 'danger');
+                }
+            })
+            .catch(error => {
+                showAlert('createAlert', 'An error occurred. Please try again.', 'danger');
+            });
+        }
+        
+        function toggleUserStatus(id, action) {
+            if (confirm(`Are you sure you want to ${action} this user?`)) {
+                fetch(`/api/admin/users/${id}/status`, {
+                    method: 'PUT',
+                    headers: {
+                        'Authorization': `Bearer ${accessToken}`,
+                        'Content-Type': 'application/json'
+                    },
+                    body: JSON.stringify({ status: action === 'activate' ? 'active' : 'suspended' })
+                })
+                .then(response => response.json())
+                .then(data => {
+                    if (data.success) {
+                        loadUsers();
+                    } else {
+                        alert(data.error || `Failed to ${action} user`);
+                    }
+                })
+                .catch(error => {
+                    alert(`An error occurred while trying to ${action} user`);
+                });
+            }
+        }
+        
+        function deleteUser(id) {
+            if (confirm('Are you sure you want to delete this user? This action cannot be undone.')) {
+                fetch(`/api/admin/users/${id}`, {
+                    method: 'DELETE',
+                    headers: {
+                        'Authorization': `Bearer ${accessToken}`
+                    }
+                })
+                .then(response => response.json())
+                .then(data => {
+                    if (data.success) {
+                        loadUsers();
+                    } else {
+                        alert(data.error || 'Failed to delete user');
+                    }
+                })
+                .catch(error => {
+                    alert('An error occurred while trying to delete user');
+                });
+            }
+        }
+        
+        function editUser(id) {
+            // Navigate to edit page or open edit modal
+            alert(`Edit user ${id} - Feature coming soon!`);
+        }
+        
+        function saveRoleAssignment(id) {
+            const newRole = document.getElementById(`role-${id}`).value;
+            const newStatus = document.getElementById(`status-${id}`).value;
+            
+            fetch(`/api/admin/users/${id}/role`, {
+                method: 'PUT',
+                headers: {
+                    'Authorization': `Bearer ${accessToken}`,
+                    'Content-Type': 'application/json'
+                },
+                body: JSON.stringify({ role: newRole, status: newStatus })
+            })
+            .then(response => response.json())
+            .then(data => {
+                if (data.success) {
+                    showAlert('roleAlert', 'Role assignment updated successfully!', 'success');
+                } else {
+                    showAlert('roleAlert', data.error || 'Failed to update role assignment', 'danger');
+                }
+            })
+            .catch(error => {
+                showAlert('roleAlert', 'An error occurred. Please try again.', 'danger');
+            });
+        }
+        
+        function saveRoleAssignments() {
+            // Save all role assignments
+            showAlert('roleAlert', 'All role assignments saved successfully!', 'success');
+            bootstrap.Modal.getInstance(document.getElementById('roleAssignmentModal')).hide();
+        }
+        
+        function searchUsers() {
+            const searchTerm = document.getElementById('searchInput').value.toLowerCase();
+            
+            // Filter users based on search term
+            fetch(`/api/admin/users?search=${encodeURIComponent(searchTerm)}`, {
+                headers: {
+                    'Authorization': `Bearer ${accessToken}`,
+                    'Content-Type': 'application/json'
+                }
+            })
+            .then(response => response.json())
+            .then(data => {
+                if (data.success) {
+                    displayUsers(data.users);
+                } else {
+                    displayUsers([]);
+                }
+            })
+            .catch(error => {
+                console.error('Error searching users:', error);
+                displayUsers([]);
+            });
+        }
+        
+        function showAlert(containerId, message, type) {
+            const alertContainer = document.getElementById(containerId);
+            alertContainer.innerHTML = `
+                <div class="alert alert-${type} alert-dismissible fade show" role="alert">
+                    ${message}
+                    <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
+                </div>
+            `;
+            
+            // Auto-hide after 5 seconds
+            setTimeout(() => {
+                const alert = alertContainer.querySelector('.alert');
+                if (alert) {
+                    alert.remove();
+                }
+            }, 5000);
+        }
+        
+        function showLogoutConfirm() {
+            const modal = new bootstrap.Modal(document.getElementById('logoutModal'));
+            modal.show();
+        }
+        
+        function logout() {
+            localStorage.removeItem('access_token');
+            localStorage.removeItem('refresh_token');
+            localStorage.removeItem('user_info');
+            window.location.href = '/login';
+        }
+    </script>
+    
+    <!-- Logout Confirmation Modal -->
+    <div class="modal fade" id="logoutModal" tabindex="-1">
+        <div class="modal-dialog">
+            <div class="modal-content">
+                <div class="modal-header">
+                    <h5 class="modal-title">Confirm Logout</h5>
+                    <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+                </div>
+                <div class="modal-body">
+                    <p>Do you really want to leave?</p>
+                </div>
+                <div class="modal-footer">
+                    <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancel</button>
+                    <button type="button" class="btn btn-danger" onclick="logout()">OK</button>
+                </div>
+            </div>
+        </div>
+    </div>
+</body>
+</html>

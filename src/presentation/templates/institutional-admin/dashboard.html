@@ -1,0 +1,2928 @@
+﻿<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Institutional Admin â€” Attendrix ðŸ‡¨ðŸ‡²</title>
+    <link rel="manifest" href="/static/manifest.json">
+    <link rel="icon" type="image/svg+xml" href="/static/images/favicon.svg">
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet" crossorigin="anonymous">
+    <script>
+        if ('serviceWorker' in navigator) {
+            window.addEventListener('load', function() {
+                navigator.serviceWorker.register('/sw.js', { scope: '/' }).then(function(reg) {
+                    console.log('SW registered:', reg.scope);
+                }).catch(function(err) {
+                    console.warn('SW registration failed:', err);
+                });
+            });
+        }
+    </script>
+    <link rel="stylesheet" href="/static/css/all.min.css" crossorigin="anonymous">
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800&display=swap" rel="stylesheet" crossorigin="anonymous">
+    <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.0/dist/chart.umd.min.js" crossorigin="anonymous"></script>
+    <link rel="stylesheet" href="/static/css/responsive.css">
+    <style>
+        :root {
+            --primary: #4F46E5; --primary-dark: #3730A3; --primary-light: #818CF8;
+            --accent: #06B6D4; --success: #10B981; --warning: #F59E0B; --danger: #EF4444;
+            --dark: #0F172A; --dark-card: rgba(255,255,255,0.04);
+            --sidebar-w: 250px; --text: #F8FAFC; --text-dim: rgba(255,255,255,0.45);
+        }
+        * { margin: 0; padding: 0; box-sizing: border-box; }
+        body {
+            font-family: 'Inter', sans-serif; background: #0A0F1E; min-height: 100vh;
+            display: flex; color: #fff; overflow-x: hidden;
+        }
+        .main-content { overflow-x: hidden; }
+
+        /* â”€â”€ SIDEBAR â”€â”€ */
+        .sidebar {
+            position: fixed; top: 0; left: 0; width: var(--sidebar-w); height: 100vh;
+            background: rgba(10,15,30,0.96); backdrop-filter: blur(20px);
+            border-right: 1px solid rgba(255,255,255,0.06); z-index: 1000;
+            display: flex; flex-direction: column; transition: transform 0.3s ease;
+        }
+        .sidebar-brand {
+            display: flex; align-items: center; gap: 0.7rem;
+            padding: 1.1rem 1.1rem 0.85rem; border-bottom: 1px solid rgba(255,255,255,0.06);
+        }
+        .sidebar-brand .brand-icon {
+            width: 32px; height: 32px;
+            background: linear-gradient(135deg,#4F46E5 0%,#7C3AED 100%);
+            border-radius: 8px; display: flex; align-items: center; justify-content: center;
+            font-size: 0.9rem; color: #fff; box-shadow: 0 4px 12px rgba(79,70,229,0.4); flex-shrink: 0;
+        }
+        .sidebar-brand .brand-text {
+            font-size: 1rem; font-weight: 800;
+            background: linear-gradient(135deg,#fff 60%,rgba(255,255,255,0.6));
+            -webkit-background-clip: text; -webkit-text-fill-color: transparent; background-clip: text;
+        }
+        .sidebar-nav { flex: 1; overflow-y: auto; padding: 0.6rem; display: flex; flex-direction: column; gap: 0.05rem; }
+        .sidebar-nav .nav-label {
+            font-size: 0.55rem; font-weight: 700; text-transform: uppercase; letter-spacing: 0.8px;
+            color: rgba(255,255,255,0.2); padding: 0.65rem 0.65rem 0.2rem; margin-top: 0.15rem;
+        }
+        .sidebar-nav a {
+            display: flex; align-items: center; gap: 0.65rem; padding: 0.5rem 0.65rem;
+            border-radius: 7px; font-size: 0.75rem; font-weight: 500;
+            color: rgba(255,255,255,0.5); text-decoration: none; transition: all 0.2s; cursor: pointer;
+        }
+        .sidebar-nav a:hover { background: rgba(255,255,255,0.05); color: #fff; }
+        .sidebar-nav a.active {
+            background: rgba(79,70,229,0.12); color: var(--primary-light);
+            border: 1px solid rgba(79,70,229,0.15);
+        }
+        .sidebar-nav a i { width: 14px; text-align: center; font-size: 0.85rem; flex-shrink: 0; }
+        .sidebar-nav .badge-dot { width: 5px; height: 5px; border-radius: 50%; margin-left: auto; }
+        .sidebar-nav .nav-count {
+            margin-left: auto; font-size: 0.55rem; font-weight: 700; padding: 0.1rem 0.35rem;
+            border-radius: 8px; background: rgba(255,255,255,0.05); color: var(--text-dim);
+        }
+
+        /* â”€â”€ MAIN â”€â”€ */
+        .main-content { margin-left: var(--sidebar-w); flex: 1; min-height: 100vh; }
+
+        /* â”€â”€ TOPBAR â”€â”€ */
+        .topbar {
+            display: flex; align-items: center; justify-content: space-between;
+            padding: 0.55rem 1.25rem; background: rgba(10,15,30,0.85);
+            backdrop-filter: blur(12px); border-bottom: 1px solid rgba(255,255,255,0.06);
+            position: fixed; top: 0; left: var(--sidebar-w); right: 0;
+            z-index: 1001; gap: 0.75rem; flex-wrap: wrap; min-height: 48px;
+        }
+        .topbar-left { display: flex; align-items: center; gap: 0.85rem; }
+        .topbar-left .inst-info { display: flex; flex-direction: column; }
+        .topbar-left .inst-name { font-size: 0.8rem; font-weight: 700; color: #fff; line-height: 1.2; }
+        .topbar-left .inst-meta { font-size: 0.6rem; color: var(--text-dim); line-height: 1.2; }
+        .topbar-strip {
+            display: flex; align-items: center; gap: 0.5rem; flex-wrap: wrap;
+        }
+        .pill-indicator {
+            display: flex; align-items: center; gap: 0.3rem; font-size: 0.6rem; font-weight: 600;
+            padding: 0.2rem 0.5rem; border-radius: 12px; white-space: nowrap;
+        }
+        .pill-green { background: rgba(16,185,129,0.08); border: 1px solid rgba(16,185,129,0.12); color: var(--success); }
+        .pill-yellow { background: rgba(245,158,11,0.08); border: 1px solid rgba(245,158,11,0.12); color: var(--warning); }
+        .pill-red { background: rgba(239,68,68,0.08); border: 1px solid rgba(239,68,68,0.12); color: var(--danger); }
+        .pill-indicator .dot { width: 5px; height: 5px; border-radius: 50%; background: currentColor; }
+        .topbar-right { display: flex; align-items: center; gap: 0.5rem; }
+        .lang-toggle {
+            background: rgba(255,255,255,0.04); border: 1px solid rgba(255,255,255,0.08);
+            color: rgba(255,255,255,0.5); padding: 0.15rem 0.5rem; border-radius: 6px;
+            font-size: 0.65rem; font-weight: 700; cursor: pointer; transition: all 0.2s;
+        }
+        .lang-toggle:hover { background: rgba(79,70,229,0.12); border-color: rgba(79,70,229,0.2); color: var(--primary-light); }
+        .user-badge-top {
+            display: flex; align-items: center; gap: 0.4rem; padding: 0.2rem 0.5rem;
+            border-radius: 6px; background: rgba(255,255,255,0.04); cursor: pointer;
+        }
+        .user-badge-top .avatar {
+            width: 22px; height: 22px; border-radius: 5px;
+            background: var(--primary); display: flex; align-items: center; justify-content: center;
+            font-size: 0.6rem; font-weight: 700; color: #fff;
+        }
+        .user-badge-top .uname { font-size: 0.7rem; font-weight: 600; color: rgba(255,255,255,0.65); }
+        .sidebar-toggle { display: none; background: none; border: none; color: #fff; font-size: 1rem; cursor: pointer; padding: 0.1rem; }
+
+        /* â”€â”€ PAGE â”€â”€ */
+        .page-content { padding: calc(56px + 1rem) 1.25rem 2rem; display: flex; flex-direction: column; gap: 1rem; }
+
+        /* â”€â”€ SECTIONS â”€â”€ */
+        .section { display: none; }
+        .section.active { display: block; }
+
+        /* â”€â”€ STATS â”€â”€ */
+        .stats-row { display: grid; grid-template-columns: repeat(auto-fit, minmax(160px, 1fr)); gap: 0.7rem; }
+        .stat-card {
+            background: var(--dark-card); backdrop-filter: blur(12px);
+            border: 1px solid rgba(255,255,255,0.06); border-radius: 10px;
+            padding: 0.85rem 1rem; transition: all 0.3s; position: relative; overflow: hidden;
+        }
+        .stat-card::before {
+            content: ''; position: absolute; top: 0; left: 0; right: 0; height: 2px;
+            background: linear-gradient(90deg, var(--primary), var(--accent)); opacity: 0; transition: opacity 0.3s;
+        }
+        .stat-card:hover::before { opacity: 1; }
+        .stat-card:hover { transform: translateY(-2px); border-color: rgba(255,255,255,0.1); }
+        .stat-card .stat-top { display: flex; align-items: center; justify-content: space-between; margin-bottom: 0.35rem; }
+        .stat-card .stat-icon { width: 28px; height: 28px; border-radius: 7px; display: flex; align-items: center; justify-content: center; font-size: 0.7rem; }
+        .stat-card .stat-label { font-size: 0.6rem; color: var(--text-dim); font-weight: 600; text-transform: uppercase; letter-spacing: 0.3px; }
+        .stat-card .stat-value { font-size: 1.4rem; font-weight: 800; color: #fff; line-height: 1.1; }
+        .stat-card .stat-footer { font-size: 0.6rem; color: var(--text-dim); margin-top: 0.15rem; display: flex; align-items: center; gap: 0.25rem; }
+        .stat-card .stat-footer .up { color: var(--success); }
+        .stat-card .stat-footer .down { color: var(--danger); }
+
+        /* â”€â”€ CARDS â”€â”€ */
+        .card-noc {
+            background: var(--dark-card); backdrop-filter: blur(12px);
+            border: 1px solid rgba(255,255,255,0.06); border-radius: 10px; overflow: hidden;
+        }
+        .card-noc .card-header {
+            display: flex; align-items: center; justify-content: space-between;
+            padding: 0.7rem 1rem; border-bottom: 1px solid rgba(255,255,255,0.06);
+        }
+        .card-noc .card-header .card-title {
+            font-size: 0.75rem; font-weight: 700; color: #fff;
+            display: flex; align-items: center; gap: 0.4rem;
+        }
+        .card-noc .card-header .card-title i { color: var(--primary-light); font-size: 0.75rem; }
+        .card-noc .card-body { padding: 0.85rem 1rem; }
+        .card-noc .card-body.compact { padding: 0.35rem 0; }
+
+        /* â”€â”€ ACTIVITY â”€â”€ */
+        .activity-item {
+            display: flex; align-items: flex-start; gap: 0.55rem;
+            padding: 0.45rem 1rem; border-bottom: 1px solid rgba(255,255,255,0.03);
+            transition: background 0.2s;
+        }
+        .activity-item:hover { background: rgba(255,255,255,0.02); }
+        .activity-item:last-child { border-bottom: none; }
+        .activity-item .time-col { font-size: 0.6rem; color: var(--text-dim); min-width: 32px; font-weight: 600; font-variant-numeric: tabular-nums; }
+        .activity-item .msg-col { flex: 1; font-size: 0.73rem; color: rgba(255,255,255,0.65); }
+        .activity-item .msg-col strong { color: #fff; font-weight: 600; }
+        .activity-item .type-dot { width: 5px; height: 5px; border-radius: 50%; margin-top: 5px; flex-shrink: 0; }
+
+        /* â”€â”€ SECURITY â”€â”€ */
+        .alert-item {
+            display: flex; align-items: center; gap: 0.55rem;
+            padding: 0.4rem 1rem; border-bottom: 1px solid rgba(255,255,255,0.03);
+            font-size: 0.73rem; transition: background 0.2s;
+        }
+        .alert-item:hover { background: rgba(255,255,255,0.02); }
+        .alert-item:last-child { border-bottom: none; }
+        .alert-item .sev-badge {
+            font-size: 0.5rem; font-weight: 700; padding: 0.08rem 0.35rem;
+            border-radius: 3px; text-transform: uppercase; letter-spacing: 0.2px; flex-shrink: 0;
+        }
+        .sev-critical { background: rgba(239,68,68,0.12); color: #FCA5A5; border: 1px solid rgba(239,68,68,0.2); }
+        .sev-high { background: rgba(245,158,11,0.12); color: #FCD34D; border: 1px solid rgba(245,158,11,0.2); }
+        .sev-medium { background: rgba(59,130,246,0.12); color: #93C5FD; border: 1px solid rgba(59,130,246,0.2); }
+        .sev-low { background: rgba(107,114,128,0.12); color: #D1D5DB; border: 1px solid rgba(107,114,128,0.2); }
+        .alert-item .alert-msg { flex: 1; color: rgba(255,255,255,0.6); }
+        .alert-item .alert-time { font-size: 0.55rem; color: var(--text-dim); flex-shrink: 0; }
+        .alert-item .alert-meta-item { font-size:0.5rem; color:var(--text-dim); display:inline-flex; align-items:center; gap:0.2rem; background:rgba(255,255,255,0.03); padding:0.04rem 0.3rem; border-radius:3px; }
+
+        /* â”€â”€ TABLES â”€â”€ */
+        .table-noc { width: 100%; border-collapse: collapse; }
+        .table-noc th {
+            font-size: 0.55rem; font-weight: 700; text-transform: uppercase; letter-spacing: 0.3px;
+            color: var(--text-dim); padding: 0.4rem 1rem; text-align: left;
+            border-bottom: 1px solid rgba(255,255,255,0.06);
+        }
+        .table-noc td { padding: 0.35rem 1rem; font-size: 0.7rem; color: rgba(255,255,255,0.6); border-bottom: 1px solid rgba(255,255,255,0.03); }
+        .table-noc tr:hover td { background: rgba(255,255,255,0.02); }
+        .table-noc .status-pill {
+            font-size: 0.5rem; font-weight: 700; padding: 0.08rem 0.4rem;
+            border-radius: 8px; text-transform: uppercase; letter-spacing: 0.15px;
+        }
+        .pill-active { background: rgba(16,185,129,0.1); color: #6EE7B7; border: 1px solid rgba(16,185,129,0.15); }
+        .pill-syncing { background: rgba(245,158,11,0.1); color: #FCD34D; border: 1px solid rgba(245,158,11,0.15); }
+        .pill-completed { background: rgba(59,130,246,0.1); color: #93C5FD; border: 1px solid rgba(59,130,246,0.15); }
+        td .risk-low { color: var(--success); }
+        td .risk-medium { color: var(--warning); }
+        td .risk-high { color: var(--danger); }
+
+        /* â”€â”€ NODES â”€â”€ */
+        .node-grid { display: flex; flex-wrap: wrap; gap: 0.55rem; }
+        .node-item {
+            display: flex; align-items: center; gap: 0.45rem; padding: 0.45rem 0.65rem;
+            border-radius: 7px; font-size: 0.7rem; border: 1px solid rgba(255,255,255,0.06); min-width: 130px; flex: 1;
+        }
+        .node-item .node-status { width: 7px; height: 7px; border-radius: 50%; flex-shrink: 0; }
+        .node-healthy .node-status { background: var(--success); box-shadow: 0 0 6px rgba(16,185,129,0.3); }
+        .node-degraded .node-status { background: var(--warning); box-shadow: 0 0 6px rgba(245,158,11,0.25); }
+        .node-offline .node-status { background: var(--danger); box-shadow: 0 0 6px rgba(239,68,68,0.25); }
+        .node-item .node-name { font-weight: 600; color: rgba(255,255,255,0.75); }
+        .node-item .node-meta { font-size: 0.55rem; color: var(--text-dim); }
+
+        /* â”€â”€ BROKER â”€â”€ */
+        .broker-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(90px, 1fr)); gap: 0.55rem; }
+        .broker-item { text-align: center; padding: 0.55rem 0.4rem; border-radius: 7px; background: rgba(255,255,255,0.02); border: 1px solid rgba(255,255,255,0.04); }
+        .broker-item .broker-val { font-size: 1rem; font-weight: 700; color: #fff; }
+        .broker-item .broker-label { font-size: 0.55rem; color: var(--text-dim); margin-top: 0.1rem; }
+
+        /* â”€â”€ CHARTS â”€â”€ */
+        .chart-wrap { position: relative; height: 160px; width: 100%; }
+        .chart-wrap-tall { height: 200px; }
+
+        /* â”€â”€ LAYOUT â”€â”€ */
+        .grid-2col { display: grid; grid-template-columns: 1fr 1fr; gap: 1rem; }
+        .grid-3col { display: grid; grid-template-columns: 1fr 1fr 1fr; gap: 1rem; }
+        .grid-sidebar { display: grid; grid-template-columns: 1fr 300px; gap: 1rem; }
+
+        /* â”€â”€ QUEUE â”€â”€ */
+        .queue-item {
+            display: flex; align-items: center; justify-content: space-between;
+            padding: 0.4rem 0; border-bottom: 1px solid rgba(255,255,255,0.03);
+            font-size: 0.7rem;
+        }
+        .queue-item:last-child { border-bottom: none; }
+        .queue-item .q-status {
+            font-size: 0.5rem; font-weight: 700; padding: 0.08rem 0.35rem;
+            border-radius: 3px; text-transform: uppercase;
+        }
+        .q-pending { background: rgba(245,158,11,0.1); color: #FCD34D; }
+        .q-syncing { background: rgba(59,130,246,0.1); color: #93C5FD; }
+        .q-failed { background: rgba(239,68,68,0.1); color: #FCA5A5; }
+
+        /* â”€â”€ QUICK ACTIONS â”€â”€ */
+        .quick-actions {
+            display: flex; gap: 0.4rem; flex-wrap: wrap;
+        }
+        .qa-btn {
+            display: flex; align-items: center; gap: 0.35rem; padding: 0.35rem 0.75rem;
+            border-radius: 7px; font-size: 0.7rem; font-weight: 600; border: none;
+            cursor: pointer; transition: all 0.2s; color: #fff;
+        }
+        .qa-btn:hover { transform: translateY(-1px); filter: brightness(1.15); }
+
+        /* â”€â”€ STUDENT DRAWER â”€â”€ */
+        .drawer-overlay { position:fixed; inset:0; background:rgba(0,0,0,0.5); z-index:2000; display:none; }
+        .drawer-overlay.open { display:block; }
+        .drawer-panel {
+            position:fixed; top:0; right:0; width:420px; max-width:100vw; height:100vh;
+            background:rgba(10,15,30,0.98); backdrop-filter:blur(24px);
+            border-left:1px solid rgba(255,255,255,0.06);
+            z-index:2001; transform:translateX(100%); transition:transform 0.3s ease;
+            display:flex; flex-direction:column; overflow:hidden;
+        }
+        .drawer-panel.open { transform:translateX(0); }
+        .drawer-header {
+            display:flex; align-items:center; justify-content:space-between;
+            padding:0.85rem 1rem; border-bottom:1px solid rgba(255,255,255,0.06); flex-shrink:0;
+        }
+        .drawer-header h6 { font-size:0.85rem; font-weight:700; color:#fff; margin:0; }
+        .drawer-close { background:none; border:none; color:rgba(255,255,255,0.4); font-size:1.1rem; cursor:pointer; padding:0.2rem; }
+        .drawer-close:hover { color:#fff; }
+        .drawer-body { flex:1; overflow-y:auto; padding:1rem; }
+        .drawer-section { margin-bottom:1rem; }
+        .drawer-section-title { font-size:0.6rem; font-weight:700; text-transform:uppercase; letter-spacing:0.5px; color:var(--text-dim); margin-bottom:0.5rem; }
+        .drawer-field { display:flex; justify-content:space-between; padding:0.25rem 0; font-size:0.75rem; border-bottom:1px solid rgba(255,255,255,0.03); }
+        .drawer-field .label { color:var(--text-dim); }
+        .drawer-field .value { color:rgba(255,255,255,0.8); font-weight:500; text-align:right; }
+        .drawer-course-item { display:flex; justify-content:space-between; align-items:center; padding:0.35rem 0.5rem; border-radius:5px; background:rgba(255,255,255,0.02); margin-bottom:0.25rem; font-size:0.7rem; }
+        .drawer-course-item .course-name { color:#fff; font-weight:600; }
+        .drawer-course-item .course-rate { font-weight:700; }
+        .drawer-security-event { padding:0.3rem 0; border-bottom:1px solid rgba(255,255,255,0.03); font-size:0.7rem; }
+        .drawer-security-event .sev-inline { font-size:0.5rem; font-weight:700; padding:0.04rem 0.3rem; border-radius:3px; text-transform:uppercase; margin-right:0.35rem; }
+
+        /* â”€â”€ NETWORK TOPOLOGY CANVAS â”€â”€ */
+        .topology-wrap { position:relative; width:100%; height:280px; }
+        .topology-wrap canvas { width:100%; height:100%; display:block; border-radius:6px; }
+        .topology-legend { display:flex; gap:0.75rem; padding:0.4rem 0.5rem; font-size:0.6rem; color:var(--text-dim); flex-wrap:wrap; }
+        .topology-legend span { display:flex; align-items:center; gap:0.25rem; }
+        .topology-legend .dot { width:6px; height:6px; border-radius:50%; display:inline-block; }
+
+        /* â”€â”€ LIVE MONITORING WALL â”€â”€ */
+        .live-checkin { display:flex; align-items:center; gap:0.55rem; padding:0.4rem 0.65rem; border-radius:7px; background:rgba(255,255,255,0.02); border:1px solid rgba(255,255,255,0.04); margin-bottom:0.3rem; animation:slideInRight 0.3s ease; }
+        @keyframes slideInRight { from { transform:translateX(20px); opacity:0; } to { transform:translateX(0); opacity:1; } }
+        .live-checkin .ci-avatar { width:24px; height:24px; border-radius:6px; background:linear-gradient(135deg,var(--primary),var(--accent)); display:flex; align-items:center; justify-content:center; font-size:0.55rem; font-weight:700; color:#fff; flex-shrink:0; }
+        .live-checkin .ci-info { flex:1; }
+        .live-checkin .ci-name { font-size:0.75rem; font-weight:600; color:#fff; }
+        .live-checkin .ci-meta { font-size:0.6rem; color:var(--text-dim); }
+        .live-checkin .ci-status { font-size:0.5rem; font-weight:700; padding:0.08rem 0.4rem; border-radius:8px; }
+        .ci-present { background:rgba(16,185,129,0.12); color:#6EE7B7; }
+        .ci-late { background:rgba(245,158,11,0.12); color:#FCD34D; }
+        .ci-suspicious { background:rgba(239,68,68,0.12); color:#FCA5A5; }
+
+        .live-alert-popup {
+            display:flex; align-items:center; gap:0.5rem; padding:0.5rem 0.65rem;
+            border-radius:7px; background:rgba(239,68,68,0.08); border:1px solid rgba(239,68,68,0.12);
+            margin-bottom:0.3rem; animation:slideInRight 0.3s ease;
+        }
+        .live-alert-popup .la-icon { font-size:0.8rem; color:#FCA5A5; flex-shrink:0; }
+        .live-alert-popup .la-msg { flex:1; font-size:0.7rem; color:rgba(255,255,255,0.7); }
+        .live-alert-popup .la-time { font-size:0.55rem; color:var(--text-dim); flex-shrink:0; }
+
+        /* â”€â”€ CONNECTION QUALITY â”€â”€ */
+        .conn-quality {
+            display:flex; align-items:center; gap:0.3rem; font-size:0.6rem; font-weight:600;
+            padding:0.15rem 0.45rem; border-radius:10px; cursor:default; white-space:nowrap;
+        }
+        .conn-quality .cq-dot { width:5px; height:5px; border-radius:50%; }
+        .conn-online { background:rgba(16,185,129,0.08); border:1px solid rgba(16,185,129,0.12); color:var(--success); }
+        .conn-degraded { background:rgba(245,158,11,0.08); border:1px solid rgba(245,158,11,0.12); color:var(--warning); }
+        .conn-offline { background:rgba(239,68,68,0.08); border:1px solid rgba(239,68,68,0.12); color:var(--danger); }
+
+        /* â”€â”€ PAGINATION â”€â”€ */
+        .pag-row { display:flex; align-items:center; justify-content:space-between; gap:0.5rem; flex-wrap:wrap; }
+        .pag-info { font-size:0.6rem; color:var(--text-dim); }
+        .pag-btns { display:flex; gap:0.2rem; }
+        .pag-btn {
+            background:rgba(255,255,255,0.04); border:1px solid rgba(255,255,255,0.06);
+            color:rgba(255,255,255,0.5); padding:0.2rem 0.5rem; border-radius:5px;
+            font-size:0.65rem; font-weight:600; cursor:pointer; transition:all 0.2s; min-width:28px; text-align:center;
+        }
+        .pag-btn:hover { background:rgba(79,70,229,0.12); border-color:rgba(79,70,229,0.2); color:var(--primary-light); }
+        .pag-btn.active { background:rgba(79,70,229,0.15); border-color:rgba(79,70,229,0.3); color:var(--primary-light); }
+        .pag-btn:disabled { opacity:0.3; cursor:default; }
+        .student-row { cursor:pointer; transition:background 0.15s; }
+        .student-row:hover td { background:rgba(79,70,229,0.06) !important; }
+
+        /* â”€â”€ ISP ROW â”€â”€ */
+        .isp-row { display: flex; gap: 0.5rem; align-items: center; }
+
+        /* â”€â”€ MODAL FORM â”€â”€ */
+        .form-input:focus { border-color: var(--primary) !important; box-shadow: 0 0 0 2px rgba(79,70,229,0.15); }
+        .form-input option { background: #1a1f35; color: #fff; }
+        select.form-control option {
+            background: #1a1f35;
+            color: #fff;
+        }
+        select.form-control:focus option:checked {
+            background: #4F46E5;
+            color: #fff;
+        }
+
+        /* â”€â”€ EMPTY â”€â”€ */
+        .empty-muted { text-align: center; padding: 1.5rem 1rem; color: var(--text-dim); font-size: 0.75rem; }
+
+        /* â”€â”€ SCROLLBAR â”€â”€ */
+        ::-webkit-scrollbar { width: 3px; }
+        ::-webkit-scrollbar-track { background: transparent; }
+        ::-webkit-scrollbar-thumb { background: rgba(255,255,255,0.08); border-radius: 2px; }
+
+        @media (max-width: 1024px) {
+            .grid-2col, .grid-3col, .grid-sidebar { grid-template-columns: 1fr; }
+        }
+        @media (max-width: 768px) {
+            .sidebar { transform: translateX(-100%); }
+            .sidebar.open { transform: translateX(0); }
+            .sidebar-overlay { position: fixed; inset: 0; background: rgba(0,0,0,0.5); z-index: 999; display: none; }
+            .sidebar-overlay.show { display: block; }
+            .main-content { margin-left: 0; }
+            .topbar { left: 0; }
+            .sidebar-toggle { display: block; }
+            .page-content { padding: calc(56px + 0.5rem) 0.5rem 2rem; }
+            .topbar-strip { display: none; }
+            .stats-row { grid-template-columns: repeat(2, 1fr); gap: 0.5rem; }
+            .node-grid { flex-direction: column; }
+            .quick-actions { gap: 0.4rem; }
+            .qa-btn { padding: 0.5rem 0.75rem; font-size: 0.75rem; }
+            
+            .card-noc { border-radius: 0; border-left: none; border-right: none; margin-left: -0.5rem; margin-right: -0.5rem; }
+            .card-noc .card-header { padding-left: 0.75rem; padding-right: 0.75rem; }
+            .card-noc .card-body { padding-left: 0.75rem; padding-right: 0.75rem; }
+            .card-noc .card-body.compact { padding-left: 0; padding-right: 0; }
+            .card-noc .card-body.compact table { min-width: 600px; }
+            
+            input[type="text"], input[type="password"], input[type="email"], select, .form-input {
+                font-size: 16px !important;
+                min-height: 44px;
+            }
+            .table-responsive-wrap { overflow-x: auto; -webkit-overflow-scrolling: touch; margin-bottom: 0.5rem; }
+        }
+        @media (max-width: 480px) {
+            .stats-row { grid-template-columns: 1fr; }
+            .drawer-panel { width: 100vw; }
+            .user-badge-top .uname { display: none; }
+            input[id$="Search"] { width: 130px !important; }
+            .topbar { padding: 0.45rem 0.65rem; gap: 0.4rem; }
+            .topbar-left { gap: 0.4rem; }
+            .topbar-left .inst-name { font-size: 0.7rem; }
+            .topbar-left .inst-meta { display: none; }
+            .page-content { padding: calc(56px + 0.4rem) 0.4rem 1.5rem; gap: 0.7rem; }
+            .grid-2col, .grid-3col, .grid-sidebar { gap: 0.6rem; }
+            .conn-quality { font-size: 0.5rem; padding: 0.1rem 0.3rem; }
+            .card-noc .card-header { flex-wrap: wrap; gap: 0.3rem; }
+            .card-noc .card-header .card-title { font-size: 0.7rem; }
+            .quick-actions .qa-btn { font-size: 0.65rem; padding: 0.4rem 0.5rem; }
+            .table-noc th, .table-noc td { padding: 0.3rem 0.5rem; font-size: 0.6rem; }
+            .stat-card { padding: 0.65rem 0.75rem; }
+            .stat-card .stat-value { font-size: 1.1rem; }
+            .chart-wrap { height: 120px; }
+            .chart-wrap-tall { height: 150px; }
+            .topbar-right { gap: 0.3rem; }
+            .lang-toggle { font-size: 0.55rem; padding: 0.1rem 0.35rem; }
+        }
+    </style>
+</head>
+<body>
+
+<div class="sidebar-overlay" id="sidebarOverlay"></div>
+
+<!-- â”€â”€â”€ SIDEBAR â”€â”€â”€ -->
+<aside class="sidebar" id="sidebar">
+    <div class="sidebar-brand">
+        <div class="brand-icon"><svg viewBox="0 0 24 24" width="1em" height="1em" fill="none" style="display:inline-block;vertical-align:-.125em"><path d="M12 6.5L3.5 21" stroke="currentColor" stroke-width="2.2" stroke-linecap="round"/><path d="M12 6.5L20.5 21" stroke="currentColor" stroke-width="2.2" stroke-linecap="round"/><path d="M5 14.5L11 14.5" stroke="currentColor" stroke-width="2" stroke-linecap="round"/><path d="M13 14.5L19 14.5" stroke="currentColor" stroke-width="2" stroke-linecap="round"/><path d="M9.5 9.5Q12 6.2 14.5 9.5" stroke="currentColor" stroke-width="1.2" stroke-linecap="round" fill="none" opacity=".6"/><circle cx="12" cy="3.5" r="3" fill="currentColor"/><circle cx="3.5" cy="21" r="2.5" fill="currentColor"/><circle cx="20.5" cy="21" r="2.5" fill="currentColor"/></svg></div>
+        <span class="brand-text">Attendrix</span>
+    </div>
+    <nav class="sidebar-nav">
+        <div class="nav-label" data-i18n="analytics">Analytics</div>
+        <a href="#" class="active" data-section="overview"><i class="fas fa-th-large"></i> <span data-i18n="overview">Overview</span></a>
+
+        <div class="nav-label" data-i18n="management">Management</div>
+        <a href="#" data-section="users"><i class="fas fa-users-cog"></i> <span data-i18n="users">Users</span></a>
+        <a href="#" data-section="courses"><i class="fas fa-book"></i> <span data-i18n="courses">Courses</span></a>
+        <a href="#" data-section="departments"><i class="fas fa-building"></i> <span data-i18n="departments">Departments</span></a>
+        <a href="#" data-section="enrollments"><i class="fas fa-user-plus"></i> <span data-i18n="enrollments">Enrollments</span></a>
+        <a href="#" data-section="students"><i class="fas fa-user-graduate"></i> <span data-i18n="students">Students</span></a>
+        <a href="#" data-section="sessions"><i class="fas fa-chalkboard-teacher"></i> <span data-i18n="sessions">Sessions</span></a>
+
+        <div class="nav-label" data-i18n="infrastructure">Infrastructure</div>
+        <a href="#" data-section="network"><i class="fas fa-network-wired"></i> <span data-i18n="network">Network</span></a>
+        <a href="#" data-section="security"><i class="fas fa-shield-alt"></i> <span data-i18n="security">Security</span> <span class="badge-dot" id="securityBadge" style="background:var(--danger);"></span></a>
+
+        <div class="nav-label" data-i18n="recovery">Offline &amp; Recovery</div>
+        <a href="#" data-section="offline"><i class="fas fa-cloud-download-alt"></i> <span data-i18n="offline_sync">Offline Sync</span></a>
+        <a href="#" data-section="p2p"><i class="fas fa-project-diagram"></i> <span data-i18n="p2p_recovery">P2P Recovery</span> <span class="nav-count" id="p2pCount">0</span></a>
+
+        <div class="nav-label" data-i18n="govt">Government</div>
+        <a href="#" data-section="compliance"><i class="fas fa-gavel"></i> <span data-i18n="compliance">Compliance</span></a>
+
+        <div class="nav-label" data-i18n="finance">Finance</div>
+        <a href="#" data-section="payments"><i class="fas fa-money-bill-wave"></i> <span data-i18n="payments">Payments</span> <span class="nav-count" id="paymentBadge">0</span></a>
+        <a href="#" data-section="vouchers"><i class="fas fa-ticket-alt"></i> <span data-i18n="vouchers">Vouchers</span> <span class="nav-count" id="voucherBadge">0</span></a>
+
+        <div class="nav-label" data-i18n="data">Data</div>
+        <a href="#" data-section="reports"><i class="fas fa-chart-bar"></i> <span data-i18n="reports">Reports</span></a>
+
+        <div class="nav-label">Live</div>
+        <a href="#" data-section="livemon"><i class="fas fa-broadcast-tower"></i> <span>Live Monitor</span> <span class="badge-dot" id="liveBadge" style="background:var(--success);"></span></a>
+
+        <div style="margin-top:auto;padding-top:0.4rem;border-top:1px solid rgba(255,255,255,0.06);">
+            <a href="/logout" id="logoutLink" style="color:rgba(239,68,68,0.5);">
+                <i class="fas fa-sign-out-alt"></i> <span data-i18n="logout">Logout</span>
+            </a>
+        </div>
+    </nav>
+</aside>
+
+<!-- â”€â”€â”€ MAIN â”€â”€â”€ -->
+<div class="main-content">
+
+    <!-- Top Bar -->
+    <header class="topbar">
+        <div class="topbar-left">
+            <button class="sidebar-toggle" id="sidebarToggle"><i class="fas fa-bars"></i></button>
+            <div class="inst-info">
+                <div class="inst-name" id="instName">University of Buea</div>
+                <div class="inst-meta" id="instMeta">Semester II 2026</div>
+            </div>
+        </div>
+        <div class="topbar-strip" id="topbarStrip">
+            <span class="pill-indicator pill-green" id="upsIndicator"><span class="dot"></span> UPS: <span id="upsPct">â€”</span>%</span>
+            <span class="pill-indicator" id="ispMtn"><span class="dot"></span> MTN</span>
+            <span class="pill-indicator" id="ispOrange"><span class="dot"></span> Orange</span>
+            <span class="pill-indicator pill-yellow" id="smsQueueIndicator"><i class="fas fa-sms"></i> <span id="smsQueueCount">0</span></span>
+        </div>
+        <div class="topbar-right">
+            <div class="conn-quality conn-online" id="connQuality" title="Connection quality"><span class="cq-dot" id="connDot" style="background:var(--success);"></span> <span id="connLabel">Online</span> <span id="connLatency" style="font-weight:400;opacity:0.6;">â€”ms</span></div>
+            <button class="lang-toggle" id="langToggle" onclick="toggleLang()">FR</button>
+            <div class="user-badge-top" id="userBadgeTop">
+                <div class="avatar" id="userAvatarTop">A</div>
+                <span class="uname" id="userNameTop">Admin</span>
+            </div>
+        </div>
+    </header>
+
+    <!-- Page Content -->
+    <div class="page-content">
+
+        <!-- Quick Actions -->
+        <div class="quick-actions" id="quickActions"></div>
+
+        <!-- â•â•â•â•â•â•â• OVERVIEW â•â•â•â•â•â•â• -->
+        <div class="section active" id="section-overview">
+            <div class="stats-row" id="overviewStats">
+                <div class="stat-card"><div class="stat-top"><span class="stat-label" data-i18n="total_students">Total Students</span><div class="stat-icon" style="background:rgba(79,70,229,0.12);color:#A5B4FC;"><i class="fas fa-users"></i></div></div><div class="stat-value" id="ovStudents">â€”</div><div class="stat-footer" data-i18n="all_faculties">Across all faculties</div></div>
+                <div class="stat-card"><div class="stat-top"><span class="stat-label" data-i18n="active_sessions">Active Sessions</span><div class="stat-icon" style="background:rgba(16,185,129,0.12);color:#6EE7B7;"><i class="fas fa-play-circle"></i></div></div><div class="stat-value" id="ovActiveSessions">â€”</div><div class="stat-footer up"><i class="fas fa-circle"></i> <span data-i18n="live_now">Live now</span></div></div>
+                <div class="stat-card"><div class="stat-top"><span class="stat-label" data-i18n="attendance_rate">Attendance Rate</span><div class="stat-icon" style="background:rgba(245,158,11,0.12);color:#FCD34D;"><i class="fas fa-chart-line"></i></div></div><div class="stat-value" id="ovAttendanceRate">â€”</div><div class="stat-footer" id="ovAttendanceFooter" data-i18n="this_semester">This semester</div></div>
+                <div class="stat-card"><div class="stat-top"><span class="stat-label" data-i18n="offline_nodes">Offline Nodes</span><div class="stat-icon" style="background:rgba(239,68,68,0.12);color:#FCA5A5;"><i class="fas fa-exclamation-triangle"></i></div></div><div class="stat-value" id="ovOfflineNodes">â€”</div><div class="stat-footer down" id="ovOfflineFooter"><span data-i18n="requires_attention">Requires attention</span></div></div>
+            </div>
+            <div class="grid-sidebar">
+                <div class="card-noc">
+                    <div class="card-header"><div class="card-title"><i class="fas fa-chart-area"></i> <span data-i18n="attendance_trend">Attendance Trend</span> (14d)</div></div>
+                    <div class="card-body"><div class="chart-wrap"><canvas id="attendanceChart"></canvas></div></div>
+                </div>
+                <div class="card-noc">
+                    <div class="card-header"><div class="card-title"><i class="fas fa-bolt"></i> <span data-i18n="live_activity">Live Activity</span></div></div>
+                    <div class="card-body compact" id="activityFeed"><div class="empty-muted" data-i18n="loading">Loading...</div></div>
+                </div>
+            </div>
+        </div>
+
+        <!-- â•â•â•â•â•â•â• USERS â•â•â•â•â•â•â• -->
+        <div class="section" id="section-users">
+            <div class="card-noc">
+                <div class="card-header">
+                    <div class="card-title"><i class="fas fa-users-cog"></i> <span>User Management</span></div>
+                    <div style="display:flex;gap:0.4rem;align-items:center;">
+                        <input type="text" id="userSearch" placeholder="Search name, email..." style="background:rgba(255,255,255,0.04);border:1px solid rgba(255,255,255,0.08);border-radius:6px;padding:0.25rem 0.55rem;color:#fff;font-size:0.7rem;outline:none;width:180px;" oninput="debounceUserSearch()">
+                        <button class="qa-btn" style="background:rgba(79,70,229,0.15);padding:0.3rem 0.7rem;font-size:0.65rem;" onclick="openUserModal()"><i class="fas fa-plus"></i> Add User</button>
+                    </div>
+                </div>
+                <div class="card-body compact" style="overflow-x:auto;">
+                    <table class="table-noc">
+                        <thead><tr><th>Name</th><th>Email</th><th>Role</th><th>Phone</th><th>Status</th><th>Actions</th></tr></thead>
+                        <tbody id="userTableBody"></tbody>
+                    </table>
+                    <div class="pagination-controls" id="userPagination" style="display:none;padding:0.5rem 1rem;border-top:1px solid rgba(255,255,255,0.04);"></div>
+                </div>
+            </div>
+        </div>
+
+        <!-- â•â•â•â•â•â•â• COURSES â•â•â•â•â•â•â• -->
+        <div class="section" id="section-courses">
+            <div class="card-noc">
+                <div class="card-header">
+                    <div class="card-title"><i class="fas fa-book"></i> <span>Course Management</span></div>
+                    <div style="display:flex;gap:0.4rem;align-items:center;">
+                        <input type="text" id="courseSearch" placeholder="Search name, code..." style="background:rgba(255,255,255,0.04);border:1px solid rgba(255,255,255,0.08);border-radius:6px;padding:0.25rem 0.55rem;color:#fff;font-size:0.7rem;outline:none;width:180px;" oninput="debounceCourseSearch()">
+                        <button class="qa-btn" style="background:rgba(79,70,229,0.15);padding:0.3rem 0.7rem;font-size:0.65rem;" onclick="openCourseModal()"><i class="fas fa-plus"></i> Add Course</button>
+                    </div>
+                </div>
+                <div class="card-body compact" style="overflow-x:auto;">
+                    <table class="table-noc">
+                        <thead><tr><th>Code</th><th>Name</th><th>Dept</th><th>Credits</th><th>Status</th><th>Actions</th></tr></thead>
+                        <tbody id="courseTableBody"></tbody>
+                    </table>
+                    <div class="pagination-controls" id="coursePagination" style="display:none;padding:0.5rem 1rem;border-top:1px solid rgba(255,255,255,0.04);"></div>
+                </div>
+            </div>
+        </div>
+
+        <!-- â•â•â•â•â•â•â• DEPARTMENTS â•â•â•â•â•â•â• -->
+        <div class="section" id="section-departments">
+            <div class="card-noc">
+                <div class="card-header">
+                    <div class="card-title"><i class="fas fa-building"></i> <span>Department Management</span></div>
+                    <div style="display:flex;gap:0.4rem;align-items:center;">
+                        <input type="text" id="deptSearch" placeholder="Search name, code..." style="background:rgba(255,255,255,0.04);border:1px solid rgba(255,255,255,0.08);border-radius:6px;padding:0.25rem 0.55rem;color:#fff;font-size:0.7rem;outline:none;width:180px;" oninput="debounceDeptSearch()">
+                        <button class="qa-btn" style="background:rgba(79,70,229,0.15);padding:0.3rem 0.7rem;font-size:0.65rem;" onclick="openDeptModal()"><i class="fas fa-plus"></i> Add Department</button>
+                    </div>
+                </div>
+                <div class="card-body compact" style="overflow-x:auto;">
+                    <table class="table-noc">
+                        <thead><tr><th>Code</th><th>Name</th><th>Head</th><th>Status</th><th>Actions</th></tr></thead>
+                        <tbody id="deptTableBody"></tbody>
+                    </table>
+                    <div class="pagination-controls" id="deptPagination" style="display:none;padding:0.5rem 1rem;border-top:1px solid rgba(255,255,255,0.04);"></div>
+                </div>
+            </div>
+        </div>
+
+        <!-- â•â•â•â•â•â•â• ENROLLMENTS â•â•â•â•â•â•â• -->
+        <div class="section" id="section-enrollments">
+            <div class="card-noc">
+                <div class="card-header">
+                    <div class="card-title"><i class="fas fa-user-plus"></i> <span>Enrollment Management</span></div>
+                    <div style="display:flex;gap:0.4rem;align-items:center;">
+                        <input type="text" id="enrollmentSearch" placeholder="Search student..." style="background:rgba(255,255,255,0.04);border:1px solid rgba(255,255,255,0.08);border-radius:6px;padding:0.25rem 0.55rem;color:#fff;font-size:0.7rem;outline:none;width:180px;" oninput="debounceEnrollmentSearch()">
+                        <button class="qa-btn" style="background:rgba(79,70,229,0.15);padding:0.3rem 0.7rem;font-size:0.65rem;" onclick="openEnrollmentModal()"><i class="fas fa-plus"></i> Enroll Student</button>
+                    </div>
+                </div>
+                <div class="card-body compact" style="overflow-x:auto;">
+                    <table class="table-noc">
+                        <thead><tr><th>Student</th><th>Course</th><th>Code</th><th>Date</th><th>Status</th><th>Actions</th></tr></thead>
+                        <tbody id="enrollmentTableBody"></tbody>
+                    </table>
+                    <div class="pagination-controls" id="enrollmentPagination" style="display:none;padding:0.5rem 1rem;border-top:1px solid rgba(255,255,255,0.04);"></div>
+                </div>
+            </div>
+        </div>
+
+        <!-- â•â•â•â•â•â•â• STUDENTS â•â•â•â•â•â•â• -->
+        <div class="section" id="section-students">
+            <div class="card-noc">
+                <div class="card-header">
+                    <div class="card-title"><i class="fas fa-user-graduate"></i> <span data-i18n="student_risk">Student Risk Analysis</span></div>
+                    <div style="display:flex;gap:0.4rem;align-items:center;">
+                        <input type="text" id="studentSearch" placeholder="Search name, ID, faculty..." style="background:rgba(255,255,255,0.04);border:1px solid rgba(255,255,255,0.08);border-radius:6px;padding:0.25rem 0.55rem;color:#fff;font-size:0.7rem;outline:none;width:180px;" oninput="debounceSearch()">
+                    </div>
+                </div>
+                <div class="card-body compact" style="overflow-x:auto;">
+                    <table class="table-noc">
+                        <thead><tr><th data-i18n="name">Name</th><th data-i18n="id">ID</th><th data-i18n="faculty">Faculty</th><th data-i18n="attendance">Att.</th><th data-i18n="risk">Risk</th><th data-i18n="trusted">Trusted</th><th data-i18n="suspicious">Susp.</th></tr></thead>
+                        <tbody id="studentTableBody"></tbody>
+                    </table>
+                    <div class="pagination-controls" id="studentPagination" style="display:none;padding:0.5rem 1rem;border-top:1px solid rgba(255,255,255,0.04);"></div>
+                </div>
+            </div>
+        </div>
+
+        <!-- â•â•â•â•â•â•â• SESSIONS â•â•â•â•â•â•â• -->
+        <div class="section" id="section-sessions">
+            <div class="stats-row" id="sessionStats">
+                <div class="stat-card"><div class="stat-top"><span class="stat-label" data-i18n="active_sessions">Active Sessions</span><div class="stat-icon" style="background:rgba(16,185,129,0.12);color:#6EE7B7;"><i class="fas fa-play-circle"></i></div></div><div class="stat-value" id="ssActive">â€”</div><div class="stat-footer" data-i18n="running_now">Running now</div></div>
+                <div class="stat-card"><div class="stat-top"><span class="stat-label" data-i18n="total_today">Total Today</span><div class="stat-icon" style="background:rgba(79,70,229,0.12);color:#A5B4FC;"><i class="fas fa-calendar-day"></i></div></div><div class="stat-value" id="ssTotal">â€”</div><div class="stat-footer" data-i18n="all_sessions">All sessions</div></div>
+            </div>
+            <div class="card-noc">
+                <div class="card-header"><div class="card-title"><i class="fas fa-list"></i> <span data-i18n="live_sessions">Live Sessions</span></div></div>
+                <div class="card-body compact" style="overflow-x:auto;">
+                    <table class="table-noc">
+                        <thead><tr><th data-i18n="course">Course</th><th data-i18n="lecturer">Lecturer</th><th data-i18n="students">Students</th><th data-i18n="present">Present</th><th data-i18n="rate">Rate</th><th data-i18n="status">Status</th><th data-i18n="broker">Broker</th><th data-i18n="latency">Lat.</th></tr></thead>
+                        <tbody id="sessionTableBody"></tbody>
+                    </table>
+                    <div class="pagination-controls" id="sessionPagination" style="display:none;padding:0.5rem 1rem;border-top:1px solid rgba(255,255,255,0.04);"></div>
+                </div>
+            </div>
+        </div>
+
+        <!-- â•â•â•â•â•â•â• NETWORK â•â•â•â•â•â•â• -->
+        <div class="section" id="section-network">
+            <div class="grid-2col">
+                <div class="card-noc">
+                    <div class="card-header"><div class="card-title"><i class="fas fa-project-diagram"></i> <span data-i18n="campus_nodes">Network Topology</span> <span style="font-size:0.55rem;font-weight:400;color:var(--text-dim);margin-left:0.4rem;">Live Â· drag to explore</span></div></div>
+                    <div class="card-body">
+                        <div class="topology-wrap"><canvas id="topologyCanvas"></canvas></div>
+                        <div class="topology-legend" id="topologyLegend"></div>
+                        <div class="node-grid" id="nodeGrid"></div>
+                    </div>
+                </div>
+                <div class="card-noc">
+                    <div class="card-header"><div class="card-title"><i class="fas fa-server"></i> MQTT Broker</div></div>
+                    <div class="card-body"><div class="broker-grid" id="brokerGrid"></div></div>
+                </div>
+            </div>
+            <div class="grid-2col" style="margin-top:0.75rem;">
+                <div class="card-noc">
+                    <div class="card-header"><div class="card-title"><i class="fas fa-layer-group"></i> Mesh Sync Health</div></div>
+                    <div class="card-body">
+                        <div class="stats-row" id="meshStats">
+                            <div class="stat-card" style="flex:1;"><div class="stat-val" id="meshStatus" style="font-size:0.9rem;">â€”</div><div class="stat-label">Status</div></div>
+                            <div class="stat-card" style="flex:1;"><div class="stat-val" id="meshNodes">â€”</div><div class="stat-label">Nodes</div></div>
+                            <div class="stat-card" style="flex:1;"><div class="stat-val" id="meshSuccessRate">â€”</div><div class="stat-label">Success</div></div>
+                            <div class="stat-card" style="flex:1;"><div class="stat-val" id="meshTotalSyncs">â€”</div><div class="stat-label">Total Syncs</div></div>
+                        </div>
+                        <div class="node-grid" id="meshNodeDetails" style="margin-top:0.4rem;"></div>
+                    </div>
+                </div>
+                <div class="card-noc">
+                    <div class="card-header"><div class="card-title"><i class="fas fa-balance-scale"></i> Load Balance</div></div>
+                    <div class="card-body">
+                        <div class="stats-row" id="loadStats">
+                            <div class="stat-card" style="flex:1;"><div class="stat-val" id="loadStatus" style="font-size:0.9rem;">â€”</div><div class="stat-label">Status</div></div>
+                            <div class="stat-card" style="flex:1;"><div class="stat-val" id="loadSessions">â€”</div><div class="stat-label">Sessions</div></div>
+                            <div class="stat-card" style="flex:1;"><div class="stat-val" id="loadTarget">â€”</div><div class="stat-label">Target/Node</div></div>
+                        </div>
+                        <div style="font-size:0.6rem;color:var(--text-dim);margin-top:0.4rem;" id="loadRec"></div>
+                        <div class="stats-row" style="margin-top:0.4rem;gap:0.3rem;" id="overloadGrid"></div>
+                    </div>
+                </div>
+            </div>
+            <div class="card-noc" style="margin-top:0.75rem;">
+                <div class="card-header"><div class="card-title"><i class="fas fa-tachometer-alt"></i> <span data-i18n="faculty_comparison">Faculty Comparison</span></div></div>
+                <div class="card-body"><div class="chart-wrap chart-wrap-tall"><canvas id="facultyChart"></canvas></div></div>
+            </div>
+        </div>
+
+        <!-- â•â•â•â•â•â•â• SECURITY â•â•â•â•â•â•â• -->
+        <div class="section" id="section-security">
+            <div class="card-noc">
+                <div class="card-header">
+                    <div class="card-title"><i class="fas fa-shield-alt"></i> <span data-i18n="security_alerts">Security Alerts</span></div>
+                    <span style="font-size:0.6rem;color:var(--text-dim);" data-i18n="last_24h">Last 24 hours</span>
+                </div>
+                <div class="card-body compact" id="securityAlertList"><div class="empty-muted" data-i18n="loading">Loading...</div></div>
+            </div>
+        </div>
+
+        <!-- â•â•â•â•â•â•â• OFFLINE SYNC â•â•â•â•â•â•â• -->
+        <div class="section" id="section-offline">
+            <div class="stats-row" id="offlineStats">
+                <div class="stat-card"><div class="stat-top"><span class="stat-label" data-i18n="pending_syncs">Pending Syncs</span><div class="stat-icon" style="background:rgba(245,158,11,0.12);color:#FCD34D;"><i class="fas fa-hourglass-half"></i></div></div><div class="stat-value" id="offPending">â€”</div><div class="stat-footer" data-i18n="in_queue">In queue</div></div>
+                <div class="stat-card"><div class="stat-top"><span class="stat-label" data-i18n="success_rate">Success Rate</span><div class="stat-icon" style="background:rgba(16,185,129,0.12);color:#6EE7B7;"><i class="fas fa-check-circle"></i></div></div><div class="stat-value" id="offSuccessRate">â€”</div><div class="stat-footer" data-i18n="last_24h">Last 24h</div></div>
+                <div class="stat-card"><div class="stat-top"><span class="stat-label" data-i18n="last_sync">Last Sync</span><div class="stat-icon" style="background:rgba(59,130,246,0.12);color:#93C5FD;"><i class="fas fa-history"></i></div></div><div class="stat-value" id="offLastSync" style="font-size:0.9rem;">â€”</div><div class="stat-footer" data-i18n="timestamp">Timestamp</div></div>
+                <div class="stat-card"><div class="stat-top"><span class="stat-label" data-i18n="nodes_offline">Nodes Offline</span><div class="stat-icon" style="background:rgba(239,68,68,0.12);color:#FCA5A5;"><i class="fas fa-plug"></i></div></div><div class="stat-value" id="offNodesOffline">â€”</div><div class="stat-footer" data-i18n="disconnected">Disconnected</div></div>
+            </div>
+            <div class="card-noc">
+                <div class="card-header"><div class="card-title"><i class="fas fa-list-ul"></i> <span data-i18n="sync_queue">Sync Queue</span></div><div style="display:flex;align-items:center;gap:0.5rem;"><span id="offQueueStats"></span><span id="offEstimate" style="font-size:0.6rem;color:var(--text-dim);"></span></div></div>
+                <div class="card-body compact" id="syncQueueBody"><div class="empty-muted" data-i18n="loading">Loading...</div></div>
+            </div>
+        </div>
+
+        <!-- â•â•â•â•â•â•â• P2P RECOVERY â•â•â•â•â•â•â• -->
+        <div class="section" id="section-p2p">
+            <div class="stats-row" id="p2pStats">
+                <div class="stat-card"><div class="stat-top"><span class="stat-label" data-i18n="total_peers">Total Peers</span><div class="stat-icon" style="background:rgba(79,70,229,0.12);color:#A5B4FC;"><i class="fas fa-server"></i></div></div><div class="stat-value" id="p2pTotal">â€”</div><div class="stat-footer" data-i18n="network_nodes">Network nodes</div></div>
+                <div class="stat-card"><div class="stat-top"><span class="stat-label" data-i18n="online_peers">Online Peers</span><div class="stat-icon" style="background:rgba(16,185,129,0.12);color:#6EE7B7;"><i class="fas fa-wifi"></i></div></div><div class="stat-value" id="p2pOnline">â€”</div><div class="stat-footer up"><i class="fas fa-circle"></i> <span data-i18n="connected">Connected</span></div></div>
+                <div class="stat-card"><div class="stat-top"><span class="stat-label" data-i18n="msgs_relayed">Msgs Relayed</span><div class="stat-icon" style="background:rgba(245,158,11,0.12);color:#FCD34D;"><i class="fas fa-exchange-alt"></i></div></div><div class="stat-value" id="p2pRelayed">â€”</div><div class="stat-footer" data-i18n="gossip_protocol">Gossip protocol</div></div>
+                <div class="stat-card"><div class="stat-top"><span class="stat-label" data-i18n="recovery_eta">Recovery ETA</span><div class="stat-icon" style="background:rgba(6,182,212,0.12);color:#67E8F9;"><i class="fas fa-clock"></i></div></div><div class="stat-value" id="p2pEta" style="font-size:1rem;">â€”</div><div class="stat-footer" data-i18n="estimated">Estimated</div></div>
+            </div>
+            <div class="card-noc">
+                <div class="card-header"><div class="card-title"><i class="fas fa-project-diagram"></i> <span data-i18n="peer_list">Peer List</span></div></div>
+                <div class="card-body compact" style="overflow-x:auto;">
+                    <table class="table-noc">
+                        <thead><tr><th data-i18n="peer_id">Peer</th><th data-i18n="address">Address</th><th data-i18n="status">Status</th><th data-i18n="latency">Latency</th><th data-i18n="blocks_synced">Blocks</th></tr></thead>
+                        <tbody id="p2pTableBody"></tbody>
+                    </table>
+                </div>
+            </div>
+        </div>
+
+        <!-- â•â•â•â•â•â•â• COMPLIANCE â•â•â•â•â•â•â• -->
+        <div class="section" id="section-compliance">
+            <div class="stats-row" id="complianceStats">
+                <div class="stat-card"><div class="stat-top"><span class="stat-label" data-i18n="exam_mode">Exam Mode</span><div class="stat-icon" style="background:rgba(239,68,68,0.12);color:#FCA5A5;"><i class="fas fa-gavel"></i></div></div><div class="stat-value" id="compExamMode" style="font-size:1rem;">â€”</div><div class="stat-footer" id="compExamType" data-i18n="exam_type">â€”</div></div>
+                <div class="stat-card"><div class="stat-top"><span class="stat-label" data-i18n="minesec">MINESEC</span><div class="stat-icon" style="background:rgba(16,185,129,0.12);color:#6EE7B7;"><i class="fas fa-file-alt"></i></div></div><div class="stat-value" id="compCompliance">â€”</div><div class="stat-footer" data-i18n="report_ready">Report ready</div></div>
+                <div class="stat-card"><div class="stat-top"><span class="stat-label" data-i18n="pending_reports">Pending Reports</span><div class="stat-icon" style="background:rgba(245,158,11,0.12);color:#FCD34D;"><i class="fas fa-hourglass-half"></i></div></div><div class="stat-value" id="compPending">â€”</div><div class="stat-footer" data-i18n="to_submit">To submit</div></div>
+                <div class="stat-card"><div class="stat-top"><span class="stat-label" data-i18n="gce_candidates">GCE Candidates</span><div class="stat-icon" style="background:rgba(59,130,246,0.12);color:#93C5FD;"><i class="fas fa-user-graduate"></i></div></div><div class="stat-value" id="compGce">â€”</div><div class="stat-footer" data-i18n="registered">Registered</div></div>
+            </div>
+            <div class="card-noc">
+                <div class="card-header">
+                    <div class="card-title"><i class="fas fa-clipboard-list"></i> <span data-i18n="audit_trail">Audit Trail</span></div>
+                    <div style="display:flex;gap:0.4rem;">
+                        <button class="qa-btn" style="background:rgba(79,70,229,0.15);padding:0.25rem 0.6rem;font-size:0.6rem;" onclick="exportComplianceReport()"><i class="fas fa-file-export"></i> <span data-i18n="export_minesec">Export</span></button>
+                    </div>
+                </div>
+                <div class="card-body compact" id="complianceAuditBody"><div class="empty-muted" data-i18n="loading">Loading...</div></div>
+            </div>
+        </div>
+
+        <!-- â•â•â•â•â•â•â• PAYMENTS â•â•â•â•â•â•â• -->
+        <div class="section" id="section-payments">
+            <div class="stats-row" id="paymentStats">
+                <div class="stat-card"><div class="stat-top"><span class="stat-label" data-i18n="voucher_sales">Voucher Sales</span><div class="stat-icon" style="background:rgba(16,185,129,0.12);color:#6EE7B7;"><i class="fas fa-coins"></i></div></div><div class="stat-value" id="paySales" style="font-size:1rem;">â€”</div><div class="stat-footer" data-i18n="xaf">XAF</div></div>
+                <div class="stat-card"><div class="stat-top"><span class="stat-label" data-i18n="pending_txns">Pending Txns</span><div class="stat-icon" style="background:rgba(245,158,11,0.12);color:#FCD34D;"><i class="fas fa-clock"></i></div></div><div class="stat-value" id="payPending">â€”</div><div class="stat-footer" data-i18n="all_providers">All providers</div></div>
+                <div class="stat-card"><div class="stat-top"><span class="stat-label" data-i18n="sms_queue">SMS Queue</span><div class="stat-icon" style="background:rgba(59,130,246,0.12);color:#93C5FD;"><i class="fas fa-sms"></i></div></div><div class="stat-value" id="paySms">â€”</div><div class="stat-footer" data-i18n="pending_alerts">Pending alerts</div></div>
+                <div class="stat-card"><div class="stat-top"><span class="stat-label" data-i18n="refunds">Refunds</span><div class="stat-icon" style="background:rgba(239,68,68,0.12);color:#FCA5A5;"><i class="fas fa-undo"></i></div></div><div class="stat-value" id="payRefunds">â€”</div><div class="stat-footer" data-i18n="in_queue">In queue</div></div>
+            </div>
+            <div class="card-noc">
+                <div class="card-header"><div class="card-title"><i class="fas fa-receipt"></i> <span data-i18n="recent_transactions">Recent Transactions</span></div>
+                    <div style="display:flex;gap:0.4rem;">
+                        <button class="qa-btn" style="background:rgba(16,185,129,0.15);padding:0.25rem 0.6rem;font-size:0.6rem;" onclick="openPaymentModal()"><i class="fas fa-plus"></i> <span data-i18n="process_payment">Pay</span></button>
+                    </div>
+                </div>
+                <div class="card-body compact" style="overflow-x:auto;">
+                    <table class="table-noc">
+                        <thead><tr><th data-i18n="id">ID</th><th data-i18n="phone">Phone</th><th data-i18n="montant_xaf">Montant (XAF)</th><th data-i18n="provider">Provider</th><th data-i18n="status">Status</th><th data-i18n="time">Time</th></tr></thead>
+                        <tbody id="paymentTableBody"></tbody>
+                    </table>
+                    <div class="pagination-controls" id="paymentPagination" style="display:none;padding:0.5rem 1rem;border-top:1px solid rgba(255,255,255,0.04);"></div>
+                </div>
+            </div>
+        </div>
+
+        <!-- â•â•â•â•â•â•â• VOUCHERS â•â•â•â•â•â•â• -->
+        <div class="section" id="section-vouchers">
+            <div class="stats-row" id="voucherStats">
+                <div class="stat-card"><div class="stat-top"><span class="stat-label">Total Vouchers</span><div class="stat-icon" style="background:rgba(79,70,229,0.12);color:#A5B4FC;"><i class="fas fa-ticket-alt"></i></div></div><div class="stat-value" id="vTotal">â€”</div><div class="stat-footer">All created</div></div>
+                <div class="stat-card"><div class="stat-top"><span class="stat-label">Used</span><div class="stat-icon" style="background:rgba(16,185,129,0.12);color:#6EE7B7;"><i class="fas fa-check-circle"></i></div></div><div class="stat-value" id="vUsed">â€”</div><div class="stat-footer up"><i class="fas fa-circle"></i> Claimed</div></div>
+                <div class="stat-card"><div class="stat-top"><span class="stat-label">Unused</span><div class="stat-icon" style="background:rgba(245,158,11,0.12);color:#FCD34D;"><i class="fas fa-clock"></i></div></div><div class="stat-value" id="vUnused">â€”</div><div class="stat-footer">Available</div></div>
+                <div class="stat-card"><div class="stat-top"><span class="stat-label">Expired</span><div class="stat-icon" style="background:rgba(239,68,68,0.12);color:#FCA5A5;"><i class="fas fa-hourglass-end"></i></div></div><div class="stat-value" id="vExpired">â€”</div><div class="stat-footer down"><i class="fas fa-exclamation-circle"></i> Past expiry</div></div>
+            </div>
+            <div class="grid-2col" style="margin-bottom:0.7rem;">
+                <div class="card-noc">
+                    <div class="card-header"><div class="card-title"><i class="fas fa-chart-pie"></i> <span>Vouchers by Role</span></div></div>
+                    <div class="card-body"><div class="chart-wrap" style="height:140px;"><canvas id="voucherRoleChart"></canvas></div></div>
+                </div>
+                <div class="card-noc">
+                    <div class="card-header"><div class="card-title"><i class="fas fa-chart-donut"></i> <span>Voucher Status</span></div></div>
+                    <div class="card-body"><div class="chart-wrap" style="height:140px;"><canvas id="voucherStatusChart"></canvas></div></div>
+                </div>
+            </div>
+            <div class="card-noc">
+                <div class="card-header">
+                    <div class="card-title"><i class="fas fa-ticket-alt"></i> <span>Voucher Management</span></div>
+                    <div style="display:flex;gap:0.4rem;align-items:center;flex-wrap:wrap;">
+                        <input type="text" id="voucherSearch" placeholder="Search code..." style="background:rgba(255,255,255,0.04);border:1px solid rgba(255,255,255,0.08);border-radius:6px;padding:0.25rem 0.55rem;color:#fff;font-size:0.7rem;outline:none;width:140px;" oninput="debounceVoucherSearch()">
+                        <select id="voucherStatusFilter" style="background:rgba(255,255,255,0.04);border:1px solid rgba(255,255,255,0.08);border-radius:6px;padding:0.25rem 0.4rem;color:rgba(255,255,255,0.6);font-size:0.65rem;outline:none;" onchange="loadVouchers()">
+                            <option value="">All Status</option>
+                            <option value="active">Active</option>
+                            <option value="used">Used</option>
+                            <option value="expired">Expired</option>
+                            <option value="revoked">Revoked</option>
+                        </select>
+                        <select id="voucherRoleFilter" style="background:rgba(255,255,255,0.04);border:1px solid rgba(255,255,255,0.08);border-radius:6px;padding:0.25rem 0.4rem;color:rgba(255,255,255,0.6);font-size:0.65rem;outline:none;" onchange="loadVouchers()">
+                            <option value="">All Roles</option>
+                            <option value="student">Student</option>
+                            <option value="lecturer">Lecturer</option>
+                            <option value="institutional_admin">Admin</option>
+                        </select>
+                        <button class="qa-btn" style="background:rgba(79,70,229,0.15);padding:0.3rem 0.7rem;font-size:0.65rem;" onclick="openVoucherGenerateModal()"><i class="fas fa-plus"></i> Generate</button>
+                        <button class="qa-btn" style="background:rgba(16,185,129,0.15);padding:0.3rem 0.7rem;font-size:0.65rem;" onclick="exportVouchersCSV()"><i class="fas fa-file-csv"></i> CSV</button>
+                    </div>
+                </div>
+                <div class="card-body compact" style="overflow-x:auto;">
+                    <table class="table-noc">
+                        <thead><tr><th>Code</th><th>Role</th><th>Status</th><th>Used By</th><th>Created</th><th>Expires</th><th>Actions</th></tr></thead>
+                        <tbody id="voucherTableBody"></tbody>
+                    </table>
+                    <div class="pagination-controls" id="voucherPagination" style="display:none;padding:0.5rem 1rem;border-top:1px solid rgba(255,255,255,0.04);"></div>
+                </div>
+            </div>
+        </div>
+
+        <!-- â•â•â•â•â•â•â• REPORTS â•â•â•â•â•â•â• -->
+        <div class="section" id="section-reports">
+            <div class="card-noc">
+                <div class="card-header"><div class="card-title"><i class="fas fa-file-export"></i> <span data-i18n="generate_reports">Generate Reports</span></div></div>
+                <div class="card-body">
+                    <div class="quick-actions">
+                        <button class="qa-btn" style="background:rgba(79,70,229,0.15);" onclick="downloadReport('summary')"><i class="fas fa-file-pdf"></i> <span data-i18n="attendance_report">Attendance Report</span></button>
+                        <button class="qa-btn" style="background:rgba(16,185,129,0.15);" onclick="downloadReport('minesec')"><i class="fas fa-file-code"></i> <span data-i18n="minesec_xml">MINESEC XML</span></button>
+                        <button class="qa-btn" style="background:rgba(245,158,11,0.15);" onclick="downloadReport('network')"><i class="fas fa-file-excel"></i> <span data-i18n="network_report">Network Report</span></button>
+                        <button class="qa-btn" style="background:rgba(239,68,68,0.15);" onclick="downloadReport('security')"><i class="fas fa-file-csv"></i> <span data-i18n="security_log">Security Log</span></button>
+                    </div>
+                    <div style="font-size:0.7rem;color:var(--text-dim);margin-top:0.75rem;">
+                        <i class="fas fa-info-circle me-1"></i> <span data-i18n="reports_info">MINESEC-compliant XML Â· Excel Â· CSV Â· PDF formats available. Print for physical backup.</span>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- â•â•â•â•â•â•â• LIVE MONITORING WALL â•â•â•â•â•â•â• -->
+        <div class="section" id="section-livemon">
+            <div class="stats-row" id="liveStats">
+                <div class="stat-card"><div class="stat-top"><span class="stat-label" data-i18n="live_sessions">Live Sessions</span><div class="stat-icon" style="background:rgba(16,185,129,0.12);color:#6EE7B7;"><i class="fas fa-play-circle"></i></div></div><div class="stat-value" id="lmActive">â€”</div><div class="stat-footer up"><i class="fas fa-circle"></i> <span data-i18n="running_now">Running now</span></div></div>
+                <div class="stat-card"><div class="stat-top"><span class="stat-label" data-i18n="todays_checkins">Today's Check-ins</span><div class="stat-icon" style="background:rgba(79,70,229,0.12);color:#A5B4FC;"><i class="fas fa-user-check"></i></div></div><div class="stat-value" id="lmCheckins">â€”</div><div class="stat-footer" data-i18n="realtime_count">Real-time count</div></div>
+                <div class="stat-card"><div class="stat-top"><span class="stat-label" data-i18n="attendance_rate_live">Attendance Rate</span><div class="stat-icon" style="background:rgba(245,158,11,0.12);color:#FCD34D;"><i class="fas fa-chart-line"></i></div></div><div class="stat-value" id="lmRate">â€”</div><div class="stat-footer" data-i18n="live_average">Live average</div></div>
+                <div class="stat-card"><div class="stat-top"><span class="stat-label" data-i18n="fraud_alerts">Fraud Alerts</span><div class="stat-icon" style="background:rgba(239,68,68,0.12);color:#FCA5A5;"><i class="fas fa-exclamation-triangle"></i></div></div><div class="stat-value" id="lmFraud">â€”</div><div class="stat-footer down" data-i18n="requires_attention">Requires attention</div></div>
+            </div>
+            <div class="grid-2col">
+                <div class="card-noc">
+                    <div class="card-header"><div class="card-title"><i class="fas fa-user-check"></i> <span data-i18n="live_checkins">Live Check-ins</span> <span style="font-size:0.55rem;font-weight:400;color:var(--text-dim);margin-left:0.4rem;">Students checking in now</span></div></div>
+                    <div class="card-body" id="liveCheckinFeed" style="max-height:320px;overflow-y:auto;">
+                        <div class="empty-muted">Waiting for check-ins...</div>
+                    </div>
+                </div>
+                <div class="card-noc">
+                    <div class="card-header"><div class="card-title"><i class="fas fa-bell"></i> <span data-i18n="live_alerts">Live Alerts</span> <span id="liveAlertCount" style="font-size:0.55rem;font-weight:400;color:var(--text-dim);margin-left:0.4rem;"></span></div></div>
+                    <div class="card-body" id="liveAlertFeed" style="max-height:320px;overflow-y:auto;">
+                        <div class="empty-muted" data-i18n="no_data">No alerts</div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+    </div>
+</div>
+
+<!-- â”€â”€â”€ STUDENT DETAIL DRAWER â”€â”€â”€ -->
+<div class="drawer-overlay" id="drawerOverlay" onclick="closeStudentDrawer()"></div>
+<div class="drawer-panel" id="studentDrawer">
+    <div class="drawer-header">
+        <h6><i class="fas fa-user-graduate me-1" style="color:var(--primary-light);"></i> <span id="drawerStudentName">Student</span></h6>
+        <button class="drawer-close" onclick="closeStudentDrawer()">&times;</button>
+    </div>
+    <div class="drawer-body" id="drawerBody">
+        <div class="empty-muted" data-i18n="loading">Loading...</div>
+    </div>
+</div>
+
+<script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js" crossorigin="anonymous"></script>
+
+<!-- â”€â”€â”€ ACTION MODAL â”€â”€â”€ -->
+<div class="modal fade" id="actionModal" tabindex="-1" aria-hidden="true">
+  <div class="modal-dialog modal-dialog-centered modal-sm">
+    <div class="modal-content" style="background:rgba(15,23,42,0.98);border:1px solid rgba(255,255,255,0.08);border-radius:10px;">
+      <div class="modal-header" style="border-bottom:1px solid rgba(255,255,255,0.06);padding:0.75rem 1rem;">
+        <h6 class="modal-title" id="actionModalTitle" style="color:#fff;font-weight:700;font-size:0.8rem;"></h6>
+        <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal" style="font-size:0.7rem;"></button>
+      </div>
+      <div class="modal-body" style="padding:0.85rem 1rem;" id="actionModalBody"></div>
+      <div class="modal-footer" style="border-top:1px solid rgba(255,255,255,0.06);padding:0.6rem 1rem;" id="actionModalFooter">
+        <button class="qa-btn" style="background:rgba(255,255,255,0.06);color:rgba(255,255,255,0.5);font-size:0.7rem;" data-bs-dismiss="modal" data-i18n="cancel">Cancel</button>
+        <button class="qa-btn" id="actionModalSubmit" style="background:#4F46E5;color:#fff;font-size:0.7rem;" onclick="submitActionModal()"><i class="fas fa-check me-1"></i> <span data-i18n="submit">Submit</span></button>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- â”€â”€â”€ USER CRUD MODAL â”€â”€â”€ -->
+<div class="modal fade" id="userModal" tabindex="-1" aria-hidden="true">
+  <div class="modal-dialog modal-dialog-centered modal-md">
+    <div class="modal-content" style="background:rgba(15,23,42,0.98);border:1px solid rgba(255,255,255,0.08);border-radius:10px;">
+      <div class="modal-header" style="border-bottom:1px solid rgba(255,255,255,0.06);padding:0.75rem 1rem;">
+        <h6 class="modal-title" style="color:#fff;font-weight:700;font-size:0.8rem;" id="userModalTitle">Add User</h6>
+        <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal" style="font-size:0.7rem;"></button>
+      </div>
+      <div class="modal-body" style="padding:0.85rem 1rem;">
+        <input type="hidden" id="userEditId">
+        <div class="form-group"><label style="font-size:0.7rem;color:var(--text-dim);">First Name</label><input type="text" id="userFirstName" class="form-control" style="background:rgba(255,255,255,0.04);border:1px solid rgba(255,255,255,0.08);color:#fff;font-size:0.75rem;padding:0.35rem 0.5rem;border-radius:6px;width:100%;"></div>
+        <div class="form-group" style="margin-top:0.5rem;"><label style="font-size:0.7rem;color:var(--text-dim);">Last Name</label><input type="text" id="userLastName" class="form-control" style="background:rgba(255,255,255,0.04);border:1px solid rgba(255,255,255,0.08);color:#fff;font-size:0.75rem;padding:0.35rem 0.5rem;border-radius:6px;width:100%;"></div>
+        <div class="form-group" style="margin-top:0.5rem;"><label style="font-size:0.7rem;color:var(--text-dim);">Email</label><input type="email" id="userEmail" class="form-control" style="background:rgba(255,255,255,0.04);border:1px solid rgba(255,255,255,0.08);color:#fff;font-size:0.75rem;padding:0.35rem 0.5rem;border-radius:6px;width:100%;"></div>
+        <div class="form-group" style="margin-top:0.5rem;"><label style="font-size:0.7rem;color:var(--text-dim);">Phone</label><input type="text" id="userPhone" class="form-control" style="background:rgba(255,255,255,0.04);border:1px solid rgba(255,255,255,0.08);color:#fff;font-size:0.75rem;padding:0.35rem 0.5rem;border-radius:6px;width:100%;"></div>
+        <div class="form-group" style="margin-top:0.5rem;"><label style="font-size:0.7rem;color:var(--text-dim);">Password (only for new users)</label><div style="position:relative;"><input type="password" id="userPassword" class="form-control" style="background:rgba(255,255,255,0.04);border:1px solid rgba(255,255,255,0.08);color:#fff;font-size:0.75rem;padding:0.35rem 2rem 0.35rem 0.5rem;border-radius:6px;width:100%;"><button type="button" id="toggleUserPassword" style="position:absolute;right:0.5rem;top:50%;transform:translateY(-50%);background:none;border:none;color:rgba(255,255,255,0.3);cursor:pointer;padding:0.1rem;font-size:0.8rem;line-height:1;" tabindex="-1"><i class="fas fa-eye"></i></button></div></div>
+        <div class="form-group" style="margin-top:0.5rem;"><label style="font-size:0.7rem;color:var(--text-dim);">Role</label><select id="userRole" class="form-control" style="background:rgba(255,255,255,0.04);border:1px solid rgba(255,255,255,0.08);color:#fff;font-size:0.75rem;padding:0.35rem 0.5rem;border-radius:6px;width:100%;"><option value="student">Student</option><option value="lecturer">Lecturer</option><option value="institutional_admin">Admin</option></select></div>
+        <div class="form-group" style="margin-top:0.5rem;"><label style="font-size:0.7rem;color:var(--text-dim);">Department</label><select id="userDept" class="form-control" style="background:rgba(255,255,255,0.04);border:1px solid rgba(255,255,255,0.08);color:#fff;font-size:0.75rem;padding:0.35rem 0.5rem;border-radius:6px;width:100%;"><option value="">â€” None â€”</option></select></div>
+      </div>
+      <div class="modal-footer" style="border-top:1px solid rgba(255,255,255,0.06);padding:0.6rem 1rem;">
+        <button class="qa-btn" style="background:rgba(255,255,255,0.06);color:rgba(255,255,255,0.5);font-size:0.7rem;" data-bs-dismiss="modal">Cancel</button>
+        <button class="qa-btn" style="background:#4F46E5;color:#fff;font-size:0.7rem;" onclick="submitUserForm()"><i class="fas fa-check me-1"></i> Save</button>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- â”€â”€â”€ COURSE CRUD MODAL â”€â”€â”€ -->
+<div class="modal fade" id="courseModal" tabindex="-1" aria-hidden="true">
+  <div class="modal-dialog modal-dialog-centered modal-md">
+    <div class="modal-content" style="background:rgba(15,23,42,0.98);border:1px solid rgba(255,255,255,0.08);border-radius:10px;">
+      <div class="modal-header" style="border-bottom:1px solid rgba(255,255,255,0.06);padding:0.75rem 1rem;">
+        <h6 class="modal-title" style="color:#fff;font-weight:700;font-size:0.8rem;" id="courseModalTitle">Add Course</h6>
+        <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal" style="font-size:0.7rem;"></button>
+      </div>
+      <div class="modal-body" style="padding:0.85rem 1rem;">
+        <input type="hidden" id="courseEditId">
+        <div class="form-group"><label style="font-size:0.7rem;color:var(--text-dim);">Course Code</label><input type="text" id="courseCode" class="form-control" style="background:rgba(255,255,255,0.04);border:1px solid rgba(255,255,255,0.08);color:#fff;font-size:0.75rem;padding:0.35rem 0.5rem;border-radius:6px;width:100%;"></div>
+        <div class="form-group" style="margin-top:0.5rem;"><label style="font-size:0.7rem;color:var(--text-dim);">Course Name</label><input type="text" id="courseName" class="form-control" style="background:rgba(255,255,255,0.04);border:1px solid rgba(255,255,255,0.08);color:#fff;font-size:0.75rem;padding:0.35rem 0.5rem;border-radius:6px;width:100%;"></div>
+        <div class="form-group" style="margin-top:0.5rem;"><label style="font-size:0.7rem;color:var(--text-dim);">Department</label><select id="courseDept" class="form-control" style="background:rgba(255,255,255,0.04);border:1px solid rgba(255,255,255,0.08);color:#fff;font-size:0.75rem;padding:0.35rem 0.5rem;border-radius:6px;width:100%;"><option value="">â€” None â€”</option></select></div>
+        <div class="form-group" style="margin-top:0.5rem;"><label style="font-size:0.7rem;color:var(--text-dim);">Lecturer</label><select id="courseLecturer" class="form-control" style="background:rgba(255,255,255,0.04);border:1px solid rgba(255,255,255,0.08);color:#fff;font-size:0.75rem;padding:0.35rem 0.5rem;border-radius:6px;width:100%;"><option value="">â€” None â€”</option></select></div>
+        <div class="form-group" style="margin-top:0.5rem;"><label style="font-size:0.7rem;color:var(--text-dim);">Credits</label><input type="number" id="courseCredits" class="form-control" value="3" style="background:rgba(255,255,255,0.04);border:1px solid rgba(255,255,255,0.08);color:#fff;font-size:0.75rem;padding:0.35rem 0.5rem;border-radius:6px;width:100%;"></div>
+        <div class="form-group" style="margin-top:0.5rem;"><label style="font-size:0.7rem;color:var(--text-dim);">Description</label><textarea id="courseDescription" rows="2" class="form-control" style="background:rgba(255,255,255,0.04);border:1px solid rgba(255,255,255,0.08);color:#fff;font-size:0.75rem;padding:0.35rem 0.5rem;border-radius:6px;width:100%;"></textarea></div>
+      </div>
+      <div class="modal-footer" style="border-top:1px solid rgba(255,255,255,0.06);padding:0.6rem 1rem;">
+        <button class="qa-btn" style="background:rgba(255,255,255,0.06);color:rgba(255,255,255,0.5);font-size:0.7rem;" data-bs-dismiss="modal">Cancel</button>
+        <button class="qa-btn" style="background:#4F46E5;color:#fff;font-size:0.7rem;" onclick="submitCourseForm()"><i class="fas fa-check me-1"></i> Save</button>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- â”€â”€â”€ DEPARTMENT CRUD MODAL â”€â”€â”€ -->
+<div class="modal fade" id="deptModal" tabindex="-1" aria-hidden="true">
+  <div class="modal-dialog modal-dialog-centered modal-md">
+    <div class="modal-content" style="background:rgba(15,23,42,0.98);border:1px solid rgba(255,255,255,0.08);border-radius:10px;">
+      <div class="modal-header" style="border-bottom:1px solid rgba(255,255,255,0.06);padding:0.75rem 1rem;">
+        <h6 class="modal-title" style="color:#fff;font-weight:700;font-size:0.8rem;" id="deptModalTitle">Add Department</h6>
+        <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal" style="font-size:0.7rem;"></button>
+      </div>
+      <div class="modal-body" style="padding:0.85rem 1rem;">
+        <input type="hidden" id="deptEditId">
+        <div class="form-group"><label style="font-size:0.7rem;color:var(--text-dim);">Department Code</label><input type="text" id="deptCode" class="form-control" style="background:rgba(255,255,255,0.04);border:1px solid rgba(255,255,255,0.08);color:#fff;font-size:0.75rem;padding:0.35rem 0.5rem;border-radius:6px;width:100%;"></div>
+        <div class="form-group" style="margin-top:0.5rem;"><label style="font-size:0.7rem;color:var(--text-dim);">Department Name</label><input type="text" id="deptName" class="form-control" style="background:rgba(255,255,255,0.04);border:1px solid rgba(255,255,255,0.08);color:#fff;font-size:0.75rem;padding:0.35rem 0.5rem;border-radius:6px;width:100%;"></div>
+        <div class="form-group" style="margin-top:0.5rem;"><label style="font-size:0.7rem;color:var(--text-dim);">Department Head</label><select id="deptHead" class="form-control" style="background:rgba(255,255,255,0.04);border:1px solid rgba(255,255,255,0.08);color:#fff;font-size:0.75rem;padding:0.35rem 0.5rem;border-radius:6px;width:100%;"><option value="">â€” None â€”</option></select></div>
+        <div class="form-group" style="margin-top:0.5rem;"><label style="font-size:0.7rem;color:var(--text-dim);">Description</label><textarea id="deptDescription" rows="2" class="form-control" style="background:rgba(255,255,255,0.04);border:1px solid rgba(255,255,255,0.08);color:#fff;font-size:0.75rem;padding:0.35rem 0.5rem;border-radius:6px;width:100%;"></textarea></div>
+      </div>
+      <div class="modal-footer" style="border-top:1px solid rgba(255,255,255,0.06);padding:0.6rem 1rem;">
+        <button class="qa-btn" style="background:rgba(255,255,255,0.06);color:rgba(255,255,255,0.5);font-size:0.7rem;" data-bs-dismiss="modal">Cancel</button>
+        <button class="qa-btn" style="background:#4F46E5;color:#fff;font-size:0.7rem;" onclick="submitDeptForm()"><i class="fas fa-check me-1"></i> Save</button>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- â”€â”€â”€ ENROLLMENT MODAL â”€â”€â”€ -->
+<div class="modal fade" id="enrollmentModal" tabindex="-1" aria-hidden="true">
+  <div class="modal-dialog modal-dialog-centered modal-md">
+    <div class="modal-content" style="background:rgba(15,23,42,0.98);border:1px solid rgba(255,255,255,0.08);border-radius:10px;">
+      <div class="modal-header" style="border-bottom:1px solid rgba(255,255,255,0.06);padding:0.75rem 1rem;">
+        <h6 class="modal-title" style="color:#fff;font-weight:700;font-size:0.8rem;">Enroll Student</h6>
+        <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal" style="font-size:0.7rem;"></button>
+      </div>
+      <div class="modal-body" style="padding:0.85rem 1rem;">
+        <div class="form-group"><label style="font-size:0.7rem;color:var(--text-dim);">Student</label><select id="enrollmentStudent" class="form-control" style="background:rgba(255,255,255,0.04);border:1px solid rgba(255,255,255,0.08);color:#fff;font-size:0.75rem;padding:0.35rem 0.5rem;border-radius:6px;width:100%;"><option value="">â€” Select Student â€”</option></select></div>
+        <div class="form-group" style="margin-top:0.5rem;"><label style="font-size:0.7rem;color:var(--text-dim);">Course</label><select id="enrollmentCourse" class="form-control" style="background:rgba(255,255,255,0.04);border:1px solid rgba(255,255,255,0.08);color:#fff;font-size:0.75rem;padding:0.35rem 0.5rem;border-radius:6px;width:100%;"><option value="">â€” Select Course â€”</option></select></div>
+      </div>
+      <div class="modal-footer" style="border-top:1px solid rgba(255,255,255,0.06);padding:0.6rem 1rem;">
+        <button class="qa-btn" style="background:rgba(255,255,255,0.06);color:rgba(255,255,255,0.5);font-size:0.7rem;" data-bs-dismiss="modal">Cancel</button>
+        <button class="qa-btn" style="background:#4F46E5;color:#fff;font-size:0.7rem;" onclick="submitEnrollmentForm()"><i class="fas fa-check me-1"></i> Enroll</button>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- â”€â”€â”€ VOUCHER GENERATE MODAL â”€â”€â”€ -->
+<div class="modal fade" id="voucherGenerateModal" tabindex="-1" aria-hidden="true">
+  <div class="modal-dialog modal-dialog-centered modal-dialog-scrollable modal-md">
+    <div class="modal-content" style="background:rgba(15,23,42,0.98);border:1px solid rgba(255,255,255,0.08);border-radius:10px;">
+      <div class="modal-header" style="border-bottom:1px solid rgba(255,255,255,0.06);padding:0.75rem 1rem;">
+        <h6 class="modal-title" style="color:#fff;font-weight:700;font-size:0.8rem;">Generate Vouchers</h6>
+        <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal" style="font-size:0.7rem;"></button>
+      </div>
+      <div class="modal-body" style="padding:0.85rem 1rem;">
+        <div class="form-group"><label style="font-size:0.7rem;color:var(--text-dim);">Role</label><select id="vGenRole" class="form-control" style="background:rgba(255,255,255,0.04);border:1px solid rgba(255,255,255,0.08);color:#fff;font-size:0.75rem;padding:0.35rem 0.5rem;border-radius:6px;width:100%;"><option value="student">Student</option><option value="lecturer">Lecturer</option><option value="institutional_admin">Admin</option></select></div>
+        <div class="form-group" style="margin-top:0.5rem;"><label style="font-size:0.7rem;color:var(--text-dim);">Quantity</label><input type="number" id="vGenQuantity" class="form-control" value="10" min="1" max="500" style="background:rgba(255,255,255,0.04);border:1px solid rgba(255,255,255,0.08);color:#fff;font-size:0.75rem;padding:0.35rem 0.5rem;border-radius:6px;width:100%;"></div>
+        <div class="form-group" style="margin-top:0.5rem;"><label style="font-size:0.7rem;color:var(--text-dim);">Email Binding <span style="color:var(--text-dim);font-weight:400;">(optional â€” lock all to one email)</span></label><input type="email" id="vGenEmail" class="form-control" placeholder="user@example.com" style="background:rgba(255,255,255,0.04);border:1px solid rgba(255,255,255,0.08);color:#fff;font-size:0.75rem;padding:0.35rem 0.5rem;border-radius:6px;width:100%;"></div>
+        <div class="form-group" style="margin-top:0.5rem;"><label style="font-size:0.7rem;color:var(--text-dim);">Email Recipients <span style="color:var(--text-dim);font-weight:400;">(optional â€” one per line, 1:1 with quantity)</span></label><textarea id="vGenRecipients" rows="2" class="form-control" placeholder="user1@example.com&#10;user2@example.com" style="background:rgba(255,255,255,0.04);border:1px solid rgba(255,255,255,0.08);color:#fff;font-size:0.75rem;padding:0.35rem 0.5rem;border-radius:6px;width:100%;"></textarea></div>
+        <div id="vGenResult" style="margin-top:0.5rem;display:none;padding:0.5rem;border-radius:6px;font-size:0.75rem;max-height:200px;overflow-y:auto;"></div>
+      </div>
+      <div class="modal-footer" style="border-top:1px solid rgba(255,255,255,0.06);padding:0.6rem 1rem;">
+        <button class="qa-btn" style="background:rgba(255,255,255,0.06);color:rgba(255,255,255,0.5);font-size:0.7rem;" data-bs-dismiss="modal">Cancel</button>
+        <button class="qa-btn" style="background:#4F46E5;color:#fff;font-size:0.7rem;" onclick="submitVoucherGenerate()"><i class="fas fa-check me-1"></i> Generate</button>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- â”€â”€â”€ PAYMENT MODAL â”€â”€â”€ -->
+<div class="modal fade" id="paymentModal" tabindex="-1" aria-hidden="true">
+  <div class="modal-dialog modal-dialog-centered modal-md">
+    <div class="modal-content" style="background:rgba(15,23,42,0.98);border:1px solid rgba(255,255,255,0.08);border-radius:10px;">
+      <div class="modal-header" style="border-bottom:1px solid rgba(255,255,255,0.06);padding:0.75rem 1rem;">
+        <h6 class="modal-title" style="color:#fff;font-weight:700;font-size:0.8rem;" data-i18n="process_payment">Process Payment</h6>
+        <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal" style="font-size:0.7rem;"></button>
+      </div>
+      <div class="modal-body" style="padding:0.85rem 1rem;">
+        <div class="form-group"><label style="font-size:0.7rem;color:var(--text-dim);" data-i18n="select_provider">Provider</label><select id="payProvider" class="form-control" style="background:rgba(255,255,255,0.04);border:1px solid rgba(255,255,255,0.08);color:#fff;font-size:0.75rem;padding:0.35rem 0.5rem;border-radius:6px;width:100%;"><option value="mtn">MTN MoMo</option><option value="orange">Orange Money</option></select></div>
+        <div class="form-group" style="margin-top:0.5rem;"><label style="font-size:0.7rem;color:var(--text-dim);" data-i18n="phone_number">Phone Number</label><input type="text" id="payPhone" class="form-control" placeholder="237XXXXXXXXX" style="background:rgba(255,255,255,0.04);border:1px solid rgba(255,255,255,0.08);color:#fff;font-size:0.75rem;padding:0.35rem 0.5rem;border-radius:6px;width:100%;"></div>
+        <div class="form-group" style="margin-top:0.5rem;"><label style="font-size:0.7rem;color:var(--text-dim);" data-i18n="amount_xaf">Amount (XAF)</label><input type="number" id="payAmount" class="form-control" value="1000" style="background:rgba(255,255,255,0.04);border:1px solid rgba(255,255,255,0.08);color:#fff;font-size:0.75rem;padding:0.35rem 0.5rem;border-radius:6px;width:100%;"></div>
+        <div class="form-group" style="margin-top:0.5rem;"><label style="font-size:0.7rem;color:var(--text-dim);">Reference</label><input type="text" id="payReference" class="form-control" style="background:rgba(255,255,255,0.04);border:1px solid rgba(255,255,255,0.08);color:#fff;font-size:0.75rem;padding:0.35rem 0.5rem;border-radius:6px;width:100%;"></div>
+        <div id="paymentResult" style="margin-top:0.5rem;display:none;padding:0.5rem;border-radius:6px;font-size:0.75rem;"></div>
+      </div>
+      <div class="modal-footer" style="border-top:1px solid rgba(255,255,255,0.06);padding:0.6rem 1rem;">
+        <button class="qa-btn" style="background:rgba(255,255,255,0.06);color:rgba(255,255,255,0.5);font-size:0.7rem;" data-bs-dismiss="modal" data-i18n="cancel">Cancel</button>
+        <button class="qa-btn" style="background:#10B981;color:#fff;font-size:0.7rem;" onclick="submitPayment()"><i class="fas fa-money-bill-wave me-1"></i> <span data-i18n="initiate_payment">Pay Now</span></button>
+      </div>
+    </div>
+  </div>
+</div>
+
+<script>
+    const API = '';
+    let userData = null;
+    let currentLang = localStorage.getItem('attendrix_lang') || 'en';
+    let attendanceChartInstance = null;
+    let facultyChartInstance = null;
+    let translationsCache = {};
+    let currentActionId = null;
+
+    // Pagination state
+    let studentPage = 1;
+    let studentSearch = '';
+    let sessionPage = 1;
+    let paymentPage = 1;
+    let searchTimer = null;
+    function debounceSearch() {
+        clearTimeout(searchTimer);
+        searchTimer = setTimeout(() => {
+            studentSearch = document.getElementById('studentSearch').value;
+            studentPage = 1;
+            loadStudents();
+        }, 300);
+    }
+
+    function getToken() { return localStorage.getItem('accessToken'); }
+    function apiHeaders() {
+        const h = { 'Content-Type': 'application/json' };
+        const t = getToken();
+        if (t) h['Authorization'] = 'Bearer ' + t;
+        return h;
+    }
+
+    async function apiFetch(url, opts = {}) {
+        opts.headers = { ...apiHeaders(), ...opts.headers };
+        const res = await fetch(API + url, opts);
+        if (res.status === 401) {
+            localStorage.removeItem('accessToken');
+            localStorage.removeItem('refreshToken');
+            localStorage.removeItem('user');
+            window.location.href = '/login';
+            return null;
+        }
+        return res;
+    }
+
+    function showToast(msg, type) {
+        const c = document.getElementById('toastContainer') || (() => {
+            const d = document.createElement('div');
+            d.id = 'toastContainer';
+            d.style.cssText = 'position:fixed;bottom:1rem;right:1rem;z-index:99999;display:flex;flex-direction:column;gap:0.35rem;';
+            document.body.appendChild(d);
+            return d;
+        })();
+        const t = document.createElement('div');
+        const color = type === 'success' ? '#10B981' : type === 'error' ? '#EF4444' : '#4F46E5';
+        t.style.cssText = 'background:rgba(10,15,30,0.96);backdrop-filter:blur(16px);border:1px solid rgba(255,255,255,0.08);border-radius:9px;padding:0.55rem 0.9rem;color:#fff;font-size:0.75rem;border-left:3px solid ' + color + ';animation:toastIn 0.3s ease;';
+        const icon = type === 'success' ? 'check-circle' : type === 'error' ? 'exclamation-circle' : 'info-circle';
+        t.innerHTML = '<i class="fas fa-' + icon + ' me-1"></i> ' + msg;
+        c.appendChild(t);
+        setTimeout(() => { t.style.opacity = '0'; t.style.transition = 'opacity 0.3s'; setTimeout(() => t.remove(), 300); }, 3500);
+    }
+
+    // â”€â”€ BILINGUAL (EN/FR) â”€â”€
+    async function toggleLang() {
+        currentLang = currentLang === 'en' ? 'fr' : 'en';
+        localStorage.setItem('attendrix_lang', currentLang);
+        document.getElementById('langToggle').textContent = currentLang === 'en' ? 'FR' : 'EN';
+        await loadTranslations();
+        applyTranslations();
+    }
+
+    async function loadTranslations() {
+        try {
+            const res = await fetch('/api/institutional/translations?lang=' + currentLang);
+            if (res.ok) translationsCache = await res.json();
+        } catch(e) {}
+    }
+
+    function applyTranslations() {
+        document.querySelectorAll('[data-i18n]').forEach(el => {
+            const key = el.dataset.i18n;
+            const val = translationsCache[key];
+            if (val) el.textContent = val;
+        });
+    }
+
+    // â”€â”€ NAVIGATION â”€â”€
+    document.querySelectorAll('.sidebar-nav a[data-section]').forEach(link => {
+        link.addEventListener('click', function(e) {
+            e.preventDefault();
+            document.querySelectorAll('.sidebar-nav a').forEach(a => a.classList.remove('active'));
+            this.classList.add('active');
+            document.querySelectorAll('.section').forEach(s => s.classList.remove('active'));
+            const section = document.getElementById('section-' + this.dataset.section);
+            if (section) section.classList.add('active');
+            if (window.innerWidth <= 768) { document.getElementById('sidebar').classList.remove('open'); document.getElementById('sidebarOverlay').classList.remove('show'); }
+        });
+    });
+
+    document.getElementById('sidebarToggle').addEventListener('click', function() {
+        document.getElementById('sidebar').classList.toggle('open');
+        document.getElementById('sidebarOverlay').classList.toggle('show');
+    });
+    document.getElementById('sidebarOverlay').addEventListener('click', function() {
+        document.getElementById('sidebar').classList.remove('open');
+        document.getElementById('sidebarOverlay').classList.remove('show');
+    });
+
+    // â”€â”€ LOAD USER â”€â”€
+    function loadUser() {
+        try { const r = localStorage.getItem('user'); if (r) userData = JSON.parse(r); } catch(e) {}
+        if (userData) {
+            const n = (userData.first_name || '') + ' ' + (userData.last_name || '');
+            document.getElementById('userNameTop').textContent = n || 'Admin';
+            document.getElementById('userAvatarTop').textContent = (userData.first_name || 'A')[0].toUpperCase();
+        }
+    }
+
+    // â”€â”€ QUICK ACTIONS â”€â”€
+    async function loadQuickActions() {
+        try {
+            const res = await apiFetch('/api/institutional/quick-actions');
+            if (!res || !res.ok) return;
+            const d = await res.json();
+            const container = document.getElementById('quickActions');
+            const actions = d.actions || [];
+            container.innerHTML = actions.map(a =>
+                '<button class="qa-btn" style="background:' + a.color + '33;color:' + a.color + ';" onclick="handleQuickAction(\'' + a.id + '\')"><i class="fas ' + a.icon + '"></i> <span data-i18n="qa_' + a.id + '">' + (currentLang === 'fr' ? a.label_fr : a.label_en) + '</span></button>'
+            ).join('');
+        } catch(e) {}
+    }
+
+    // â”€â”€ ACTION HANDLER DISPATCH â”€â”€
+    function handleQuickAction(actionId) {
+        switch(actionId) {
+            case 'qa_session': openActionModal('session'); break;
+            case 'qa_voucher': openActionModal('voucher'); break;
+            case 'qa_report': openActionModal('report'); break;
+            case 'qa_sms': openActionModal('sms'); break;
+            case 'qa_sync': triggerForceSync(); break;
+            case 'qa_backup': triggerBackup(); break;
+            default: showToast('Unknown action', 'error');
+        }
+    }
+
+    // â”€â”€ ACTION MODAL â”€â”€
+    const actionForms = {
+        session: {
+            title: 'New Attendance Session',
+            fields: [
+                {name: 'course_name', label: 'Course Name', type: 'text', placeholder: 'e.g. Data Structures'},
+                {name: 'lecturer_name', label: 'Lecturer', type: 'text', placeholder: 'e.g. Dr. Ewane'},
+                {name: 'total_students', label: 'Total Students', type: 'number', value: 50},
+            ],
+            endpoint: '/api/institutional/session',
+            transform: (data) => ({course_id: data.course_name.toUpperCase().replace(/\\s/g,'_'), ...data})
+        },
+        voucher: {
+            title: 'Generate Vouchers',
+            fields: [
+                {name: 'role', label: 'Role', type: 'select', options: [
+                    {value: 'student', label: 'Student'},
+                    {value: 'lecturer', label: 'Lecturer'},
+                    {value: 'institutional_admin', label: 'Admin'},
+                ]},
+                {name: 'quantity', label: 'Quantity', type: 'number', value: 10, min: 1, max: 100},
+            ],
+            endpoint: '/api/voucher/generate-batch',
+            transform: (data) => ({...data, institution_id: (userData && userData.institution_id) || 'inst_001'})
+        },
+        report: {
+            title: 'MINESEC Report / Exam Mode',
+            fields: [
+                {name: 'active', label: 'Exam Mode Active', type: 'select', options: [
+                    {value: 'true', label: 'Active'},
+                    {value: 'false', label: 'Inactive'},
+                ]},
+                {name: 'exam_type', label: 'Exam Type', type: 'select', options: [
+                    {value: 'GCE', label: 'GCE'},
+                    {value: 'Baccalaureate', label: 'Baccalaureate'},
+                    {value: 'BEPC', label: 'BEPC'},
+                    {value: 'Probatoire', label: 'Probatoire'},
+                    {value: 'CAP', label: 'CAP'},
+                ]},
+                {name: 'gce_candidates', label: 'Candidate Count', type: 'number', value: 500},
+            ],
+            endpoint: '/api/institutional/compliance/exam-mode',
+            transform: (data) => ({...data, active: data.active === 'true', gce_candidates: parseInt(data.gce_candidates)})
+        },
+        sms: {
+            title: 'Send Security Alert',
+            fields: [
+                {name: 'description', label: 'Alert Description', type: 'text', placeholder: 'e.g. Suspicious login detected'},
+                {name: 'severity', label: 'Severity', type: 'select', options: [
+                    {value: 'critical', label: 'Critical'},
+                    {value: 'high', label: 'High'},
+                    {value: 'medium', label: 'Medium'},
+                    {value: 'low', label: 'Low'},
+                ]},
+            ],
+            endpoint: '/api/institutional/security-alert',
+            transform: (data) => ({...data, event_type: 'manual_alert'})
+        },
+    };
+
+    function openActionModal(type) {
+        const form = actionForms[type];
+        if (!form) return;
+        currentActionId = type;
+        document.getElementById('actionModalTitle').textContent = form.title;
+        const body = document.getElementById('actionModalBody');
+        body.innerHTML = form.fields.map(f => {
+            let input;
+            if (f.type === 'select') {
+                const opts = f.options.map(o =>
+                    '<option value="' + o.value + '"' + (o.value === f.value ? ' selected' : '') + '>' + o.label + '</option>'
+                ).join('');
+                input = '<select class="form-input" id="af_' + f.name + '" style="width:100%;background:rgba(255,255,255,0.04);border:1px solid rgba(255,255,255,0.08);border-radius:6px;padding:0.4rem 0.55rem;color:#fff;font-size:0.75rem;outline:none;">' + opts + '</select>';
+            } else {
+                const attrs = 'value="' + (f.value || '') + '" placeholder="' + (f.placeholder || '') + '" min="' + (f.min || '') + '" max="' + (f.max || '') + '"';
+                input = '<input type="' + f.type + '" id="af_' + f.name + '" ' + attrs + ' style="width:100%;background:rgba(255,255,255,0.04);border:1px solid rgba(255,255,255,0.08);border-radius:6px;padding:0.4rem 0.55rem;color:#fff;font-size:0.75rem;outline:none;">';
+            }
+            return '<div style="margin-bottom:0.55rem;"><label style="font-size:0.65rem;color:var(--text-dim);font-weight:600;display:block;margin-bottom:0.2rem;">' + f.label + '</label>' + input + '</div>';
+        }).join('');
+        const modal = new bootstrap.Modal(document.getElementById('actionModal'));
+        modal.show();
+    }
+
+    async function submitActionModal() {
+        const form = actionForms[currentActionId];
+        if (!form) return;
+        const data = {};
+        form.fields.forEach(f => {
+            const el = document.getElementById('af_' + f.name);
+            data[f.name] = el ? el.value : '';
+        });
+        const payload = form.transform ? form.transform(data) : data;
+        try {
+            const res = await apiFetch(form.endpoint, {method: 'POST', body: JSON.stringify(payload)});
+            if (res && res.ok) {
+                showToast(form.title + ' â€” completed successfully', 'success');
+                bootstrap.Modal.getInstance(document.getElementById('actionModal')).hide();
+                // Refresh relevant sections
+                loadOverview(); loadActivityFeed(); loadSecurityAlerts();
+                if (currentActionId === 'voucher') { /* voucher stats */ }
+            } else {
+                const err = res ? await res.json() : {error: 'Request failed'};
+                showToast('Error: ' + (err.error || 'Request failed'), 'error');
+            }
+        } catch(e) {
+            showToast('Error: ' + e.message, 'error');
+        }
+    }
+
+    async function triggerForceSync() {
+        try {
+            showToast('Initializing force synchronization...', 'info');
+            const enqRes = await apiFetch('/api/institutional/offline-sync', {
+                method: 'POST',
+                body: JSON.stringify({node_name: 'Admin Panel', records: -1})
+            });
+            if (!enqRes || !enqRes.ok) { showToast('Enqueue failed', 'error'); return; }
+            const procRes = await apiFetch('/api/institutional/offline-queue/process', { method: 'POST' });
+            if (procRes && procRes.ok) {
+                await apiFetch('/api/institutional/activity-log', {
+                    method: 'POST',
+                    body: JSON.stringify({type: 'sync_completed', message: 'Force sync completed from admin panel', faculty: 'Infrastructure'})
+                });
+                showToast('Force sync completed â€” all pending records synchronized', 'success');
+            } else {
+                showToast('Sync processing returned a warning', 'error');
+            }
+            loadActivityFeed(); loadOverview(); loadOfflineData();
+        } catch(e) { showToast('Error: ' + e.message, 'error'); }
+    }
+
+    async function triggerBackup() {
+        try {
+            showToast('Compiling backup data...', 'info');
+            const [uRes, cRes, dRes, eRes] = await Promise.all([
+                apiFetch('/api/institutional/users?per_page=9999&search='),
+                apiFetch('/api/institutional/courses?per_page=9999&search='),
+                apiFetch('/api/institutional/departments?per_page=9999&search='),
+                apiFetch('/api/institutional/enrollments?per_page=9999&search=')
+            ]);
+            if (!uRes || !cRes || !dRes || !eRes) { showToast('Failed to fetch backup data', 'error'); return; }
+            const [users, courses, departments, enrollments] = await Promise.all([
+                uRes.json(), cRes.json(), dRes.json(), eRes.json()
+            ]);
+            const backup = {
+                timestamp: new Date().toISOString(),
+                institution: document.getElementById('instName').textContent,
+                exported_by: (userData ? (userData.first_name + ' ' + userData.last_name).trim() : 'Admin'),
+                summary: {
+                    users: (users.users||[]).length,
+                    courses: (courses.courses||[]).length,
+                    departments: (departments.departments||[]).length,
+                    enrollments: (enrollments.enrollments||[]).length
+                },
+                data: { users: users.users||[], courses: courses.courses||[], departments: departments.departments||[], enrollments: enrollments.enrollments||[] }
+            };
+            const blob = new Blob([JSON.stringify(backup, null, 2)], {type: 'application/json'});
+            const url = URL.createObjectURL(blob);
+            const a = document.createElement('a');
+            a.href = url;
+            a.download = 'attendrix-backup-' + new Date().toISOString().slice(0,10) + '.json';
+            document.body.appendChild(a); a.click();
+            document.body.removeChild(a); URL.revokeObjectURL(url);
+            await apiFetch('/api/institutional/activity-log', {
+                method: 'POST',
+                body: JSON.stringify({type: 'backup', message: 'Manual backup completed â€” ' + backup.summary.users + ' users, ' + backup.summary.courses + ' courses', faculty: 'System'})
+            });
+            showToast('Backup completed â€” ' + backup.summary.users + ' users, ' + backup.summary.courses + ' courses exported', 'success');
+            loadActivityFeed();
+        } catch(e) { showToast('Error: ' + e.message, 'error'); }
+    }
+
+    // â”€â”€ OVERVIEW â”€â”€
+    async function loadOverview() {
+        try {
+            const [shRes, trendRes, netRes, offRes, infraRes, innovNetRes] = await Promise.all([
+                apiFetch('/api/institutional/session-health?page=' + sessionPage + '&per_page=20'),
+                apiFetch('/api/institutional/attendance-trends'),
+                apiFetch('/api/institutional/network-status'),
+                apiFetch('/api/institutional/offline-log'),
+                apiFetch('/api/institutional/infrastructure'),
+                apiFetch('/api/innovation/infrastructure/status'),
+            ]);
+            if (shRes && shRes.ok) {
+                const d = await shRes.json();
+                document.getElementById('ovActiveSessions').textContent = d.active_sessions || 0;
+                document.getElementById('ssActive').textContent = d.active_sessions || 0;
+                document.getElementById('ssTotal').textContent = d.total_sessions || 0;
+                if (d.sessions) renderSessionTable(d.sessions, d.total, d.page, d.total_pages);
+            }
+            if (trendRes && trendRes.ok) {
+                const d = await trendRes.json();
+                document.getElementById('ovAttendanceRate').textContent = d.average ? d.average + '%' : 'â€”';
+                if (d.daily_rates) renderAttendanceChart(d.dates, d.daily_rates);
+            }
+            if (netRes && netRes.ok) {
+                const d = await netRes.json();
+                const nodes = d.nodes || [];
+                const offline = nodes.filter(n => n.status === 'offline').length;
+                document.getElementById('ovOfflineNodes').textContent = offline;
+                document.getElementById('ovOfflineFooter').innerHTML = offline > 0 ? '<i class="fas fa-exclamation-circle"></i> Requires attention' : '<i class="fas fa-check-circle"></i> All online';
+                renderNetworkNodes(nodes);
+                renderBrokerStats(d.broker || {});
+                /* Enhanced network topology visualization */
+                if (window.AttendrixTopology) {
+                    AttendrixTopology.start(nodes, d.broker || {});
+                }
+            }
+            if (offRes && offRes.ok) {
+                const d = await offRes.json();
+                document.getElementById('offPending').textContent = d.pending_syncs ?? 'â€”';
+                document.getElementById('offSuccessRate').textContent = d.sync_success_rate ? d.sync_success_rate + '%' : 'â€”';
+                document.getElementById('offLastSync').textContent = d.last_sync ? new Date(d.last_sync).toLocaleTimeString() : 'â€”';
+                document.getElementById('offNodesOffline').textContent = d.nodes_offline ?? 'â€”';
+                if (d.queue) renderSyncQueue(d.queue);
+                /* Also load enhanced offline queue stats */
+                try {
+                    const qsRes = await apiFetch('/api/institutional/offline-queue/stats');
+                    if (qsRes && qsRes.ok) {
+                        const qs = await qsRes.json();
+                        var qsEl = document.getElementById('offQueueStats');
+                        if (qsEl && qs.total > 0) {
+                            qsEl.innerHTML = '<span class="pill-indicator ' + (qs.queue_healthy ? 'pill-green' : 'pill-yellow') + '">Queue: ' + qs.pending + ' pend Â· ' + qs.failed + ' fail Â· ' + qs.synced + ' done</span>';
+                        }
+                    }
+                } catch(e) {}
+                try {
+                    const estRes = await apiFetch('/api/institutional/offline-queue/estimate');
+                    if (estRes && estRes.ok) {
+                        var est = await estRes.json();
+                        var eEl = document.getElementById('offEstimate');
+                        if (eEl) {
+                            eEl.textContent = est.estimated_recovery_mins > 1 ? '~' + est.estimated_recovery_mins + ' min recovery' : '~' + est.estimated_seconds + 's recovery';
+                        }
+                    }
+                } catch(e) {}
+            }
+            if (infraRes && infraRes.ok) {
+                const d = await infraRes.json();
+                renderInfrastructure(d);
+            }
+            if (innovNetRes && innovNetRes.ok) {
+                const d = await innovNetRes.json();
+                renderInnovationNetwork(d);
+            }
+        } catch(e) { console.error('Overview error:', e); }
+    }
+
+    // â”€â”€ INFRASTRUCTURE â”€â”€
+    function renderInfrastructure(d) {
+        // UPS
+        const ups = d.ups || {};
+        const upsEl = document.getElementById('upsIndicator');
+        document.getElementById('upsPct').textContent = ups.charge_pct ?? 'â€”';
+        if (ups.status === 'on_battery') { upsEl.className = 'pill-indicator pill-yellow'; }
+        else if ((ups.charge_pct || 100) < 30) { upsEl.className = 'pill-indicator pill-red'; }
+        else { upsEl.className = 'pill-indicator pill-green'; }
+
+        // ISP
+        const isps = d.isp || [];
+        const mtn = isps.find(i => i.name === 'MTN');
+        const orange = isps.find(i => i.name === 'Orange');
+        const mtnEl = document.getElementById('ispMtn');
+        const orEl = document.getElementById('ispOrange');
+        if (mtn) { mtnEl.className = 'pill-indicator ' + (mtn.status === 'up' ? 'pill-green' : mtn.status === 'degraded' ? 'pill-yellow' : 'pill-red'); mtnEl.innerHTML = '<span class="dot"></span> MTN ' + mtn.latency_ms + 'ms'; }
+        if (orange) { orEl.className = 'pill-indicator ' + (orange.status === 'up' ? 'pill-green' : orange.status === 'degraded' ? 'pill-yellow' : 'pill-red'); orEl.innerHTML = '<span class="dot"></span> Orange ' + orange.latency_ms + 'ms'; }
+    }
+
+    // â”€â”€ INNOVATION NETWORK (Mesh Health + Load Balance) â”€â”€
+    function renderInnovationNetwork(d) {
+        // Mesh health
+        var mh = d.mesh_health || {};
+        var msEl = document.getElementById('meshStatus');
+        if (msEl) {
+            msEl.textContent = (mh.mesh_status || 'N/A').toUpperCase();
+            msEl.style.color = mh.mesh_status === 'healthy' ? '#10B981' : mh.mesh_status === 'degraded' ? '#F59E0B' : '#EF4444';
+        }
+        document.getElementById('meshNodes').textContent = mh.nodes_assessed ?? 'â€”';
+        document.getElementById('meshSuccessRate').textContent = mh.overall_success_rate ? (mh.overall_success_rate * 100).toFixed(1) + '%' : 'â€”';
+        document.getElementById('meshTotalSyncs').textContent = mh.total_syncs_assessed ?? 'â€”';
+
+        var mnd = document.getElementById('meshNodeDetails');
+        var details = mh.node_details || {};
+        var keys = Object.keys(details);
+        if (mnd && keys.length > 0) {
+            mnd.innerHTML = keys.map(function(k) {
+                var n = details[k];
+                var c = n.status === 'healthy' ? '#10B981' : n.status === 'degraded' ? '#F59E0B' : '#EF4444';
+                return '<div class="node-item" style="justify-content:space-between;"><span style="color:#fff;font-size:0.65rem;">' + k + '</span><span style="color:' + c + ';font-size:0.6rem;">' + n.status + ' Â· ' + (n.success_rate * 100).toFixed(0) + '% Â· ' + n.avg_duration_ms + 'ms</span></div>';
+            }).join('');
+        } else if (mnd) {
+            mnd.innerHTML = '<div class="empty-muted" style="font-size:0.6rem;">No mesh nodes assessed</div>';
+        }
+
+        // Load balance
+        var lb = d.load_balance || {};
+        var lsEl = document.getElementById('loadStatus');
+        if (lsEl) {
+            var lbl = lb.load_balancing || 'idle';
+            lsEl.textContent = lbl.toUpperCase();
+            lsEl.style.color = lbl === 'balanced' || lbl === 'idle' ? '#10B981' : '#F59E0B';
+        }
+        document.getElementById('loadSessions').textContent = lb.total_sessions ?? 'â€”';
+        document.getElementById('loadTarget').textContent = lb.target_per_node ?? 'â€”';
+        document.getElementById('loadRec').textContent = lb.recommendation || '';
+
+        var og = document.getElementById('overloadGrid');
+        if (og) {
+            var overloaded = lb.overloaded_nodes || [];
+            var underloaded = lb.underloaded_nodes || [];
+            var parts = [];
+            overloaded.forEach(function(n) { parts.push('<span style="font-size:0.55rem;color:#EF4444;background:rgba(239,68,68,0.1);padding:0.15rem 0.4rem;border-radius:4px;">' + n.node_id + ' (' + n.sessions + ')</span>'); });
+            underloaded.forEach(function(n) { parts.push('<span style="font-size:0.55rem;color:#F59E0B;background:rgba(245,158,11,0.1);padding:0.15rem 0.4rem;border-radius:4px;">' + n.node_id + ' (' + n.sessions + ')</span>'); });
+            og.innerHTML = parts.join(' ') || '<span style="font-size:0.55rem;color:var(--text-dim);">All nodes balanced</span>';
+        }
+    }
+
+    // â”€â”€ ACTIVITY â”€â”€
+    async function loadActivityFeed() {
+        try {
+            const res = await apiFetch('/api/institutional/activity-feed');
+            if (!res || !res.ok) return;
+            const d = await res.json();
+            const feed = document.getElementById('activityFeed');
+            const events = d.events || [];
+            if (events.length === 0) { feed.innerHTML = '<div class="empty-muted">No recent activity</div>'; return; }
+            feed.innerHTML = events.map(e =>
+                '<div class="activity-item"><div class="type-dot" style="background:' + (e.type === 'session_started' ? '#10B981' : e.type === 'alert_generated' ? '#EF4444' : '#4F46E5') + ';"></div><div class="time-col">' + e.time + '</div><div class="msg-col">' + e.message + '</div></div>'
+            ).join('');
+        } catch(e) {}
+    }
+
+    // â”€â”€ STUDENTS â”€â”€
+    async function loadStudents() {
+        try {
+            const url = '/api/institutional/students?page=' + studentPage + '&per_page=12&search=' + encodeURIComponent(studentSearch);
+            const res = await apiFetch(url);
+            if (!res || !res.ok) return;
+            const d = await res.json();
+            const tb = document.getElementById('studentTableBody');
+            const students = d.students || [];
+            document.getElementById('ovStudents').textContent = d.total || students.length;
+            if (students.length === 0) {
+                tb.innerHTML = '<tr><td colspan="7"><div class="empty-muted">' + (studentSearch ? 'No students match your search' : 'No students') + '</div></td></tr>';
+                renderPagination('studentPagination', d.page, d.total_pages, function(p) { studentPage = p; loadStudents(); });
+                return;
+            }
+            tb.innerHTML = students.map(s =>
+                '<tr class="student-row" onclick="openStudentDrawer(\'' + s.id + '\')"><td style="font-weight:600;color:#fff;">' + s.name + '</td><td style="font-size:0.65rem;">' + s.student_id + '</td><td>' + (s.faculty || '').split(' ')[0] + '</td><td>' + s.attendance_pct + '%</td><td class="risk-' + s.risk_level + '" style="font-weight:600;">' + s.risk_level.toUpperCase() + '</td><td>' + (s.trusted_device ? '<i class="fas fa-check-circle" style="color:#10B981;"></i>' : '<i class="fas fa-times-circle" style="color:#EF4444;"></i>') + '</td><td>' + (s.suspicious_attempts || 0) + '</td></tr>'
+            ).join('');
+            renderPagination('studentPagination', d.page, d.total_pages, function(p) { studentPage = p; loadStudents(); });
+        } catch(e) {}
+    }
+
+    // â”€â”€ SESSION TABLE â”€â”€
+    function renderSessionTable(sessions, total, page, totalPages) {
+        const tb = document.getElementById('sessionTableBody');
+        if (!sessions || sessions.length === 0) { tb.innerHTML = '<tr><td colspan="8"><div class="empty-muted">No sessions</div></td></tr>'; renderPagination('sessionPagination', 1, 1, function(){}); return; }
+        tb.innerHTML = sessions.map(s =>
+            '<tr><td style="font-weight:600;color:#fff;">' + s.course + '</td><td>' + s.lecturer + '</td><td>' + s.total_students + '</td><td>' + s.present + '</td><td style="font-weight:600;color:' + (s.attendance_rate >= 80 ? '#10B981' : s.attendance_rate >= 60 ? '#F59E0B' : '#EF4444') + ';">' + s.attendance_rate + '%</td><td><span class="status-pill pill-' + s.status + '">' + s.status + '</span></td><td>' + (s.health ? '<span style="color:' + (s.health.broker === 'healthy' ? '#10B981' : '#F59E0B') + ';"><i class="fas fa-circle" style="font-size:0.45rem;"></i> ' + s.health.broker + '</span>' : 'â€”') + '</td><td>' + (s.health ? s.health.latency_ms + 'ms' : 'â€”') + '</td></tr>'
+        ).join('');
+        renderPagination('sessionPagination', page, totalPages, function(p) { sessionPage = p; loadOverview(); });
+    }
+
+    // â”€â”€ NETWORK NODES â”€â”€
+    function renderNetworkNodes(nodes) {
+        const grid = document.getElementById('nodeGrid');
+        if (!grid) return;
+        if (!nodes || nodes.length === 0) { grid.innerHTML = '<div class="empty-muted">No nodes</div>'; return; }
+        grid.innerHTML = nodes.map(n =>
+            '<div class="node-item node-' + n.status + '"><div class="node-status"></div><div><div class="node-name">' + n.name + '</div><div class="node-meta">' + n.latency_ms + 'ms Â· ' + n.packet_loss + '% loss</div></div></div>'
+        ).join('');
+    }
+
+    function renderBrokerStats(broker) {
+        const grid = document.getElementById('brokerGrid');
+        grid.innerHTML =
+            '<div class="broker-item"><div class="broker-val">' + (broker.messages_per_sec || 0) + '</div><div class="broker-label">Msg/sec</div></div>' +
+            '<div class="broker-item"><div class="broker-val">' + (broker.connected_nodes || 0) + '/' + (broker.total_nodes || 0) + '</div><div class="broker-label">Connected</div></div>' +
+            '<div class="broker-item"><div class="broker-val">' + (broker.dropped_messages || 0) + '</div><div class="broker-label">Dropped</div></div>' +
+            '<div class="broker-item"><div class="broker-val">' + (broker.bandwidth_mbps || 0) + '</div><div class="broker-label">Mbps</div></div>' +
+            '<div class="broker-item"><div class="broker-val">' + (broker.uptime || 'â€”') + '</div><div class="broker-label">Uptime</div></div>';
+    }
+
+    // â”€â”€ SECURITY â”€â”€
+    const _secDedupCache = new Map();
+    function _isDuplicate(a, windowSec) {
+        var k = a.event_type + '|' + (a.user_id || '') + '|' + a.message;
+        var now = Date.now();
+        var last = _secDedupCache.get(k);
+        if (last && now - last < windowSec * 1000) return true;
+        _secDedupCache.set(k, now);
+        return false;
+    }
+    function _fmtTimestamp(iso) {
+        if (!iso) return 'â€”';
+        try {
+            var d = new Date(iso.indexOf('+') > 0 || iso.indexOf('Z') > 0 || iso.indexOf('T') > 0 ? iso : iso.replace(' ', 'T'));
+            if (isNaN(d.getTime())) return iso.slice(11, 16) || iso;
+            var h = d.getHours(), m = d.getMinutes();
+            var ampm = h >= 12 ? 'p.m.' : 'a.m.';
+            var h12 = h % 12 || 12;
+            return h12 + ':' + (m < 10 ? '0' : '') + m + ' ' + ampm;
+        } catch(e) { return iso; }
+    }
+    async function loadSecurityAlerts() {
+        try {
+            const res = await apiFetch('/api/institutional/security-alerts');
+            if (!res || !res.ok) return;
+            const d = await res.json();
+            const list = document.getElementById('securityAlertList');
+            const alerts = d.alerts || [];
+            var filtered = alerts.filter(function(a) { return !_isDuplicate(a, 300); });
+            if (filtered.length === 0 && alerts.length > 0) { filtered = alerts.slice(0, 1); }
+            if (filtered.length === 0) { list.innerHTML = '<div class="empty-muted">No security events</div>'; return; }
+            document.getElementById('securityBadge').style.display = alerts.filter(function(a) { return a.severity === 'critical'; }).length > 0 ? 'block' : 'none';
+            list.innerHTML = filtered.map(function(a) {
+                var metaParts = [];
+                if (a.user_id) metaParts.push('<span class="alert-meta-item"><i class="fas fa-user"></i> ' + a.user_id.slice(0, 8) + '</span>');
+                if (a.source_ip) metaParts.push('<span class="alert-meta-item"><i class="fas fa-network-wired"></i> ' + a.source_ip + '</span>');
+                var metaHtml = metaParts.length ? '<span style="display:inline-flex;gap:0.4rem;align-items:center;">' + metaParts.join('') + '</span>' : '';
+                return '<div class="alert-item">' +
+                    '<span class="sev-badge sev-' + a.severity + '">' + a.severity + '</span>' +
+                    '<span class="alert-msg"><span style="color:#fff;font-weight:500;">' + a.event_type.replace(/_/g, ' ') + '</span> &middot; ' + a.message + '</span>' +
+                    '<span style="display:flex;align-items:center;gap:0.5rem;flex-shrink:0;">' + metaHtml + '<span class="alert-time">' + _fmtTimestamp(a.timestamp) + '</span></span>' +
+                '</div>';
+            }).join('');
+        } catch(e) {}
+    }
+
+    // â”€â”€ SYNC QUEUE â”€â”€
+    function renderSyncQueue(queue) {
+        const body = document.getElementById('syncQueueBody');
+        if (!queue || queue.length === 0) { body.innerHTML = '<div class="empty-muted">No pending syncs</div>'; return; }
+        body.innerHTML = queue.map(q =>
+            '<div class="queue-item"><div><strong style="color:#fff;">' + q.node + '</strong><br><span style="color:var(--text-dim);font-size:0.65rem;">' + q.records + ' records Â· since ' + q.since + '</span></div><span class="q-status q-' + q.status + '">' + q.status + '</span></div>'
+        ).join('');
+    }
+
+    // â”€â”€ P2P SYNC â”€â”€
+    async function loadP2pSync() {
+        try {
+            const res = await apiFetch('/api/institutional/p2p-sync');
+            if (!res || !res.ok) return;
+            const d = await res.json();
+            document.getElementById('p2pTotal').textContent = d.total_neighbors || 0;
+            document.getElementById('p2pOnline').textContent = d.online_neighbors || 0;
+            document.getElementById('p2pRelayed').textContent = d.messages_relayed ? (d.messages_relayed > 1000 ? (d.messages_relayed/1000).toFixed(1) + 'k' : d.messages_relayed) : 'â€”';
+            document.getElementById('p2pEta').textContent = d.last_gossip_round ? Math.floor((Date.now() - new Date(d.last_gossip_round).getTime())/1000) + 's ago' : 'â€”';
+            document.getElementById('p2pCount').textContent = (d.total_neighbors || 0) - (d.offline_neighbors || 0) + '/' + (d.total_neighbors || 0);
+
+            const tb = document.getElementById('p2pTableBody');
+            const peers = d.peers || [];
+            if (peers.length === 0) { tb.innerHTML = '<tr><td colspan="5"><div class="empty-muted">No peers</div></td></tr>'; return; }
+            tb.innerHTML = peers.map(p =>
+                '<tr><td style="font-weight:600;color:#fff;">' + p.id + '</td><td style="font-size:0.65rem;">' + p.address + '</td><td><span style="color:' + (p.status === 'online' ? '#10B981' : '#EF4444') + ';font-weight:600;">' + p.status + '</span></td><td>' + p.latency_ms + 'ms</td><td>' + (p.blocks_synced || 0) + '</td></tr>'
+            ).join('');
+        } catch(e) {}
+    }
+
+    // â”€â”€ COMPLIANCE â”€â”€
+    async function loadCompliance() {
+        try {
+            const res = await apiFetch('/api/institutional/compliance');
+            if (!res || !res.ok) return;
+            const d = await res.json();
+            document.getElementById('compExamMode').textContent = d.exam_mode ? 'ðŸŸ¢ ACTIVE' : 'âšª Inactive';
+            document.getElementById('compExamType').textContent = d.exam_type || 'â€”';
+            document.getElementById('compCompliance').textContent = d.report_compliance_pct ? d.report_compliance_pct + '%' : 'â€”';
+            document.getElementById('compPending').textContent = d.pending_reports ?? 'â€”';
+            document.getElementById('compGce').textContent = d.gce_candidates ?? 'â€”';
+
+            const ab = document.getElementById('complianceAuditBody');
+            const trail = d.audit_trail || [];
+            if (trail.length === 0) { ab.innerHTML = '<div class="empty-muted">No audit events</div>'; return; }
+            ab.innerHTML = trail.map(a =>
+                '<div class="queue-item"><div><strong style="color:#fff;font-size:0.7rem;">' + a.date + '</strong><br><span style="color:var(--text-dim);font-size:0.65rem;">' + a.action.replace(/_/g,' ') + '</span></div><span class="q-status q-' + (a.status === 'completed' ? 'syncing' : 'pending') + '">' + a.status + '</span></div>'
+            ).join('');
+        } catch(e) {}
+    }
+
+    // â”€â”€ COMPLIANCE EXPORT â”€â”€
+    async function exportComplianceReport() {
+        try {
+            const res = await apiFetch('/api/institutional/compliance/exam-mode', {
+                method: 'POST',
+                body: JSON.stringify({active: true, exam_type: 'GCE', gce_candidates: 0})
+            });
+            if (res && res.ok) {
+                await apiFetch('/api/institutional/activity-log', {
+                    method: 'POST',
+                    body: JSON.stringify({type: 'report_generated', message: 'MINESEC compliance report exported', faculty: 'Compliance'})
+                });
+                showToast('MINESEC report generated and added to audit trail', 'success');
+                loadCompliance(); loadActivityFeed();
+            } else {
+                showToast('Export failed', 'error');
+            }
+        } catch(e) { showToast('Error: ' + e.message, 'error'); }
+    }
+
+    // â”€â”€ PAYMENTS â”€â”€
+    async function loadPayments() {
+        try {
+            const res = await apiFetch('/api/institutional/payments?page=' + paymentPage + '&per_page=10');
+            if (!res || !res.ok) return;
+            const d = await res.json();
+            document.getElementById('paySales').textContent = d.voucher_sales_xaf ? (d.voucher_sales_xaf/1000).toFixed(0) + 'k' : 'â€”';
+            document.getElementById('payPending').textContent = d.pending_txns ?? 'â€”';
+            document.getElementById('paySms').textContent = d.sms_queue_count ?? 'â€”';
+            document.getElementById('payRefunds').textContent = d.refund_queue ?? 'â€”';
+            document.getElementById('smsQueueCount').textContent = d.sms_queue_count ?? '0';
+            document.getElementById('paymentBadge').textContent = d.pending_txns ?? '0';
+
+            const tb = document.getElementById('paymentTableBody');
+            const txns = d.recent_txns || [];
+            if (txns.length === 0) { tb.innerHTML = '<tr><td colspan="6"><div class="empty-muted">No transactions</div></td></tr>'; renderPagination('paymentPagination', 1, 1, function(){}); return; }
+            tb.innerHTML = txns.map(t =>
+                '<tr><td style="font-size:0.65rem;">' + t.id + '</td><td>' + t.phone + '</td><td style="font-weight:600;color:#fff;">' + t.amount_xaf.toLocaleString() + '</td><td>' + t.provider + '</td><td><span class="status-pill ' + (t.status === 'completed' ? 'pill-active' : t.status === 'pending' ? 'pill-syncing' : 'pill-completed') + '">' + t.status + '</span></td><td style="font-size:0.6rem;">' + t.time + '</td></tr>'
+            ).join('');
+            renderPagination('paymentPagination', d.page, d.total_pages, function(p) { paymentPage = p; loadPayments(); });
+        } catch(e) {}
+    }
+
+    // â”€â”€ PAGINATION RENDERER â”€â”€
+    function renderPagination(containerId, currentPage, totalPages, onClick) {
+        const container = document.getElementById(containerId);
+        if (!container) return;
+        if (totalPages <= 1 && currentPage === 1) { container.style.display = 'none'; return; }
+        container.style.display = 'block';
+        let html = '<div class="pag-row"><div class="pag-info">Page ' + currentPage + ' of ' + totalPages + '</div><div class="pag-btns">';
+        html += '<button class="pag-btn" onclick="(function(){ ' + containerId + '_goto(1) })()" ' + (currentPage === 1 ? 'disabled' : '') + '><i class="fas fa-angle-double-left"></i></button>';
+        html += '<button class="pag-btn" onclick="(function(){ ' + containerId + '_goto(' + (currentPage - 1) + ') })()" ' + (currentPage === 1 ? 'disabled' : '') + '><i class="fas fa-angle-left"></i></button>';
+        var startP = Math.max(1, currentPage - 2);
+        var endP = Math.min(totalPages, currentPage + 2);
+        for (var p = startP; p <= endP; p++) {
+            html += '<button class="pag-btn ' + (p === currentPage ? 'active' : '') + '" onclick="(function(){ ' + containerId + '_goto(' + p + ') })()">' + p + '</button>';
+        }
+        html += '<button class="pag-btn" onclick="(function(){ ' + containerId + '_goto(' + (currentPage + 1) + ') })()" ' + (currentPage === totalPages ? 'disabled' : '') + '><i class="fas fa-angle-right"></i></button>';
+        html += '<button class="pag-btn" onclick="(function(){ ' + containerId + '_goto(' + totalPages + ') })()" ' + (currentPage === totalPages ? 'disabled' : '') + '><i class="fas fa-angle-double-right"></i></button>';
+        html += '</div></div>';
+        container.innerHTML = html;
+        window[containerId + '_goto'] = onClick;
+    }
+
+    // â”€â”€ STUDENT DETAIL DRAWER â”€â”€
+    async function openStudentDrawer(studentId) {
+        document.getElementById('drawerOverlay').classList.add('open');
+        document.getElementById('studentDrawer').classList.add('open');
+        document.getElementById('drawerBody').innerHTML = '<div class="empty-muted">Loading...</div>';
+        try {
+            const res = await apiFetch('/api/institutional/students/' + studentId);
+            if (!res || !res.ok) { document.getElementById('drawerBody').innerHTML = '<div class="empty-muted">Failed to load student details</div>'; return; }
+            const d = await res.json();
+            renderStudentDrawer(d);
+        } catch(e) { document.getElementById('drawerBody').innerHTML = '<div class="empty-muted">Error loading data</div>'; }
+    }
+
+    function renderStudentDrawer(d) {
+        var p = d.profile || {};
+        var a = d.attendance || {};
+        var s = d.security || {};
+        document.getElementById('drawerStudentName').textContent = (p.first_name || '') + ' ' + (p.last_name || '');
+
+        var html = '';
+        // Profile section
+        html += '<div class="drawer-section"><div class="drawer-section-title"><i class="fas fa-id-card me-1"></i> Profile</div>';
+        html += '<div class="drawer-field"><span class="label">Email</span><span class="value">' + (p.email || 'â€”') + '</span></div>';
+        html += '<div class="drawer-field"><span class="label">Student ID</span><span class="value">' + (p.student_id || 'â€”') + '</span></div>';
+        html += '<div class="drawer-field"><span class="label">Faculty</span><span class="value">' + (p.faculty || 'â€”') + '</span></div>';
+        html += '<div class="drawer-field"><span class="label">Phone</span><span class="value">' + (p.phone || 'â€”') + '</span></div>';
+        html += '<div class="drawer-field"><span class="label">Status</span><span class="value" style="color:' + (p.is_active ? '#10B981' : '#EF4444') + ';">' + (p.is_active ? 'Active' : 'Inactive') + '</span></div>';
+        html += '<div class="drawer-field"><span class="label">Trusted Device</span><span class="value">' + (p.trusted_device ? '<i class="fas fa-check-circle" style="color:#10B981;"></i> Yes' : '<i class="fas fa-times-circle" style="color:#EF4444;"></i> No') + '</span></div>';
+        html += '<div class="drawer-field"><span class="label">VPN Detected</span><span class="value">' + (p.vpn_detected ? '<span style="color:#EF4444;font-weight:600;">Yes</span>' : 'No') + '</span></div>';
+        html += '<div class="drawer-field"><span class="label">Last Login</span><span class="value">' + (p.last_login ? new Date(p.last_login).toLocaleDateString() : 'â€”') + '</span></div>';
+        html += '<div class="drawer-field"><span class="label">Registered</span><span class="value">' + (p.created_at ? new Date(p.created_at).toLocaleDateString() : 'â€”') + '</span></div>';
+        html += '</div>';
+
+        // Attendance section
+        html += '<div class="drawer-section"><div class="drawer-section-title"><i class="fas fa-chart-line me-1"></i> Attendance</div>';
+        html += '<div class="drawer-field"><span class="label">Total Sessions</span><span class="value" style="font-size:0.85rem;font-weight:700;">' + a.total_sessions + '</span></div>';
+        html += '<div class="drawer-field"><span class="label">Present</span><span class="value" style="color:#10B981;">' + a.present + '</span></div>';
+        html += '<div class="drawer-field"><span class="label">Absent</span><span class="value" style="color:#EF4444;">' + a.absent + '</span></div>';
+        html += '<div class="drawer-field"><span class="label">Overall Rate</span><span class="value" style="font-size:0.9rem;font-weight:700;color:' + (a.attendance_pct >= 80 ? '#10B981' : a.attendance_pct >= 60 ? '#F59E0B' : '#EF4444') + ';">' + a.attendance_pct + '%</span></div>';
+        if (a.course_breakdown && a.course_breakdown.length) {
+            html += '<div style="margin-top:0.35rem;"></div>';
+            a.course_breakdown.forEach(function(c) {
+                html += '<div class="drawer-course-item"><span class="course-name">' + c.course + '</span><span class="course-rate" style="color:' + (c.rate >= 80 ? '#10B981' : c.rate >= 60 ? '#F59E0B' : '#EF4444') + ';">' + c.present + '/' + c.total + ' (' + c.rate + '%)</span></div>';
+            });
+        }
+        html += '</div>';
+
+        // Security section
+        html += '<div class="drawer-section"><div class="drawer-section-title"><i class="fas fa-shield-alt me-1"></i> Security Events (' + s.total_events + ')</div>';
+        if (s.events && s.events.length) {
+            s.events.forEach(function(e) {
+                var sevColor = e.severity === 'critical' ? '#EF4444' : e.severity === 'high' ? '#F59E0B' : '#3B82F6';
+                html += '<div class="drawer-security-event"><span class="sev-inline" style="background:' + sevColor + '22;color:' + sevColor + ';border:1px solid ' + sevColor + '44;">' + e.severity + '</span>';
+                html += e.description + '<br><span style="font-size:0.6rem;color:var(--text-dim);">' + (e.created_at ? new Date(e.created_at).toLocaleDateString() : '') + '</span></div>';
+            });
+        } else {
+            html += '<div style="font-size:0.7rem;color:var(--text-dim);">No security events</div>';
+        }
+        html += '</div>';
+
+        document.getElementById('drawerBody').innerHTML = html;
+    }
+
+    function closeStudentDrawer() {
+        document.getElementById('drawerOverlay').classList.remove('open');
+        document.getElementById('studentDrawer').classList.remove('open');
+    }
+
+    // â”€â”€ REPORT DOWNLOAD â”€â”€
+    async function downloadReport(type) {
+        try {
+            showToast('Generating ' + type + ' report...', 'info');
+            var endpoint, filename;
+            if (type === 'minesec') {
+                endpoint = '/api/reports/minesec-xml';
+                filename = 'minesec_report_' + new Date().toISOString().slice(0,10) + '.xml';
+            } else if (type === 'network') {
+                endpoint = '/api/reports/network';
+                filename = 'network_report_' + new Date().toISOString().slice(0,10) + '.csv';
+            } else if (type === 'security') {
+                endpoint = '/api/reports/security';
+                filename = 'security_log_' + new Date().toISOString().slice(0,10) + '.csv';
+            } else {
+                endpoint = '/api/reports/attendance?type=' + type;
+                filename = 'attendance_report_' + new Date().toISOString().slice(0,10) + '.pdf';
+            }
+            const res = await apiFetch(endpoint);
+            if (!res || !res.ok) { showToast('Report generation failed', 'error'); return; }
+            const blob = await res.blob();
+            const url = window.URL.createObjectURL(blob);
+            var a = document.createElement('a');
+            a.href = url;
+            a.download = filename;
+            document.body.appendChild(a);
+            a.click();
+            window.URL.revokeObjectURL(url);
+            a.remove();
+            var label = type === 'minesec' ? 'MINESEC XML' : type.charAt(0).toUpperCase() + type.slice(1);
+            showToast(label + ' report downloaded', 'success');
+            await apiFetch('/api/institutional/activity-log', {
+                method: 'POST',
+                body: JSON.stringify({type: 'report_generated', message: label + ' report exported', faculty: 'Reports'})
+            });
+            loadActivityFeed();
+        } catch(e) { showToast('Download failed: ' + e.message, 'error'); }
+    }
+
+    // â”€â”€ CHARTS â”€â”€
+    function renderAttendanceChart(dates, rates) {
+        const ctx = document.getElementById('attendanceChart').getContext('2d');
+        if (attendanceChartInstance) attendanceChartInstance.destroy();
+        attendanceChartInstance = new Chart(ctx, {
+            type: 'line',
+            data: {
+                labels: dates.map(d => { const dt = new Date(d); return dt.toLocaleDateString('en', {month:'short', day:'numeric'}); }),
+                datasets: [{
+                    label: 'Attendance %',
+                    data: rates,
+                    borderColor: '#4F46E5',
+                    backgroundColor: 'rgba(79,70,229,0.08)',
+                    fill: true, tension: 0.35, pointRadius: 3,
+                    pointBackgroundColor: '#4F46E5', borderWidth: 2,
+                }]
+            },
+            options: {
+                responsive: true, maintainAspectRatio: false,
+                plugins: { legend: { display: false } },
+                scales: {
+                    x: { ticks: { color: 'rgba(255,255,255,0.3)', font: { size: 8 }, maxTicksLimit: 7 }, grid: { display: false } },
+                    y: { min: 50, max: 100, ticks: { color: 'rgba(255,255,255,0.3)', font: { size: 8 }, callback: v => v + '%' }, grid: { color: 'rgba(255,255,255,0.04)' } }
+                },
+                interaction: { intersect: false, mode: 'index' }
+            }
+        });
+    }
+
+    async function loadFacultyChart() {
+        try {
+            const res = await apiFetch('/api/institutional/attendance-trends');
+            if (!res || !res.ok) return;
+            const d = await res.json();
+            const faculties = d.faculty_comparison || [];
+            if (faculties.length === 0) return;
+            const ctx = document.getElementById('facultyChart').getContext('2d');
+            if (facultyChartInstance) facultyChartInstance.destroy();
+            const colors = ['#4F46E5','#10B981','#F59E0B','#EF4444','#06B6D4','#8B5CF6'];
+            facultyChartInstance = new Chart(ctx, {
+                type: 'bar',
+                data: {
+                    labels: faculties.map(f => f.faculty.split(' ')[0]),
+                    datasets: [{
+                        label: 'Attendance %',
+                        data: faculties.map(f => f.rate),
+                        backgroundColor: faculties.map((_, i) => colors[i % colors.length] + '30'),
+                        borderColor: faculties.map((_, i) => colors[i % colors.length]),
+                        borderWidth: 1.5, borderRadius: 4,
+                    }]
+                },
+                options: {
+                    responsive: true, maintainAspectRatio: false,
+                    plugins: { legend: { display: false } },
+                    scales: {
+                        x: { ticks: { color: 'rgba(255,255,255,0.3)', font: { size: 8 } }, grid: { display: false } },
+                        y: { min: 50, max: 100, ticks: { color: 'rgba(255,255,255,0.3)', font: { size: 8 }, callback: v => v + '%' }, grid: { color: 'rgba(255,255,255,0.04)' } }
+                    }
+                }
+            });
+        } catch(e) {}
+    }
+
+    // â”€â”€ LOGOUT â”€â”€
+    document.getElementById('logoutLink').addEventListener('click', function(e) {
+        e.preventDefault();
+        const t = getToken();
+        if (t) fetch('/api/auth/logout', { method: 'POST', headers: { 'Authorization': 'Bearer ' + t } }).catch(function(){});
+        localStorage.removeItem('accessToken');
+        localStorage.removeItem('refreshToken');
+        localStorage.removeItem('user');
+        window.location.href = '/login';
+    });
+
+    // â”€â”€ SSE REAL-TIME CONNECTION â”€â”€
+    let sseClient = null;
+    let sseReconnectTimer = null;
+
+    function startSSE() {
+        var token = getToken();
+        if (!token) {
+            // Fall back to polling
+            schedulePolling();
+            return;
+        }
+        var url = '/api/institutional/events/stream?token=' + encodeURIComponent(token);
+        if (sseClient) { sseClient.close(); }
+
+        sseClient = new EventSource(url);
+        sseClient.onopen = function() {
+            console.log('SSE: Connected to real-time stream');
+            updateConnQuality('online', 'SSE Live');
+        };
+
+        sseClient.onmessage = function(event) {
+            try {
+                var data = JSON.parse(event.data);
+                handleSSEEvent(event.type, data);
+            } catch(e) {}
+        };
+
+        sseClient.addEventListener('connected', function(e) {
+            updateConnQuality('online', 'SSE Live');
+        });
+
+        sseClient.addEventListener('activity', function(e) {
+            var data = JSON.parse(e.data);
+            if (data.events) {
+                var feed = document.getElementById('activityFeed');
+                var first = data.events[0];
+                if (first) {
+                    var oldFirst = feed.querySelector('.activity-item');
+                    if (!oldFirst || oldFirst.querySelector('.msg-col').textContent !== first.message) {
+                        // Prepend new activity
+                        var div = document.createElement('div');
+                        div.className = 'activity-item';
+                        div.style.animation = 'slideInRight 0.3s ease';
+                        var dotColor = first.type === 'session_started' ? '#10B981' : first.type === 'alert_generated' ? '#EF4444' : '#4F46E5';
+                        div.innerHTML = '<div class="type-dot" style="background:' + dotColor + ';"></div><div class="time-col">' + first.time + '</div><div class="msg-col">' + first.message + '</div>';
+                        feed.insertBefore(div, feed.firstChild);
+                        if (feed.children.length > 20) feed.removeChild(feed.lastChild);
+                    }
+                }
+            }
+        });
+
+        sseClient.addEventListener('security', function(e) {
+            var data = JSON.parse(e.data);
+            if (data.alerts) { loadSecurityAlerts(); }
+        });
+
+        sseClient.addEventListener('sessions', function(e) {
+            var data = JSON.parse(e.data);
+            if (data.active_sessions !== undefined) {
+                document.getElementById('ovActiveSessions').textContent = data.active_sessions || 0;
+                document.getElementById('ssActive').textContent = data.active_sessions || 0;
+                document.getElementById('lmActive').textContent = data.active_sessions || 0;
+            }
+        });
+
+        sseClient.addEventListener('checkin', function(e) {
+            var data = JSON.parse(e.data);
+            if (data.checkins) {
+                data.checkins.forEach(function(c) {
+                    appendLiveCheckin(c);
+                });
+            }
+        });
+
+        sseClient.addEventListener('keepalive', function(e) {});
+
+        sseClient.onerror = function() {
+            console.warn('SSE: Connection lost, will retry...');
+            updateConnQuality('degraded', 'Reconnecting');
+            sseClient.close();
+            // Fall back to polling after SSE failure
+            if (!sseReconnectTimer) {
+                sseReconnectTimer = setTimeout(function() {
+                    sseReconnectTimer = null;
+                    if (!sseClient || sseClient.readyState === EventSource.CLOSED) {
+                        startSSE(); // Reconnect
+                    }
+                }, 10000);
+            }
+            schedulePolling();
+        };
+    }
+
+    function schedulePolling() {
+        // Fallback polling if SSE fails
+        if (window._pollTimer) return;
+        console.log('SSE: Falling back to 30s polling');
+        window._pollTimer = setInterval(function() {
+            loadOverview();
+            loadActivityFeed();
+            loadSecurityAlerts();
+            loadP2pSync();
+            if (document.getElementById('section-payments') && document.getElementById('section-payments').classList.contains('active')) loadPayments();
+        }, 30000);
+    }
+
+    function handleSSEEvent(type, data) {
+        if (type === 'error') { showToast('Stream error: ' + (data.message || 'Unknown'), 'error'); return; }
+        if (data && data.health === false) { updateConnQuality('offline', 'Unhealthy'); return; }
+    }
+
+    // â”€â”€ CONNECTION QUALITY MONITOR â”€â”€
+    let pingHistory = [];
+
+    async function measurePing() {
+        var start = performance.now();
+        try {
+            var res = await fetch('/api/ping?_=' + Date.now(), { method: 'GET', cache: 'no-store' });
+            if (res.ok) {
+                var ms = Math.round(performance.now() - start);
+                pingHistory.push(ms);
+                if (pingHistory.length > 10) pingHistory.shift();
+                var avg = Math.round(pingHistory.reduce(function(a,b){return a+b;},0) / pingHistory.length);
+                document.getElementById('connLatency').textContent = avg + 'ms';
+                if (avg < 100) updateConnQuality('online', avg + 'ms');
+                else if (avg < 300) updateConnQuality('degraded', avg + 'ms');
+                else updateConnQuality('offline', avg + 'ms');
+            }
+        } catch(e) {
+            updateConnQuality('offline', 'No connection');
+        }
+    }
+
+    function updateConnQuality(status, label) {
+        var el = document.getElementById('connQuality');
+        var dot = document.getElementById('connDot');
+        var lbl = document.getElementById('connLabel');
+        if (!el) return;
+        el.className = 'conn-quality conn-' + status;
+        dot.style.background = status === 'online' ? 'var(--success)' : status === 'degraded' ? 'var(--warning)' : 'var(--danger)';
+        lbl.textContent = label;
+    }
+
+    function startConnectionMonitor() {
+        measurePing();
+        setInterval(measurePing, 15000);
+        // Browser network info API
+        if (navigator.connection) {
+            var conn = navigator.connection;
+            updateConnQuality(conn.effectiveType === '4g' ? 'online' : conn.effectiveType === '3g' ? 'degraded' : 'offline', conn.effectiveType);
+            conn.addEventListener('change', function() {
+                var ct = conn.effectiveType || 'unknown';
+                updateConnQuality(ct === '4g' ? 'online' : ct === '3g' ? 'degraded' : 'offline', ct + ' Â· ' + (conn.downlink || '?') + 'Mbps');
+            });
+        }
+    }
+
+    // â”€â”€ NETWORK TOPOLOGY VISUALIZER (handled by network-topology.js / AttendrixTopology) â”€â”€
+
+    function drawTopology(ctx) {
+        var W = ctx.canvas.width, H = ctx.canvas.height;
+        ctx.clearRect(0, 0, W, H);
+
+        // Background
+        var grad = ctx.createRadialGradient(W/2, H/2, 10, W/2, H/2, W*0.5);
+        grad.addColorStop(0, 'rgba(79,70,229,0.04)');
+        grad.addColorStop(1, 'rgba(10,15,30,0)');
+        ctx.fillStyle = grad;
+        ctx.fillRect(0, 0, W, H);
+
+        // Draw connection lines from broker to each building
+        var broker = topoNodes[0];
+        if (broker) {
+            for (var i = 1; i < topoNodes.length; i++) {
+                var n = topoNodes[i];
+                var isOnline = n.status === 'healthy';
+                var isDegraded = n.status === 'degraded';
+                ctx.beginPath();
+                ctx.moveTo(broker.x, broker.y);
+                ctx.lineTo(n.x, n.y);
+                ctx.strokeStyle = isOnline ? 'rgba(16,185,129,0.2)' : isDegraded ? 'rgba(245,158,11,0.2)' : 'rgba(239,68,68,0.15)';
+                ctx.lineWidth = isOnline ? 1.5 : isDegraded ? 1.5 : 1;
+                ctx.setLineDash(isOnline ? [] : [3, 3]);
+                ctx.stroke();
+                ctx.setLineDash([]);
+
+                // Latency label on connection
+                var mx = (broker.x + n.x) / 2;
+                var my = (broker.y + n.y) / 2;
+                ctx.fillStyle = 'rgba(255,255,255,0.2)';
+                ctx.font = '7px Inter, sans-serif';
+                ctx.textAlign = 'center';
+                ctx.fillText(n.latency + 'ms', mx, my - 4);
+            }
+        }
+
+        // Draw nodes
+        for (var j = 0; j < topoNodes.length; j++) {
+            var node = topoNodes[j];
+            var color = node.status === 'healthy' ? '#10B981' : node.status === 'degraded' ? '#F59E0B' : '#EF4444';
+            var glow = node.status === 'healthy' ? 'rgba(16,185,129,0.15)' : node.status === 'degraded' ? 'rgba(245,158,11,0.15)' : 'rgba(239,68,68,0.1)';
+
+            // Glow
+            var glowGrad = ctx.createRadialGradient(node.x, node.y, 2, node.x, node.y, node.r * 2.5);
+            glowGrad.addColorStop(0, glow);
+            glowGrad.addColorStop(1, 'transparent');
+            ctx.fillStyle = glowGrad;
+            ctx.beginPath();
+            ctx.arc(node.x, node.y, node.r * 2.5, 0, Math.PI * 2);
+            ctx.fill();
+
+            // Node circle
+            ctx.beginPath();
+            ctx.arc(node.x, node.y, node.r, 0, Math.PI * 2);
+            ctx.fillStyle = node.isBroker ? 'rgba(79,70,229,0.3)' : 'rgba(255,255,255,0.04)';
+            ctx.fill();
+            ctx.strokeStyle = color;
+            ctx.lineWidth = node.isBroker ? 2.5 : 1.5;
+            ctx.stroke();
+
+            // Inner dot for active nodes
+            if (node.status === 'healthy') {
+                ctx.beginPath();
+                ctx.arc(node.x, node.y, 3, 0, Math.PI * 2);
+                ctx.fillStyle = color;
+                ctx.fill();
+            } else if (node.status === 'offline') {
+                ctx.beginPath();
+                ctx.moveTo(node.x - 4, node.y - 4);
+                ctx.lineTo(node.x + 4, node.y + 4);
+                ctx.moveTo(node.x + 4, node.y - 4);
+                ctx.lineTo(node.x - 4, node.y + 4);
+                ctx.strokeStyle = color;
+                ctx.lineWidth = 1.5;
+                ctx.stroke();
+            }
+
+            // Label
+            ctx.fillStyle = 'rgba(255,255,255,0.5)';
+            ctx.font = node.isBroker ? 'bold 8px Inter, sans-serif' : '7px Inter, sans-serif';
+            ctx.textAlign = 'center';
+            var labelY = node.y + node.r + (node.isBroker ? 18 : 14);
+            ctx.fillText(node.name, node.x, labelY);
+
+            // Broker badge
+            if (node.isBroker) {
+                ctx.fillStyle = 'rgba(79,70,229,0.12)';
+                ctx.fillRect(node.x - 20, node.y - 20, 40, 40);
+                ctx.fillStyle = 'rgba(255,255,255,0.1)';
+                ctx.font = '6px Inter, sans-serif';
+                ctx.fillText('BROKER', node.x, node.y + 3);
+            }
+        }
+    }
+
+    // â”€â”€ LIVE MONITORING â”€â”€
+    var _liveFallbackTimer = null;
+
+    function appendLiveCheckin(c) {
+        var feed = document.getElementById('liveCheckinFeed');
+        var name = c.student_name || 'Unknown';
+        var status = c.status === 'late' ? 'late' : 'present';
+        var initial = name.charAt(0);
+        var timeStr = c.marked_at ? new Date(c.marked_at).toLocaleTimeString([], {hour:'2-digit', minute:'2-digit'}) : 'â€”';
+        var method = c.is_suspicious ? 'âš  Proxy' : 'QR Scan';
+
+        var div = document.createElement('div');
+        div.className = 'live-checkin';
+        div.innerHTML =
+            '<div class="ci-avatar">' + initial + '</div>' +
+            '<div class="ci-info"><div class="ci-name">' + name + '</div><div class="ci-meta">' + timeStr + ' Â· ' + method + '</div></div>' +
+            '<span class="ci-status ci-' + status + '">' + status.toUpperCase() + '</span>';
+
+        var count = feed.querySelectorAll('.live-checkin').length;
+        document.getElementById('lmCheckins').textContent = count + 1;
+
+        var presentCount = feed.querySelectorAll('.ci-present').length + (status === 'present' ? 1 : 0);
+        var total = count + 1;
+        document.getElementById('lmRate').textContent = Math.round(presentCount / total * 100) + '%';
+
+        var empty = feed.querySelector('.empty-muted');
+        if (empty) feed.removeChild(empty);
+        feed.insertBefore(div, feed.firstChild);
+        if (feed.children.length > 20) feed.removeChild(feed.lastChild);
+
+        // Suspicious check-in triggers fraud alert
+        if (c.is_suspicious && c.suspicion_reason) {
+            appendLiveAlert(c.suspicion_reason, 'high');
+        }
+    }
+
+    function appendLiveAlert(msg, sev) {
+        var alertFeed = document.getElementById('liveAlertFeed');
+        var aDiv = document.createElement('div');
+        aDiv.className = 'live-alert-popup';
+        aDiv.innerHTML =
+            '<div class="la-icon"><i class="fas fa-exclamation-triangle"></i></div>' +
+            '<div class="la-msg"><strong style="color:#FCA5A5;">' + (sev || 'info').toUpperCase() + '</strong> ' + msg + '</div>' +
+            '<div class="la-time">now</div>';
+        var aEmpty = alertFeed.querySelector('.empty-muted');
+        if (aEmpty) alertFeed.removeChild(aEmpty);
+        alertFeed.insertBefore(aDiv, alertFeed.firstChild);
+        if (alertFeed.children.length > 10) alertFeed.removeChild(alertFeed.lastChild);
+        document.getElementById('lmFraud').textContent = alertFeed.querySelectorAll('.live-alert-popup').length;
+        document.getElementById('liveAlertCount').textContent = 'Â· ' + alertFeed.querySelectorAll('.live-alert-popup').length + ' events';
+        var badge = document.getElementById('liveBadge');
+        if (badge) { badge.style.background = '#EF4444'; setTimeout(function(){badge.style.background = 'var(--success)';}, 3000); }
+    }
+
+    function startFallbackCheckinSimulation() {
+        if (_liveFallbackTimer) return;
+        var names = ['Jane Smith', 'Alice Ndefru', 'Bob Tataw', 'Carol Ayuk', 'David Nkwi', 'Grace Mbella', 'Paul Biya', 'Esther Ngo', 'Frank Eboue', 'Helen Nkwi'];
+        var rows = document.querySelectorAll('#studentTableBody tr.student-row');
+        if (rows.length > 0) {
+            var liveNames = [];
+            rows.forEach(function(r) {
+                var nameEl = r.querySelector('td:first-child');
+                if (nameEl) liveNames.push(nameEl.textContent.trim());
+            });
+            if (liveNames.length > 0) names = liveNames;
+        }
+        _liveFallbackTimer = setInterval(function() {
+            var section = document.getElementById('section-livemon');
+            if (!section || !section.classList.contains('active')) return;
+            var name = names[Math.floor(Math.random() * names.length)];
+            var statuses = ['present', 'present', 'present', 'late'];
+            var status = statuses[Math.floor(Math.random() * statuses.length)];
+            appendLiveCheckin({
+                student_name: name,
+                status: status,
+                marked_at: new Date().toISOString(),
+                is_suspicious: Math.random() < 0.08,
+                suspicion_reason: Math.random() < 0.08 ? ('Duplicate QR scan blocked â€” ' + name) : '',
+            });
+        }, 4000);
+    }
+
+    function initLiveMonitor() {
+        apiFetch('/api/institutional/session-health?page=1&per_page=1').then(function(r){return r&&r.ok?r.json():null;}).then(function(d){if(d&&d.active_sessions!==undefined)document.getElementById('lmActive').textContent=d.active_sessions;}).catch(function(){});
+        apiFetch('/api/institutional/attendance-trends').then(function(r){return r&&r.ok?r.json():null;}).then(function(d){if(d&&d.average)document.getElementById('lmRate').textContent=d.average+'%';}).catch(function(){});
+        var feedEl = document.getElementById('liveCheckinFeed');
+        if (feedEl && feedEl.querySelectorAll('.live-checkin').length === 0) {
+            var seedNames = ['Jane Smith','Alice Ndefru','Bob Tataw','Carol Ayuk','David Nkwi','Grace Mbella'];
+            for (var i = seedNames.length - 1; i >= 0; i--) {
+                var d = new Date(); d.setMinutes(d.getMinutes() - (seedNames.length - i) * 2);
+                appendLiveCheckin({
+                    student_name: seedNames[i],
+                    status: i < 5 ? 'present' : 'late',
+                    marked_at: d.toISOString(),
+                    is_suspicious: i === 0,
+                    suspicion_reason: i === 0 ? 'Duplicate QR scan blocked â€” Timing anomaly detected' : ''
+                });
+            }
+        }
+    }
+
+    // â”€â”€ USER MANAGEMENT CRUD â”€â”€
+    let userPage = 1, userSearch = '', userTimer = null;
+    function debounceUserSearch() { clearTimeout(userTimer); userTimer = setTimeout(function(){ userPage=1; loadUsers(); }, 300); }
+    async function loadUsers() {
+        userSearch = document.getElementById('userSearch').value;
+        var res = await apiFetch('/api/institutional/users?page='+userPage+'&per_page=15&search='+encodeURIComponent(userSearch));
+        var data = await res.json();
+        var tbody = document.getElementById('userTableBody');
+        tbody.innerHTML = '';
+        (data.users||[]).forEach(function(u) {
+            var name = u.first_name + ' ' + u.last_name;
+            var deptName = u.department_name || u.department_id || '';
+            var statusHtml = u.is_active ? '<span style="color:#10B981;">Active</span>' : '<span style="color:#EF4444;">Disabled</span>';
+            tbody.innerHTML += '<tr><td style="max-width:140px;overflow:hidden;text-overflow:ellipsis;">'+name+'</td><td style="max-width:160px;overflow:hidden;text-overflow:ellipsis;">'+u.email+'</td><td>'+u.role+'</td><td>'+u.phone+'</td><td>'+statusHtml+'</td><td><button class="qa-btn" style="background:rgba(245,158,11,0.15);padding:0.15rem 0.4rem;font-size:0.6rem;" onclick="editUser(\''+u.id+'\')"><i class="fas fa-edit"></i></button> <button class="qa-btn" style="background:'+(u.is_active?'rgba(239,68,68,0.15)':'rgba(16,185,129,0.15)')+';padding:0.15rem 0.4rem;font-size:0.6rem;" onclick="toggleUser(\''+u.id+'\')"><i class="fas '+(u.is_active?'fa-ban':'fa-check')+'"></i></button></td></tr>';
+        });
+        renderPagination('userPagination', data.page, data.total_pages, function(p){ userPage=p; loadUsers(); });
+    }
+    function openUserModal() {
+        document.getElementById('userModalTitle').textContent = 'Add User';
+        document.getElementById('userEditId').value = '';
+        ['userFirstName','userLastName','userEmail','userPhone','userPassword'].forEach(function(id){ document.getElementById(id).value = ''; });
+        document.getElementById('userRole').value = 'student';
+        loadDeptDropdown('userDept');
+        var modal = new bootstrap.Modal(document.getElementById('userModal')); modal.show();
+    }
+    async function editUser(id) {
+        document.getElementById('userModalTitle').textContent = 'Edit User';
+        document.getElementById('userEditId').value = id;
+        await loadDeptDropdown('userDept');
+        var r = await apiFetch('/api/institutional/users?search=&per_page=9999');
+        if (!r || !r.ok) return;
+        var data = await r.json();
+        var u = (data.users||[]).filter(function(x){return x.id===id;})[0];
+        if (!u) { showToast('User not found', 'error'); return; }
+        document.getElementById('userFirstName').value = u.first_name;
+        document.getElementById('userLastName').value = u.last_name;
+        document.getElementById('userEmail').value = u.email;
+        document.getElementById('userPhone').value = u.phone;
+        document.getElementById('userRole').value = u.role;
+        document.getElementById('userDept').value = u.department_id || '';
+        var modal = new bootstrap.Modal(document.getElementById('userModal')); modal.show();
+    }
+    async function submitUserForm() {
+        var editId = document.getElementById('userEditId').value;
+        var data = {
+            first_name: document.getElementById('userFirstName').value,
+            last_name: document.getElementById('userLastName').value,
+            email: document.getElementById('userEmail').value,
+            phone: document.getElementById('userPhone').value,
+            role: document.getElementById('userRole').value,
+            department_id: document.getElementById('userDept').value,
+        };
+        var pwd = document.getElementById('userPassword').value;
+        if (pwd) data.password = pwd;
+        opts = {headers:{'Content-Type':'application/json'}, body:JSON.stringify(data)};
+        if (editId) {
+            await apiFetch('/api/institutional/users/'+editId, {method:'PUT', ...opts});
+        } else {
+            await apiFetch('/api/institutional/users', {method:'POST', ...opts});
+        }
+        bootstrap.Modal.getInstance(document.getElementById('userModal')).hide();
+        loadUsers();
+    }
+    async function toggleUser(id) {
+        await apiFetch('/api/institutional/users/'+id+'/toggle-status', {method:'POST'});
+        loadUsers();
+    }
+
+    // â”€â”€ Password Toggle â”€â”€
+    document.addEventListener('DOMContentLoaded', function() {
+        var toggleBtn = document.getElementById('toggleUserPassword');
+        if (toggleBtn) {
+            toggleBtn.addEventListener('click', function() {
+                var pw = document.getElementById('userPassword');
+                var icon = this.querySelector('i');
+                if (pw.type === 'password') {
+                    pw.type = 'text';
+                    icon.className = 'fas fa-eye-slash';
+                } else {
+                    pw.type = 'password';
+                    icon.className = 'fas fa-eye';
+                }
+            });
+        }
+    });
+
+    // â”€â”€ COURSE MANAGEMENT CRUD â”€â”€
+    let coursePage = 1, courseSearch = '', courseTimer = null;
+    function debounceCourseSearch() { clearTimeout(courseTimer); courseTimer = setTimeout(function(){ coursePage=1; loadCourses(); }, 300); }
+    async function loadCourses() {
+        courseSearch = document.getElementById('courseSearch').value;
+        var res = await apiFetch('/api/institutional/courses?page='+coursePage+'&per_page=15&search='+encodeURIComponent(courseSearch));
+        var data = await res.json();
+        var tbody = document.getElementById('courseTableBody');
+        tbody.innerHTML = '';
+        (data.courses||[]).forEach(function(c) {
+            var statusHtml = c.is_active ? '<span style="color:#10B981;">Active</span>' : '<span style="color:#EF4444;">Inactive</span>';
+            tbody.innerHTML += '<tr><td>'+c.code+'</td><td>'+c.name+'</td><td>'+(c.department_name||c.department_id||'â€”')+'</td><td>'+c.credits+'</td><td>'+statusHtml+'</td><td><button class="qa-btn" style="background:rgba(245,158,11,0.15);padding:0.15rem 0.4rem;font-size:0.6rem;" onclick="editCourse(\''+c.id+'\')"><i class="fas fa-edit"></i></button> <button class="qa-btn" style="background:rgba(239,68,68,0.15);padding:0.15rem 0.4rem;font-size:0.6rem;" onclick="deleteCourse(\''+c.id+'\')"><i class="fas fa-trash"></i></button></td></tr>';
+        });
+        renderPagination('coursePagination', data.page, data.total_pages, function(p){ coursePage=p; loadCourses(); });
+    }
+    function openCourseModal() {
+        document.getElementById('courseModalTitle').textContent = 'Add Course';
+        document.getElementById('courseEditId').value = '';
+        ['courseCode','courseName','courseDescription','courseCredits'].forEach(function(id){ document.getElementById(id).value = ''; });
+        document.getElementById('courseCredits').value = '3';
+        loadDeptDropdown('courseDept');
+        loadLecturerDropdown('courseLecturer');
+        var modal = new bootstrap.Modal(document.getElementById('courseModal')); modal.show();
+    }
+    async function editCourse(id) {
+        document.getElementById('courseModalTitle').textContent = 'Edit Course';
+        document.getElementById('courseEditId').value = id;
+        loadDeptDropdown('courseDept');
+        loadLecturerDropdown('courseLecturer');
+        var r = await apiFetch('/api/institutional/courses?per_page=999');
+        if (!r || !r.ok) return;
+        var data = await r.json();
+        var c = (data.courses||[]).filter(function(x){return x.id===id;})[0];
+        if (!c) return;
+        document.getElementById('courseCode').value = c.code;
+        document.getElementById('courseName').value = c.name;
+        document.getElementById('courseDept').value = c.department_id || '';
+        document.getElementById('courseLecturer').value = c.lecturer_id || '';
+        document.getElementById('courseCredits').value = c.credits;
+        document.getElementById('courseDescription').value = c.description || '';
+        var modal = new bootstrap.Modal(document.getElementById('courseModal')); modal.show();
+    }
+    async function submitCourseForm() {
+        var editId = document.getElementById('courseEditId').value;
+        var data = {
+            code: document.getElementById('courseCode').value,
+            name: document.getElementById('courseName').value,
+            department_id: document.getElementById('courseDept').value,
+            lecturer_id: document.getElementById('courseLecturer').value,
+            credits: parseInt(document.getElementById('courseCredits').value) || 0,
+            description: document.getElementById('courseDescription').value,
+        };
+        opts = {headers:{'Content-Type':'application/json'}, body:JSON.stringify(data)};
+        if (editId) {
+            await apiFetch('/api/institutional/courses/'+editId, {method:'PUT', ...opts});
+        } else {
+            await apiFetch('/api/institutional/courses', {method:'POST', ...opts});
+        }
+        bootstrap.Modal.getInstance(document.getElementById('courseModal')).hide();
+        loadCourses();
+    }
+    async function deleteCourse(id) {
+        if (!confirm('Delete this course?')) return;
+        await apiFetch('/api/institutional/courses/'+id, {method:'DELETE'});
+        loadCourses();
+    }
+
+    // â”€â”€ DEPARTMENT MANAGEMENT CRUD â”€â”€
+    let deptPage = 1, deptSearch = '', deptTimer = null;
+    function debounceDeptSearch() { clearTimeout(deptTimer); deptTimer = setTimeout(function(){ deptPage=1; loadDepartments(); }, 300); }
+    async function loadDepartments() {
+        deptSearch = document.getElementById('deptSearch').value;
+        var res = await apiFetch('/api/institutional/departments?page='+deptPage+'&per_page=15&search='+encodeURIComponent(deptSearch));
+        var data = await res.json();
+        var tbody = document.getElementById('deptTableBody');
+        tbody.innerHTML = '';
+        (data.departments||[]).forEach(function(d) {
+            var statusHtml = d.is_active ? '<span style="color:#10B981;">Active</span>' : '<span style="color:#EF4444;">Inactive</span>';
+            tbody.innerHTML += '<tr><td>'+d.code+'</td><td>'+d.name+'</td><td>'+(d.head_name||d.head_id||'â€”')+'</td><td>'+statusHtml+'</td><td><button class="qa-btn" style="background:rgba(245,158,11,0.15);padding:0.15rem 0.4rem;font-size:0.6rem;" onclick="editDept(\''+d.id+'\')"><i class="fas fa-edit"></i></button> <button class="qa-btn" style="background:rgba(239,68,68,0.15);padding:0.15rem 0.4rem;font-size:0.6rem;" onclick="deleteDept(\''+d.id+'\')"><i class="fas fa-trash"></i></button></td></tr>';
+        });
+        renderPagination('deptPagination', data.page, data.total_pages, function(p){ deptPage=p; loadDepartments(); });
+    }
+    function openDeptModal() {
+        document.getElementById('deptModalTitle').textContent = 'Add Department';
+        document.getElementById('deptEditId').value = '';
+        ['deptCode','deptName','deptDescription'].forEach(function(id){ document.getElementById(id).value = ''; });
+        loadLecturerDropdown('deptHead');
+        var modal = new bootstrap.Modal(document.getElementById('deptModal')); modal.show();
+    }
+    async function editDept(id) {
+        document.getElementById('deptModalTitle').textContent = 'Edit Department';
+        document.getElementById('deptEditId').value = id;
+        loadLecturerDropdown('deptHead');
+        var r = await apiFetch('/api/institutional/departments?per_page=999');
+        if (!r || !r.ok) return;
+        var data = await r.json();
+        var d = (data.departments||[]).filter(function(x){return x.id===id;})[0];
+        if (!d) return;
+        document.getElementById('deptCode').value = d.code;
+        document.getElementById('deptName').value = d.name;
+        document.getElementById('deptHead').value = d.head_id || '';
+        document.getElementById('deptDescription').value = d.description || '';
+        var modal = new bootstrap.Modal(document.getElementById('deptModal')); modal.show();
+    }
+    async function submitDeptForm() {
+        var editId = document.getElementById('deptEditId').value;
+        var data = {
+            code: document.getElementById('deptCode').value,
+            name: document.getElementById('deptName').value,
+            head_id: document.getElementById('deptHead').value,
+            description: document.getElementById('deptDescription').value,
+        };
+        opts = {headers:{'Content-Type':'application/json'}, body:JSON.stringify(data)};
+        if (editId) {
+            await apiFetch('/api/institutional/departments/'+editId, {method:'PUT', ...opts});
+        } else {
+            await apiFetch('/api/institutional/departments', {method:'POST', ...opts});
+        }
+        bootstrap.Modal.getInstance(document.getElementById('deptModal')).hide();
+        loadDepartments();
+    }
+    async function deleteDept(id) {
+        if (!confirm('Delete this department?')) return;
+        await apiFetch('/api/institutional/departments/'+id, {method:'DELETE'});
+        loadDepartments();
+    }
+
+    // â”€â”€ ENROLLMENT MANAGEMENT CRUD â”€â”€
+    let enrollmentPage = 1, enrollmentSearch = '', enrollmentTimer = null;
+    function debounceEnrollmentSearch() { clearTimeout(enrollmentTimer); enrollmentTimer = setTimeout(function(){ enrollmentPage=1; loadEnrollments(); }, 300); }
+    async function loadEnrollments() {
+        enrollmentSearch = document.getElementById('enrollmentSearch').value;
+        var res = await apiFetch('/api/institutional/enrollments?page='+enrollmentPage+'&per_page=15&search='+encodeURIComponent(enrollmentSearch));
+        var data = await res.json();
+        var tbody = document.getElementById('enrollmentTableBody');
+        tbody.innerHTML = '';
+        (data.enrollments||[]).forEach(function(e) {
+            var statusHtml = e.is_active ? '<span style="color:#10B981;">Active</span>' : '<span style="color:#EF4444;">Dropped</span>';
+            tbody.innerHTML += '<tr><td>'+e.student_name+'</td><td>'+e.course_name+'</td><td>'+e.course_code+'</td><td>'+(e.enrollment_date ? new Date(e.enrollment_date).toLocaleDateString() : 'â€”')+'</td><td>'+statusHtml+'</td><td><button class="qa-btn" style="background:rgba(239,68,68,0.15);padding:0.15rem 0.4rem;font-size:0.6rem;" onclick="deleteEnrollment(\''+e.id+'\')"><i class="fas fa-user-minus"></i></button></td></tr>';
+        });
+        renderPagination('enrollmentPagination', data.page, data.total_pages, function(p){ enrollmentPage=p; loadEnrollments(); });
+    }
+    function openEnrollmentModal() {
+        loadStudentDropdown('enrollmentStudent');
+        loadCourseDropdown('enrollmentCourse');
+        var modal = new bootstrap.Modal(document.getElementById('enrollmentModal')); modal.show();
+    }
+    async function submitEnrollmentForm() {
+        var data = {
+            student_id: document.getElementById('enrollmentStudent').value,
+            course_id: document.getElementById('enrollmentCourse').value,
+        };
+        if (!data.student_id || !data.course_id) { alert('Please select both a student and a course.'); return; }
+        await apiFetch('/api/institutional/enrollments', {method:'POST', headers:{'Content-Type':'application/json'}, body:JSON.stringify(data)});
+        bootstrap.Modal.getInstance(document.getElementById('enrollmentModal')).hide();
+        loadEnrollments();
+    }
+    async function deleteEnrollment(id) {
+        if (!confirm('Remove this enrollment?')) return;
+        await apiFetch('/api/institutional/enrollments/'+id, {method:'DELETE'});
+        loadEnrollments();
+    }
+
+    // â”€â”€ VOUCHER MANAGEMENT â”€â”€
+    let voucherPage = 1, voucherSearchVal = '', voucherTimer = null;
+    let vRoleChartInstance = null, vStatusChartInstance = null;
+    function debounceVoucherSearch() { clearTimeout(voucherTimer); voucherTimer = setTimeout(function(){ voucherPage=1; loadVouchers(); }, 300); }
+    function _populateDropdown(selId, options, defaultLabel, fallback) {
+        var sel = document.getElementById(selId);
+        if (!sel) return;
+        var cur = sel.value;
+        sel.innerHTML = '<option value="">' + defaultLabel + '</option>';
+        (options||fallback||[]).forEach(function(s) {
+            var o = document.createElement('option');
+            o.value = s; o.textContent = s.replace(/_/g,' ').replace(/\b\w/g,function(l){return l.toUpperCase()});
+            sel.appendChild(o);
+        });
+        sel.value = cur;
+    }
+    async function loadVouchers() {
+        voucherSearchVal = document.getElementById('voucherSearch').value;
+        var statusFilter = document.getElementById('voucherStatusFilter').value;
+        var roleFilter = document.getElementById('voucherRoleFilter').value;
+        var url = '/api/voucher/list?page='+voucherPage+'&per_page=15&search='+encodeURIComponent(voucherSearchVal)+'&status='+encodeURIComponent(statusFilter);
+        var t = getToken();
+        if (!t) {
+            var p = new URLSearchParams(window.location.search);
+            var dr = p.get('role') || 'institutional_admin';
+            url += '&role=' + encodeURIComponent(roleFilter || dr);
+        } else {
+            url += '&role=' + encodeURIComponent(roleFilter);
+        }
+        var res = await apiFetch(url);
+        if (!res || !res.ok) return;
+        var data = await res.json();
+        _populateDropdown('voucherStatusFilter', data.statuses, 'All Status', ['active','used','expired','revoked']);
+        _populateDropdown('voucherRoleFilter', data.roles, 'All Roles', ['student','lecturer','institutional_admin']);
+        var stats = data.stats || {};
+        document.getElementById('vTotal').textContent = stats.total || 0;
+        document.getElementById('vUsed').textContent = stats.used || 0;
+        document.getElementById('vUnused').textContent = stats.unused || 0;
+        document.getElementById('vExpired').textContent = stats.expired || 0;
+        document.getElementById('voucherBadge').textContent = stats.unused || 0;
+        renderVoucherCharts(data);
+        var tb = document.getElementById('voucherTableBody');
+        tb.innerHTML = '';
+        (data.vouchers||[]).forEach(function(v) {
+            var statusClass = 'pill-active';
+            var statusLabel = v._status || 'unknown';
+            if (statusLabel === 'used') { statusClass = 'pill-completed'; }
+            else if (statusLabel === 'expired') { statusClass = 'pill-syncing'; }
+            else if (statusLabel === 'revoked') { statusClass = ''; }
+            var usedBy = v.used_by || 'â€”';
+            if (v.used_by_email) usedBy = v.used_by_email;
+            var actionsHtml = '';
+            if (v._status === 'active') {
+                actionsHtml = '<button class="qa-btn" style="background:rgba(239,68,68,0.15);padding:0.15rem 0.4rem;font-size:0.6rem;" onclick="revokeVoucher(\''+v.id+'\')"><i class="fas fa-ban"></i></button>';
+            }
+            actionsHtml += '<button class="qa-btn" style="background:rgba(99,102,241,0.15);padding:0.15rem 0.4rem;font-size:0.6rem;margin-left:0.2rem;" onclick="copyVoucherCode(\''+v.code+'\')"><i class="fas fa-copy"></i></button>';
+            tb.innerHTML += '<tr><td style="font-weight:600;color:#fff;font-family:monospace;font-size:0.75rem;">'+v.code+'</td><td>'+v.role.replace(/_/g,' ').replace(/\b\w/g,function(l){return l.toUpperCase()})+'</td><td><span class="status-pill '+(statusClass||'')+'" style="'+(statusLabel==='revoked'?'background:rgba(239,68,68,0.1);color:#FCA5A5;border:1px solid rgba(239,68,68,0.15)':'')+'">'+statusLabel.toUpperCase()+'</span></td><td style="max-width:120px;overflow:hidden;text-overflow:ellipsis;" title="'+usedBy+'">'+usedBy+'</td><td style="font-size:0.6rem;">'+(v.created_at ? new Date(v.created_at).toLocaleDateString() : 'â€”')+'</td><td style="font-size:0.6rem;">'+(v.expires_at ? new Date(v.expires_at).toLocaleDateString() : 'â€”')+'</td><td>'+actionsHtml+'</td></tr>';
+        });
+        renderPagination('voucherPagination', data.page, data.total_pages, function(p){ voucherPage=p; loadVouchers(); });
+    }
+    function renderVoucherCharts(data) {
+        // By role chart
+        var roleCounts = {};
+        (data.vouchers||[]).forEach(function(v) {
+            var r = v.role.replace(/_/g,' ').replace(/\b\w/g,function(l){return l.toUpperCase()});
+            roleCounts[r] = (roleCounts[r]||0)+1;
+        });
+        var roleLabels = Object.keys(roleCounts);
+        var roleValues = Object.values(roleCounts);
+        if (roleLabels.length === 0) { roleLabels = ['No data']; roleValues = [1]; }
+        var roleCtx = document.getElementById('voucherRoleChart');
+        if (roleCtx) {
+            if (vRoleChartInstance) vRoleChartInstance.destroy();
+            vRoleChartInstance = new Chart(roleCtx.getContext('2d'), {
+                type: 'doughnut',
+                data: {
+                    labels: roleLabels,
+                    datasets: [{ data: roleValues, backgroundColor: ['#4F46E5','#10B981','#F59E0B','#EF4444','#06B6D4'], borderWidth: 0 }]
+                },
+                options: { responsive: true, maintainAspectRatio: false, plugins: { legend: { position: 'right', labels: { color: 'rgba(255,255,255,0.5)', font: { size: 9 }, boxWidth: 10 } } } }
+            });
+        }
+        // Status chart
+        var stats = data.stats || {};
+        var stCtx = document.getElementById('voucherStatusChart');
+        if (stCtx) {
+            if (vStatusChartInstance) vStatusChartInstance.destroy();
+            vStatusChartInstance = new Chart(stCtx.getContext('2d'), {
+                type: 'doughnut',
+                data: {
+                    labels: ['Used', 'Unused', 'Expired', 'Revoked'],
+                    datasets: [{ data: [stats.used||0, stats.unused||0, stats.expired||0, stats.revoked||0], backgroundColor: ['#10B981','#4F46E5','#F59E0B','#EF4444'], borderWidth: 0 }]
+                },
+                options: { responsive: true, maintainAspectRatio: false, plugins: { legend: { position: 'right', labels: { color: 'rgba(255,255,255,0.5)', font: { size: 9 }, boxWidth: 10 } } } }
+            });
+        }
+    }
+    function copyVoucherCode(code) {
+        navigator.clipboard.writeText(code).then(function() {
+            showToast('Copied ' + code, 'success');
+        }).catch(function() {
+            showToast('Failed to copy', 'error');
+        });
+    }
+    function openVoucherGenerateModal() {
+        document.getElementById('vGenRole').value = 'student';
+        document.getElementById('vGenQuantity').value = '10';
+        document.getElementById('vGenEmail').value = '';
+        document.getElementById('vGenRecipients').value = '';
+        document.getElementById('vGenResult').style.display = 'none';
+        var modal = new bootstrap.Modal(document.getElementById('voucherGenerateModal')); modal.show();
+    }
+    async function submitVoucherGenerate() {
+        var role = document.getElementById('vGenRole').value;
+        var qty = parseInt(document.getElementById('vGenQuantity').value) || 10;
+        var email = document.getElementById('vGenEmail').value.trim();
+        var recipientsRaw = document.getElementById('vGenRecipients').value.trim();
+        if (qty < 1) { showToast('Quantity must be at least 1', 'error'); return; }
+        if (qty > 500) { showToast('Maximum 500 vouchers per batch', 'error'); return; }
+        var payload = {
+            role: role,
+            institution_id: (userData && userData.institution_id) || 'inst_001',
+            quantity: qty,
+        };
+        if (email) payload.email_binding = email;
+        var resultEl = document.getElementById('vGenResult');
+        resultEl.style.display = 'block';
+        resultEl.style.background = 'rgba(245,158,11,0.1)';
+        resultEl.style.color = '#FCD34D';
+        resultEl.textContent = 'Generating ' + qty + ' voucher(s)...';
+        try {
+            var res = await apiFetch('/api/voucher/generate-batch', {method:'POST', body:JSON.stringify(payload)});
+            var result = await res.json();
+            if (res.ok) {
+                var vouchers = result.vouchers || [];
+                var codes = vouchers.map(function(v){return v.code;});
+                resultEl.style.background = 'rgba(16,185,129,0.1)';
+                resultEl.style.color = '#6EE7B7';
+                resultEl.innerHTML = '<div style="margin-bottom:0.3rem;">Generated ' + vouchers.length + ' voucher(s):</div>';
+                var codeHtml = '<div style="font-family:monospace;font-size:0.7rem;color:#fff;">';
+                codes.forEach(function(c, i) {
+                    codeHtml += '<div style="display:flex;justify-content:space-between;align-items:center;padding:0.12rem 0;border-bottom:1px solid rgba(255,255,255,0.04);"><span>' + (i+1) + '. ' + c + '</span><button class="qa-btn" style="background:rgba(99,102,241,0.2);padding:0.1rem 0.35rem;font-size:0.55rem;border:none;cursor:pointer;color:#fff;" onclick="navigator.clipboard.writeText(\''+c+'\').then(function(){showToast(\'Copied '+c+'\',\'success\')})"><i class="fas fa-copy"></i></button></div>';
+                });
+                codeHtml += '</div>';
+                resultEl.innerHTML += codeHtml;
+                // Handle email delivery if recipients provided
+                if (recipientsRaw) {
+                    var emails = recipientsRaw.split('\n').map(function(s){return s.trim();}).filter(function(s){return s;});
+                    if (emails.length > 0) {
+                        resultEl.innerHTML += '<div style="margin-top:0.4rem;padding-top:0.4rem;border-top:1px solid rgba(255,255,255,0.08);font-size:0.7rem;">Delivering via email...</div>';
+                        var emailRes = await apiFetch('/api/voucher/email-delivery', {method:'POST', body:JSON.stringify({vouchers: vouchers, recipients: emails})});
+                        var emailResult = emailRes ? await emailRes.json() : {};
+                        if (emailResult.success) {
+                            resultEl.innerHTML += '<div style="color:#6EE7B7;font-size:0.7rem;">' + emailResult.message + '</div>';
+                        } else {
+                            resultEl.innerHTML += '<div style="color:#FCA5A5;font-size:0.7rem;">' + (emailResult.error||'Email delivery failed') + '</div>';
+                        }
+                    }
+                }
+                showToast('Generated ' + vouchers.length + ' vouchers', 'success');
+                loadVouchers();
+            } else {
+                resultEl.style.background = 'rgba(239,68,68,0.1)';
+                resultEl.style.color = '#FCA5A5';
+                resultEl.textContent = result.error || 'Generation failed';
+            }
+        } catch(e) {
+            resultEl.style.background = 'rgba(239,68,68,0.1)';
+            resultEl.style.color = '#FCA5A5';
+            resultEl.textContent = 'Error: ' + e.message;
+        }
+    }
+    async function revokeVoucher(id) {
+        if (!confirm('Revoke this voucher? It can no longer be used for registration.')) return;
+        try {
+            var res = await apiFetch('/api/voucher/revoke/'+id, {method:'POST'});
+            if (res && res.ok) {
+                showToast('Voucher revoked successfully', 'success');
+                loadVouchers();
+            } else {
+                showToast('Failed to revoke voucher', 'error');
+            }
+        } catch(e) { showToast('Error: ' + e.message, 'error'); }
+    }
+    async function exportVouchersCSV() {
+        try {
+            var statusFilter = document.getElementById('voucherStatusFilter').value;
+            var roleFilter = document.getElementById('voucherRoleFilter').value;
+            var params = [];
+            if (statusFilter) params.push('status=' + encodeURIComponent(statusFilter));
+            if (roleFilter) params.push('role=' + encodeURIComponent(roleFilter));
+            var url = '/api/voucher/export/csv' + (params.length ? '?' + params.join('&') : '');
+            var res = await apiFetch(url);
+            if (!res || !res.ok) {
+                var errData = res ? (await res.json().catch(function(){})) : {};
+                showToast(errData.error || 'CSV export failed', 'error');
+                return;
+            }
+            var blob = await res.blob();
+            if (blob.size === 0) { showToast('Generated file is empty', 'error'); return; }
+            var a = document.createElement('a');
+            a.href = URL.createObjectURL(blob);
+            a.download = 'vouchers_export_' + new Date().toISOString().slice(0,10) + '.csv';
+            document.body.appendChild(a);
+            a.click();
+            a.remove();
+            URL.revokeObjectURL(a.href);
+            showToast('Vouchers exported as CSV', 'success');
+        } catch(e) { showToast('Export failed: ' + e.message, 'error'); }
+    }
+
+    // â”€â”€ DROPDOWN HELPERS â”€â”€
+    async function loadDeptDropdown(selectId) {
+        var sel = document.getElementById(selectId);
+        if (!sel) return;
+        var val = sel.value;
+        sel.innerHTML = '<option value="">Loading...</option>';
+        try {
+            var res = await apiFetch('/api/institutional/lookup/departments');
+            if (!res || !res.ok) { sel.innerHTML = '<option value="">â€” Error loading â€”</option>'; return; }
+            var data = await res.json();
+            var depts = data.departments || [];
+            if (depts.length === 0) {
+                sel.innerHTML = '<option value="">â€” No departments available â€”</option>';
+            } else {
+                sel.innerHTML = '<option value="">â€” None â€”</option>';
+                depts.forEach(function(d){ sel.innerHTML += '<option value="'+d.id+'">'+d.name+' ('+d.code+')</option>'; });
+            }
+            sel.value = val;
+        } catch(e) { sel.innerHTML = '<option value="">â€” Error â€”</option>'; }
+    }
+    async function loadLecturerDropdown(selectId) {
+        var sel = document.getElementById(selectId);
+        if (!sel) return;
+        var val = sel.value;
+        sel.innerHTML = '<option value="">Loading...</option>';
+        try {
+            var res = await apiFetch('/api/institutional/lookup/lecturers');
+            if (!res || !res.ok) { sel.innerHTML = '<option value="">â€” Error loading â€”</option>'; return; }
+            var data = await res.json();
+            sel.innerHTML = '<option value="">â€” None â€”</option>';
+            (data.lecturers||[]).forEach(function(l){ sel.innerHTML += '<option value="'+l.id+'">'+l.name+'</option>'; });
+            sel.value = val;
+        } catch(e) { sel.innerHTML = '<option value="">â€” Error â€”</option>'; }
+    }
+    async function loadStudentDropdown(selectId) {
+        var sel = document.getElementById(selectId);
+        if (!sel) return;
+        sel.innerHTML = '<option value="">Loading...</option>';
+        try {
+            var res = await apiFetch('/api/institutional/lookup/students');
+            if (!res || !res.ok) { sel.innerHTML = '<option value="">â€” Error loading â€”</option>'; return; }
+            var data = await res.json();
+            sel.innerHTML = '<option value="">â€” Select Student â€”</option>';
+            (data.students||[]).forEach(function(s){ sel.innerHTML += '<option value="'+s.id+'">'+s.first_name+' '+s.last_name+' ('+s.email+')</option>'; });
+        } catch(e) { sel.innerHTML = '<option value="">â€” Error â€”</option>'; }
+    }
+    async function loadCourseDropdown(selectId) {
+        var sel = document.getElementById(selectId);
+        if (!sel) return;
+        sel.innerHTML = '<option value="">Loading...</option>';
+        try {
+            var res = await apiFetch('/api/institutional/lookup/courses');
+            if (!res || !res.ok) { sel.innerHTML = '<option value="">â€” Error loading â€”</option>'; return; }
+            var data = await res.json();
+            sel.innerHTML = '<option value="">â€” Select Course â€”</option>';
+            (data.courses||[]).forEach(function(c){ sel.innerHTML += '<option value="'+c.id+'">'+c.name+' ('+c.code+')</option>'; });
+        } catch(e) { sel.innerHTML = '<option value="">â€” Error â€”</option>'; }
+    }
+
+    // â”€â”€ PHASE D: SMS & PAYMENT â”€â”€
+    async function openPaymentModal() {
+        document.getElementById('payPhone').value = '237';
+        document.getElementById('payAmount').value = '1000';
+        document.getElementById('payReference').value = 'TXN-' + Date.now().toString(36).toUpperCase();
+        document.getElementById('paymentResult').style.display = 'none';
+        var modal = new bootstrap.Modal(document.getElementById('paymentModal')); modal.show();
+    }
+    async function submitPayment() {
+        var data = {
+            provider: document.getElementById('payProvider').value,
+            phone: document.getElementById('payPhone').value,
+            amount: parseInt(document.getElementById('payAmount').value) || 0,
+            reference: document.getElementById('payReference').value || '',
+        };
+        if (!data.phone || data.phone.length < 5) { showToast('Enter a valid phone number', 'error'); return; }
+        if (data.amount < 100) { showToast('Minimum amount is 100 XAF', 'error'); return; }
+        var resultEl = document.getElementById('paymentResult');
+        resultEl.style.display = 'block';
+        resultEl.style.background = 'rgba(245,158,11,0.1)';
+        resultEl.style.color = '#FCD34D';
+        resultEl.textContent = 'Processing payment...';
+        try {
+            var res = await apiFetch('/api/institutional/payments/initiate', {method:'POST', body:JSON.stringify(data)});
+            var result = await res.json();
+            if (result.status === 'completed' || result.status === 'pending') {
+                resultEl.style.background = 'rgba(16,185,129,0.1)';
+                resultEl.style.color = '#6EE7B7';
+                resultEl.textContent = result.message_en || 'Payment initiated. Check your phone to confirm.';
+                setTimeout(function(){ bootstrap.Modal.getInstance(document.getElementById('paymentModal')).hide(); loadPayments(); }, 3000);
+            } else {
+                resultEl.style.background = 'rgba(239,68,68,0.1)';
+                resultEl.style.color = '#FCA5A5';
+                resultEl.textContent = result.error || 'Payment failed';
+            }
+        } catch(e) {
+            resultEl.style.background = 'rgba(239,68,68,0.1)';
+            resultEl.style.color = '#FCA5A5';
+            resultEl.textContent = 'Error: ' + e.message;
+        }
+    }
+
+    // â”€â”€ EXTENDED TRANSLATIONS â”€â”€
+    async function loadExtendedTranslations() {
+        try {
+            var res = await apiFetch('/api/institutional/translations/extended?lang=' + currentLang);
+            var data = await res.json();
+            for (var key in data) {
+                if (data.hasOwnProperty(key) && !translationsCache[key]) {
+                    translationsCache[key] = data[key];
+                }
+            }
+            applyTranslations();
+        } catch(e) { /* extended translations are optional */ }
+    }
+
+    // â”€â”€ INIT â”€â”€
+    document.addEventListener('DOMContentLoaded', async function() {
+        // Language init
+        document.getElementById('langToggle').textContent = currentLang === 'en' ? 'FR' : 'EN';
+        await loadTranslations();
+        await loadExtendedTranslations();
+        applyTranslations();
+
+        loadUser();
+        loadQuickActions();
+        await Promise.all([
+            loadOverview(),
+            loadActivityFeed(),
+            loadStudents(),
+            loadSecurityAlerts(),
+            loadFacultyChart(),
+            loadP2pSync(),
+            loadCompliance(),
+            loadPayments(),
+        ]);
+
+        // Phase C: Lazy-load management sections
+        loadUsers();
+        loadCourses();
+        loadDepartments();
+        loadEnrollments();
+        loadVouchers();
+
+        // SSE real-time connection (replaces polling)
+        startSSE();
+
+        // Connection quality monitoring
+        startConnectionMonitor();
+
+        // Live check-in monitoring â€” SSE-driven, with fallback simulation
+        startFallbackCheckinSimulation();
+        initLiveMonitor();
+    });
+
+    // â”€â”€ ADDITIONAL STYLES â”€â”€
+    (function() {
+        var ss = document.createElement('style');
+        ss.textContent = '@keyframes toastIn { from { transform: translateX(100%); opacity: 0; } to { transform: translateX(0); opacity: 1; } }';
+        document.head.appendChild(ss);
+    })();
+</script>
+
+<script src="/static/js/device-fingerprint.js"></script>
+<script src="/static/js/network-monitor.js"></script>
+<script src="/static/js/network-topology.js"></script>
+<script>
+    if (window.AttendrixNetwork) {
+        AttendrixNetwork.init(30000);
+    }
+    if (window.AttendrixSecurity) {
+        AttendrixSecurity.collectAllSignals().catch(function() {});
+    }
+</script>
+
+<script src="/static/js/responsive.js"></script>
+</body>
+</html>

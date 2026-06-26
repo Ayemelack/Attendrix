@@ -1,101 +1,80 @@
-# Attendrix Dockerfile
-# Multi-stage build for production deployment
+# Multi-stage Dockerfile for Attendrix
 
 # Stage 1: Build stage
 FROM python:3.11-slim as builder
 
 # Set environment variables
-ENV PYTHONDONTWRITEBYTECODE=1
-ENV PYTHONUNBUFFERED=1
-ENV DEBIAN_FRONTEND=noninteractive
+ENV PYTHONDONTWRITEBYTECODE=1 \
+    PYTHONUNBUFFERED=1 \
+    PIP_NO_CACHE_DIR=1 \
+    PIP_DISABLE_PIP_VERSION_CHECK=1
 
 # Install system dependencies
 RUN apt-get update && apt-get install -y \
     build-essential \
-    libpq-dev \
-    libgdal-dev \
-    gdal-bin \
-    libproj-dev \
-    libgeos-dev \
-    libspatialite-dev \
-    spatialite-bin \
-    libffi-dev \
-    libssl-dev \
-    libjpeg-dev \
-    libpng-dev \
-    libwebp-dev \
-    libzip-dev \
-    zlib1g-dev \
+    curl \
+    gcc \
     && rm -rf /var/lib/apt/lists/*
 
-# Set work directory
-WORKDIR /app
+# Create and activate virtual environment
+RUN python -m venv /opt/venv
+ENV PATH="/opt/venv/bin:$PATH"
 
-# Install Python dependencies
+# Copy requirements and install Python dependencies
 COPY requirements.txt .
-RUN pip install --no-cache-dir --upgrade pip && \
-    pip install --no-cache-dir -r requirements.txt
+RUN pip install --upgrade pip && \
+    pip install -r requirements.txt
 
 # Stage 2: Production stage
 FROM python:3.11-slim as production
 
 # Set environment variables
-ENV PYTHONDONTWRITEBYTECODE=1
-ENV PYTHONUNBUFFERED=1
-ENV DEBIAN_FRONTEND=noninteractive
-ENV DJANGO_SETTINGS_MODULE=attendrix.settings.production
+ENV PYTHONDONTWRITEBYTECODE=1 \
+    PYTHONUNBUFFERED=1 \
+    PATH="/opt/venv/bin:$PATH"
 
-# Install runtime system dependencies
+# Install runtime dependencies
 RUN apt-get update && apt-get install -y \
-    libpq5 \
-    libgdal28 \
-    libproj25 \
-    libgeos3.11.0 \
-    libspatialite7 \
-    libffi8 \
-    libssl3 \
-    libjpeg62-turbo \
-    libpng16-16 \
-    libwebp7 \
-    libzip4 \
-    zlib1g \
     curl \
     && rm -rf /var/lib/apt/lists/* \
-    && apt-get clean
+    && apt-get clean \
+    && rm -rf /tmp/*
 
-# Create non-root user
-RUN groupadd -r attendrix && useradd -r -g attendrix attendrix
+# Copy virtual environment from builder stage
+COPY --from=builder /opt/venv /opt/venv
 
-# Set work directory
-WORKDIR /app
-
-# Copy Python dependencies from builder stage
-COPY --from=builder /usr/local/lib/python3.11/site-packages /usr/local/lib/python3.11/site-packages
-COPY --from=builder /usr/local/bin /usr/local/bin
-
-# Copy application code
-COPY . .
-
-# Create necessary directories
-RUN mkdir -p /app/logs /app/media /app/static /app/uploads && \
+# Create app user with no login shell and no home directory
+RUN groupadd -r attendrix && \
+    useradd -r -g attendrix -d /app -s /usr/sbin/nologin attendrix && \
+    mkdir -p /app/config /app/uploads /app/logs /app/static && \
+    mkdir -p src/presentation/static/css src/presentation/static/js src/presentation/static/images && \
+    mkdir -p logs uploads && \
     chown -R attendrix:attendrix /app
 
-# Set permissions
-RUN chmod +x /app/entrypoint.sh
+# Copy application code
+COPY --chown=attendrix:attendrix . /app
 
-# Switch to non-root user
-USER attendrix
+# Set working directory
+WORKDIR /app
 
-# Collect static files
-RUN python manage.py collectstatic --noinput --clear
+# Securely set permissions on sensitive files
+RUN chmod 640 /app/.env 2>/dev/null || true && \
+    chmod 640 /app/firebase-credentials.json 2>/dev/null || true && \
+    find /app -name "*.py" -exec chmod 440 {} \; && \
+    find /app -name "*.pyc" -delete 2>/dev/null || true
+
+# Install gunicorn
+RUN pip install --no-cache-dir --no-compile gunicorn
+
+# Switch to non-root user (drop all privileges)
+USER attendrix:attendrix
 
 # Expose port
 EXPOSE 8000
 
 # Health check
-HEALTHCHECK --interval=30s --timeout=30s --start-period=5s --retries=3 \
-    CMD curl -f http://localhost:8000/health/ || exit 1
+HEALTHCHECK --interval=30s --timeout=10s --start-period=5s --retries=3 \
+    CMD curl -f http://localhost:8000/health || exit 1
 
-# Start the application
-ENTRYPOINT ["/app/entrypoint.sh"]
-CMD ["gunicorn", "--bind", "0.0.0.0:8000", "--workers", "4", "--timeout", "120", "--keepalive", "5", "--max-requests", "1000", "--max-requests-jitter", "50", "attendrix.wsgi:application"]
+# Default command
+CMD ["gunicorn", "--bind", "0.0.0.0:8000", "--workers", "4", "--timeout", "120", "--keepalive", "5", "--max-requests", "1000", "--max-requests-jitter", "100", "app:app"]

@@ -1,0 +1,1671 @@
+﻿<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>System Command Center â€” Attendrix</title>
+<link rel="icon" type="image/svg+xml" href="/static/images/favicon.svg">
+<script>
+    if ('serviceWorker' in navigator) {
+        window.addEventListener('load', function() {
+            navigator.serviceWorker.register('/sw.js', { scope: '/' }).then(function(reg) {
+                console.log('SW registered:', reg.scope);
+            }).catch(function(err) {
+                console.warn('SW registration failed:', err);
+            });
+        });
+    }
+</script>
+<link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
+<link rel="stylesheet" href="/static/css/all.min.css">
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800;900&display=swap" rel="stylesheet">
+<style>
+:root {
+  --bg-primary: #0B0E17; --bg-secondary: #111827; --bg-card: #1A1F2E;
+  --bg-hover: #242B3D; --border: #2A3142; --text-primary: #F1F5F9;
+  --text-secondary: #94A3B8; --text-muted: #64748B;
+  --primary: #4F46E5; --primary-dark: #3730A3; --primary-light: #818CF8;
+  --success: #10B981; --warning: #F59E0B; --danger: #EF4444; --info: #06B6D4;
+  --accent: #8B5CF6; --accent-pink: #EC4899; --amber: #F59E0B; --cyan: #22D3EE;
+  --gradient-primary: linear-gradient(135deg, #4F46E5 0%, #7C3AED 100%);
+  --gradient-success: linear-gradient(135deg, #059669 0%, #10B981 100%);
+  --gradient-warning: linear-gradient(135deg, #D97706 0%, #F59E0B 100%);
+  --gradient-danger: linear-gradient(135deg, #DC2626 0%, #EF4444 100%);
+  --gradient-info: linear-gradient(135deg, #0284C7 0%, #06B6D4 100%);
+  --shadow-card: 0 4px 24px rgba(0,0,0,0.3);
+  --glow-primary: 0 0 20px rgba(79,70,229,0.15);
+  --glow-success: 0 0 20px rgba(16,185,129,0.15);
+  --glow-danger: 0 0 20px rgba(239,68,68,0.15);
+}
+html { overflow-x: hidden; width: 100%; }
+* { margin: 0; padding: 0; box-sizing: border-box; }
+body {
+  font-family: 'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
+  background: var(--bg-primary); color: var(--text-primary);
+  overflow-x: hidden; min-height: 100vh; width: 100%;
+}
+::-webkit-scrollbar { width: 6px; height: 6px; }
+::-webkit-scrollbar-track { background: var(--bg-primary); }
+::-webkit-scrollbar-thumb { background: var(--border); border-radius: 3px; }
+::-webkit-scrollbar-thumb:hover { background: var(--text-muted); }
+
+.app-layout { display: flex; min-height: 100vh; }
+.sidebar {
+  width: 240px; background: var(--bg-secondary); border-right: 1px solid var(--border);
+  display: flex; flex-direction: column; position: fixed; top: 0; left: 0; bottom: 0; z-index: 100;
+}
+.sidebar-brand { padding: 1.25rem 1.25rem; border-bottom: 1px solid var(--border); display: flex; align-items: center; gap: 0.6rem; }
+.sidebar-brand .brand-icon { width: 32px; height: 32px; background: var(--gradient-primary); border-radius: 8px; display: flex; align-items: center; justify-content: center; font-size: 0.9rem; color: #fff; }
+.sidebar-brand span { font-weight: 800; font-size: 0.95rem; }
+.sidebar-brand .badge { font-size: 0.55rem; background: rgba(239,68,68,0.2); color: var(--danger); padding: 0.15rem 0.4rem; border-radius: 4px; font-weight: 700; letter-spacing: 0.5px; margin-left: auto; }
+.sidebar-nav { flex: 1; padding: 0.75rem; overflow-y: auto; }
+.nav-item {
+  display: flex; align-items: center; gap: 0.65rem; padding: 0.65rem 0.85rem;
+  border-radius: 8px; color: var(--text-secondary); text-decoration: none; font-size: 0.8rem;
+  font-weight: 500; cursor: pointer; transition: all 0.15s ease; margin-bottom: 0.15rem;
+  border: none; background: none; width: 100%; text-align: left; font-family: 'Inter', sans-serif;
+}
+.nav-item:hover { background: var(--bg-hover); color: var(--text-primary); }
+.nav-item.active { background: rgba(79,70,229,0.15); color: var(--primary-light); }
+.nav-item .nav-badge { margin-left: auto; font-size: 0.55rem; background: rgba(239,68,68,0.15); color: var(--danger); padding: 0.1rem 0.35rem; border-radius: 100px; font-weight: 700; }
+.nav-item i { width: 18px; text-align: center; font-size: 0.85rem; }
+.nav-section-label { font-size: 0.6rem; text-transform: uppercase; letter-spacing: 1px; color: var(--text-muted); padding: 0.75rem 0.85rem 0.35rem; font-weight: 700; }
+
+.main-content { margin-left: 240px; flex: 1; padding: 1.5rem; min-width: 0; }
+
+.topbar {
+  display: flex; align-items: center; justify-content: space-between; margin-bottom: 1.5rem;
+  flex-wrap: wrap; gap: 0.5rem; position: sticky; top: 0; z-index: 110;
+  background: rgba(11,14,23,0.94); backdrop-filter: blur(14px);
+  border-bottom: 1px solid rgba(255,255,255,0.06);
+  padding: 0.85rem 0.35rem;
+}
+@media (min-width: 769px) {
+  .topbar { padding: 0.85rem 0; }
+}
+.topbar h1 { font-size: 1.2rem; font-weight: 800; line-height: 1.1; }
+.topbar h1 span { color: var(--text-muted); font-weight: 400; }
+.topbar-right { display: flex; align-items: center; gap: 0.75rem; flex-wrap: wrap; }
+.live-indicator { display: flex; align-items: center; gap: 0.4rem; font-size: 0.72rem; color: var(--success); font-weight: 600; }
+.live-dot { width: 7px; height: 7px; border-radius: 50%; background: var(--success); animation: pulse 1.5s ease-in-out infinite; }
+@keyframes pulse { 0%, 100% { opacity: 1; } 50% { opacity: 0.3; } }
+.auto-refresh-btn { font-size: 0.72rem; color: var(--text-muted); background: var(--bg-card); border: 1px solid var(--border); padding: 0.35rem 0.75rem; border-radius: 6px; cursor: pointer; font-family: 'Inter', sans-serif; transition: all 0.15s ease; }
+.auto-refresh-btn:hover { border-color: var(--text-muted); color: var(--text-primary); }
+.auto-refresh-btn.active { border-color: var(--primary); color: var(--primary-light); }
+
+.stats-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(160px, 1fr)); gap: 0.85rem; margin-bottom: 1.25rem; }
+.stat-card {
+  background: var(--bg-card); border: 1px solid var(--border); border-radius: 12px;
+  padding: 1rem 1.15rem; transition: all 0.2s ease;
+}
+.stat-card:hover { border-color: rgba(79,70,229,0.3); transform: translateY(-1px); }
+.stat-card .stat-label { font-size: 0.65rem; text-transform: uppercase; letter-spacing: 0.5px; color: var(--text-muted); font-weight: 600; }
+.stat-card .stat-value { font-size: 1.5rem; font-weight: 800; margin-top: 0.2rem; line-height: 1.2; }
+.stat-card .stat-sub { font-size: 0.7rem; color: var(--text-secondary); margin-top: 0.2rem; }
+.stat-card .stat-icon { float: right; font-size: 1.3rem; opacity: 0.15; }
+
+.tab-content { display: none; }
+.tab-content.active { display: block; animation: fadeIn 0.3s ease; }
+@keyframes fadeIn { from { opacity: 0; transform: translateY(8px); } to { opacity: 1; transform: translateY(0); } }
+
+.section-header { display: flex; align-items: center; justify-content: space-between; margin-bottom: 1rem; flex-wrap: wrap; gap: 0.5rem; width: 100%; }
+.section-header h2 { font-size: 1rem; font-weight: 700; }
+.section-header .badge-count { font-size: 0.65rem; background: var(--bg-hover); color: var(--text-secondary); padding: 0.2rem 0.5rem; border-radius: 100px; font-weight: 600; white-space: nowrap; }
+.section-header select, .section-header input {
+  background: var(--bg-card); border: 1px solid var(--border); border-radius: 6px; color: var(--text-primary);
+  padding: 0.4rem 0.7rem; font-size: 0.75rem; font-family: 'Inter', sans-serif; min-width: 0;
+}
+.section-header select:focus, .section-header input:focus { outline: none; border-color: var(--primary); }
+.section-header > div { display: flex; flex-wrap: wrap; gap: 0.5rem; align-items: center; width: 100%; min-width: 0; }
+.section-header > div > * { min-width: 0; }
+.nav-item span { flex: 1 1 auto; min-width: 0; }
+
+.table-wrap { overflow-x: auto; background: var(--bg-card); border: 1px solid var(--border); border-radius: 12px; max-width: 100%; min-width: 0; -webkit-overflow-scrolling: touch; }
+table { width: 100%; min-width: 820px; border-collapse: collapse; font-size: 0.78rem; table-layout: fixed; }
+th, td { white-space: normal; word-break: break-word; overflow-wrap: break-word; }
+th { text-align: left; padding: 0.7rem 1rem; font-size: 0.65rem; text-transform: uppercase; letter-spacing: 0.5px; color: var(--text-muted); font-weight: 700; border-bottom: 1px solid var(--border); background: var(--bg-secondary); }
+td { padding: 0.6rem 1rem; border-bottom: 1px solid rgba(42,49,66,0.5); color: var(--text-secondary); }
+@media (max-width: 1200px) { .table-wrap table { min-width: 760px; } }
+@media (max-width: 1024px) { .table-wrap table { min-width: 700px; } }
+@media (max-width: 768px) { .table-wrap table { min-width: 620px; } }
+@media (max-width: 540px) { .table-wrap table { min-width: 520px; } }
+@media (max-width: 425px) { .table-wrap { border-radius: 8px; } .table-wrap table { min-width: 100%; font-size: 0.58rem; } th, td { padding: 0.35rem 0.35rem; } th { font-size: 0.48rem; letter-spacing: 0.3px; } }
+tr:hover td { background: var(--bg-hover); }
+
+.status-badge {
+  display: inline-flex; align-items: center; justify-content: center;
+  gap: 0.35rem; min-height: 1.9rem; padding: 0.2rem 0.65rem; border-radius: 999px;
+  font-size: 0.72rem; font-weight: 700; letter-spacing: 0.01em;
+  background: rgba(255,255,255,0.04); border: 1px solid rgba(255,255,255,0.08);
+  color: var(--text-primary); white-space: nowrap;
+}
+.status-badge.active { background: rgba(16,185,129,0.16); color: var(--success); border-color: rgba(16,185,129,0.2); }
+.status-badge.inactive { background: rgba(239,68,68,0.16); color: var(--danger); border-color: rgba(239,68,68,0.24); }
+.status-badge.pending { background: rgba(245,158,11,0.16); color: var(--warning); border-color: rgba(245,158,11,0.22); }
+.status-badge.high { background: rgba(239,68,68,0.16); color: var(--danger); border-color: rgba(239,68,68,0.22); }
+.status-badge.medium { background: rgba(245,158,11,0.16); color: var(--warning); border-color: rgba(245,158,11,0.22); }
+.status-badge.low { background: rgba(6,182,212,0.16); color: var(--info); border-color: rgba(6,182,212,0.22); }
+.status-badge.role-super_admin { background: rgba(239,68,68,0.15); color: #fca5a5; border-color: rgba(239,68,68,0.25); }
+.status-badge.role-institutional_admin { background: rgba(245,158,11,0.15); color: #fcd34d; border-color: rgba(245,158,11,0.25); }
+.status-badge.role-lecturer { background: rgba(139,92,246,0.15); color: #c4b5fd; border-color: rgba(139,92,246,0.25); }
+.status-badge.role-student { background: rgba(16,185,129,0.15); color: #6ee7b7; border-color: rgba(16,185,129,0.25); }
+.status-badge.role-employee { background: rgba(6,182,212,0.15); color: #67e8f9; border-color: rgba(6,182,212,0.25); }
+.status-dot { width: 6px; height: 6px; border-radius: 50%; display: inline-block; }
+.status-dot.online { background: var(--success); box-shadow: 0 0 6px rgba(16,185,129,0.5); }
+.status-dot.offline { background: var(--danger); box-shadow: 0 0 6px rgba(239,68,68,0.5); }
+.status-dot.warning { background: var(--warning); }
+
+.btn-action {
+  padding: 0.3rem 0.6rem; border-radius: 6px; border: 1px solid var(--border);
+  background: transparent; color: var(--text-secondary); font-size: 0.7rem;
+  cursor: pointer; transition: all 0.15s ease; font-family: 'Inter', sans-serif;
+}
+.btn-action:hover { border-color: var(--primary); color: var(--primary-light); }
+.btn-action.danger:hover { border-color: var(--danger); color: var(--danger); }
+.btn-action.success:hover { border-color: var(--success); color: var(--success); }
+
+.feed-list { max-height: 500px; overflow-y: auto; }
+.table-card-view { display: none; }
+.table-card-view .card-row { display: flex; flex-direction: column; padding: 0.6rem; border-bottom: 1px solid rgba(42,49,66,0.5); }
+.table-card-view .card-row:last-child { border-bottom: none; }
+.table-card-view .card-field { display: flex; justify-content: space-between; padding: 0.15rem 0; font-size: 0.72rem; }
+.table-card-view .card-field .field-label { color: var(--text-muted); font-weight: 600; text-transform: uppercase; font-size: 0.55rem; letter-spacing: 0.3px; }
+.table-card-view .card-field .field-value { color: var(--text-secondary); text-align: right; max-width: 60%; word-break: break-word; }
+.feed-item { display: flex; align-items: flex-start; gap: 0.75rem; padding: 0.6rem 0; border-bottom: 1px solid rgba(42,49,66,0.3); }
+.feed-item:last-child { border-bottom: none; }
+.feed-icon { width: 28px; height: 28px; border-radius: 6px; display: flex; align-items: center; justify-content: center; font-size: 0.65rem; flex-shrink: 0; }
+.feed-icon.info { background: rgba(6,182,212,0.12); color: var(--info); }
+.feed-icon.warning { background: rgba(245,158,11,0.12); color: var(--warning); }
+.feed-icon.danger { background: rgba(239,68,68,0.12); color: var(--danger); }
+.feed-icon.success { background: rgba(16,185,129,0.12); color: var(--success); }
+.feed-icon.primary { background: rgba(79,70,229,0.12); color: var(--primary-light); }
+.feed-content { flex: 1; min-width: 0; }
+.feed-content .feed-title { font-size: 0.78rem; font-weight: 600; color: var(--text-primary); }
+.feed-content .feed-desc { font-size: 0.7rem; color: var(--text-muted); margin-top: 0.1rem; }
+.feed-content .feed-meta { font-size: 0.62rem; color: var(--text-muted); margin-top: 0.15rem; }
+
+.loading-state { text-align: center; padding: 3rem; color: var(--text-muted); }
+.loading-state .spinner { width: 32px; height: 32px; border: 3px solid var(--border); border-top-color: var(--primary); border-radius: 50%; animation: spin 0.7s linear infinite; margin: 0 auto 0.75rem; }
+@keyframes spin { to { transform: rotate(360deg); } }
+
+.empty-state { text-align: center; padding: 3rem; color: var(--text-muted); font-size: 0.85rem; }
+.empty-state i { font-size: 2rem; margin-bottom: 0.75rem; opacity: 0.3; }
+.empty-state .empty-title { font-size: 1rem; font-weight: 600; color: var(--text-secondary); margin-bottom: 0.25rem; }
+.empty-state .empty-desc { font-size: 0.78rem; color: var(--text-muted); max-width: 400px; margin: 0 auto; }
+
+.error-state { text-align: center; padding: 3rem; color: var(--danger); }
+.error-state i { font-size: 2rem; margin-bottom: 0.75rem; }
+.error-state .retry-btn { margin-top: 0.75rem; }
+
+.skeleton { background: linear-gradient(90deg, var(--bg-card) 25%, var(--bg-hover) 50%, var(--bg-card) 75%); background-size: 200% 100%; animation: shimmer 1.5s infinite; border-radius: 6px; }
+@keyframes shimmer { 0% { background-position: 200% 0; } 100% { background-position: -200% 0; } }
+.skeleton-line { height: 14px; margin-bottom: 8px; width: 100%; }
+.skeleton-line.w60 { width: 60%; }
+.skeleton-line.w40 { width: 40%; }
+.skeleton-line.w80 { width: 80%; }
+.skeleton-card { height: 80px; border-radius: 12px; }
+.skeleton-row { height: 40px; margin-bottom: 4px; border-radius: 6px; }
+
+.security-summary { display: grid; grid-template-columns: repeat(auto-fill, minmax(150px, 1fr)); gap: 0.85rem; margin-bottom: 1.25rem; }
+.security-card { background: var(--bg-card); border: 1px solid var(--border); border-radius: 12px; padding: 1rem; text-align: center; }
+.security-card .sc-value { font-size: 1.4rem; font-weight: 800; }
+.security-card .sc-label { font-size: 0.65rem; color: var(--text-muted); margin-top: 0.15rem; text-transform: uppercase; letter-spacing: 0.5px; }
+
+.risk-bar { width: 100%; height: 4px; background: var(--border); border-radius: 2px; margin-top: 0.4rem; }
+.risk-bar-fill { height: 100%; border-radius: 2px; transition: width 0.5s ease; }
+
+.two-col { display: grid; grid-template-columns: 1fr 1fr; gap: 1rem; margin-bottom: 1.5rem; }
+.three-col { display: grid; grid-template-columns: 1fr 1fr 1fr; gap: 1rem; margin-bottom: 1.5rem; }
+.four-col { display: grid; grid-template-columns: 1fr 1fr 1fr 1fr; gap: 1rem; margin-bottom: 1.5rem; }
+.health-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(160px, 1fr)); gap: 0.85rem; margin-bottom: 1.25rem; }
+.health-card { background: var(--bg-card); border: 1px solid var(--border); border-radius: 12px; padding: 1rem; text-align: center; }
+.health-card .hc-value { font-size: 1.1rem; font-weight: 800; }
+.health-card .hc-label { font-size: 0.6rem; color: var(--text-muted); margin-top: 0.15rem; text-transform: uppercase; letter-spacing: 0.5px; }
+.health-card .hc-icon { font-size: 1.5rem; margin-bottom: 0.3rem; }
+
+.node-card { background: var(--bg-card); border: 1px solid var(--border); border-radius: 10px; padding: 0.85rem; display: flex; align-items: center; gap: 0.75rem; transition: all 0.15s ease; }
+.node-card:hover { border-color: rgba(79,70,229,0.3); }
+.node-card .node-status { width: 10px; height: 10px; border-radius: 50%; flex-shrink: 0; }
+.node-card .node-name { font-weight: 600; font-size: 0.85rem; }
+.node-card .node-meta { font-size: 0.65rem; color: var(--text-muted); }
+
+.risk-indicator { display: inline-flex; align-items: center; gap: 0.4rem; padding: 0.2rem 0.6rem; border-radius: 100px; font-size: 0.7rem; font-weight: 600; }
+.risk-indicator.critical { background: rgba(239,68,68,0.15); color: var(--danger); }
+.risk-indicator.high { background: rgba(245,158,11,0.15); color: var(--warning); }
+.risk-indicator.moderate { background: rgba(6,182,212,0.15); color: var(--info); }
+.risk-indicator.low { background: rgba(16,185,129,0.15); color: var(--success); }
+
+.threat-level { width: 100%; height: 6px; border-radius: 3px; margin: 0.5rem 0; }
+.threat-level-fill { height: 100%; border-radius: 3px; transition: width 0.5s ease; background: var(--gradient-danger); }
+
+.gov-role-card { background: var(--bg-card); border: 1px solid var(--border); border-radius: 10px; padding: 1rem; text-align: center; }
+.gov-role-card .gov-count { font-size: 1.6rem; font-weight: 800; }
+.gov-role-card .gov-label { font-size: 0.65rem; color: var(--text-muted); text-transform: uppercase; letter-spacing: 0.5px; margin-top: 0.15rem; }
+.gov-role-card .gov-icon { font-size: 1.2rem; margin-bottom: 0.3rem; }
+
+.alert-card { background: var(--bg-card); border: 1px solid var(--border); border-left: 3px solid var(--danger); border-radius: 8px; padding: 0.85rem; margin-bottom: 0.5rem; display: flex; align-items: flex-start; gap: 0.75rem; }
+.alert-card .alert-icon { font-size: 1rem; color: var(--danger); flex-shrink: 0; margin-top: 0.1rem; }
+.alert-card .alert-content { flex: 1; }
+.alert-card .alert-title { font-size: 0.8rem; font-weight: 600; }
+.alert-card .alert-desc { font-size: 0.7rem; color: var(--text-muted); }
+.alert-card .alert-meta { font-size: 0.62rem; color: var(--text-muted); margin-top: 0.2rem; }
+
+.recommendation-card { background: var(--bg-card); border: 1px solid var(--border); border-left: 3px solid var(--accent); border-radius: 8px; padding: 0.85rem; margin-bottom: 0.5rem; }
+.recommendation-card .rec-text { font-size: 0.78rem; color: var(--text-secondary); }
+
+.sidebar-overlay { display: none; position: fixed; inset: 0; background: rgba(0,0,0,0.5); z-index: 99; }
+.menu-toggle { display: none; background: none; border: 1px solid var(--border); color: var(--text-secondary); font-size: 1.1rem; padding: 0.4rem 0.6rem; border-radius: 6px; cursor: pointer; font-family: 'Inter', sans-serif; }
+
+/* â”€â”€ Laptops / medium screens â”€â”€ */
+@media (max-width: 1200px) {
+  .stats-grid { grid-template-columns: repeat(3, 1fr); }
+  .four-col { grid-template-columns: repeat(3, 1fr); }
+}
+
+/* â”€â”€ Tablets landscape â”€â”€ */
+@media (max-width: 1024px) {
+  .sidebar { width: 220px; }
+  .main-content { margin-left: 220px; }
+  .stats-grid { grid-template-columns: repeat(3, 1fr); gap: 0.7rem; }
+  .four-col { grid-template-columns: 1fr 1fr; }
+  .three-col { grid-template-columns: 1fr 1fr; }
+  .two-col { grid-template-columns: 1fr; }
+  .security-summary { grid-template-columns: repeat(3, 1fr); }
+  .node-card { padding: 0.7rem; }
+  table { font-size: 0.72rem; }
+  th, td { padding: 0.5rem 0.7rem; }
+}
+
+/* â”€â”€ Tablets portrait / large phones â”€â”€ */
+@media (max-width: 768px) {
+  .menu-toggle { display: inline-flex; align-items: center; }
+  .sidebar-overlay.active { display: block; }
+  .sidebar { width: 260px; transform: translateX(-100%); transition: transform 0.25s ease; }
+  .sidebar.open { transform: translateX(0); }
+  .main-content { margin-left: 0; padding: 1rem; }
+  .stats-grid { grid-template-columns: repeat(2, 1fr); gap: 0.65rem; }
+  .stat-card { padding: 0.8rem; }
+  .stat-card .stat-label { font-size: 0.58rem; }
+  .stat-card .stat-value { font-size: 1.2rem; }
+  .stat-card .stat-sub { font-size: 0.62rem; }
+  .stat-card .stat-icon { font-size: 1.1rem; }
+  .four-col { grid-template-columns: 1fr 1fr; gap: 0.65rem; }
+  .three-col { grid-template-columns: 1fr; }
+  .health-grid { grid-template-columns: repeat(2, 1fr); gap: 0.65rem; }
+  .health-card { padding: 0.75rem; }
+  .health-card .hc-value { font-size: 1rem; }
+  .health-card .hc-icon { font-size: 1.2rem; }
+  .security-summary { grid-template-columns: 1fr 1fr; gap: 0.65rem; }
+  .security-card { padding: 0.75rem; }
+  .security-card .sc-value { font-size: 1.15rem; }
+  .section-header { flex-direction: column; align-items: flex-start; gap: 0.35rem; }
+  .section-header h2 { font-size: 0.88rem; }
+  .section-header select, .section-header input { width: 100%; max-width: 100%; font-size: 0.72rem; padding: 0.35rem 0.5rem; }
+  .section-header .badge-count { font-size: 0.58rem; }
+  .topbar { margin-bottom: 0.75rem; gap: 0.4rem; }
+  .topbar h1 { font-size: 0.95rem; }
+  .topbar-right { gap: 0.5rem; }
+  .topbar-right .auto-refresh-btn { font-size: 0.62rem; padding: 0.2rem 0.45rem; }
+  .loading-state, .empty-state, .error-state { padding: 1.5rem; }
+  .loading-state .spinner { width: 26px; height: 26px; border-width: 2px; }
+  .empty-state { font-size: 0.78rem; }
+  .empty-state i { font-size: 1.4rem; margin-bottom: 0.5rem; }
+  .empty-state .empty-title { font-size: 0.88rem; }
+  .empty-state .empty-desc { font-size: 0.7rem; max-width: 100%; }
+  .table-wrap { border-radius: 8px; }
+  table { font-size: 0.7rem; }
+  th, td { padding: 0.45rem 0.5rem; }
+  th { font-size: 0.55rem; letter-spacing: 0.4px; }
+  td { font-size: 0.68rem; }
+  .gov-role-card { padding: 0.75rem; }
+  .gov-role-card .gov-count { font-size: 1.2rem; }
+  .gov-role-card .gov-label { font-size: 0.58rem; }
+  .gov-role-card .gov-icon { font-size: 1rem; }
+  .status-badge { font-size: 0.6rem; padding: 0.12rem 0.4rem; }
+  .status-dot { width: 5px; height: 5px; }
+  .btn-action { font-size: 0.62rem; padding: 0.2rem 0.45rem; }
+  .feed-list { max-height: 380px; }
+  .feed-item { padding: 0.45rem 0; gap: 0.5rem; }
+  .feed-icon { width: 22px; height: 22px; font-size: 0.5rem; }
+  .feed-content .feed-title { font-size: 0.72rem; }
+  .feed-content .feed-desc { font-size: 0.62rem; }
+  .feed-content .feed-meta { font-size: 0.55rem; }
+  .skeleton-card { height: 65px; }
+  .skeleton-row { height: 32px; }
+  .risk-bar { height: 3px; }
+  .risk-indicator { font-size: 0.62rem; padding: 0.15rem 0.45rem; }
+  .recommendation-card { padding: 0.65rem; }
+  .recommendation-card .rec-text { font-size: 0.7rem; }
+  .alert-card { padding: 0.65rem; gap: 0.5rem; }
+  .alert-card .alert-title { font-size: 0.72rem; }
+  .alert-card .alert-desc { font-size: 0.62rem; }
+  .sidebar-brand { padding: 0.85rem 1rem; }
+  .sidebar-brand .brand-icon { width: 28px; height: 28px; font-size: 0.8rem; }
+  .sidebar-brand span { font-size: 0.85rem; }
+  .sidebar-nav { padding: 0.5rem; }
+  .nav-item { gap: 0.5rem; padding: 0.55rem 0.7rem; font-size: 0.75rem; }
+  .nav-item i { width: 16px; font-size: 0.78rem; }
+  .nav-section-label { font-size: 0.55rem; padding: 0.5rem 0.7rem 0.25rem; }
+  .nav-item .nav-badge { font-size: 0.5rem; padding: 0.08rem 0.3rem; }
+  .live-indicator { font-size: 0.65rem; }
+  .live-dot { width: 6px; height: 6px; }
+  .node-card { padding: 0.6rem; gap: 0.55rem; }
+  .node-card .node-name { font-size: 0.78rem; }
+  .node-card .node-meta { font-size: 0.6rem; }
+  .gov-rule-card .gov-count { font-size: 1.2rem; }
+}
+
+/* â”€â”€ Medium phones (640px) â”€â”€ */
+@media (max-width: 640px) {
+  .stats-grid { grid-template-columns: repeat(2, 1fr); gap: 0.5rem; }
+  .stat-card { padding: 0.65rem; }
+  .stat-card .stat-label { font-size: 0.5rem; letter-spacing: 0.3px; }
+  .stat-card .stat-value { font-size: 1.05rem; }
+  .stat-card .stat-sub { font-size: 0.58rem; }
+  .stat-card .stat-icon { font-size: 0.95rem; }
+  .four-col { grid-template-columns: 1fr 1fr; gap: 0.5rem; }
+  .health-grid { gap: 0.5rem; }
+  .health-card { padding: 0.6rem; }
+  .health-card .hc-value { font-size: 0.88rem; }
+  .health-card .hc-label { font-size: 0.52rem; }
+  .health-card .hc-icon { font-size: 1.1rem; margin-bottom: 0.2rem; }
+  .security-summary { gap: 0.5rem; }
+  .security-card { padding: 0.65rem; }
+  .security-card .sc-value { font-size: 1rem; }
+  .security-card .sc-label { font-size: 0.55rem; }
+  .main-content { padding: 0.7rem; }
+  table { font-size: 0.62rem; }
+  th, td { padding: 0.35rem 0.4rem; }
+  th { font-size: 0.5rem; letter-spacing: 0.3px; }
+  td { font-size: 0.62rem; }
+  .topbar h1 { font-size: 0.85rem; }
+  .section-header h2 { font-size: 0.8rem; }
+  .section-header .badge-count { font-size: 0.52rem; padding: 0.15rem 0.35rem; }
+  .gov-role-card { padding: 0.55rem; }
+  .gov-role-card .gov-count { font-size: 1.05rem; }
+  .gov-role-card .gov-label { font-size: 0.5rem; }
+  .gov-role-card .gov-icon { font-size: 0.88rem; margin-bottom: 0.2rem; }
+  .skeleton-card { height: 55px; }
+  .skeleton-row { height: 28px; }
+  .auto-refresh-btn { font-size: 0.58rem; padding: 0.18rem 0.4rem; }
+  .node-card { padding: 0.5rem; gap: 0.45rem; }
+  .node-card .node-status { width: 8px; height: 8px; }
+  .node-card .node-name { font-size: 0.72rem; }
+  .node-card .node-meta { font-size: 0.55rem; }
+  .recommendation-card { padding: 0.55rem; }
+  .recommendation-card .rec-text { font-size: 0.65rem; }
+  .alert-card { padding: 0.55rem; }
+  .alert-card .alert-icon { font-size: 0.88rem; }
+  .alert-card .alert-title { font-size: 0.68rem; }
+  .alert-card .alert-desc { font-size: 0.58rem; }
+  .alert-card .alert-meta { font-size: 0.52rem; }
+  .nav-item { padding: 0.5rem 0.6rem; font-size: 0.7rem; }
+  .feed-list { max-height: 320px; }
+  .empty-state { padding: 1.25rem; }
+  .empty-state .empty-desc { max-width: 100%; }
+  .status-badge { min-height: 1.65rem; padding: 0.15rem 0.5rem; font-size: 0.65rem; }
+}
+
+/* â”€â”€ Small phones (480px) â”€â”€ */
+@media (max-width: 480px) {
+  .stats-grid { grid-template-columns: 1fr 1fr; gap: 0.45rem; }
+  .stat-card { padding: 0.5rem; }
+  .stat-card .stat-value { font-size: 0.95rem; margin-top: 0.1rem; }
+  .stat-card .stat-label { font-size: 0.48rem; }
+  .stat-card .stat-sub { font-size: 0.55rem; }
+  .stat-card .stat-icon { font-size: 0.85rem; opacity: 0.1; }
+  .four-col { grid-template-columns: 1fr 1fr; gap: 0.45rem; }
+  .main-content { padding: 0.55rem; }
+  table { font-size: 0.58rem; }
+  th, td { padding: 0.28rem 0.3rem; }
+  th { font-size: 0.45rem; letter-spacing: 0.2px; }
+  td { font-size: 0.58rem; }
+  .topbar { flex-direction: row; flex-wrap: wrap; gap: 0.3rem; }
+  .topbar h1 { font-size: 0.78rem; }
+  .topbar-right { gap: 0.3rem; }
+  .live-indicator { font-size: 0.58rem; }
+  .live-dot { width: 5px; height: 5px; }
+  .auto-refresh-btn { font-size: 0.52rem; padding: 0.15rem 0.35rem; }
+  .status-badge { font-size: 0.52rem; padding: 0.08rem 0.3rem; gap: 0.2rem; min-height: 1.4rem; }
+  .status-dot { width: 4px; height: 4px; }
+  .btn-action { font-size: 0.55rem; padding: 0.15rem 0.35rem; }
+  .gov-role-card { padding: 0.45rem; }
+  .gov-role-card .gov-count { font-size: 0.92rem; }
+  .gov-role-card .gov-label { font-size: 0.45rem; letter-spacing: 0.3px; }
+  .gov-role-card .gov-icon { font-size: 0.78rem; }
+  .health-grid { gap: 0.45rem; }
+  .health-card { padding: 0.5rem; }
+  .health-card .hc-value { font-size: 0.8rem; }
+  .health-card .hc-label { font-size: 0.48rem; }
+  .health-card .hc-icon { font-size: 0.95rem; }
+  .security-summary { gap: 0.45rem; }
+  .security-card { padding: 0.55rem; }
+  .security-card .sc-value { font-size: 0.92rem; }
+  .security-card .sc-label { font-size: 0.5rem; }
+  .section-header h2 { font-size: 0.72rem; }
+  .section-header .badge-count { font-size: 0.48rem; padding: 0.1rem 0.3rem; }
+  .section-header select, .section-header input { font-size: 0.62rem; padding: 0.28rem 0.4rem; }
+  .loading-state, .empty-state, .error-state { padding: 1rem; }
+  .loading-state .spinner { width: 22px; height: 22px; border-width: 2px; }
+  .empty-state { font-size: 0.72rem; }
+  .empty-state i { font-size: 1.2rem; margin-bottom: 0.35rem; }
+  .empty-state .empty-title { font-size: 0.78rem; }
+  .empty-state .empty-desc { font-size: 0.62rem; }
+  .error-state i { font-size: 1.2rem; }
+  .feed-item { padding: 0.35rem 0; gap: 0.4rem; }
+  .feed-icon { width: 20px; height: 20px; font-size: 0.45rem; }
+  .feed-content .feed-title { font-size: 0.65rem; }
+  .feed-content .feed-desc { font-size: 0.55rem; }
+  .feed-content .feed-meta { font-size: 0.5rem; }
+  .skeleton-card { height: 48px; border-radius: 8px; }
+  .skeleton-row { height: 24px; }
+  .recommendation-card { padding: 0.45rem; }
+  .recommendation-card .rec-text { font-size: 0.6rem; }
+  .alert-card { padding: 0.45rem; gap: 0.4rem; }
+  .alert-card .alert-title { font-size: 0.62rem; }
+  .alert-card .alert-desc { font-size: 0.55rem; }
+  .nav-item { padding: 0.45rem 0.5rem; font-size: 0.65rem; gap: 0.4rem; }
+  .nav-item i { width: 14px; font-size: 0.7rem; }
+  .feed-list { max-height: 280px; }
+  .risk-bar { height: 2px; }
+  .risk-indicator { font-size: 0.55rem; padding: 0.1rem 0.35rem; }
+  .sidebar-brand { padding: 0.7rem 0.85rem; }
+  .sidebar-brand .brand-icon { width: 24px; height: 24px; font-size: 0.7rem; }
+  .sidebar-brand span { font-size: 0.78rem; }
+  .sidebar-nav { padding: 0.4rem; }
+  .nav-section-label { font-size: 0.5rem; padding: 0.4rem 0.6rem 0.2rem; }
+  .node-card { padding: 0.45rem; gap: 0.4rem; }
+}
+
+/* â”€â”€ Compact phones (425px) â”€â”€ */
+@media (max-width: 425px) {
+  .main-content { padding: 0.65rem; }
+  .topbar { align-items: stretch; gap: 0.5rem; }
+  .topbar > div { width: 100%; min-width: 0; }
+  .topbar-right { width: 100%; justify-content: space-between; gap: 0.35rem; }
+  .stats-grid { grid-template-columns: 1fr; gap: 0.45rem; }
+  .four-col, .three-col, .health-grid, .security-summary { grid-template-columns: 1fr; gap: 0.45rem; }
+  .section-header { flex-direction: column; align-items: stretch; gap: 0.4rem; }
+  .section-header > div { justify-content: space-between; }
+  .section-header select, .section-header input { width: 100%; max-width: 100%; }
+  .section-header h2 { font-size: 0.76rem; }
+  .nav-item { padding: 0.4rem 0.45rem; font-size: 0.64rem; }
+  .nav-item span { white-space: normal; }
+  .menu-toggle { display: inline-flex; padding: 0.3rem 0.45rem; font-size: 0.95rem; }
+  .sidebar { width: 100%; max-width: 320px; }
+  .sidebar.open { width: 100%; max-width: 320px; }
+  .section-header .badge-count { width: auto; }
+  .table-wrap { border-radius: 8px; }
+  .table-wrap table { min-width: 100%; font-size: 0.58rem; }
+  th, td { padding: 0.3rem 0.3rem; }
+  th { font-size: 0.48rem; letter-spacing: 0.3px; }
+  .stat-card .stat-value { font-size: 0.9rem; }
+  .health-card .hc-value { font-size: 0.78rem; }
+  .security-card .sc-value { font-size: 0.85rem; }
+  .topbar h1 { font-size: 0.8rem; }
+  .status-badge { min-height: 1.3rem; padding: 0.1rem 0.35rem; font-size: 0.52rem; }
+}
+
+/* â”€â”€ Smallest phones (375px and below, down to 320px) â”€â”€ */
+@media (max-width: 375px) {
+  .main-content { padding: 0.5rem; }
+  .topbar-right { flex-direction: column; align-items: stretch; gap: 0.35rem; }
+  .section-header { gap: 0.35rem; }
+  .section-header h2 { font-size: 0.72rem; }
+  .section-header select, .section-header input { padding: 0.28rem 0.4rem; font-size: 0.6rem; }
+  .stats-grid { grid-template-columns: 1fr; gap: 0.4rem; }
+  .stat-card { padding: 0.45rem; }
+  .stat-card .stat-value { font-size: 0.82rem; }
+  .stat-card .stat-label { font-size: 0.42rem; }
+  .stat-card .stat-sub { font-size: 0.5rem; }
+  .four-col { grid-template-columns: 1fr; gap: 0.4rem; }
+  table { font-size: 0.52rem; }
+  th, td { padding: 0.22rem 0.22rem; }
+  th { font-size: 0.42rem; }
+  td { font-size: 0.52rem; }
+  .menu-toggle { padding: 0.25rem 0.4rem; font-size: 0.85rem; }
+  .nav-item { padding: 0.35rem 0.35rem; font-size: 0.58rem; gap: 0.3rem; }
+  .nav-item i { width: 12px; font-size: 0.6rem; }
+  .table-wrap table { min-width: 100%; }
+  .health-grid { grid-template-columns: 1fr 1fr; gap: 0.35rem; }
+  .health-card { padding: 0.4rem; }
+  .health-card .hc-value { font-size: 0.7rem; }
+  .health-card .hc-label { font-size: 0.42rem; }
+  .security-card { padding: 0.45rem; }
+  .security-card .sc-value { font-size: 0.8rem; }
+  .gov-role-card { padding: 0.35rem; }
+  .gov-role-card .gov-count { font-size: 0.8rem; }
+  .section-header select, .section-header input { font-size: 0.55rem; padding: 0.22rem 0.3rem; }
+  .sidebar { max-width: 100%; }
+  .skeleton-card { height: 38px; }
+  .feed-list { max-height: 220px; }
+  .feed-item { padding: 0.3rem 0; gap: 0.35rem; }
+  .feed-icon { width: 18px; height: 18px; font-size: 0.4rem; }
+  .topbar h1 { font-size: 0.7rem; }
+}
+  .stats-grid { grid-template-columns: 1fr; gap: 0.4rem; }
+  .stat-card { padding: 0.45rem; }
+  .stat-card .stat-value { font-size: 0.82rem; }
+  .stat-card .stat-label { font-size: 0.42rem; }
+  .stat-card .stat-sub { font-size: 0.5rem; }
+  .four-col { grid-template-columns: 1fr; gap: 0.4rem; }
+  .main-content { padding: 0.4rem; }
+  .topbar { flex-direction: column; align-items: stretch; }
+  .topbar h1 { font-size: 0.72rem; }
+  .topbar-right { justify-content: flex-end; }
+  table { font-size: 0.5rem; }
+  th, td { padding: 0.2rem 0.2rem; }
+  th { font-size: 0.4rem; }
+  td { font-size: 0.5rem; }
+  .health-grid { grid-template-columns: 1fr 1fr; gap: 0.35rem; }
+  .health-card { padding: 0.4rem; }
+  .health-card .hc-value { font-size: 0.7rem; }
+  .health-card .hc-label { font-size: 0.42rem; }
+  .security-card { padding: 0.45rem; }
+  .security-card .sc-value { font-size: 0.8rem; }
+  .gov-role-card { padding: 0.35rem; }
+  .gov-role-card .gov-count { font-size: 0.8rem; }
+  .section-header select, .section-header input { font-size: 0.55rem; padding: 0.22rem 0.3rem; }
+  .sidebar { max-width: 100%; }
+  .skeleton-card { height: 38px; }
+  .feed-list { max-height: 220px; }
+  .feed-item { padding: 0.3rem 0; gap: 0.35rem; }
+  .feed-icon { width: 18px; height: 18px; font-size: 0.4rem; }
+  .nav-item { padding: 0.35rem 0.35rem; font-size: 0.55rem; gap: 0.3rem; }
+}
+
+/* â”€â”€ Desktop safety â”€â”€ */
+@media (min-width: 769px) {
+  .sidebar { transform: none !important; }
+}
+</style>
+</head>
+<body>
+<div class="app-layout">
+  <aside class="sidebar">
+    <div class="sidebar-brand">
+      <div class="brand-icon"><svg viewBox="0 0 24 24" width="1.1em" height="1.1em" fill="none" style="display:inline-block;vertical-align:-.125em"><path d="M12 6.5L3.5 21" stroke="currentColor" stroke-width="2.2" stroke-linecap="round"/><path d="M12 6.5L20.5 21" stroke="currentColor" stroke-width="2.2" stroke-linecap="round"/><path d="M5 14.5L11 14.5" stroke="currentColor" stroke-width="2" stroke-linecap="round"/><path d="M13 14.5L19 14.5" stroke="currentColor" stroke-width="2" stroke-linecap="round"/><path d="M9.5 9.5Q12 6.2 14.5 9.5" stroke="currentColor" stroke-width="1.2" stroke-linecap="round" fill="none" opacity=".6"/><circle cx="12" cy="3.5" r="3" fill="currentColor"/><circle cx="3.5" cy="21" r="2.5" fill="currentColor"/><circle cx="20.5" cy="21" r="2.5" fill="currentColor"/></svg></div>
+      <span>Attendrix</span>
+      <div class="badge">v1</div>
+    </div>
+    <nav class="sidebar-nav">
+      <div class="nav-section-label">Command</div>
+      <button class="nav-item active" data-tab="overview"><i class="fas fa-lg fa-gauge-high"></i><span>Overview</span></button>
+
+      <div class="nav-section-label">Governance</div>
+      <button class="nav-item" data-tab="institutions"><i class="fas fa-lg fa-building-columns"></i><span>Institutions</span></button>
+      <button class="nav-item" data-tab="users"><i class="fas fa-lg fa-users-gear"></i><span>Users</span></button>
+      <button class="nav-item" data-tab="governance"><i class="fas fa-lg fa-scale-balanced"></i><span>Role Governance</span></button>
+
+      <div class="nav-section-label">Monitoring</div>
+      <button class="nav-item" data-tab="attendance"><i class="fas fa-lg fa-clipboard-check"></i><span>Attendance</span></button>
+      <button class="nav-item" data-tab="network"><i class="fas fa-lg fa-network-wired"></i><span>Network</span></button>
+      <button class="nav-item" data-tab="health"><i class="fas fa-lg fa-heart-pulse"></i><span>Health</span></button>
+
+      <div class="nav-section-label">Security</div>
+      <button class="nav-item" data-tab="security"><i class="fas fa-lg fa-shield-halved"></i><span>SOC</span><span class="nav-badge" id="socBadge">0</span></button>
+      <button class="nav-item" data-tab="anti-proxy"><i class="fas fa-lg fa-user-secret"></i><span>Anti-Proxy</span></button>
+      <button class="nav-item" data-tab="suspicious"><i class="fas fa-lg fa-triangle-exclamation"></i><span>Suspicious</span></button>
+      <button class="nav-item" data-tab="ai-risk"><i class="fas fa-lg fa-brain"></i><span>AI Risk</span></button>
+
+      <div class="nav-section-label">Intelligence</div>
+      <button class="nav-item" data-tab="activity"><i class="fas fa-lg fa-rss"></i><span>Activity</span></button>
+      <button class="nav-item" data-tab="audit"><i class="fas fa-lg fa-list"></i><span>Audit</span></button>
+      <button class="nav-item" data-tab="analytics"><i class="fas fa-lg fa-chart-line"></i><span>Analytics</span></button>
+      <button class="nav-item" data-tab="bookings"><i class="fas fa-lg fa-calendar-check"></i><span>Demo Bookings</span></button>
+      <button class="nav-item" data-tab="feedback"><i class="fas fa-lg fa-comments"></i><span>Feedback Intelligence</span><span class="nav-badge" id="feedbackBadge">0</span></button>
+
+      <div class="nav-section-label" style="margin-top:1rem;">System</div>
+      <button class="nav-item" onclick="window.location.href='/institutional-admin/dashboard'" title="Exit Command Center"><i class="fas fa-lg fa-right-from-bracket"></i><span>Exit</span></button>
+    </nav>
+  </aside>
+
+  <div class="main-content">
+    <div class="sidebar-overlay" id="sidebarOverlay" onclick="toggleSidebar()"></div>
+    <div class="topbar">
+      <div style="display:flex;align-items:center;gap:0.5rem;">
+        <button class="menu-toggle" id="menuToggle" onclick="toggleSidebar()" title="Toggle sidebar"><i class="fas fa-bars"></i></button>
+        <h1 id="pageTitle">Command <span>Center</span></h1>
+      </div>
+      <div class="topbar-right">
+        <div class="live-indicator"><div class="live-dot"></div> <span id="liveLabel">LIVE</span></div>
+        <button class="auto-refresh-btn" id="refreshBtn" onclick="refreshAll()"><i class="fas fa-rotate"></i> Refresh</button>
+      </div>
+    </div>
+
+    <!-- â•â•â• OVERVIEW â•â•â• -->
+    <div class="tab-content active" id="tab-overview">
+      <div class="stats-grid" id="overviewStats"></div>
+      <div class="two-col">
+        <div>
+          <div class="section-header"><h2><i class="fas fa-rss" style="font-size:0.7rem;color:var(--text-muted);margin-right:0.4rem;"></i> Activity Feed</h2><span class="badge-count" id="overviewFeedCount">0</span></div>
+          <div class="table-wrap"><div class="feed-list" id="overviewFeed"></div></div>
+        </div>
+        <div>
+          <div class="section-header"><h2><i class="fas fa-shield" style="font-size:0.7rem;color:var(--text-muted);margin-right:0.4rem;"></i> Security Events</h2><span class="badge-count" id="overviewSecurityCount">0</span></div>
+          <div class="table-wrap"><div class="feed-list" id="overviewSecurity"></div></div>
+        </div>
+      </div>
+    </div>
+
+    <!-- â•â•â• INSTITUTIONS â•â•â• -->
+    <div class="tab-content" id="tab-institutions">
+      <div class="section-header"><h2><i class="fas fa-building-columns"></i> All Institutions</h2><span class="badge-count" id="instCount">0</span></div>
+      <div class="table-wrap"><table><thead><tr><th>Name</th><th>Code</th><th>Status</th><th>Admins</th><th>Lecturers</th><th>Students</th><th>Employees</th><th>Attendance</th><th>Security</th><th>Actions</th></tr></thead><tbody id="instTableBody"></tbody></table></div>
+    </div>
+
+    <!-- â•â•â• USERS â•â•â• -->
+    <div class="tab-content" id="tab-users">
+      <div class="section-header">
+        <h2><i class="fas fa-users-gear"></i> System Users</h2>
+        <div style="display:flex;gap:0.5rem;flex-wrap:wrap;">
+          <select id="userRoleFilter" onchange="loadUsers()"><option value="">All Roles</option><option value="super_admin">Super Admin</option><option value="institutional_admin">Inst. Admin</option><option value="lecturer">Lecturer</option><option value="student">Student</option><option value="employee">Employee</option></select>
+          <input type="text" id="userSearch" placeholder="Search name or email..." oninput="loadUsers()" style="width:180px;max-width:100%;">
+          <span class="badge-count" id="userCount">0</span>
+        </div>
+      </div>
+      <div class="table-wrap"><table><thead><tr><th>Name</th><th>Email</th><th>Role</th><th>Institution</th><th>Status</th><th>Verified</th><th>Last Login</th><th>Actions</th></tr></thead><tbody id="userTableBody"></tbody></table></div>
+    </div>
+
+    <!-- â•â•â• ROLE GOVERNANCE â•â•â• -->
+    <div class="tab-content" id="tab-governance">
+      <div id="governanceContent"></div>
+    </div>
+
+    <!-- â•â•â• ATTENDANCE â•â•â• -->
+    <div class="tab-content" id="tab-attendance">
+      <div id="attendanceContent"></div>
+    </div>
+
+    <!-- â•â•â• NETWORK INFRASTRUCTURE â•â•â• -->
+    <div class="tab-content" id="tab-network">
+      <div id="networkContent"></div>
+    </div>
+
+    <!-- â•â•â• SYSTEM HEALTH â•â•â• -->
+    <div class="tab-content" id="tab-health">
+      <div id="healthContent"></div>
+    </div>
+
+    <!-- â•â•â• SOC / SECURITY CENTER â•â•â• -->
+    <div class="tab-content" id="tab-security">
+      <div id="securityContent"></div>
+    </div>
+
+    <!-- â•â•â• ANTI-PROXY INTELLIGENCE â•â•â• -->
+    <div class="tab-content" id="tab-anti-proxy">
+      <div id="antiProxyContent"></div>
+    </div>
+
+    <!-- â•â•â• SUSPICIOUS ACTIVITY â•â•â• -->
+    <div class="tab-content" id="tab-suspicious">
+      <div class="section-header"><h2><i class="fas fa-triangle-exclamation"></i> Suspicious Attendance</h2><span class="badge-count" id="suspiciousCount">0</span></div>
+      <div class="table-wrap"><table><thead><tr><th>Student</th><th>Email</th><th>Institution</th><th>Status</th><th>Reason</th><th>IP</th><th>Time</th></tr></thead><tbody id="suspiciousTableBody"></tbody></table></div>
+    </div>
+
+    <!-- â•â•â• AI RISK INTELLIGENCE â•â•â• -->
+    <div class="tab-content" id="tab-ai-risk">
+      <div id="aiRiskContent"></div>
+    </div>
+
+    <!-- â•â•â• ACTIVITY FEED â•â•â• -->
+    <div class="tab-content" id="tab-activity">
+      <div class="section-header"><h2><i class="fas fa-rss"></i> Real-Time Activity</h2><span class="badge-count" id="activityCount">0</span></div>
+      <div class="table-wrap"><div class="feed-list" id="activityFeedList"></div></div>
+    </div>
+
+    <!-- â•â•â• AUDIT LOGS â•â•â• -->
+    <div class="tab-content" id="tab-audit">
+      <div class="section-header"><h2><i class="fas fa-list"></i> Audit Logs</h2><select id="auditActionFilter" onchange="loadAudit()"><option value="">All Actions</option><option value="API_ACCESS">API Access</option><option value="LOGIN">Login</option><option value="CREATE">Create</option><option value="UPDATE">Update</option><option value="DELETE">Delete</option></select></div>
+      <div class="table-wrap"><table><thead><tr><th>Action</th><th>Resource</th><th>Institution</th><th>User</th><th>IP</th><th>Timestamp</th></tr></thead><tbody id="auditTableBody"></tbody></table></div>
+    </div>
+
+    <!-- â•â•â• ANALYTICS â•â•â• -->
+    <div class="tab-content" id="tab-analytics">
+      <div id="analyticsContent"></div>
+    </div>
+
+    <!-- â•â•â• DEMO BOOKINGS â•â•â• -->
+    <div class="tab-content" id="tab-bookings">
+      <div class="section-header"><h2><i class="fas fa-calendar-check"></i> Demo Bookings</h2><span class="badge-count" id="bookingCount">0</span></div>
+      <div class="table-wrap"><table><thead><tr><th>Name</th><th>Email</th><th>Institution</th><th>Type</th><th>Students</th><th>Status</th><th>Date</th><th>Onboarding</th></tr></thead><tbody id="bookingTableBody"></tbody></table></div>
+    </div>
+
+    <!-- â•â•â• FEEDBACK INTELLIGENCE CENTER â•â•â• -->
+    <div class="tab-content" id="tab-feedback">
+      <div id="feedbackContent"></div>
+    </div>
+  </div>
+</div>
+
+<script>
+var API_BASE = '/api/super-admin';
+var currentTab = 'overview';
+var REFRESH_MS = 15000;
+var retryCount = {};
+
+function fmtTime(t) { if (!t) return '\u2014'; try { return new Date(t).toLocaleString(); } catch(e) { return t; } }
+function fmtDate(t) { if (!t) return '\u2014'; try { return new Date(t).toLocaleDateString(); } catch(e) { return t; } }
+function esc(s) { if (!s) return '\u2014'; var d = document.createElement('div'); d.textContent = s; return d.innerHTML; }
+function riskColor(s) { var n = parseInt(s) || 0; if (n >= 7) return 'high'; if (n >= 4) return 'medium'; return 'low'; }
+function riskPct(s) { return Math.min(parseInt(s) || 0, 10) * 10; }
+
+function skeletonCards(n) { return Array(n).fill(0).map(function() { return '<div class="skeleton skeleton-card"></div>'; }).join(''); }
+function skeletonRows(n) { return Array(n).fill(0).map(function() { return '<div class="skeleton skeleton-row"></div>'; }).join(''); }
+function spinner() { return '<div class="loading-state"><div class="spinner"></div></div>'; }
+function emptyState(icon, title, desc) { return '<div class="empty-state"><i class="fas fa-' + icon + '"></i><div class="empty-title">' + title + '</div>' + (desc ? '<div class="empty-desc">' + desc + '</div>' : '') + '</div>'; }
+function errorState(msg) { return '<div class="error-state"><i class="fas fa-triangle-exclamation"></i><div>' + esc(msg || 'Failed to load data') + '</div><button class="btn-action auto-refresh-btn" onclick="loadTab(currentTab)"><i class="fas fa-rotate"></i> Retry</button></div>'; }
+
+function toggleSidebar() {
+  document.getElementById('sidebarOverlay').classList.toggle('active');
+  document.querySelector('.sidebar').classList.toggle('open');
+}
+
+function closeSidebarMobile() {
+  if (window.innerWidth <= 768) {
+    document.getElementById('sidebarOverlay').classList.remove('active');
+    document.querySelector('.sidebar').classList.remove('open');
+  }
+}
+
+function apiFetch(url, cb, key) {
+  var k = key || url;
+  retryCount[k] = (retryCount[k] || 0) + 1;
+  fetch(url).then(function(r) { if (!r.ok) throw new Error('HTTP ' + r.status); return r.json(); }).then(function(d) { retryCount[k] = 0; cb(d); }).catch(function(err) { console.warn('API error:', url, err); if (typeof cb.error === 'function') cb.error(err); });
+}
+
+document.querySelectorAll('.nav-item[data-tab]').forEach(function(btn) {
+  btn.addEventListener('click', function() {
+    document.querySelectorAll('.nav-item').forEach(function(b) { b.classList.remove('active'); });
+    this.classList.add('active');
+    document.querySelectorAll('.tab-content').forEach(function(t) { t.classList.remove('active'); });
+    var tab = this.getAttribute('data-tab');
+    document.getElementById('tab-' + tab).classList.add('active');
+    var spanText = this.querySelector('span') ? this.querySelector('span').textContent : 'Command';
+    document.getElementById('pageTitle').innerHTML = esc(spanText) + ' <span>Command Center</span>';
+    currentTab = tab;
+    loadTab(tab);
+    closeSidebarMobile();
+  });
+});
+
+function loadTab(tab) {
+  var fns = {
+    overview: loadOverview, institutions: loadInstitutions, users: loadUsers,
+    governance: loadGovernance, attendance: loadAttendance, network: loadNetwork,
+    health: loadHealth, security: loadSecurity, 'anti-proxy': loadAntiProxy,
+    suspicious: loadSuspicious, 'ai-risk': loadAiRisk, activity: loadActivity,
+    audit: loadAudit, analytics: loadAnalytics, bookings: loadBookings,
+    feedback: loadFeedback,
+  };
+  if (fns[tab]) fns[tab]();
+}
+function refreshAll() { loadTab(currentTab); }
+
+
+/* â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â• OVERVIEW â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â• */
+function loadOverview() {
+  var statsEl = document.getElementById('overviewStats');
+  statsEl.innerHTML = skeletonCards(6);
+  apiFetch(API_BASE + '/overview', function(d) {
+    if (!d.success) { statsEl.innerHTML = errorState(); return; }
+    var o = d.data;
+    statsEl.innerHTML =
+      '<div class="stat-card"><div class="stat-icon"><i class="fas fa-building-columns"></i></div><div class="stat-label">Institutions</div><div class="stat-value">' + (o.total_institutions || 0) + '</div><div class="stat-sub">' + (o.active_institutions || 0) + ' active <span style="color:var(--text-muted)">\u00b7</span> ' + (o.pending_institutions || 0) + ' pending</div></div>' +
+      '<div class="stat-card"><div class="stat-icon"><i class="fas fa-user-graduate"></i></div><div class="stat-label">Users</div><div class="stat-value">' + (o.total_users || 0) + '</div><div class="stat-sub">' + (o.total_students || 0) + ' students <span style="color:var(--text-muted)">\u00b7</span> ' + (o.total_lecturers || 0) + ' lecturers</div></div>' +
+      '<div class="stat-card"><div class="stat-icon"><i class="fas fa-clipboard-check"></i></div><div class="stat-label">Attendance Records</div><div class="stat-value">' + (o.total_attendance_records || 0).toLocaleString() + '</div><div class="stat-sub">' + (o.today_records || 0) + ' today <span style="color:var(--text-muted)">\u00b7</span> ' + (o.attendance_completion_rate || 0) + '% rate</div></div>' +
+      '<div class="stat-card"><div class="stat-icon"><i class="fas fa-triangle-exclamation"></i></div><div class="stat-label">Fraud Intelligence</div><div class="stat-value" style="color:' + ((o.suspicious_records || 0) > 0 ? 'var(--warning)' : 'var(--success)') + '">' + (o.suspicious_records || 0) + '</div><div class="stat-sub">' + (o.proxy_flags || 0) + ' proxy flags <span style="color:var(--text-muted)">\u00b7</span> ' + (o.attendance_fraud_probability || 0) + '% fraud prob.</div></div>' +
+      '<div class="stat-card"><div class="stat-icon"><i class="fas fa-shield"></i></div><div class="stat-label">Security Posture</div><div class="stat-value" style="color:' + ((o.unresolved_alerts || 0) > 0 ? 'var(--danger)' : 'var(--success)') + '">' + (o.security_events || 0) + '</div><div class="stat-sub">' + (o.unresolved_alerts || 0) + ' open <span style="color:var(--text-muted)">\u00b7</span> ' + (o.high_risk_events || 0) + ' high risk</div></div>' +
+      '<div class="stat-card"><div class="stat-icon"><i class="fas fa-gauge"></i></div><div class="stat-label">System</div><div class="stat-value">' + (o.active_sessions || 0) + '</div><div class="stat-sub">' + (o.active_security_incidents || 0) + ' active incidents <span style="color:var(--text-muted)">\u00b7</span> ' + (o.system_uptime_hours || 0) + 'h uptime</div></div>';
+    loadOverviewFeed();
+    loadOverviewSecurity();
+  });
+}
+
+function loadOverviewFeed() {
+  var el = document.getElementById('overviewFeed');
+  el.innerHTML = spinner();
+  apiFetch(API_BASE + '/activity-feed', function(d) {
+    if (!d.success || !d.data || !d.data.length) { el.innerHTML = emptyState('rss', 'No Recent Activity', 'System activity will appear here as users interact with the platform.'); var _e=document.getElementById('overviewFeedCount');if(_e)_e.textContent='0'; return; }
+    var _e=document.getElementById('overviewFeedCount');if(_e)_e.textContent=d.data.length;
+    el.innerHTML = d.data.slice(0, 8).map(function(a) {
+      var icon = 'info';
+      if (a.action && a.action.includes('LOGIN')) icon = 'success';
+      else if (a.action && (a.action.includes('DELETE') || a.action.includes('SECURITY'))) icon = 'danger';
+      else if (a.action && a.action.includes('CREATE')) icon = 'success';
+      else if (a.action && a.action.includes('UPDATE')) icon = 'warning';
+      return '<div class="feed-item"><div class="feed-icon ' + icon + '"><i class="fas ' + (icon==='info'?'fa-circle-info':icon==='success'?'fa-right-to-bracket':icon==='danger'?'fa-trash':'fa-pen') + '"></i></div><div class="feed-content"><div class="feed-title">' + esc(a.action) + '</div><div class="feed-desc">' + esc(a.resource_type || 'system') + (a.institution_name ? ' \u00b7 ' + esc(a.institution_name) : '') + '</div><div class="feed-meta">' + fmtTime(a.timestamp) + (a.ip_address ? ' \u00b7 ' + esc(a.ip_address) : '') + '</div></div></div>';
+    }).join('');
+  });
+}
+
+function loadOverviewSecurity() {
+  var el = document.getElementById('overviewSecurity');
+  el.innerHTML = spinner();
+  apiFetch(API_BASE + '/security-events?min_risk=4', function(d) {
+    if (!d.success || !d.data || !d.data.length) { el.innerHTML = emptyState('shield-check', 'No Security Events', 'No medium-to-high risk security events detected.'); var _e=document.getElementById('overviewSecurityCount');if(_e)_e.textContent='0'; return; }
+    var _e=document.getElementById('overviewSecurityCount');if(_e)_e.textContent=d.data.length;
+    el.innerHTML = d.data.slice(0, 8).map(function(e) {
+      var cls = riskColor(e.risk_score);
+      return '<div class="feed-item"><div class="feed-icon ' + cls + '"><i class="fas fa-bolt"></i></div><div class="feed-content"><div class="feed-title">' + esc(e.event_type) + '</div><div class="feed-desc">' + esc(e.description || '') + (e.institution_name ? ' \u00b7 ' + esc(e.institution_name) : '') + '</div><div class="feed-meta">Risk: ' + (e.risk_score || 0) + '/10 \u00b7 ' + fmtTime(e.created_at) + '</div></div></div>';
+    }).join('');
+  });
+}
+
+
+/* â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â• INSTITUTIONS â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â• */
+function loadInstitutions() {
+  var el = document.getElementById('instTableBody');
+  el.innerHTML = '<tr><td colspan="10" class="loading-state"><div class="spinner"></div></td></tr>';
+  apiFetch(API_BASE + '/institutions', function(d) {
+    if (!d.success) { el.innerHTML = '<tr><td colspan="10" class="error-state">Failed to load</td></tr>'; return; }
+    var _e=document.getElementById('instCount');if(_e)_e.textContent=d.data.length;
+    if (!d.data.length) { el.innerHTML = '<tr><td colspan="10" class="empty-state"><i class="fas fa-building-columns"></i><br><div class="empty-title">No Institutions Registered</div><div class="empty-desc">Institutions will appear here once they register on the platform.</div></td></tr>'; return; }
+    el.innerHTML = d.data.map(function(i) {
+      return '<tr><td><strong>' + esc(i.name) + '</strong></td><td>' + esc(i.code) + '</td>' +
+        '<td><span class="status-badge ' + (i.is_active ? 'active' : 'inactive') + '"><span class="status-dot ' + (i.is_active ? 'online' : 'offline') + '"></span>' + (i.is_active ? 'Active' : 'Inactive') + '</span></td>' +
+        '<td>' + (i.total_admins || 0) + '</td><td>' + (i.total_lecturers || 0) + '</td><td>' + (i.total_students || 0) + '</td><td>' + (i.total_employees || 0) + '</td>' +
+        '<td><span style="font-weight:600;color:' + ((i.attendance_rate || 0) >= 70 ? 'var(--success)' : (i.attendance_rate || 0) >= 40 ? 'var(--warning)' : 'var(--danger)') + '">' + (i.attendance_rate || 0) + '%</span></td>' +
+        '<td><span class="status-badge ' + ((i.high_risk_events || 0) > 0 ? 'high' : 'low') + '">' + (i.security_events || 0) + ' events</span></td>' +
+        '<td><button class="btn-action" onclick="toggleInstitution(\'' + esc(i.id) + '\')"><i class="fas ' + (i.is_active ? 'fa-pause' : 'fa-play') + '"></i></button></td></tr>';
+    }).join('');
+  });
+}
+
+function toggleInstitution(id) {
+  if (!confirm('Toggle this institution\'s status?')) return;
+  fetch(API_BASE + '/institution/' + id + '/toggle-status', { method: 'POST' }).then(function(r) { return r.json(); }).then(function(d) { if (d.success) loadInstitutions(); else alert('Failed: ' + (d.error || 'Unknown')); });
+}
+
+
+/* â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â• USERS â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â• */
+function loadUsers() {
+  var role = document.getElementById('userRoleFilter').value;
+  var search = document.getElementById('userSearch').value;
+  var url = API_BASE + '/users?';
+  if (role) url += 'role=' + encodeURIComponent(role) + '&';
+  if (search) url += 'search=' + encodeURIComponent(search) + '&';
+  var el = document.getElementById('userTableBody');
+  el.innerHTML = '<tr><td colspan="8" class="loading-state"><div class="spinner"></div></td></tr>';
+  apiFetch(url, function(d) {
+    if (!d.success) { el.innerHTML = '<tr><td colspan="8" class="error-state">Failed to load</td></tr>'; return; }
+    var _e=document.getElementById('userCount');if(_e)_e.textContent=d.data.length;
+    if (!d.data.length) { el.innerHTML = '<tr><td colspan="8" class="empty-state"><i class="fas fa-users"></i><br><div class="empty-title">No Users Found</div><div class="empty-desc">' + (search || role ? 'No users match the current filters.' : 'No users registered yet.') + '</div></td></tr>'; return; }
+    el.innerHTML = d.data.map(function(u) {
+      return '<tr><td><strong>' + esc(u.full_name || u.email) + '</strong></td><td>' + esc(u.email) + '</td>' +
+        '<td><span class="status-badge role-' + esc(u.role || '').replace(/_/g, '-') + '">' + esc(u.role || '').replace(/_/g, ' ') + '</span></td>' +
+        '<td>' + esc(u.institution_name) + '</td>' +
+        '<td><span class="status-badge ' + (u.is_active ? 'active' : 'inactive') + '">' + (u.is_active ? 'Active' : 'Inactive') + '</span></td>' +
+        '<td>' + (u.email_verified ? '<i class="fas fa-check-circle" style="color:var(--success)"></i>' : '<i class="fas fa-times-circle" style="color:var(--text-muted)"></i>') + '</td>' +
+        '<td style="font-size:0.7rem;">' + fmtTime(u.last_login) + '</td>' +
+        '<td><button class="btn-action" onclick="toggleUser(\'' + esc(u.id) + '\')"><i class="fas ' + (u.is_active ? 'fa-ban' : 'fa-check') + '"></i></button></td></tr>';
+    }).join('');
+  });
+}
+
+function toggleUser(id) {
+  if (!confirm('Toggle this user\'s active status?')) return;
+  fetch(API_BASE + '/user/' + id + '/toggle-status', { method: 'POST' }).then(function(r) { return r.json(); }).then(function(d) { if (d.success) loadUsers(); else alert('Failed: ' + (d.error || 'Unknown')); });
+}
+
+
+/* â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â• ROLE GOVERNANCE â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â• */
+function loadGovernance() {
+  var el = document.getElementById('governanceContent');
+  el.innerHTML = spinner();
+  apiFetch(API_BASE + '/role-governance', function(d) {
+    if (!d.success) { el.innerHTML = errorState(); return; }
+    var g = d.data;
+    var roles = g.role_distribution || {};
+    var roleKeys = Object.keys(roles);
+    var roleCards = roleKeys.length ? roleKeys.map(function(r) {
+      var iconMap = { super_admin: 'fa-crown', institutional_admin: 'fa-building-shield', lecturer: 'fa-chalkboard-user', student: 'fa-user-graduate', employee: 'fa-user-tie' };
+      var colorMap = { super_admin: 'var(--danger)', institutional_admin: 'var(--warning)', lecturer: 'var(--info)', student: 'var(--success)', employee: 'var(--accent)' };
+      return '<div class="gov-role-card"><div class="gov-icon" style="color:' + (colorMap[r] || 'var(--text-muted)') + '"><i class="fas ' + (iconMap[r] || 'fa-user') + '"></i></div><div class="gov-count">' + (roles[r] || 0) + '</div><div class="gov-label">' + esc(r.replace(/_/g, ' ')) + '</div></div>';
+    }).join('') : '<div class="empty-state" style="grid-column:1/-1"><i class="fas fa-users"></i><div class="empty-title">No Users Registered</div><div class="empty-desc">User role distribution will appear once users are onboarded.</div></div>';
+
+    el.innerHTML =
+      '<div class="section-header"><h2><i class="fas fa-scale-balanced"></i> Role Distribution</h2><span class="badge-count">' + (g.total_users || 0) + ' total</span></div>' +
+      '<div class="four-col">' + roleCards + '</div>' +
+      '<div class="two-col" style="margin-top:1rem;">' +
+      '<div><div class="section-header"><h2>Account Status</h2></div><div class="table-wrap"><table><thead><tr><th>Metric</th><th>Value</th></tr></thead><tbody>' +
+      '<tr><td>Total Users</td><td><strong>' + (g.total_users || 0) + '</strong></td></tr>' +
+      '<tr><td><span style="color:var(--success)">\u25cf</span> Active</td><td><strong>' + (g.active_users || 0) + '</strong></td></tr>' +
+      '<tr><td><span style="color:var(--danger)">\u25cf</span> Suspended</td><td><strong>' + (g.suspended_users || 0) + '</strong></td></tr>' +
+      '<tr><td><span style="color:var(--info)">\u25cf</span> Verified</td><td><strong>' + (g.verified_users || 0) + '</strong></td></tr>' +
+      '<tr><td><span style="color:var(--warning)">\u25cf</span> Unverified</td><td><strong>' + (g.unverified_users || 0) + '</strong></td></tr>' +
+      '</tbody></table></div></div>' +
+      '<div><div class="section-header"><h2>Security Overview</h2></div><div class="table-wrap">' +
+      emptyState('shield-check', 'Governance Controls Active', 'Role-based access controls and permission boundaries are enforced across all institutions.') +
+      '</div></div></div>';
+  });
+}
+
+
+/* â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â• ATTENDANCE â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â• */
+function loadAttendance() {
+  var el = document.getElementById('attendanceContent');
+  el.innerHTML = spinner();
+  apiFetch(API_BASE + '/attendance/overview', function(d) {
+    if (!d.success) { el.innerHTML = errorState(); return; }
+    var o = d.data;
+    el.innerHTML =
+      '<div class="stats-grid">' +
+      '<div class="stat-card"><div class="stat-icon"><i class="fas fa-chart-simple"></i></div><div class="stat-label">Attendance Rate</div><div class="stat-value" style="color:' + ((o.attendance_rate || 0) >= 80 ? 'var(--success)' : (o.attendance_rate || 0) >= 60 ? 'var(--warning)' : 'var(--danger)') + '">' + (o.attendance_rate || 0) + '%</div><div class="stat-sub">' + (o.total_sessions || 0) + ' total sessions</div></div>' +
+      '<div class="stat-card"><div class="stat-icon"><i class="fas fa-clock"></i></div><div class="stat-label">Active Sessions</div><div class="stat-value">' + (o.active_sessions || 0) + '</div><div class="stat-sub">Currently running</div></div>' +
+      '<div class="stat-card"><div class="stat-icon"><i class="fas fa-user-graduate"></i></div><div class="stat-label">Students Tracked</div><div class="stat-value">' + (o.students_with_attendance || 0) + '</div><div class="stat-sub">of ' + (o.enrolled_students || 0) + ' enrolled</div></div>' +
+      '<div class="stat-card"><div class="stat-icon"><i class="fas fa-record-vinyl"></i></div><div class="stat-label">Avg Per Session</div><div class="stat-value">' + (o.avg_records_per_session || 0) + '</div><div class="stat-sub">Records per session</div></div>' +
+      '</div>' +
+      '<div class="section-header"><h2>Attendance Breakdown</h2></div>' +
+      '<div class="table-wrap"><table><thead><tr><th>Metric</th><th>Value</th></tr></thead><tbody>' +
+      (o.total_records > 0 ?
+      '<tr><td><strong>Total Records</strong></td><td>' + (o.total_records || 0).toLocaleString() + '</td></tr>' +
+      '<tr><td><span style="color:var(--success)">\u25cf</span> Present</td><td>' + (o.present || 0).toLocaleString() + '</td></tr>' +
+      '<tr><td><span style="color:var(--warning)">\u25cf</span> Late</td><td>' + (o.late || 0).toLocaleString() + '</td></tr>' +
+      '<tr><td><span style="color:var(--danger)">\u25cf</span> Absent</td><td>' + (o.absent || 0).toLocaleString() + '</td></tr>' +
+      '<tr><td><span style="color:var(--info)">\u25cf</span> Excused</td><td>' + (o.excused || 0).toLocaleString() + '</td></tr>' +
+      '<tr><td><span style="color:var(--danger)">\u26a0</span> Suspicious</td><td>' + (o.suspicious_records || 0) + '</td></tr>'
+      : '<tr><td colspan="2" class="empty-state"><i class="fas fa-clipboard-check"></i><br><div class="empty-title">No Attendance Data</div><div class="empty-desc">Attendance records will appear here once sessions are created and students start marking attendance.</div></td></tr>') +
+      '</tbody></table></div>';
+  });
+}
+
+
+/* â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â• NETWORK â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â• */
+function loadNetwork() {
+  var el = document.getElementById('networkContent');
+  el.innerHTML = spinner();
+  apiFetch(API_BASE + '/network-infrastructure', function(d) {
+    if (!d.success) { el.innerHTML = errorState(); return; }
+    var n = d.data;
+    var nodes = n.institutions || [];
+    el.innerHTML =
+      '<div class="section-header"><h2><i class="fas fa-network-wired"></i> Distributed Network Topology</h2><span class="badge-count">' + (n.total_nodes || 0) + ' nodes</span></div>' +
+      '<div class="stats-grid">' +
+      '<div class="stat-card"><div class="stat-icon"><i class="fas fa-server"></i></div><div class="stat-label">Total Nodes</div><div class="stat-value">' + (n.total_nodes || 0) + '</div><div class="stat-sub">Institutional endpoints</div></div>' +
+      '<div class="stat-card"><div class="stat-icon"><i class="fas fa-wifi"></i></div><div class="stat-label">Online</div><div class="stat-value" style="color:var(--success)">' + (n.online_nodes || 0) + '</div><div class="stat-sub">' + (n.offline_nodes || 0) + ' offline</div></div>' +
+      '<div class="stat-card"><div class="stat-icon"><i class="fas fa-clock-rotate-left"></i></div><div class="stat-label">Sync Latency</div><div class="stat-value" style="color:' + ((n.sync_latency_ms || 0) > 30 ? 'var(--warning)' : 'var(--success)') + '">' + (n.sync_latency_ms || 0) + 'ms</div><div class="stat-sub">MQTT sync</div></div>' +
+      '<div class="stat-card"><div class="stat-icon"><i class="fas fa-tower-broadcast"></i></div><div class="stat-label">MQTT Broker</div><div class="stat-value" style="color:var(--success);font-size:1rem;"><span class="status-dot online" style="margin-right:0.3rem;"></span>' + esc(n.mqtt_status || 'connected') + '</div><div class="stat-sub">Message queue</div></div>' +
+      '</div>' +
+      '<div class="section-header"><h2>Node Status</h2><span class="badge-count">' + nodes.length + '</span></div>' +
+      '<div style="display:grid;grid-template-columns:repeat(auto-fill,minmax(280px,1fr));gap:0.65rem;">' +
+      (nodes.length ? nodes.map(function(node) {
+        return '<div class="node-card"><div class="node-status" style="background:' + (node.is_active ? 'var(--success)' : 'var(--danger)') + ';box-shadow:0 0 8px ' + (node.is_active ? 'rgba(16,185,129,0.4)' : 'rgba(239,68,68,0.4)') + '"></div><div><div class="node-name">' + esc(node.name || 'Unknown') + '</div><div class="node-meta">' + esc(node.code || '') + ' \u00b7 ' + (node.is_active ? 'Online' : 'Offline') + '</div></div></div>';
+      }).join('') : '<div class="empty-state" style="grid-column:1/-1"><i class="fas fa-network-wired"></i><div class="empty-title">No Network Nodes</div><div class="empty-desc">Institutional nodes will appear here as they connect to the distributed network.</div></div>') +
+      '</div>';
+  });
+}
+
+
+/* â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â• SYSTEM HEALTH â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â• */
+function loadHealth() {
+  var el = document.getElementById('healthContent');
+  el.innerHTML = spinner();
+  apiFetch(API_BASE + '/system-health', function(d) {
+    if (!d.success) { el.innerHTML = errorState(); return; }
+    var h = d.data;
+    var statusColor = h.status === 'operational' ? 'var(--success)' : 'var(--warning)';
+    var statusIcon = h.status === 'operational' ? 'fa-check-circle' : 'fa-exclamation-triangle';
+    el.innerHTML =
+      '<div class="section-header"><h2><i class="fas fa-heart-pulse"></i> System Health Dashboard</h2></div>' +
+      '<div class="health-grid">' +
+      '<div class="health-card"><div class="hc-icon" style="color:' + statusColor + '"><i class="fas ' + statusIcon + '"></i></div><div class="hc-value" style="color:' + statusColor + ';text-transform:capitalize;">' + esc(h.status.replace(/_/g, ' ')) + '</div><div class="hc-label">System Status</div></div>' +
+      '<div class="health-card"><div class="hc-icon" style="color:var(--info)"><i class="fas fa-clock"></i></div><div class="hc-value">' + (h.uptime_hours || 0) + 'h</div><div class="hc-label">Uptime</div></div>' +
+      '<div class="health-card"><div class="hc-icon" style="color:var(--success)"><i class="fas fa-building-columns"></i></div><div class="hc-value">' + (h.active_institutions || 0) + '</div><div class="hc-label">Active Institutions</div></div>' +
+      '<div class="health-card"><div class="hc-icon" style="color:var(--primary-light)"><i class="fas fa-users"></i></div><div class="hc-value">' + (h.users_active_today || 0) + '</div><div class="hc-label">Users Today</div></div>' +
+      '<div class="health-card"><div class="hc-icon" style="color:' + ((h.events_last_hour || 0) > 0 ? 'var(--warning)' : 'var(--success)') + '"><i class="fas fa-bolt"></i></div><div class="hc-value">' + (h.events_last_hour || 0) + '</div><div class="hc-label">Events (1h)</div></div>' +
+      '<div class="health-card"><div class="hc-icon" style="color:var(--text-muted)"><i class="fas fa-database"></i></div><div class="hc-value">' + (h.total_users || 0) + '</div><div class="hc-label">Total Users</div></div>' +
+      '<div class="health-card"><div class="hc-icon" style="color:var(--accent)"><i class="fas fa-tower-broadcast"></i></div><div class="hc-value" style="text-transform:capitalize;">' + esc(h.mqtt_health || 'operational') + '</div><div class="hc-label">MQTT</div></div>' +
+      '<div class="health-card"><div class="hc-icon" style="color:var(--info)"><i class="fas fa-arrows-rotate"></i></div><div class="hc-value" style="text-transform:capitalize;">' + esc(h.sync_status || 'synchronized') + '</div><div class="hc-label">Sync Status</div></div>' +
+      '</div>' +
+      '<div class="empty-state"><i class="fas fa-heart-pulse" style="color:var(--success);opacity:1;"></i><div class="empty-title">All Systems ' + (h.status === 'operational' ? 'Operational' : 'Monitored') + '</div><div class="empty-desc">Last checked: ' + fmtTime(h.last_checked) + '</div></div>';
+  });
+}
+
+
+/* â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â• SOC / SECURITY â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â• */
+function loadSecurity() {
+  var el = document.getElementById('securityContent');
+  el.innerHTML = spinner();
+  apiFetch(API_BASE + '/security-events', function(d) {
+    if (!d.success) { el.innerHTML = errorState(); return; }
+    var data = d.data || [];
+    var high = data.filter(function(e) { return (e.risk_score || 0) >= 7; }).length;
+    var unresolved = data.filter(function(e) { return !e.is_resolved; }).length;
+    var _e=document.getElementById('socBadge');if(_e)_e.textContent=unresolved;
+
+    el.innerHTML =
+      '<div class="section-header"><h2><i class="fas fa-shield-halved"></i> Security Operations Center</h2><span class="badge-count">' + data.length + ' events</span></div>' +
+      '<div class="security-summary">' +
+      '<div class="security-card"><div class="sc-value" style="color:var(--' + (data.length > 0 ? 'danger' : 'success') + ')">' + (data.length || 0) + '</div><div class="sc-label">Total Events</div></div>' +
+      '<div class="security-card"><div class="sc-value" style="color:var(--danger)">' + high + '</div><div class="sc-label">High Risk</div></div>' +
+      '<div class="security-card"><div class="sc-value" style="color:var(--warning)">' + unresolved + '</div><div class="sc-label">Unresolved</div></div>' +
+      '</div>' +
+      '<div class="section-header"><h2>Threat Log</h2><select id="riskFilter" onchange="loadSecurityTable()"><option value="0">All Levels</option><option value="7">High (7+)</option><option value="4">Medium (4+)</option></select></div>' +
+      '<div class="table-wrap"><table><thead><tr><th>Event Type</th><th>Description</th><th>Institution</th><th>Risk</th><th>Status</th><th>Actions</th></tr></thead><tbody id="securityTableBody"></tbody></table></div>';
+    loadSecurityTable();
+  });
+}
+
+function loadSecurityTable() {
+  var minRisk = (document.getElementById('riskFilter') || {}).value || '0';
+  var el = document.getElementById('securityTableBody');
+  if (!el) return;
+  el.innerHTML = '<tr><td colspan="6" class="loading-state"><div class="spinner"></div></td></tr>';
+  apiFetch(API_BASE + '/security-events?min_risk=' + minRisk, function(d) {
+    if (!d.success) { el.innerHTML = '<tr><td colspan="6" class="error-state">Failed to load</td></tr>'; return; }
+    var data = d.data || [];
+    if (!data.length) { el.innerHTML = '<tr><td colspan="6" class="empty-state"><i class="fas fa-shield-check" style="color:var(--success)"></i><br><div class="empty-title">No Security Events</div><div class="empty-desc">No events at this risk level. The system is secure.</div></td></tr>'; return; }
+    el.innerHTML = data.map(function(e) {
+      return '<tr><td><strong>' + esc(e.event_type) + '</strong></td><td>' + esc(e.description || '') + '</td><td>' + esc(e.institution_name || '\u2014') + '</td>' +
+        '<td><div class="risk-bar"><div class="risk-bar-fill" style="width:' + riskPct(e.risk_score) + '%;background:var(--' + riskColor(e.risk_score) + ')"></div></div><span style="font-size:0.65rem;">' + (e.risk_score || 0) + '/10</span></td>' +
+        '<td><span class="status-badge ' + (e.is_resolved ? 'active' : 'high') + '">' + (e.is_resolved ? 'Resolved' : 'Open') + '</span></td>' +
+        '<td>' + (e.is_resolved ? '' : '<button class="btn-action success" onclick="resolveSecurity(\'' + esc(e.id) + '\')"><i class="fas fa-check"></i> Resolve</button>') + '</td></tr>';
+    }).join('');
+  });
+}
+
+function resolveSecurity(id) {
+  fetch(API_BASE + '/security-events/' + id + '/resolve', { method: 'POST' }).then(function(r) { return r.json(); }).then(function(d) { if (d.success) loadSecurity(); else alert('Failed: ' + (d.error || 'Unknown')); });
+}
+
+
+/* â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â• ANTI-PROXY INTELLIGENCE â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â• */
+function loadAntiProxy() {
+  var el = document.getElementById('antiProxyContent');
+  el.innerHTML = spinner();
+  apiFetch(API_BASE + '/anti-proxy-intelligence', function(d) {
+    if (!d.success) { el.innerHTML = errorState(); return; }
+    var a = d.data;
+    var reasons = a.reasons || {};
+    var reasonKeys = Object.keys(reasons);
+    el.innerHTML =
+      '<div class="section-header"><h2><i class="fas fa-user-secret"></i> Anti-Proxy Intelligence</h2><span class="badge-count">' + (a.total_suspicious || 0) + ' flagged</span></div>' +
+      '<div class="security-summary">' +
+      '<div class="security-card"><div class="sc-value" style="color:' + ((a.total_suspicious || 0) > 0 ? 'var(--warning)' : 'var(--success)') + '">' + (a.total_suspicious || 0) + '</div><div class="sc-label">Suspicious Records</div></div>' +
+      '<div class="security-card"><div class="sc-value" style="color:' + ((a.proxy_attendance_flags || 0) > 0 ? 'var(--danger)' : 'var(--success)') + '">' + (a.proxy_attendance_flags || 0) + '</div><div class="sc-label">Proxy/VPN Flags</div></div>' +
+      '<div class="security-card"><div class="sc-value" style="color:' + ((a.geolocation_mismatches || 0) > 0 ? 'var(--warning)' : 'var(--success)') + '">' + (a.geolocation_mismatches || 0) + '</div><div class="sc-label">Geo Mismatches</div></div>' +
+      '<div class="security-card"><div class="sc-value" style="color:' + ((a.device_fingerprint_anomalies || 0) > 0 ? 'var(--warning)' : 'var(--success)') + '">' + (a.device_fingerprint_anomalies || 0) + '</div><div class="sc-label">Device Anomalies</div></div>' +
+      '<div class="security-card"><div class="sc-value" style="color:' + ((a.duplicate_attendance_flags || 0) > 0 ? 'var(--danger)' : 'var(--success)') + '">' + (a.duplicate_attendance_flags || 0) + '</div><div class="sc-label">Duplicate Flags</div></div>' +
+      '<div class="security-card"><div class="sc-value" style="color:' + ((a.fraud_probability || 0) > 10 ? 'var(--danger)' : (a.fraud_probability || 0) > 5 ? 'var(--warning)' : 'var(--success)') + '">' + (a.fraud_probability || 0) + '%</div><div class="sc-label">Fraud Probability</div></div>' +
+      '</div>' +
+      '<div class="section-header"><h2>Detection Breakdown</h2></div>' +
+      '<div class="table-wrap"><table><thead><tr><th>Detection Type</th><th>Count</th><th>Severity</th></tr></thead><tbody>' +
+      (reasonKeys.length ? reasonKeys.map(function(k) {
+        var count = reasons[k] || 0;
+        var sev = count > 10 ? 'high' : count > 3 ? 'medium' : 'low';
+        return '<tr><td><strong>' + esc(k.charAt(0).toUpperCase() + k.slice(1)) + '</strong></td><td>' + count + '</td><td><span class="status-badge ' + sev + '">' + sev.charAt(0).toUpperCase() + sev.slice(1) + '</span></td></tr>';
+      }).join('') : '<tr><td colspan="3" class="empty-state"><i class="fas fa-shield-check" style="color:var(--success)"></i><br><div class="empty-title">No Detection Data</div><div class="empty-desc">Anti-proxy intelligence will activate when suspicious patterns are detected across attendance records.</div></td></tr>') +
+      '</tbody></table></div>';
+  });
+}
+
+
+/* â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â• SUSPICIOUS ACTIVITY â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â• */
+function loadSuspicious() {
+  var el = document.getElementById('suspiciousTableBody');
+  el.innerHTML = '<tr><td colspan="7" class="loading-state"><div class="spinner"></div></td></tr>';
+  apiFetch(API_BASE + '/suspicious-activity', function(d) {
+    if (!d.success) { el.innerHTML = '<tr><td colspan="7" class="error-state">Failed to load</td></tr>'; return; }
+    var data = d.data || [];
+    var _e=document.getElementById('suspiciousCount');if(_e)_e.textContent=data.length;
+    if (!data.length) { el.innerHTML = '<tr><td colspan="7" class="empty-state"><i class="fas fa-check-circle" style="color:var(--success)"></i><br><div class="empty-title">No Suspicious Activity</div><div class="empty-desc">All attendance records appear legitimate. Suspicious patterns will be flagged here.</div></td></tr>'; return; }
+    el.innerHTML = data.map(function(r) {
+      return '<tr><td><strong>' + esc(r.student_name || 'Unknown') + '</strong></td><td>' + esc(r.student_email || '') + '</td>' +
+        '<td>' + esc(r.institution_name || '\u2014') + '</td>' +
+        '<td><span class="status-badge ' + (r.status === 'present' ? 'active' : 'inactive') + '">' + esc(r.status) + '</span></td>' +
+        '<td style="color:var(--warning)">' + esc(r.suspicion_reason || '\u2014') + '</td>' +
+        '<td style="font-size:0.7rem;">' + esc(r.ip_address || '\u2014') + '</td><td style="font-size:0.7rem;">' + fmtTime(r.marked_at || r.created_at) + '</td></tr>';
+    }).join('');
+  });
+}
+
+
+/* â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â• AI RISK INTELLIGENCE â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â• */
+function loadAiRisk() {
+  var el = document.getElementById('aiRiskContent');
+  el.innerHTML = spinner();
+  apiFetch(API_BASE + '/ai-risk-intelligence', function(d) {
+    if (!d.success) { el.innerHTML = errorState(); return; }
+    var r = d.data;
+    var riskIndex = r.overall_risk_index || 0;
+    var recs = r.recommendations || [];
+
+    var riskLevel = riskIndex < 3 ? 'low' : riskIndex < 6 ? 'moderate' : riskIndex < 8 ? 'high' : 'critical';
+    var riskLabel = riskLevel.charAt(0).toUpperCase() + riskLevel.slice(1);
+    var riskColorVal = riskLevel === 'low' ? 'var(--success)' : riskLevel === 'moderate' ? 'var(--info)' : riskLevel === 'high' ? 'var(--warning)' : 'var(--danger)';
+
+    var highRiskInsts = r.high_risk_institutions || [];
+
+    el.innerHTML =
+      '<div class="section-header"><h2><i class="fas fa-brain"></i> AI-Powered Risk Intelligence</h2><span class="badge-count" style="background:rgba(' + (riskLevel==='critical'?'239,68,68':riskLevel==='high'?'245,158,11':riskLevel==='moderate'?'6,182,212':'16,185,129') + ',0.15);color:' + riskColorVal + '">' + riskLabel + '</span></div>' +
+      '<div class="stats-grid">' +
+      '<div class="stat-card"><div class="stat-icon"><i class="fas fa-gauge-high"></i></div><div class="stat-label">Overall Risk Index</div><div class="stat-value" style="color:' + riskColorVal + '">' + riskIndex + '/10</div><div class="stat-sub">' + riskLabel + ' risk level</div></div>' +
+      '<div class="stat-card"><div class="stat-icon"><i class="fas fa-timer"></i></div><div class="stat-label">Today\'s Suspicious</div><div class="stat-value" style="color:' + ((r.today_suspicious_count || 0) > 0 ? 'var(--warning)' : 'var(--success)') + '">' + (r.today_suspicious_count || 0) + '</div><div class="stat-sub">Flagged today</div></div>' +
+      '<div class="stat-card"><div class="stat-icon"><i class="fas fa-building-columns"></i></div><div class="stat-label">High-Risk Institutions</div><div class="stat-value" style="color:var(--danger)">' + highRiskInsts.length + '</div><div class="stat-sub">Flagged for review</div></div>' +
+      '<div class="stat-card"><div class="stat-icon"><i class="fas fa-chart-line"></i></div><div class="stat-label">Prediction</div><div class="stat-value" style="font-size:1rem;text-transform:capitalize;color:' + (r.prediction === 'elevated_risk' ? 'var(--warning)' : 'var(--success)') + ';">' + esc((r.prediction || 'stable').replace(/_/g, ' ')) + '</div><div class="stat-sub">AI forecast</div></div>' +
+      '</div>' +
+      (highRiskInsts.length ? '<div class="section-header"><h2>High-Risk Institutions</h2><span class="badge-count">' + highRiskInsts.length + '</span></div><div class="table-wrap"><table><thead><tr><th>Institution</th><th>Risk Score</th><th>Suspicious Records</th><th>Security Events</th></tr></thead><tbody>' + highRiskInsts.map(function(inst) {
+        return '<tr><td><strong>' + esc(inst.name) + '</strong></td><td><span class="risk-indicator ' + (inst.risk_score >= 7 ? 'high' : 'moderate') + '">' + inst.risk_score + '/10</span></td><td>' + (inst.suspicious_records || 0) + '</td><td>' + (inst.security_events || 0) + '</td></tr>';
+      }).join('') + '</tbody></table></div>' : '') +
+      '<div class="section-header" style="margin-top:1rem;"><h2>AI Recommendations</h2></div>' +
+      (recs.length ? recs.map(function(rec) {
+        return '<div class="recommendation-card"><div class="rec-text"><i class="fas fa-lightbulb" style="color:var(--accent);margin-right:0.4rem;"></i>' + esc(rec) + '</div></div>';
+      }).join('') : '<div class="empty-state"><i class="fas fa-lightbulb" style="opacity:0.5;"></i><div class="empty-title">No Recommendations</div><div class="empty-desc">AI risk intelligence will generate recommendations as data patterns emerge.</div></div>');
+  });
+}
+
+
+/* â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â• ACTIVITY â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â• */
+function loadActivity() {
+  var el = document.getElementById('activityFeedList');
+  el.innerHTML = spinner();
+  apiFetch(API_BASE + '/activity-feed', function(d) {
+    if (!d.success) { el.innerHTML = '<div class="error-state">Failed to load</div>'; return; }
+    var data = d.data || [];
+    var _e=document.getElementById('activityCount');if(_e)_e.textContent=data.length;
+    if (!data.length) { el.innerHTML = emptyState('rss', 'No Activity Recorded', 'System activity will appear here as users interact with the platform.'); return; }
+    el.innerHTML = data.map(function(a) {
+      var icon = 'info';
+      if (a.action && a.action.includes('LOGIN')) icon = 'success';
+      else if (a.action && (a.action.includes('DELETE') || a.action.includes('SECURITY'))) icon = 'danger';
+      else if (a.action && a.action.includes('CREATE')) icon = 'success';
+      else if (a.action && a.action.includes('UPDATE')) icon = 'warning';
+      var actionStr = a.action || 'Unknown';
+      return '<div class="feed-item"><div class="feed-icon ' + icon + '"><i class="fas ' + (icon==='info'?'fa-circle-info':icon==='success'?'fa-right-to-bracket':icon==='danger'?'fa-trash':'fa-pen') + '"></i></div><div class="feed-content"><div class="feed-title">' + esc(actionStr.replace(/_/g,' ')) + '</div><div class="feed-desc">' + esc(a.resource_type || 'system') + (a.institution_name ? ' \u00b7 ' + esc(a.institution_name) : '') + '</div><div class="feed-meta">' + fmtTime(a.timestamp) + (a.ip_address ? ' \u00b7 ' + esc(a.ip_address) : '') + '</div></div></div>';
+    }).join('');
+  });
+}
+
+
+/* â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â• AUDIT â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â• */
+function loadAudit() {
+  var action = (document.getElementById('auditActionFilter') || {}).value;
+  var url = API_BASE + '/audit-logs';
+  if (action) url += '?action=' + encodeURIComponent(action);
+  var el = document.getElementById('auditTableBody');
+  el.innerHTML = '<tr><td colspan="6" class="loading-state"><div class="spinner"></div></td></tr>';
+  apiFetch(url, function(d) {
+    if (!d.success) { el.innerHTML = '<tr><td colspan="6" class="error-state">Failed to load</td></tr>'; return; }
+    var data = d.data || [];
+    if (!data.length) { el.innerHTML = '<tr><td colspan="6" class="empty-state"><i class="fas fa-list"></i><br><div class="empty-title">No Audit Logs</div><div class="empty-desc">' + (action ? 'No logs match the selected filter.' : 'Audit logs will appear here as system actions are recorded.') + '</div></td></tr>'; return; }
+    el.innerHTML = data.map(function(l) {
+      return '<tr><td><strong>' + esc((l.action || '').replace(/_/g,' ')) + '</strong></td><td>' + esc(l.resource_type || '\u2014') + '</td><td>' + esc(l.institution_name || '\u2014') + '</td><td style="font-size:0.7rem;">' + esc(l.user_id || '').substring(0,12) + '...</td><td style="font-size:0.7rem;">' + esc(l.ip_address || '\u2014') + '</td><td style="font-size:0.7rem;">' + fmtTime(l.timestamp) + '</td></tr>';
+    }).join('');
+  });
+}
+
+
+/* â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â• ANALYTICS â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â• */
+function loadAnalytics() {
+  var el = document.getElementById('analyticsContent');
+  el.innerHTML = spinner();
+  apiFetch(API_BASE + '/attendance-analytics', function(d) {
+    if (!d.success) { el.innerHTML = errorState(); return; }
+    var a = d.data;
+    var rate = a.overall_rate || 0;
+    var rateColor = rate >= 80 ? 'var(--success)' : rate >= 60 ? 'var(--warning)' : 'var(--danger)';
+
+    var instRows = '';
+    if (a.institution_performance && a.institution_performance.length > 0) {
+      instRows = a.institution_performance.slice(0, 15).map(function(i) {
+        var ir = i.attendance_rate || 0;
+        var ic = ir >= 80 ? 'success' : ir >= 60 ? 'warning' : 'danger';
+        return '<tr><td>' + esc(i.institution_name) + '</td><td>' + (i.total_records || 0) + '</td><td>' + (i.present || 0) + '</td><td>' + (i.absent || 0) + '</td><td>' + (i.late || 0) + '</td><td><div class="risk-bar"><div class="risk-bar-fill" style="width:' + ir + '%;background:var(--' + ic + ')"></div></div><span style="font-size:0.65rem;">' + ir + '%</span></td><td>' + (i.suspicious || 0) + '</td></tr>';
+      }).join('');
+    } else {
+      instRows = '<tr><td colspan="7" class="empty-state"><i class="fas fa-chart-simple"></i><br><div class="empty-title">No Institution Data</div><div class="empty-desc">Performance data will appear once institutions have attendance records.</div></td></tr>';
+    }
+
+    el.innerHTML =
+      '<div class="section-header"><h2><i class="fas fa-chart-line"></i> Attendance Analytics</h2></div>' +
+      '<div class="stats-grid">' +
+      '<div class="stat-card"><div class="stat-icon"><i class="fas fa-chart-pie"></i></div><div class="stat-label">Overall Rate</div><div class="stat-value" style="color:' + rateColor + '">' + rate + '%</div><div class="stat-sub">' + (a.total_records || 0) + ' total records</div></div>' +
+      '<div class="stat-card"><div class="stat-icon"><i class="fas fa-clock"></i></div><div class="stat-label">Today\'s Rate</div><div class="stat-value" style="color:' + ((a.today_rate || 0) >= 80 ? 'var(--success)' : 'var(--warning)') + '">' + (a.today_rate || 0) + '%</div><div class="stat-sub">' + (a.today_records || 0) + ' today</div></div>' +
+      '<div class="stat-card"><div class="stat-icon"><i class="fas fa-triangle-exclamation"></i></div><div class="stat-label">Low Performing</div><div class="stat-value" style="color:' + ((a.low_performing_institutions || []).length > 0 ? 'var(--danger)' : 'var(--success)') + '">' + (a.low_performing_institutions || []).length + '</div><div class="stat-sub">Below 50% rate</div></div>' +
+      '<div class="stat-card"><div class="stat-icon"><i class="fas fa-clock"></i></div><div class="stat-label">Active Sessions</div><div class="stat-value">' + (a.active_sessions || 0) + '</div><div class="stat-sub">' + (a.total_sessions || 0) + ' total</div></div>' +
+      '</div>' +
+      '<div class="section-header"><h2>Institution Performance Rankings</h2><span class="badge-count">' + (a.institution_performance ? a.institution_performance.length : 0) + '</span></div>' +
+      '<div class="table-wrap"><table><thead><tr><th>Institution</th><th>Records</th><th>Present</th><th>Absent</th><th>Late</th><th>Rate</th><th>Suspicious</th></tr></thead><tbody>' + instRows + '</tbody></table></div>';
+  });
+}
+
+
+/* â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â• DEMO BOOKINGS â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â• */
+function loadBookings() {
+  var el = document.getElementById('bookingTableBody');
+  el.innerHTML = '<tr><td colspan="8" class="loading-state"><div class="spinner"></div></td></tr>';
+  apiFetch(API_BASE + '/demo-bookings', function(d) {
+    if (!d.success) { el.innerHTML = '<tr><td colspan="8" class="error-state">Failed to load</td></tr>'; return; }
+    var data = d.data || [];
+    var _e=document.getElementById('bookingCount');if(_e)_e.textContent=data.length;
+    if (!data.length) { el.innerHTML = '<tr><td colspan="8" class="empty-state"><i class="fas fa-calendar-check"></i><br><div class="empty-title">No Demo Bookings</div><div class="empty-desc">Demo booking requests will appear here when institutions request a demo of the platform.</div></td></tr>'; return; }
+    el.innerHTML = data.map(function(b) {
+      var statusCls = 'pending';
+      if (b.status === 'confirmed' || b.status === 'completed') statusCls = 'active';
+      else if (b.status === 'cancelled' || b.status === 'expired') statusCls = 'inactive';
+      var prog = b.onboarding_progress || 0;
+      return '<tr><td><strong>' + esc(b.full_name) + '</strong></td><td>' + esc(b.email) + '</td><td>' + esc(b.institution) + '</td><td>' + esc(b.institution_type) + '</td><td>' + (b.number_of_students || 0) + '</td>' +
+        '<td><span class="status-badge ' + statusCls + '">' + esc(b.status) + '</span></td>' +
+        '<td style="font-size:0.7rem;">' + (b.preferred_date ? fmtDate(b.preferred_date) : '\u2014') + '</td>' +
+        '<td><div class="risk-bar"><div class="risk-bar-fill" style="width:' + prog + '%;background:var(--' + (prog >= 80 ? 'success' : prog >= 40 ? 'warning' : 'info') + ')"></div></div><span style="font-size:0.65rem;">' + prog + '%</span></td></tr>';
+    }).join('');
+  });
+}
+
+
+/* â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â• FEEDBACK INTELLIGENCE CENTER â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â• */
+/* â”€â”€â”€ Enterprise SaaS Feedback Control Center â”€â”€â”€ */
+var fbSSESource = null;
+
+function loadFeedback() {
+  var el = document.getElementById('feedbackContent');
+  el.innerHTML = '<div class="loading-state"><div class="spinner"></div></div>';
+
+  var FDB = '/api/super-admin/feedback';
+
+  // Connect SSE for real-time updates
+  connectFeedbackSSE();
+
+  function renderUI(overview) {
+    var o = overview || {};
+    var badge = document.getElementById('feedbackBadge');
+    if (badge) badge.textContent = (o.unviewed || 0) || '0';
+
+    var sevColors = {critical:'#EF4444',high:'#F59E0B',medium:'#3B82F6',low:'#6B7280'};
+    var sevHtml = o.severity_counts ? Object.entries(o.severity_counts).map(function(e) {
+      return '<div class="stat-card" style="min-width:90px;"><div class="stat-label">' + e[0].charAt(0).toUpperCase() + e[0].slice(1) + '</div><div class="stat-value" style="color:' + (sevColors[e[0]]||'var(--text)') + ';font-size:1.2rem;">' + e[1] + '</div></div>';
+    }).join('') : '';
+
+    var sentColors = {positive:'#22C55E',negative:'#EF4444',neutral:'#6B7280'};
+    var sentHtml = o.sentiment_counts ? Object.entries(o.sentiment_counts).map(function(e) {
+      return '<span style="color:' + (sentColors[e[0]]||'var(--text-muted)') + ';font-weight:600;font-size:0.85rem;">' + e[0].charAt(0).toUpperCase() + e[0].slice(1) + ': ' + e[1] + '</span>';
+    }).join(' \u00b7 ') : '';
+
+    var trendingHtml = (o.trending && o.trending.length) ? o.trending.map(function(f) {
+      return '<div class="policy-card" style="padding:0.65rem;cursor:pointer;" onclick="viewFeedbackDetail(\'' + f.id + '\')"><div style="display:flex;justify-content:space-between;align-items:center;"><strong style="font-size:0.85rem;">' + esc(f.title) + '</strong><span class="status-badge ' + (f.severity === 'critical' ? 'inactive' : f.severity === 'high' ? 'pending' : 'active') + '" style="font-size:0.55rem;">' + f.severity + '</span></div><div style="display:flex;gap:1rem;margin-top:0.2rem;font-size:0.7rem;color:var(--text-muted);"><span>' + esc(f.category.replace(/_/g,' ')) + '</span><span><i class="fas fa-arrow-up"></i> ' + f.upvotes + '</span><span>' + fmtTime(f.created_at) + '</span></div></div>';
+    }).join('') : '<div style="font-size:0.85rem;color:var(--text-muted);padding:1rem;text-align:center;">No trending issues</div>';
+
+    el.innerHTML =
+      '<div class="section-header"><h2><i class="fas fa-comments"></i> Feedback Control Center</h2>' +
+      '<div style="display:flex;gap:0.5rem;flex-wrap:wrap;">' +
+      '<span class="badge-count" style="background:rgba(239,68,68,0.15);color:#FCA5A5;">' + (o.critical||0) + ' Critical</span>' +
+      '<span class="badge-count" style="background:rgba(245,158,11,0.15);color:#FDE68A;">' + (o.high||0) + ' High</span>' +
+      '<span class="badge-count" style="background:rgba(59,130,246,0.15);color:#93C5FD;">' + (o.unviewed||0) + ' Unviewed</span>' +
+      '<span class="badge-count" style="background:rgba(34,197,94,0.15);color:#86EFAC;">' + (o.resolved||0) + ' Resolved</span>' +
+      '<span style="font-size:0.7rem;color:var(--text-muted);display:flex;align-items:center;" id="fbLiveIndicator"><i class="fas fa-circle" style="color:var(--success);font-size:0.4rem;margin-right:0.3rem;"></i> Live</span>' +
+      '</div></div>' +
+
+      '<div class="stats-grid">' +
+      '<div class="stat-card"><div class="stat-icon"><i class="fas fa-message"></i></div><div class="stat-label">Total Feedback</div><div class="stat-value">' + (o.total||0) + '</div><div class="stat-sub">' + (o.today||0) + ' today</div></div>' +
+      '<div class="stat-card"><div class="stat-icon"><i class="fas fa-clock"></i></div><div class="stat-label">Open</div><div class="stat-value" style="color:' + ((o.open||0) > (o.total||1) * 0.5 ? 'var(--warning)' : 'var(--text)') + '">' + (o.open||0) + '</div><div class="stat-sub">' + (o.hidden||0) + ' hidden \u00b7 ' + (o.flagged||0) + ' flagged</div></div>' +
+      '<div class="stat-card"><div class="stat-icon"><i class="fas fa-arrow-up"></i></div><div class="stat-label">Upvotes</div><div class="stat-value">' + (o.upvotes_total||0) + '</div><div class="stat-sub">Community engagement</div></div>' +
+      '<div class="stat-card"><div class="stat-icon"><i class="fas fa-check-circle"></i></div><div class="stat-label">Resolution</div><div class="stat-value" style="color:var(--success);">' + (o.total > 0 ? Math.round(o.resolved/o.total*100) : 0) + '%</div><div class="stat-sub">' + (o.resolved||0) + ' resolved</div></div>' +
+      '</div>' +
+
+      '<div class="two-col">' +
+      '<div><div class="section-header" style="margin-top:0.5rem;"><h2>Severity</h2></div><div class="stats-grid" style="grid-template-columns:repeat(auto-fill,minmax(80px,1fr));">' + sevHtml + '</div></div>' +
+      '<div><div class="section-header" style="margin-top:0.5rem;"><h2>Sentiment</h2></div><div style="display:flex;gap:0.5rem;flex-wrap:wrap;padding:0.75rem;background:var(--surface);border-radius:12px;">' + (sentHtml || '<span style="color:var(--text-muted);font-size:0.85rem;">No sentiment data</span>') + '</div></div>' +
+      '</div>' +
+
+      '<div class="two-col">' +
+      '<div><div class="section-header" style="margin-top:0.5rem;"><h2>Trending Issues</h2></div><div style="display:grid;gap:0.4rem;">' + trendingHtml + '</div></div>' +
+      '<div><div class="section-header" style="margin-top:0.5rem;"><h2>Top Institutions</h2></div><div class="table-wrap" style="max-height:240px;"><table><thead><tr><th>Institution</th><th>Reports</th></tr></thead><tbody>' + ((o.top_institutions && o.top_institutions.length) ? o.top_institutions.map(function(i) { return '<tr><td>' + esc(i.name||'Unknown') + '</td><td>' + i.count + '</td></tr>'; }).join('') : '<tr><td colspan="2" style="text-align:center;color:var(--text-muted);font-size:0.85rem;">No data</td></tr>') + '</tbody></table></div></div>' +
+      '</div>' +
+
+      '<div class="section-header" style="margin-top:1rem;"><h2><i class="fas fa-chart-line"></i> Trends & Analytics</h2></div>' +
+      '<div id="feedbackAnalyticsSection"><div class="loading-state"><div class="spinner"></div></div></div>' +
+
+      '<div class="section-header" style="margin-top:1rem;"><h2><i class="fas fa-users"></i> User Activity Insights</h2></div>' +
+      '<div id="feedbackActivitySection"><div class="loading-state"><div class="spinner"></div></div></div>' +
+
+      '<div class="section-header" style="margin-top:1rem;"><h2><i class="fas fa-list"></i> All Feedback</h2>' +
+      '<div style="display:flex;gap:0.5rem;flex-wrap:wrap;">' +
+      '<select id="fbFilterStatus" onchange="loadFeedbackList()"><option value="">All Status</option><option value="open">Open</option><option value="in_review">In Review</option><option value="resolved">Resolved</option><option value="archived">Archived</option><option value="hidden">Hidden</option></select>' +
+      '<select id="fbFilterCategory" onchange="loadFeedbackList()"><option value="">All Categories</option><option value="attendance_issue">Attendance</option><option value="bug_report">Bug</option><option value="feature_request">Feature</option><option value="network_failure">Network</option><option value="security_concern">Security</option><option value="sync_failure">Sync</option><option value="suggestion">Suggestion</option><option value="general">General</option></select>' +
+      '<select id="fbFilterSeverity" onchange="loadFeedbackList()"><option value="">All Severity</option><option value="critical">Critical</option><option value="high">High</option><option value="medium">Medium</option><option value="low">Low</option></select>' +
+      '<input type="text" id="fbSearch" placeholder="Search..." style="width:130px;max-width:100%;font-size:0.78rem;" oninput="var t=this;setTimeout(function(){if(t.value===t._v)loadFeedbackList();t._v=t.value;},300)">' +
+      '<label style="display:flex;align-items:center;gap:0.2rem;font-size:0.72rem;cursor:pointer;white-space:nowrap;"><input type="checkbox" id="fbUnviewedOnly" onchange="loadFeedbackList()"> Unviewed</label>' +
+      '<label style="display:flex;align-items:center;gap:0.2rem;font-size:0.72rem;cursor:pointer;white-space:nowrap;"><input type="checkbox" id="fbFlaggedOnly" onchange="loadFeedbackList()"> Flagged</label>' +
+      '<label style="display:flex;align-items:center;gap:0.2rem;font-size:0.72rem;cursor:pointer;white-space:nowrap;"><input type="checkbox" id="fbHiddenOnly" onchange="loadFeedbackList()"> Hidden</label>' +
+      '<label style="display:flex;align-items:center;gap:0.2rem;font-size:0.72rem;cursor:pointer;white-space:nowrap;"><input type="checkbox" id="fbEscalatedOnly" onchange="loadFeedbackList()"> Escalated</label>' +
+      '<select id="fbSort" onchange="loadFeedbackList()" style="font-size:0.72rem;"><option value="latest">Latest</option><option value="upvotes">Upvoted</option><option value="severity">Severity</option><option value="oldest">Oldest</option></select>' +
+      '<button class="btn-action" onclick="loadFeedbackList()" title="Apply filters"><i class="fas fa-filter"></i></button>' +
+      '<a href="/api/super-admin/feedback/export?format=csv" class="btn-action" title="Export CSV" style="text-decoration:none;"><i class="fas fa-download"></i></a>' +
+      '</div></div>' +
+      '<div class="table-wrap" style="max-height:500px;overflow-y:auto;"><table><thead><tr><th>Title</th><th>Category</th><th>Severity</th><th>Status</th><th>Inst.</th><th>Upvotes</th><th>Replies</th><th>Sentiment</th><th>Esc.</th><th>Viewed</th><th>Created</th><th>Actions</th></tr></thead><tbody id="feedbackListBody"></tbody></table></div>' +
+      '<div style="display:flex;justify-content:space-between;align-items:center;margin-top:0.5rem;"><span id="fbPaginationInfo" style="font-size:0.78rem;color:var(--text-muted);"></span><div id="fbPaginationBtns" style="display:flex;gap:0.4rem;"></div></div>';
+
+    loadFeedbackList();
+    loadFeedbackAnalytics();
+    loadFeedbackActivity();
+  }
+
+  apiFetch(FDB + '/overview', function(d) {
+    if (!d.success) { el.innerHTML = errorState(); return; }
+    renderUI(d.data);
+  });
+}
+
+function connectFeedbackSSE() {
+  if (fbSSESource) { fbSSESource.close(); }
+  fbSSESource = new EventSource('/api/feedback/events/stream');
+  fbSSESource.onmessage = function(e) {
+    try {
+      var d = JSON.parse(e.data);
+      if (d.type === 'overview' && d.data) {
+        var badge = document.getElementById('feedbackBadge');
+        if (badge) badge.textContent = (d.data.unviewed || 0) || '0';
+        var liveDot = document.querySelector('#fbLiveIndicator i');
+        if (liveDot) liveDot.style.color = 'var(--success)';
+      }
+    } catch(ex) {}
+  };
+  fbSSESource.onerror = function() {
+    var liveDot = document.querySelector('#fbLiveIndicator i');
+    if (liveDot) liveDot.style.color = 'var(--danger)';
+    setTimeout(connectFeedbackSSE, 5000);
+  };
+}
+
+function loadFeedbackAnalytics() {
+  var section = document.getElementById('feedbackAnalyticsSection');
+  if (!section) return;
+  apiFetch('/api/super-admin/feedback/analytics', function(d) {
+    if (!d.success || !d.data) { section.innerHTML = '<div class="error-state">Analytics unavailable</div>'; return; }
+    var a = d.data;
+    var dailyHtml = '';
+    if (a.daily_counts && a.daily_counts.length) {
+      var maxCount = Math.max.apply(null, a.daily_counts.map(function(dd) { return dd.count; })) || 1;
+      dailyHtml = '<div style="display:flex;align-items:flex-end;gap:4px;min-height:80px;">' +
+        a.daily_counts.slice(-14).map(function(dd) {
+          var pct = (dd.count / maxCount) * 100;
+          return '<div title="' + dd.date + ': ' + dd.count + '" style="flex:1;display:flex;flex-direction:column;align-items:center;"><div style="width:100%;background:linear-gradient(180deg,var(--primary),var(--accent));border-radius:3px 3px 0 0;height:' + pct + 'px;min-height:4px;transition:height 0.3s;" onmouseover="this.style.opacity=\'0.8\'" onmouseout="this.style.opacity=\'1\'"></div><span style="font-size:0.5rem;color:var(--text-muted);margin-top:2px;">' + dd.date.slice(-5) + '</span></div>';
+        }).join('') + '</div>';
+    } else {
+      dailyHtml = '<div style="font-size:0.85rem;color:var(--text-muted);padding:1rem;text-align:center;">No daily data yet</div>';
+    }
+
+    var catHtml = '';
+    if (a.category_distribution && a.category_distribution.length) {
+      var catMax = Math.max.apply(null, a.category_distribution.map(function(c) { return c.count; })) || 1;
+      catHtml = a.category_distribution.map(function(c) {
+        var pct = (c.count / catMax) * 100;
+        return '<div style="display:flex;align-items:center;gap:0.5rem;margin-bottom:0.3rem;"><span style="width:90px;font-size:0.72rem;color:var(--text-muted);text-align:right;">' + c.name.replace(/_/g,' ') + '</span><div style="flex:1;height:16px;background:var(--surface-card);border-radius:8px;overflow:hidden;"><div style="height:100%;width:' + pct + '%;background:linear-gradient(90deg,var(--primary),var(--accent));border-radius:8px;transition:width 0.5s;"></div></div><span style="font-size:0.72rem;color:var(--text-secondary);min-width:30px;">' + c.count + '</span></div>';
+      }).join('');
+    }
+
+    var deviceHtml = '';
+    if (a.device_breakdown && a.device_breakdown.length) {
+      deviceHtml = a.device_breakdown.map(function(dd) {
+        return '<span style="font-size:0.78rem;color:var(--text-secondary);"><i class="fas fa-' + (dd.type === 'mobile' ? 'mobile-screen' : 'desktop') + '"></i> ' + dd.type + ': ' + dd.count + '</span>';
+      }).join(' \u00b7 ');
+    }
+
+    section.innerHTML =
+      '<div class="two-col">' +
+      '<div><div class="section-header"><h3 style="font-size:0.85rem;">Daily Submissions (14 days)</h3></div>' + dailyHtml + '</div>' +
+      '<div><div class="section-header"><h3 style="font-size:0.85rem;">Category Distribution</h3></div>' + catHtml + '</div>' +
+      '</div>' +
+      '<div class="two-col" style="margin-top:0.5rem;">' +
+      '<div style="display:flex;gap:1rem;flex-wrap:wrap;padding:0.75rem;background:var(--surface);border-radius:12px;">' +
+      '<span style="font-size:0.78rem;color:var(--text-muted);"><i class="fas fa-chart-pie"></i> Network Issues: <strong style="color:var(--text);">' + (a.network_issues||0) + '</strong></span>' +
+      '<span style="font-size:0.78rem;color:var(--text-muted);"><i class="fas fa-gauge-high"></i> Resolution Rate: <strong style="color:var(--success);">' + (a.resolution_rate||0) + '%</strong></span>' +
+      '<span style="font-size:0.78rem;color:var(--text-muted);"><i class="fas fa-arrow-up"></i> Avg Upvotes: <strong style="color:var(--text);">' + (a.avg_upvotes||0) + '</strong></span>' +
+      '</div>' +
+      '<div style="padding:0.75rem;background:var(--surface);border-radius:12px;display:flex;flex-wrap:wrap;gap:0.5rem;">' +
+      (deviceHtml || '<span style="font-size:0.78rem;color:var(--text-muted);">No device data</span>') +
+      '</div>' +
+      '</div>';
+  });
+}
+
+function loadFeedbackActivity() {
+  var section = document.getElementById('feedbackActivitySection');
+  if (!section) return;
+  apiFetch('/api/super-admin/feedback/activity', function(dAct) {
+    apiFetch('/api/super-admin/feedback/response-times', function(dResp) {
+      var actHtml = '', respHtml = '';
+      if (dAct.success && dAct.data) {
+        var a = dAct.data;
+        actHtml = '<div class="two-col"><div style="display:flex;gap:1rem;flex-wrap:wrap;padding:0.75rem;background:var(--surface);border-radius:12px;">' +
+          '<span style="font-size:0.78rem;color:var(--text-muted);">Unique Contributors: <strong style="color:var(--text);">' + (a.total_unique_contributors||0) + '</strong></span>' +
+          '<span style="font-size:0.78rem;color:var(--text-muted);">Repeat Contributors: <strong style="color:var(--text);">' + (a.repeat_contributors||0) + '</strong></span>' +
+          '<span style="font-size:0.78rem;color:var(--text-muted);">Avg Upvotes/User: <strong style="color:var(--text);">' + (a.avg_upvotes_per_user||0) + '</strong></span>' +
+          '</div><div></div></div>';
+        if (a.top_contributors && a.top_contributors.length) {
+          actHtml += '<div style="margin-top:0.5rem;"><table><thead><tr><th>User ID</th><th>Role</th><th>Submissions</th><th>Total Upvotes</th></tr></thead><tbody>' +
+            a.top_contributors.map(function(u) {
+              return '<tr><td style="font-size:0.7rem;">' + esc(u.user_id.slice(0,12)) + '...</td><td style="font-size:0.72rem;">' + esc(u.role) + '</td><td>' + u.submissions + '</td><td>' + u.total_upvotes + '</td></tr>';
+            }).join('') + '</tbody></table></div>';
+        }
+      }
+      if (dResp.success && dResp.data) {
+        var r = dResp.data;
+        respHtml = '<div style="display:flex;gap:1rem;flex-wrap:wrap;padding:0.75rem;background:var(--surface);border-radius:12px;margin-top:0.5rem;">' +
+          '<span style="font-size:0.78rem;color:var(--text-muted);"><i class="fas fa-clock"></i> Avg Resolution: <strong style="color:var(--text);">' + (r.avg_resolution_hours||0) + 'h</strong></span>' +
+          '<span style="font-size:0.78rem;color:var(--text-muted);"><i class="fas fa-arrow-up"></i> Max: <strong style="color:var(--warning);">' + (r.max_resolution_hours||0) + 'h</strong></span>' +
+          '<span style="font-size:0.78rem;color:var(--text-muted);"><i class="fas fa-arrow-down"></i> Min: <strong style="color:var(--success);">' + (r.min_resolution_hours||0) + 'h</strong></span>' +
+          '<span style="font-size:0.78rem;color:var(--text-muted);"><i class="fas fa-check-circle"></i> Resolved (7d): <strong style="color:var(--accent);">' + (r.recently_resolved_7d||0) + '</strong></span>' +
+          '</div>';
+      }
+      section.innerHTML = actHtml + respHtml;
+    });
+  });
+}
+
+var fbCurrentPage = 1;
+
+function loadFeedbackList() {
+  var tb = document.getElementById('feedbackListBody');
+  if (!tb) return;
+  tb.innerHTML = '<tr><td colspan="12" class="loading-state"><div class="spinner"></div></td></tr>';
+  var params = 'page=' + fbCurrentPage + '&per_page=30';
+  var s = document.getElementById('fbSearch');
+  if (s && s.value.trim()) params += '&search=' + encodeURIComponent(s.value.trim());
+  var st = document.getElementById('fbFilterStatus');
+  if (st && st.value) params += '&status=' + st.value;
+  var ct = document.getElementById('fbFilterCategory');
+  if (ct && ct.value) params += '&category=' + ct.value;
+  var sv = document.getElementById('fbFilterSeverity');
+  if (sv && sv.value) params += '&severity=' + sv.value;
+  var sort = document.getElementById('fbSort');
+  if (sort && sort.value) params += '&sort=' + sort.value;
+  var uv = document.getElementById('fbUnviewedOnly');
+  if (uv && uv.checked) params += '&unviewed_only=true';
+  var fl = document.getElementById('fbFlaggedOnly');
+  if (fl && fl.checked) params += '&flagged_only=true';
+  var hl = document.getElementById('fbHiddenOnly');
+  if (hl && hl.checked) params += '&hidden_only=true';
+  var el = document.getElementById('fbEscalatedOnly');
+  if (el && el.checked) params += '&escalated_only=true';
+
+  apiFetch('/api/super-admin/feedback/list?' + params, function(d) {
+    if (!d.success) { tb.innerHTML = '<tr><td colspan="12" class="error-state">Failed</td></tr>'; return; }
+    var items = d.data || [];
+    if (!items.length) {
+      tb.innerHTML = '<tr><td colspan="12" style="text-align:center;padding:2rem;color:var(--text-muted);font-size:0.9rem;"><i class="fas fa-comments" style="font-size:1.5rem;margin-bottom:0.5rem;display:block;"></i>No feedback matching filters</td></tr>';
+      var pi = document.getElementById('fbPaginationInfo');
+      if (pi) pi.textContent = '';
+      var pb = document.getElementById('fbPaginationBtns');
+      if (pb) pb.innerHTML = '';
+      return;
+    }
+    var pi = document.getElementById('fbPaginationInfo');
+    if (pi) pi.textContent = 'Page ' + d.page + ' of ' + d.total_pages + ' (' + d.total + ' total)';
+    var pb = document.getElementById('fbPaginationBtns');
+    if (pb) {
+      var bHtml = '';
+      if (d.page > 1) bHtml += '<button class="btn-action" onclick="fbPage(' + (d.page - 1) + ')">Prev</button>';
+      bHtml += '<span style="font-size:0.72rem;color:var(--text-muted);padding:0 0.4rem;">' + d.page + '</span>';
+      if (d.page < d.total_pages) bHtml += '<button class="btn-action" onclick="fbPage(' + (d.page + 1) + ')">Next</button>';
+      pb.innerHTML = bHtml;
+    }
+    tb.innerHTML = items.map(function(f) {
+      var sevCls = f.severity === 'critical' ? 'inactive' : f.severity === 'high' ? 'pending' : 'active';
+      var viewedIcon = f.admin_viewed ? '<i class="fas fa-eye" style="color:var(--success);font-size:0.7rem;" title="Viewed ' + (f.admin_viewed_at ? fmtTime(f.admin_viewed_at) : '') + '"></i>' : '<i class="fas fa-eye-slash" style="color:var(--text-muted);font-size:0.7rem;" title="Unviewed"></i>';
+      var hideIcon = f.is_hidden ? '<i class="fas fa-eye-slash" style="color:var(--warning);font-size:0.7rem;"></i>' : '';
+      var flagIcon = f.is_flagged ? '<i class="fas fa-flag" style="color:var(--danger);font-size:0.7rem;"></i>' : '';
+      var escLevel = f.escalation_level !== 'none' ? '<span class="status-badge inactive" style="font-size:0.55rem;">' + f.escalation_level + '</span>' : '\u2014';
+      return '<tr>' +
+        '<td><strong style="font-size:0.85rem;">' + esc(f.title) + '</strong></td>' +
+        '<td style="font-size:0.7rem;">' + esc(f.category.replace(/_/g,' ')) + '</td>' +
+        '<td><span class="status-badge ' + sevCls + '" style="font-size:0.55rem;">' + f.severity + '</span></td>' +
+        '<td><span class="status-badge ' + (f.status === 'resolved' ? 'active' : f.status === 'hidden' || f.status === 'archived' ? 'inactive' : 'pending') + '" style="font-size:0.55rem;">' + f.status + '</span></td>' +
+        '<td style="font-size:0.7rem;">' + esc(f.institution || '\u2014') + '</td>' +
+        '<td style="font-size:0.8rem;">' + f.upvotes + '</td>' +
+        '<td style="font-size:0.8rem;">' + f.reply_count + '</td>' +
+        '<td><span style="color:' + (f.sentiment_label === 'positive' ? 'var(--success)' : f.sentiment_label === 'negative' ? 'var(--danger)' : 'var(--text-muted)') + ';font-size:0.7rem;">' + esc(f.sentiment_label || '\u2014') + '</span></td>' +
+        '<td>' + escLevel + '</td>' +
+        '<td>' + viewedIcon + ' ' + hideIcon + ' ' + flagIcon + '</td>' +
+        '<td style="font-size:0.65rem;">' + fmtTime(f.created_at) + '</td>' +
+        '<td><button class="btn-action" onclick="viewFeedbackDetail(\'' + f.id + '\')" title="View & Manage"><i class="fas fa-eye"></i></button></td>' +
+        '</tr>';
+    }).join('');
+  });
+}
+
+function fbPage(p) {
+  fbCurrentPage = p;
+  loadFeedbackList();
+}
+
+function viewFeedbackDetail(id) {
+  var existing = document.getElementById('feedbackDetailModal');
+  if (existing) existing.remove();
+  var html = '<div id="feedbackDetailModal" style="position:fixed;inset:0;z-index:10000;background:rgba(0,0,0,0.7);display:flex;align-items:center;justify-content:center;padding:1rem;" onclick="if(event.target===this)closeFeedbackDetail()">' +
+    '<div style="background:var(--darker);border-radius:24px;max-width:720px;width:100%;max-height:90vh;overflow-y:auto;padding:1.5rem;border:1px solid var(--border);box-shadow:0 32px 80px rgba(0,0,0,0.5);" onclick="event.stopPropagation()">' +
+    '<div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:1rem;"><h3 style="margin:0;font-size:1.1rem;" id="fbDetailTitle">Loading...</h3><button class="btn-action" onclick="closeFeedbackDetail()" style="border:none;background:transparent;font-size:1.2rem;"><i class="fas fa-times"></i></button></div>' +
+    '<div id="fbDetailBody">Loading...</div></div></div>';
+  document.body.insertAdjacentHTML('beforeend', html);
+
+  apiFetch('/api/super-admin/feedback/' + id + '/detail', function(d) {
+    if (!d.success || !d.data) {
+      document.getElementById('fbDetailBody').innerHTML = '<div class="error-state">Failed to load feedback</div>';
+      return;
+    }
+    var f = d.data;
+    document.getElementById('fbDetailTitle').textContent = f.title;
+    var sevColor = f.severity === 'critical' ? 'var(--danger)' : f.severity === 'high' ? 'var(--warning)' : f.severity === 'medium' ? 'var(--primary-light)' : 'var(--text-muted)';
+    var sevRgb = f.severity === 'critical' ? '239,68,68' : f.severity === 'high' ? '245,158,11' : '59,130,246';
+
+    var repliesHtml = (f.replies && f.replies.length) ? f.replies.map(function(r) {
+      return '<div style="padding:0.65rem;background:var(--surface-card);border-radius:12px;margin-bottom:0.4rem;"><div style="display:flex;justify-content:space-between;font-size:0.7rem;color:var(--text-muted);"><span>' + esc(r.display_name) + (r.is_admin ? ' <span style="color:var(--accent);font-weight:600;">(Admin)</span>' : '') + '</span><span>' + fmtTime(r.created_at) + '</span></div><div style="margin-top:0.25rem;font-size:0.85rem;color:var(--text-secondary);">' + esc(r.body) + '</div></div>';
+    }).join('') : '<div style="font-size:0.85rem;color:var(--text-muted);padding:0.75rem;text-align:center;">No replies yet.</div>';
+
+    document.getElementById('fbDetailBody').innerHTML =
+      '<div style="display:flex;gap:0.5rem;flex-wrap:wrap;margin-bottom:0.75rem;">' +
+      '<span class="badge-count" style="font-size:0.65rem;">' + esc(f.category.replace(/_/g,' ')) + '</span>' +
+      '<span class="badge-count" style="background:rgba(' + sevRgb + ',0.15);color:' + sevColor + ';font-size:0.65rem;">' + f.severity + '</span>' +
+      '<span class="badge-count" style="background:rgba(79,70,229,0.15);color:var(--primary-light);font-size:0.65rem;">' + (f.status || 'open') + '</span>' +
+      (f.is_resolved ? '<span class="badge-count" style="background:rgba(34,197,94,0.15);color:#86EFAC;font-size:0.65rem;"><i class="fas fa-check-circle"></i> Resolved</span>' : '') +
+      (f.institution ? '<span class="badge-count" style="background:rgba(107,114,128,0.15);color:var(--text-muted);font-size:0.65rem;">' + esc(f.institution) + '</span>' : '') +
+      (f.sentiment_label ? '<span class="badge-count" style="background:' + (f.sentiment_label==='positive'?'rgba(34,197,94,0.15)':f.sentiment_label==='negative'?'rgba(239,68,68,0.15)':'rgba(107,114,128,0.15)') + ';color:' + (f.sentiment_label==='positive'?'#86EFAC':f.sentiment_label==='negative'?'#FCA5A5':'var(--text-muted)') + ';font-size:0.65rem;">' + f.sentiment_label + '</span>' : '') +
+      '</div>' +
+      '<div style="margin-bottom:0.75rem;line-height:1.7;font-size:0.9rem;color:var(--text-secondary);padding:0.75rem;background:var(--surface-card);border-radius:12px;">' + esc(f.description) + '</div>' +
+      '<div style="display:flex;gap:1rem;font-size:0.75rem;color:var(--text-muted);margin-bottom:0.75rem;flex-wrap:wrap;">' +
+      '<span><i class="fas fa-user-secret"></i> ' + esc(f.display_name || 'Anonymous') + '</span>' +
+      '<span><i class="fas fa-arrow-up"></i> ' + f.upvotes + '</span>' +
+      '<span><i class="fas fa-reply"></i> ' + (f.reply_count||0) + '</span>' +
+      '<span><i class="fas fa-clock"></i> ' + fmtTime(f.created_at) + '</span>' +
+      (f.experience_rating ? '<span><i class="fas fa-star"></i> Rating: ' + f.experience_rating + '/5</span>' : '') +
+      '</div>' +
+
+      '<div class="section-header" style="margin-top:0.75rem;"><h3 style="font-size:0.85rem;">Status Workflow</h3></div>' +
+      '<div style="display:flex;gap:0.4rem;flex-wrap:wrap;margin-bottom:0.75rem;">' +
+      '<button class="btn-action" onclick="updateFeedbackStatus(\'' + id + '\',\'open\')" style="background:rgba(79,70,229,0.15);color:var(--primary-light);font-size:0.7rem;"><i class="fas fa-folder-open"></i> Open</button>' +
+      '<button class="btn-action" onclick="updateFeedbackStatus(\'' + id + '\',\'in_review\')" style="background:rgba(245,158,11,0.15);color:#FDE68A;font-size:0.7rem;"><i class="fas fa-search"></i> In Review</button>' +
+      '<button class="btn-action" onclick="updateFeedbackStatus(\'' + id + '\',\'resolved\')" style="background:rgba(34,197,94,0.15);color:#86EFAC;font-size:0.7rem;"><i class="fas fa-check"></i> Resolved</button>' +
+      '<button class="btn-action" onclick="updateFeedbackStatus(\'' + id + '\',\'archived\')" style="background:rgba(107,114,128,0.15);color:var(--text-muted);font-size:0.7rem;"><i class="fas fa-archive"></i> Archive</button>' +
+      '</div>' +
+
+      '<div class="section-header" style="margin-top:0.75rem;"><h3 style="font-size:0.85rem;">Replies</h3></div><div style="display:grid;gap:0.4rem;margin-bottom:0.75rem;">' + repliesHtml + '</div>' +
+      '<div style="display:flex;gap:0.5rem;margin-bottom:0.75rem;">' +
+      '<input type="text" id="fbAdminReply" placeholder="Write a public reply..." style="flex:1;padding:0.5rem 0.75rem;border-radius:12px;background:var(--surface-card);border:1px solid var(--border);color:var(--text);font-size:0.82rem;">' +
+      '<button class="btn-action" onclick="submitAdminReply(\'' + id + '\')"><i class="fas fa-paper-plane"></i></button>' +
+      '</div>' +
+
+      '<div class="section-header" style="margin-top:0.75rem;"><h3 style="font-size:0.85rem;">Private Admin Notes</h3></div>' +
+      '<div style="display:flex;gap:0.5rem;margin-bottom:0.75rem;">' +
+      '<input type="text" id="fbAdminNote" placeholder="Add private note (invisible to users)..." style="flex:1;padding:0.5rem 0.75rem;border-radius:12px;background:var(--surface-card);border:1px solid var(--border);color:var(--text);font-size:0.82rem;">' +
+      '<button class="btn-action" onclick="submitAdminNote(\'' + id + '\')"><i class="fas fa-sticky-note"></i></button>' +
+      '</div>' +
+
+      '<div class="section-header" style="margin-top:0.75rem;"><h3 style="font-size:0.85rem;">Moderation Actions</h3></div>' +
+      '<div style="display:flex;gap:0.4rem;flex-wrap:wrap;">' +
+      '<button class="btn-action" onclick="moderateFeedback(\'' + id + '\',\'hide\')" style="background:rgba(239,68,68,0.15);color:#FCA5A5;font-size:0.7rem;"><i class="fas fa-eye-slash"></i> Hide</button>' +
+      '<button class="btn-action" onclick="moderateFeedback(\'' + id + '\',\'unhide\')" style="background:rgba(34,197,94,0.15);color:#86EFAC;font-size:0.7rem;"><i class="fas fa-eye"></i> Unhide</button>' +
+      '<button class="btn-action" onclick="moderateFeedback(\'' + id + '\',\'flag\')" style="background:rgba(245,158,11,0.15);color:#FDE68A;font-size:0.7rem;"><i class="fas fa-flag"></i> Flag</button>' +
+      '<button class="btn-action" onclick="moderateFeedback(\'' + id + '\',\'resolve\')" style="background:rgba(34,197,94,0.15);color:#86EFAC;font-size:0.7rem;"><i class="fas fa-check"></i> Resolve</button>' +
+      '<button class="btn-action" onclick="moderateFeedback(\'' + id + '\',\'archive\')" style="background:rgba(107,114,128,0.15);color:var(--text-muted);font-size:0.7rem;"><i class="fas fa-archive"></i> Archive</button>' +
+      '</div>';
+  });
+}
+
+function closeFeedbackDetail() {
+  var el = document.getElementById('feedbackDetailModal');
+  if (el) { el.remove(); loadFeedback(); }
+}
+
+function updateFeedbackStatus(id, status) {
+  fetch('/api/super-admin/feedback/' + id + '/moderate', {
+    method: 'POST',
+    headers: {'Content-Type': 'application/json'},
+    body: JSON.stringify({action: status === 'resolved' ? 'resolve' : status === 'archived' ? 'archive' : status, reason: 'Status update via workflow'})
+  }).then(function(r) { return r.json(); }).then(function(d) {
+    if (d.success) { viewFeedbackDetail(id); loadFeedbackList(); }
+    else { alert('Failed: ' + (d.error || 'Unknown')); }
+  });
+}
+
+function submitAdminReply(id) {
+  var input = document.getElementById('fbAdminReply');
+  if (!input || !input.value.trim()) return;
+  fetch('/api/super-admin/feedback/' + id + '/reply-admin', {
+    method: 'POST',
+    headers: {'Content-Type': 'application/json'},
+    body: JSON.stringify({body: input.value.trim()})
+  }).then(function(r) { return r.json(); }).then(function(d) {
+    if (d.success) { input.value = ''; viewFeedbackDetail(id); loadFeedbackList(); }
+    else { alert('Failed: ' + (d.error || 'Unknown')); }
+  });
+}
+
+function submitAdminNote(id) {
+  var input = document.getElementById('fbAdminNote');
+  if (!input || !input.value.trim()) return;
+  fetch('/api/super-admin/feedback/' + id + '/note', {
+    method: 'POST',
+    headers: {'Content-Type': 'application/json'},
+    body: JSON.stringify({note: input.value.trim()})
+  }).then(function(r) { return r.json(); }).then(function(d) {
+    if (d.success) { input.value = ''; alert('Private note saved.'); }
+    else { alert('Failed: ' + (d.error || 'Unknown')); }
+  });
+}
+
+function moderateFeedback(id, action) {
+  var reason = action === 'flag' ? prompt('Flag reason:') : '';
+  if (action === 'flag' && !reason) return;
+  fetch('/api/super-admin/feedback/' + id + '/moderate', {
+    method: 'POST',
+    headers: {'Content-Type': 'application/json'},
+    body: JSON.stringify({action: action, reason: reason || 'Moderated by admin'})
+  }).then(function(r) { return r.json(); }).then(function(d) {
+    if (d.success) { viewFeedbackDetail(id); loadFeedbackList(); }
+    else { alert('Failed: ' + (d.error || 'Unknown')); }
+  });
+}
+
+
+/* â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â• AUTO-REFRESH â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â• */
+setInterval(function() {
+  if (document.visibilityState !== 'hidden') loadTab(currentTab);
+}, REFRESH_MS);
+
+
+/* â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â• INIT â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â• */
+loadOverview();
+</script>
+</body>
+</html>

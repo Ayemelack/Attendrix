@@ -1,0 +1,414 @@
+from typing import Dict, Any, Optional, List
+from datetime import datetime
+import io
+import logging
+import os
+import xml.etree.ElementTree as ET
+
+logger = logging.getLogger(__name__)
+
+
+class ReportService:
+    """Professional report generation service using ReportLab."""
+
+    def __init__(self, firebase_service):
+        self.fb = firebase_service
+
+    def generate_attendance_report(self, institution_id: str,
+                                   report_type: str = 'summary') -> Optional[bytes]:
+        try:
+            from reportlab.lib import colors
+            from reportlab.lib.pagesizes import A4
+            from reportlab.lib.styles import getSampleStyleSheet, ParagraphStyle
+            from reportlab.lib.units import mm, cm
+            from reportlab.lib.enums import TA_CENTER, TA_RIGHT, TA_LEFT
+            from reportlab.platypus import (
+                SimpleDocTemplate, Paragraph, Spacer, Table, TableStyle,
+                PageBreak, Image, HRFlowable
+            )
+            from reportlab.graphics.shapes import Drawing
+            from reportlab.graphics.charts.lineplots import LinePlot
+
+            institution = self._get_institution_info(institution_id)
+            inst_name = institution.get('name', 'Institution')
+            stats = self._compute_report_stats(institution_id)
+
+            buf = io.BytesIO()
+            doc = SimpleDocTemplate(
+                buf, pagesize=A4,
+                leftMargin=20*mm, rightMargin=20*mm,
+                topMargin=15*mm, bottomMargin=15*mm,
+            )
+
+            styles = getSampleStyleSheet()
+            title_style = ParagraphStyle(
+                'CustomTitle', parent=styles['Title'],
+                fontSize=20, leading=24, spaceAfter=4*mm,
+                textColor=colors.HexColor('#1E293B'),
+                fontName='Helvetica-Bold',
+            )
+            subtitle_style = ParagraphStyle(
+                'CustomSubtitle', parent=styles['Normal'],
+                fontSize=9, leading=12, spaceAfter=2*mm,
+                textColor=colors.HexColor('#64748B'),
+            )
+            heading_style = ParagraphStyle(
+                'CustomHeading2', parent=styles['Heading2'],
+                fontSize=13, leading=16, spaceBefore=6*mm, spaceAfter=3*mm,
+                textColor=colors.HexColor('#334155'),
+                fontName='Helvetica-Bold',
+            )
+            normal_style = ParagraphStyle(
+                'CustomNormal', parent=styles['Normal'],
+                fontSize=8.5, leading=12, spaceAfter=1*mm,
+                textColor=colors.HexColor('#475569'),
+            )
+            small_style = ParagraphStyle(
+                'SmallText', parent=styles['Normal'],
+                fontSize=7, leading=9, textColor=colors.HexColor('#94A3B8'),
+            )
+
+            elements = []
+
+            elements.append(Paragraph(
+                f'Attendrix &mdash; Attendance Report', title_style))
+            elements.append(Paragraph(
+                f'{inst_name} &nbsp;|&nbsp; {datetime.utcnow().strftime("%d %B %Y")} &nbsp;|&nbsp; {report_type.title()} Report',
+                subtitle_style
+            ))
+            elements.append(HRFlowable(
+                width='100%', thickness=1,
+                color=colors.HexColor('#E2E8F0'),
+                spaceAfter=4*mm, spaceBefore=1*mm
+            ))
+
+            elements.append(Paragraph('Executive Summary', heading_style))
+            summary_data = [
+                ['Metric', 'Value'],
+                ['Total Students', str(stats['total_students'])],
+                ['Total Sessions', str(stats['total_sessions'])],
+                ['Attendance Records', str(stats['total_records'])],
+                ['Overall Attendance Rate', f'{stats["attendance_rate"]}%'],
+                ['Active Sessions', str(stats['active_sessions'])],
+                ['Fraud Attempts Blocked', str(stats['fraud_attempts'])],
+            ]
+            summary_table = Table(summary_data, colWidths=[120*mm, 60*mm])
+            summary_table.setStyle(TableStyle([
+                ('BACKGROUND', (0, 0), (-1, 0), colors.HexColor('#4F46E5')),
+                ('TEXTCOLOR', (0, 0), (-1, 0), colors.white),
+                ('FONTNAME', (0, 0), (-1, 0), 'Helvetica-Bold'),
+                ('FONTSIZE', (0, 0), (-1, -1), 9),
+                ('ALIGN', (1, 0), (-1, -1), 'CENTER'),
+                ('VALIGN', (0, 0), (-1, -1), 'MIDDLE'),
+                ('GRID', (0, 0), (-1, -1), 0.5, colors.HexColor('#CBD5E1')),
+                ('ROWBACKGROUNDS', (0, 1), (-1, -1), [colors.HexColor('#F8FAFC'), colors.white]),
+                ('TOPPADDING', (0, 0), (-1, -1), 5),
+                ('BOTTOMPADDING', (0, 0), (-1, -1), 5),
+            ]))
+            elements.append(summary_table)
+            elements.append(Spacer(1, 4*mm))
+
+            elements.append(Paragraph('Session Breakdown', heading_style))
+            sessions = stats['sessions']
+            if sessions:
+                session_header = ['Course', 'Lecturer', 'Students', 'Present',
+                                  'Rate', 'Status']
+                session_rows = [session_header]
+                for s in sessions:
+                    session_rows.append([
+                        s.get('course_name', '—'),
+                        s.get('lecturer_name', '—'),
+                        str(s.get('total_students', 0)),
+                        str(s.get('present', 0)),
+                        f'{s.get("attendance_rate", 0)}%',
+                        s.get('status', '—').title(),
+                    ])
+                session_table = Table(
+                    session_rows,
+                    colWidths=[45*mm, 40*mm, 20*mm, 20*mm, 20*mm, 25*mm]
+                )
+                session_table.setStyle(TableStyle([
+                    ('BACKGROUND', (0, 0), (-1, 0), colors.HexColor('#1E293B')),
+                    ('TEXTCOLOR', (0, 0), (-1, 0), colors.white),
+                    ('FONTNAME', (0, 0), (-1, 0), 'Helvetica-Bold'),
+                    ('FONTSIZE', (0, 0), (-1, -1), 7.5),
+                    ('ALIGN', (2, 0), (-1, -1), 'CENTER'),
+                    ('VALIGN', (0, 0), (-1, -1), 'MIDDLE'),
+                    ('GRID', (0, 0), (-1, -1), 0.5, colors.HexColor('#CBD5E1')),
+                    ('ROWBACKGROUNDS', (0, 1), (-1, -1),
+                     [colors.HexColor('#F8FAFC'), colors.white]),
+                    ('TOPPADDING', (0, 0), (-1, -1), 4),
+                    ('BOTTOMPADDING', (0, 0), (-1, -1), 4),
+                ]))
+                elements.append(session_table)
+            else:
+                elements.append(Paragraph(
+                    'No session data available.', normal_style))
+
+            elements.append(Spacer(1, 6*mm))
+            elements.append(HRFlowable(
+                width='100%', thickness=0.5,
+                color=colors.HexColor('#E2E8F0'),
+                spaceAfter=2*mm, spaceBefore=2*mm
+            ))
+            elements.append(Paragraph(
+                f'Generated by Attendrix on {datetime.utcnow().strftime("%Y-%m-%d %H:%M UTC")}',
+                small_style
+            ))
+            elements.append(Paragraph(
+                'MINESEC-compliant attendance report for Cameroonian educational institutions.',
+                small_style
+            ))
+
+            doc.build(elements)
+            pdf_bytes = buf.getvalue()
+            buf.close()
+            return pdf_bytes
+
+        except ImportError as e:
+            logger.error(f"ReportLab not installed: {e}")
+            return None
+        except Exception as e:
+            logger.error(f"PDF generation failed: {str(e)}")
+            return None
+
+    def _get_institution_info(self, institution_id: str) -> Dict[str, Any]:
+        inst = self.fb.get_document('institutions', institution_id)
+        if inst:
+            return inst
+        return {'name': institution_id.replace('_', ' ').title()}
+
+    def _compute_report_stats(self, institution_id: str) -> Dict[str, Any]:
+        students = self.fb.query_documents(
+            'users',
+            filters=[{'field': 'institution_id', 'value': institution_id},
+                     {'field': 'role', 'value': 'student'}]
+        )
+        sessions = self.fb.query_documents(
+            'attendance_sessions',
+            filters=[{'field': 'institution_id', 'value': institution_id}],
+        )
+        records = self.fb.query_documents(
+            'attendance_records',
+            filters=[{'field': 'institution_id', 'value': institution_id}]
+        )
+        session_ids = set(s['id'] for s in sessions)
+        relevant_records = [r for r in records
+                            if r.get('attendance_session_id') in session_ids]
+
+        total_records = len(relevant_records)
+        present = sum(1 for r in relevant_records if r.get('status') == 'present')
+        attendance_rate = round(present / total_records * 100, 1) if total_records > 0 else 0
+
+        security_logs = self.fb.query_documents(
+            'security_logs',
+            filters=[{'field': 'institution_id', 'value': institution_id}]
+        )
+        fraud_attempts = sum(1 for s in security_logs if s.get('event_type') in (
+            'proxy_attempt', 'duplicate_qr', 'geo_anomaly', 'rapid_replay',
+        ))
+
+        session_details = []
+        for s in sessions:
+            s_records = [r for r in relevant_records
+                         if r.get('attendance_session_id') == s.get('id')]
+            s_total = len(s_records)
+            s_present = sum(1 for r in s_records if r.get('status') == 'present')
+            session_details.append({
+                'course_name': s.get('course_name', s.get('course_id', '—')),
+                'lecturer_name': s.get('lecturer_name', '—'),
+                'total_students': s.get('total_students', s_total),
+                'present': s_present,
+                'attendance_rate': round(s_present / s_total * 100, 1) if s_total > 0 else 0,
+                'status': s.get('status', 'completed'),
+            })
+
+        return {
+            'total_students': len(students),
+            'total_sessions': len(sessions),
+            'total_records': total_records,
+            'attendance_rate': attendance_rate,
+            'active_sessions': sum(1 for s in sessions if s.get('is_active')),
+            'fraud_attempts': fraud_attempts,
+            'sessions': session_details,
+        }
+
+    def generate_network_report(self, institution_id: str) -> Optional[bytes]:
+        try:
+            nodes = self.fb.query_documents(
+                'network_nodes',
+                filters=[{'field': 'institution_id', 'value': institution_id}]
+            )
+            broker = self.fb.query_documents(
+                'broker_status',
+                filters=[{'field': 'institution_id', 'value': institution_id}],
+                limit=1
+            )
+            broker = broker[0] if broker else {}
+            lines = ['Network Status Report', f'Generated: {datetime.utcnow().isoformat()}', '']
+            lines.append('Node Name,Type,Status,Latency (ms),Packet Loss (%),Last Seen')
+            for n in nodes:
+                lines.append(f'{n.get("name","")},{n.get("type","")},{n.get("status","")},{n.get("latency_ms",0)},{n.get("packet_loss",0)},{n.get("last_seen","")}')
+            lines.append('')
+            lines.append(f'Broker Stats: msgs/sec={broker.get("messages_per_sec",0)}, connected_nodes={broker.get("connected_nodes",0)}, dropped={broker.get("dropped_messages",0)}, bandwidth={broker.get("bandwidth_mbps",0)}Mbps')
+            return '\n'.join(lines).encode('utf-8')
+        except Exception as e:
+            logger.error(f"Network report generation failed: {e}")
+            return None
+
+    def generate_security_log(self, institution_id: str) -> Optional[bytes]:
+        try:
+            logs = self.fb.query_documents(
+                'security_logs',
+                filters=[{'field': 'institution_id', 'value': institution_id}],
+                order_by='-created_at'
+            )
+            lines = ['Security Log Report', f'Generated: {datetime.utcnow().isoformat()}', '']
+            lines.append('Event Type,Severity,Description,User ID,IP Address,Created At')
+            for l in logs:
+                lines.append(f'{l.get("event_type","")},{l.get("severity","")},{l.get("description","")},{l.get("user_id","")},{l.get("ip_address","")},{l.get("created_at","")}')
+            return '\n'.join(lines).encode('utf-8')
+        except Exception as e:
+            logger.error(f"Security log generation failed: {e}")
+            return None
+
+    def generate_minesec_xml(self, institution_id: str) -> Optional[bytes]:
+        try:
+            institution = self._get_institution_info(institution_id)
+            inst_name = institution.get('name', institution_id)
+            inst_code = institution.get('code', institution_id)
+            stats = self._compute_report_stats(institution_id)
+
+            root = ET.Element('MINESEC_Attendance_Report')
+            root.set('xmlns', 'https://minesec.gov.cm/schemas/attendance')
+            root.set('version', '1.0')
+
+            header = ET.SubElement(root, 'ReportHeader')
+            ET.SubElement(header, 'InstitutionName').text = inst_name
+            ET.SubElement(header, 'InstitutionCode').text = inst_code
+            ET.SubElement(header, 'AcademicYear').text = datetime.utcnow().strftime('%Y-%Y')
+            ET.SubElement(header, 'ReportType').text = 'ATTENDANCE_SUMMARY'
+            ET.SubElement(header, 'GeneratedAt').text = datetime.utcnow().isoformat()
+            ET.SubElement(header, 'GeneratedBy').text = 'Attendrix v2.0'
+
+            summary = ET.SubElement(root, 'ExecutiveSummary')
+            ET.SubElement(summary, 'TotalStudents').text = str(stats['total_students'])
+            ET.SubElement(summary, 'TotalSessions').text = str(stats['total_sessions'])
+            ET.SubElement(summary, 'TotalAttendanceRecords').text = str(stats['total_records'])
+            ET.SubElement(summary, 'OverallAttendanceRate').text = f'{stats["attendance_rate"]}%'
+            ET.SubElement(summary, 'ActiveSessions').text = str(stats['active_sessions'])
+            ET.SubElement(summary, 'FraudAttemptsBlocked').text = str(stats['fraud_attempts'])
+
+            sessions_elem = ET.SubElement(root, 'Sessions')
+            for s in stats['sessions']:
+                se = ET.SubElement(sessions_elem, 'Session')
+                ET.SubElement(se, 'Course').text = str(s.get('course_name', ''))
+                ET.SubElement(se, 'Lecturer').text = str(s.get('lecturer_name', ''))
+                total_s = int(s.get('total_students', 0) or 0)
+                present_s = int(s.get('present', 0) or 0)
+                ET.SubElement(se, 'TotalStudents').text = str(total_s)
+                ET.SubElement(se, 'Present').text = str(present_s)
+                ET.SubElement(se, 'Absent').text = str(max(0, total_s - present_s))
+                ET.SubElement(se, 'AttendanceRate').text = str(s.get('attendance_rate', 0)) + '%'
+                ET.SubElement(se, 'Status').text = str(s.get('status', 'completed'))
+
+            footer = ET.SubElement(root, 'ReportFooter')
+            ET.SubElement(footer, 'Certification').text = 'This report is MINESEC-compliant and generated electronically.'
+            ET.SubElement(footer, 'MINESECVersion').text = '2026.1'
+
+            xml_str = ET.tostring(root, encoding='unicode', xml_declaration=True)
+            return xml_str.encode('utf-8')
+
+        except Exception as e:
+            logger.error(f"MINESEC XML generation failed: {str(e)}")
+            return None
+
+    def generate_attendance_xls(self, institution_id: str) -> Optional[bytes]:
+        try:
+            import openpyxl
+            from openpyxl.styles import Font, PatternFill, Alignment, Border, Side
+            institution = self._get_institution_info(institution_id)
+            inst_name = institution.get('name', 'Institution')
+            stats = self._compute_report_stats(institution_id)
+
+            wb = openpyxl.Workbook()
+            ws = wb.active
+            ws.title = 'Attendance Report'
+
+            header_font = Font(name='Calibri', bold=True, color='FFFFFF', size=12)
+            header_fill = PatternFill(start_color='4F46E5', end_color='4F46E5', fill_type='solid')
+            cell_font = Font(name='Calibri', size=10)
+            label_fill = PatternFill(start_color='F1F5F9', end_color='F1F5F9', fill_type='solid')
+
+            ws.merge_cells('A1:F1')
+            ws['A1'] = f'Attendrix Attendance Report — {inst_name}'
+            ws['A1'].font = Font(name='Calibri', bold=True, size=14)
+            ws['A2'] = f'Generated: {datetime.utcnow().strftime("%Y-%m-%d %H:%M UTC")}'
+            ws['A2'].font = Font(name='Calibri', italic=True, size=9, color='666666')
+
+            summary_headers = ['Metric', 'Value']
+            summary_data = [
+                ['Total Students', str(stats['total_students'])],
+                ['Total Sessions', str(stats['total_sessions'])],
+                ['Attendance Records', str(stats['total_records'])],
+                ['Overall Attendance Rate', f'{stats["attendance_rate"]}%'],
+                ['Active Sessions', str(stats['active_sessions'])],
+                ['Fraud Attempts Blocked', str(stats['fraud_attempts'])],
+            ]
+            row = 4
+            for i, h in enumerate(summary_headers, 1):
+                c = ws.cell(row=row, column=i, value=h)
+                c.font = header_font; c.fill = header_fill; c.alignment = Alignment(horizontal='center')
+            for r_data in summary_data:
+                row += 1
+                for i, v in enumerate(r_data, 1):
+                    c = ws.cell(row=row, column=i, value=v)
+                    c.font = cell_font
+                    if i == 1:
+                        c.fill = label_fill
+
+            row += 2
+            ws.merge_cells(f'A{row}:F{row}')
+            ws.cell(row=row, column=1, value='Session Breakdown').font = Font(bold=True, size=12)
+            row += 1
+            session_headers = ['Course', 'Lecturer', 'Students', 'Present', 'Rate', 'Status']
+            for i, h in enumerate(session_headers, 1):
+                c = ws.cell(row=row, column=i, value=h)
+                c.font = header_font; c.fill = header_fill; c.alignment = Alignment(horizontal='center')
+            for s in stats['sessions']:
+                row += 1
+                vals = [
+                    s.get('course_name', '—'),
+                    s.get('lecturer_name', '—'),
+                    s.get('total_students', 0),
+                    s.get('present', 0),
+                    f'{s.get("attendance_rate", 0)}%',
+                    s.get('status', '—').title(),
+                ]
+                for i, v in enumerate(vals, 1):
+                    c = ws.cell(row=row, column=i, value=v)
+                    c.font = cell_font
+                    if row % 2 == 0:
+                        c.fill = PatternFill(start_color='F8FAFC', end_color='F8FAFC', fill_type='solid')
+
+            thin_border = Border(
+                left=Side(style='thin'), right=Side(style='thin'),
+                top=Side(style='thin'), bottom=Side(style='thin'))
+            for r in ws.iter_rows(min_row=4, max_row=row, min_col=1, max_col=6):
+                for c in r:
+                    c.border = thin_border
+
+            for col in ['A', 'B', 'C', 'D', 'E', 'F']:
+                ws.column_dimensions[col].width = 22
+
+            buf = io.BytesIO()
+            wb.save(buf)
+            buf.seek(0)
+            return buf.getvalue()
+
+        except ImportError as e:
+            logger.error(f"openpyxl not installed: {e}")
+            return None
+        except Exception as e:
+            logger.error(f"XLS generation failed: {str(e)}")
+            return None

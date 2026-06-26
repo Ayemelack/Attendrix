@@ -1,0 +1,616 @@
+rules_version = '2';
+service cloud.firestore {
+  match /databases/{database}/documents {
+
+    // =====================================================================
+    // HELPER FUNCTIONS
+    // =====================================================================
+
+    function isAuthenticated() {
+      return request.auth != null;
+    }
+
+    function isSuperAdmin() {
+      return isAuthenticated()
+        && request.auth.token.role == 'super_admin';
+    }
+
+    function hasRole(role) {
+      return isAuthenticated()
+        && request.auth.token.role == role;
+    }
+
+    function sameInstitutionAsToken() {
+      return request.auth.token.institution_id != null;
+    }
+
+    function docInstitutionMatches() {
+      return resource.data.institution_id == request.auth.token.institution_id;
+    }
+
+    function reqInstitutionMatches() {
+      return request.resource.data.institution_id == request.auth.token.institution_id;
+    }
+
+    function belongsToInstitution() {
+      return docInstitutionMatches() || reqInstitutionMatches();
+    }
+
+    function isOwnDocument() {
+      return request.auth.uid == resource.data.user_id
+        || request.auth.uid == resource.data.uid
+        || request.auth.uid == resource.data.student_id
+        || request.auth.uid == resource.data.id;
+    }
+
+    function isOwnRequest() {
+      return request.auth.uid == request.resource.data.user_id
+        || request.auth.uid == request.resource.data.uid
+        || request.auth.uid == request.resource.data.student_id;
+    }
+
+    function sameInstitutionRead() {
+      return isAuthenticated()
+        && sameInstitutionAsToken()
+        && docInstitutionMatches();
+    }
+
+    function sameInstitutionWrite() {
+      return isAuthenticated()
+        && sameInstitutionAsToken()
+        && reqInstitutionMatches();
+    }
+
+    function institutionAdmin() {
+      return hasRole('institutional_admin');
+    }
+
+    function lecturer() {
+      return hasRole('lecturer');
+    }
+
+    function student() {
+      return hasRole('student');
+    }
+
+    // =====================================================================
+    // INSTITUTIONS (global, no institution_id on document)
+    // =====================================================================
+
+    match /institutions/{institutionId} {
+      allow read: if isAuthenticated()
+        && (request.auth.token.institution_id == institutionId
+          || isSuperAdmin());
+      allow create: if isSuperAdmin();
+      allow update: if isSuperAdmin()
+        || (institutionAdmin() && request.auth.token.institution_id == institutionId);
+      allow delete: if isSuperAdmin();
+    }
+
+    // =====================================================================
+    // USERS
+    // =====================================================================
+
+    match /users/{userId} {
+      allow read: if isAuthenticated()
+        && (request.auth.uid == userId                          // own profile
+          || (institutionAdmin() && sameInstitutionAsToken() && docInstitutionMatches())  // inst admin
+          || isSuperAdmin());                                      // super admin
+      allow create: if isAuthenticated()
+        && (reqInstitutionMatches() || isSuperAdmin());
+      allow update: if isAuthenticated()
+        && (request.auth.uid == userId                                // self-update
+          || (institutionAdmin() && sameInstitutionAsToken())     // inst admin
+          || isSuperAdmin());
+      allow delete: if isSuperAdmin();
+    }
+
+    // =====================================================================
+    // USER PROFILES
+    // =====================================================================
+
+    match /user_profiles/{profileId} {
+      allow read: if isAuthenticated()
+        && (request.auth.uid == resource.data.user_id
+          || (institutionAdmin() && sameInstitutionAsToken() && docInstitutionMatches())
+          || isSuperAdmin());
+      allow create: if isAuthenticated()
+        && (isOwnRequest() || sameInstitutionWrite() || isSuperAdmin());
+      allow update: if isAuthenticated()
+        && (request.auth.uid == resource.data.user_id
+          || sameInstitutionWrite()
+          || isSuperAdmin());
+      allow delete: if isSuperAdmin();
+    }
+
+    // =====================================================================
+    // ATTENDANCE RECORDS
+    // =====================================================================
+
+    match /attendance_records/{recordId} {
+      allow read: if isAuthenticated()
+        && (isOwnDocument()
+          || ((lecturer() || institutionAdmin()) && sameInstitutionAsToken() && docInstitutionMatches())
+          || isSuperAdmin());
+      allow create: if isAuthenticated()
+        && (student()
+          || lecturer()
+          || institutionAdmin()
+          || isSuperAdmin());
+      allow update: if isAuthenticated()
+        && (lecturer()
+          || institutionAdmin()
+          || isSuperAdmin());
+      allow delete: if institutionAdmin() || isSuperAdmin();
+    }
+
+    // =====================================================================
+    // ATTENDANCE SESSIONS
+    // =====================================================================
+
+    match /attendance_sessions/{sessionId} {
+      allow read: if isAuthenticated()
+        && (sameInstitutionRead() || isSuperAdmin());
+      allow create: if isAuthenticated()
+        && (lecturer()
+          || institutionAdmin()
+          || isSuperAdmin());
+      allow update: if isAuthenticated()
+        && (lecturer()
+          || institutionAdmin()
+          || isSuperAdmin());
+      allow delete: if institutionAdmin() || isSuperAdmin();
+    }
+
+    // =====================================================================
+    // COURSES
+    // =====================================================================
+
+    match /courses/{courseId} {
+      allow read: if isAuthenticated()
+        && (sameInstitutionRead() || isSuperAdmin());
+      allow create: if isAuthenticated() && ((institutionAdmin() && sameInstitutionWrite()) || isSuperAdmin());
+      allow update: if institutionAdmin() || isSuperAdmin();
+      allow delete: if isSuperAdmin();
+    }
+
+    // =====================================================================
+    // DEPARTMENTS
+    // =====================================================================
+
+    match /departments/{deptId} {
+      allow read: if isAuthenticated()
+        && (sameInstitutionRead() || isSuperAdmin());
+      allow create: if isAuthenticated() && ((institutionAdmin() && sameInstitutionWrite()) || isSuperAdmin());
+      allow update: if institutionAdmin() || isSuperAdmin();
+      allow delete: if isSuperAdmin();
+    }
+
+    // =====================================================================
+    // COURSE ENROLLMENTS
+    // =====================================================================
+
+    match /course_enrollments/{enrollmentId} {
+      allow read: if isAuthenticated()
+        && (request.auth.uid == resource.data.student_id
+          || sameInstitutionRead()
+          || isSuperAdmin());
+      allow create: if isAuthenticated() && ((institutionAdmin() && sameInstitutionWrite()) || isSuperAdmin());
+      allow delete: if institutionAdmin() || isSuperAdmin();
+    }
+
+    // =====================================================================
+    // SCHEDULES
+    // =====================================================================
+
+    match /schedules/{scheduleId} {
+      allow read: if isAuthenticated()
+        && (sameInstitutionRead() || isSuperAdmin());
+      allow create: if isAuthenticated() && ((institutionAdmin() && sameInstitutionWrite()) || isSuperAdmin());
+      allow update: if institutionAdmin() || isSuperAdmin();
+      allow delete: if isSuperAdmin();
+    }
+
+    // =====================================================================
+    // CLASS SESSIONS
+    // =====================================================================
+
+    match /class_sessions/{sessionId} {
+      allow read: if isAuthenticated()
+        && (sameInstitutionRead() || isSuperAdmin());
+      allow create: if isAuthenticated() && ((institutionAdmin() && sameInstitutionWrite()) || isSuperAdmin());
+      allow update: if institutionAdmin() || isSuperAdmin();
+      allow delete: if isSuperAdmin();
+    }
+
+    // =====================================================================
+    // NOTIFICATIONS
+    // =====================================================================
+
+    match /notifications/{notificationId} {
+      allow read: if isAuthenticated()
+        && (request.auth.uid == resource.data.user_id
+          || (institutionAdmin() && sameInstitutionAsToken() && docInstitutionMatches())
+          || isSuperAdmin());
+      allow create: if isAuthenticated()
+        && (isOwnRequest()
+          || sameInstitutionWrite()
+          || isSuperAdmin());
+      allow update: if isAuthenticated()
+        && (request.auth.uid == resource.data.user_id
+          || isSuperAdmin());
+      allow delete: if isAuthenticated()
+        && (request.auth.uid == resource.data.user_id
+          || isSuperAdmin());
+    }
+
+    // =====================================================================
+    // VOUCHERS
+    // =====================================================================
+
+    match /vouchers/{voucherId} {
+      allow read: if isAuthenticated()
+        && (sameInstitutionRead() || isSuperAdmin());
+      allow create: if isAuthenticated() && ((institutionAdmin() && sameInstitutionWrite()) || isSuperAdmin());
+      allow update: if institutionAdmin() || isSuperAdmin();
+      allow delete: if isSuperAdmin();
+    }
+
+    // =====================================================================
+    // ACTIVITY LOGS
+    // =====================================================================
+
+    match /activity_logs/{logId} {
+      allow read: if isAuthenticated()
+        && (sameInstitutionRead() || isSuperAdmin());
+      allow create: if isAuthenticated()
+        && (sameInstitutionWrite() || isSuperAdmin());
+      allow update: if institutionAdmin() || isSuperAdmin();
+      allow delete: if isSuperAdmin();
+    }
+
+    // =====================================================================
+    // SECURITY LOGS
+    // =====================================================================
+
+    match /security_logs/{logId} {
+      allow read: if isAuthenticated()
+        && (sameInstitutionRead() || isSuperAdmin());
+      allow create: if isAuthenticated()
+        && (sameInstitutionWrite() || isSuperAdmin());
+      allow update: if isSuperAdmin();
+      allow delete: if isSuperAdmin();
+    }
+
+    // =====================================================================
+    // AUDIT LOGS
+    // =====================================================================
+
+    match /audit_logs/{logId} {
+      allow read: if isSuperAdmin();
+      allow create: if isAuthenticated();
+      allow delete: if isSuperAdmin();
+    }
+
+    // =====================================================================
+    // NETWORK NODES
+    // =====================================================================
+
+    match /network_nodes/{nodeId} {
+      allow read: if isAuthenticated()
+        && (sameInstitutionRead() || isSuperAdmin());
+      allow create: if isAuthenticated() && ((institutionAdmin() && sameInstitutionWrite()) || isSuperAdmin());
+      allow update: if institutionAdmin() || isSuperAdmin();
+      allow delete: if isSuperAdmin();
+    }
+
+    // =====================================================================
+    // BROKER STATUS
+    // =====================================================================
+
+    match /broker_status/{statusId} {
+      allow read: if isAuthenticated()
+        && (sameInstitutionRead() || isSuperAdmin());
+      allow create: if isAuthenticated() && ((institutionAdmin() && sameInstitutionWrite()) || isSuperAdmin());
+      allow update: if institutionAdmin() || isSuperAdmin();
+      allow delete: if isSuperAdmin();
+    }
+
+    // =====================================================================
+    // P2P PEERS & STATUS
+    // =====================================================================
+
+    match /p2p_peers/{peerId} {
+      allow read: if isAuthenticated()
+        && (sameInstitutionRead() || isSuperAdmin());
+      allow create, update: if institutionAdmin() || isSuperAdmin();
+      allow delete: if isSuperAdmin();
+    }
+
+    match /p2p_status/{statusId} {
+      allow read: if isAuthenticated()
+        && (sameInstitutionRead() || isSuperAdmin());
+      allow create, update: if institutionAdmin() || isSuperAdmin();
+      allow delete: if isSuperAdmin();
+    }
+
+    // =====================================================================
+    // COMPLIANCE
+    // =====================================================================
+
+    match /compliance_exam/{examId} {
+      allow read: if isAuthenticated()
+        && (sameInstitutionRead() || isSuperAdmin());
+      allow create, update: if institutionAdmin() || isSuperAdmin();
+      allow delete: if isSuperAdmin();
+    }
+
+    match /compliance_audit/{auditId} {
+      allow read: if isAuthenticated()
+        && (sameInstitutionRead() || isSuperAdmin());
+      allow create: if isAuthenticated() && ((institutionAdmin() && sameInstitutionWrite()) || isSuperAdmin());
+      allow delete: if isSuperAdmin();
+    }
+
+    match /compliance_reports/{reportId} {
+      allow read: if isAuthenticated()
+        && (sameInstitutionRead() || isSuperAdmin());
+      allow create: if isAuthenticated() && ((institutionAdmin() && sameInstitutionWrite()) || isSuperAdmin());
+      allow delete: if isSuperAdmin();
+    }
+
+    // =====================================================================
+    // INFRASTRUCTURE STATUS
+    // =====================================================================
+
+    match /ups_status/{statusId} {
+      allow read, create, update: if isAuthenticated()
+        && (sameInstitutionRead() || isSuperAdmin());
+      allow delete: if isSuperAdmin();
+    }
+
+    match /isp_status/{statusId} {
+      allow read, create, update: if isAuthenticated()
+        && (sameInstitutionRead() || isSuperAdmin());
+      allow delete: if isSuperAdmin();
+    }
+
+    match /generator_status/{statusId} {
+      allow read, create, update: if isAuthenticated()
+        && (sameInstitutionRead() || isSuperAdmin());
+      allow delete: if isSuperAdmin();
+    }
+
+    // =====================================================================
+    // PAYMENTS
+    // =====================================================================
+
+    match /payment_transactions/{txnId} {
+      allow read: if isAuthenticated()
+        && (sameInstitutionRead() || isSuperAdmin());
+      allow create: if institutionAdmin() || isSuperAdmin();
+      allow update: if institutionAdmin() || isSuperAdmin();
+      allow delete: if isSuperAdmin();
+    }
+
+    match /mobile_money_providers/{providerId} {
+      allow read: if isAuthenticated()
+        && (sameInstitutionRead() || isSuperAdmin());
+      allow create, update: if institutionAdmin() || isSuperAdmin();
+      allow delete: if isSuperAdmin();
+    }
+
+    // =====================================================================
+    // OFFLINE SYNC QUEUE
+    // =====================================================================
+
+    match /offline_sync_queue/{entryId} {
+      allow read, write: if isAuthenticated()
+        && (sameInstitutionRead() || isSuperAdmin());
+    }
+
+    match /offline_queue/{entryId} {
+      allow read, write: if isAuthenticated()
+        && (sameInstitutionRead() || isSuperAdmin());
+    }
+
+    // =====================================================================
+    // BIOMETRIC ENROLLMENTS
+    // =====================================================================
+
+    match /biometric_enrollments/{enrollmentId} {
+      allow read: if isAuthenticated()
+        && (request.auth.uid == resource.data.user_id      // own biometrics
+          || (institutionAdmin() && sameInstitutionAsToken() && docInstitutionMatches())
+          || isSuperAdmin());
+      allow create: if isAuthenticated()
+        && (isOwnRequest()
+          || institutionAdmin()
+          || isSuperAdmin());
+      allow update: if isAuthenticated()
+        && (request.auth.uid == resource.data.user_id
+          || isSuperAdmin());
+      allow delete: if isAuthenticated()
+        && (request.auth.uid == resource.data.user_id
+          || isSuperAdmin());
+    }
+
+    // =====================================================================
+    // DEVICE FINGERPRINTS
+    // =====================================================================
+
+    match /device_fingerprints/{fingerprintId} {
+      allow read: if isAuthenticated()
+        && (request.auth.uid == resource.data.user_id
+          || (institutionAdmin() && sameInstitutionAsToken() && docInstitutionMatches())
+          || isSuperAdmin());
+      allow create: if isAuthenticated()
+        && (isOwnRequest()
+          || isSuperAdmin());
+      allow update: if isAuthenticated()
+        && (request.auth.uid == resource.data.user_id
+          || isSuperAdmin());
+      allow delete: if isAuthenticated()
+        && (request.auth.uid == resource.data.user_id
+          || isSuperAdmin());
+    }
+
+    // =====================================================================
+    // FACE DESCRIPTORS
+    // =====================================================================
+
+    match /face_descriptors/{descriptorId} {
+      allow read: if isAuthenticated()
+        && (request.auth.uid == resource.data.user_id
+          || (institutionAdmin() && sameInstitutionAsToken() && docInstitutionMatches())
+          || isSuperAdmin());
+      allow create: if isAuthenticated()
+        && (isOwnRequest()
+          || institutionAdmin()
+          || isSuperAdmin());
+      allow update: if isAuthenticated()
+        && (request.auth.uid == resource.data.user_id
+          || isSuperAdmin());
+      allow delete: if isAuthenticated()
+        && (request.auth.uid == resource.data.user_id
+          || isSuperAdmin());
+    }
+
+    // =====================================================================
+    // PERSISTENT SESSIONS
+    // =====================================================================
+
+    match /persistent_sessions/{sessionId} {
+      allow read, write: if isAuthenticated()
+        && (request.auth.uid == resource.data.user_id
+          || isSuperAdmin());
+      allow delete: if isAuthenticated()
+        && (request.auth.uid == resource.data.user_id
+          || isSuperAdmin());
+    }
+
+    // =====================================================================
+    // DEMO BOOKINGS (public read for token validation, restricted write)
+    // =====================================================================
+
+    match /demo_bookings/{bookingId} {
+      allow read: if request.auth != null
+        || resource.data.booking_token == request.query.token;
+      allow create: if true;  // public demo booking
+      allow update: if isSuperAdmin();
+      allow delete: if isSuperAdmin();
+    }
+
+    // =====================================================================
+    // SYSTEM CONFIGURATIONS
+    // =====================================================================
+
+    match /system_configurations/{configId} {
+      allow read: if isSuperAdmin();
+      allow write: if isSuperAdmin();
+    }
+
+    // =====================================================================
+    // LEAVE REQUESTS
+    // =====================================================================
+
+    match /leave_requests/{requestId} {
+      allow read: if isAuthenticated()
+        && (request.auth.uid == resource.data.user_id
+          || (institutionAdmin() && sameInstitutionAsToken() && docInstitutionMatches())
+          || isSuperAdmin());
+      allow create: if isAuthenticated()
+        && (isOwnRequest()
+          || isSuperAdmin());
+      allow update: if isAuthenticated()
+        && (request.auth.uid == resource.data.user_id
+          || institutionAdmin()
+          || isSuperAdmin());
+      allow delete: if isSuperAdmin();
+    }
+
+    // =====================================================================
+    // SMS QUEUE
+    // =====================================================================
+
+    match /sms_queue/{entryId} {
+      allow read, write: if isAuthenticated()
+        && (sameInstitutionRead() || isSuperAdmin());
+    }
+
+    // =====================================================================
+    // MAIL QUEUE
+    // =====================================================================
+
+    match /mail_queue/{entryId} {
+      allow read: if isAuthenticated()
+        && (sameInstitutionRead() || isSuperAdmin());
+      allow create: if isAuthenticated();
+      allow update: if isSuperAdmin();
+      allow delete: if isSuperAdmin();
+    }
+
+    // =====================================================================
+    // FEEDBACK
+    // =====================================================================
+
+    match /feedback/{feedbackId} {
+      allow read: if isAuthenticated()
+        && (request.auth.uid == resource.data.user_id
+          || sameInstitutionRead()
+          || isSuperAdmin());
+      allow create: if isAuthenticated();
+      allow delete: if isSuperAdmin();
+    }
+
+    // =====================================================================
+    // SECURITY ALERTS (legacy collection)
+    // =====================================================================
+
+    match /security_alerts/{alertId} {
+      allow read: if isAuthenticated()
+        && (sameInstitutionRead() || isSuperAdmin());
+      allow create: if isAuthenticated()
+        && (sameInstitutionWrite() || isSuperAdmin());
+      allow update: if institutionAdmin() || isSuperAdmin();
+      allow delete: if isSuperAdmin();
+    }
+
+    // =====================================================================
+    // ATTENDANCE / SESSIONS / ENROLLMENTS (legacy offline queue collections)
+    // =====================================================================
+
+    match /attendance/{docId} {
+      allow read, write: if isAuthenticated()
+        && (sameInstitutionRead() || isSuperAdmin());
+    }
+
+    match /sessions/{docId} {
+      allow read, write: if isAuthenticated()
+        && (sameInstitutionRead() || isSuperAdmin());
+    }
+
+    match /enrollments/{docId} {
+      allow read, write: if isAuthenticated()
+        && (sameInstitutionRead() || isSuperAdmin());
+    }
+
+    match /activity_log/{docId} {
+      allow read, write: if isAuthenticated()
+        && (sameInstitutionRead() || isSuperAdmin());
+    }
+
+    match /payments/{docId} {
+      allow read, write: if isAuthenticated()
+        && (sameInstitutionRead() || isSuperAdmin());
+    }
+
+    // =====================================================================
+    // DEFAULT DENY - everything else
+    // =====================================================================
+
+    match /{document=**} {
+      allow read, write: if false;
+    }
+  }
+}

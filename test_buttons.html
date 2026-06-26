@@ -1,0 +1,132 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <title>Button Functionality Test</title>
+    <script>
+        async function testButtons() {
+            console.log("Testing Super Admin Dashboard Buttons...");
+            
+            // Test Users Page buttons
+            try {
+                const usersResponse = await fetch('http://localhost:5000/admin/users');
+                const usersContent = await usersResponse.text();
+                
+                console.log("=== USERS PAGE ===");
+                console.log("showAddUserModal function found:", usersContent.includes('showAddUserModal'));
+                console.log("exportUsers function found:", usersContent.includes('exportUsers'));
+                console.log("Users page loaded successfully:", usersResponse.status === 200);
+                
+                // Test if the modal HTML is present in the JavaScript function
+                if (usersContent.includes('showAddUserModal')) {
+                    // Extract the function content
+                    const startIdx = usersContent.indexOf('function showAddUserModal()');
+                    if (startIdx !== -1) {
+                        const endIdx = usersContent.indexOf('function', startIdx + 1);
+                        const functionContent = usersContent.substring(startIdx, endIdx !== -1 ? endIdx : usersContent.length);
+                        console.log("Modal HTML in function:", functionContent.includes('modal fade'));
+                        console.log("Modal title in function:", functionContent.includes('Add New User'));
+                    }
+                }
+                
+            } catch (error) {
+                console.error("Error testing users page:", error);
+            }
+            
+            // Test Monitoring Page buttons
+            try {
+                const monitoringResponse = await fetch('http://localhost:5000/admin/monitoring');
+                const monitoringContent = await monitoringResponse.text();
+                
+                console.log("\n=== MONITORING PAGE ===");
+                console.log("refreshMonitoring function found:", monitoringContent.includes('refreshMonitoring'));
+                console.log("configureMonitoring function found:", monitoringContent.includes('configureMonitoring'));
+                console.log("Monitoring page loaded successfully:", monitoringResponse.status === 200);
+                
+            } catch (error) {
+                console.error("Error testing monitoring page:", error);
+            }
+            
+            // Test Security Page buttons
+            try {
+                const securityResponse = await fetch('http://localhost:5000/admin/security');
+                const securityContent = await securityResponse.text();
+                
+                console.log("\n=== SECURITY PAGE ===");
+                console.log("refreshSecurity function found:", securityContent.includes('refreshSecurity'));
+                console.log("configureSecurity function found:", securityContent.includes('configureSecurity'));
+                console.log("Security page loaded successfully:", securityResponse.status === 200);
+                
+            } catch (error) {
+                console.error("Error testing security page:", error);
+            }
+            
+            // Test Backup Page buttons
+            try {
+                const backupResponse = await fetch('http://localhost:5000/admin/backup');
+                const backupContent = await backupResponse.text();
+                
+                console.log("\n=== BACKUP PAGE ===");
+                console.log("createBackup function found:", backupContent.includes('createBackup'));
+                console.log("restoreBackup function found:", backupContent.includes('restoreBackup'));
+                console.log("scheduleBackup function found:", backupContent.includes('scheduleBackup'));
+                console.log("Backup page loaded successfully:", backupResponse.status === 200);
+                
+            } catch (error) {
+                console.error("Error testing backup page:", error);
+            }
+            
+            // Test Notifications Page buttons
+            try {
+                const notificationsResponse = await fetch('http://localhost:5000/admin/notifications');
+                const notificationsContent = await notificationsResponse.text();
+                
+                console.log("\n=== NOTIFICATIONS PAGE ===");
+                console.log("sendNotification function found:", notificationsContent.includes('sendNotification'));
+                console.log("manageTemplates function found:", notificationsContent.includes('manageTemplates'));
+                console.log("configureSettings function found:", notificationsContent.includes('configureSettings'));
+                console.log("Notifications page loaded successfully:", notificationsResponse.status === 200);
+                
+            } catch (error) {
+                console.error("Error testing notifications page:", error);
+            }
+            
+            // Test Audit Page buttons
+            try {
+                const auditResponse = await fetch('http://localhost:5000/admin/audit');
+                const auditContent = await auditResponse.text();
+                
+                console.log("\n=== AUDIT PAGE ===");
+                console.log("refreshLogs function found:", auditContent.includes('refreshLogs'));
+                console.log("exportLogs function found:", auditContent.includes('exportLogs'));
+                console.log("configureAudit function found:", auditContent.includes('configureAudit'));
+                console.log("Audit page loaded successfully:", auditResponse.status === 200);
+                
+            } catch (error) {
+                console.error("Error testing audit page:", error);
+            }
+            
+            // Test Roles Page buttons
+            try {
+                const rolesResponse = await fetch('http://localhost:5000/admin/roles');
+                const rolesContent = await rolesResponse.text();
+                
+                console.log("\n=== ROLES PAGE ===");
+                console.log("createRole function found:", rolesContent.includes('createRole'));
+                console.log("manageRoles function found:", rolesContent.includes('manageRoles'));
+                console.log("configureSettings function found:", rolesContent.includes('configureSettings'));
+                console.log("Roles page loaded successfully:", rolesResponse.status === 200);
+                
+            } catch (error) {
+                console.error("Error testing roles page:", error);
+            }
+        }
+        
+        // Run test when page loads
+        window.onload = testButtons;
+    </script>
+</head>
+<body>
+    <h1>Button Functionality Test</h1>
+    <p>Check browser console for results...</p>
+</body>
+</html>
