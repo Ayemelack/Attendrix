@@ -227,6 +227,9 @@
         .check-item .ck.pass { color: var(--success); }
         .check-item .ck.fail { color: var(--danger); }
 
+        /* â”€â”€ ACTIVE SESSIONS (QR CARDS) â”€â”€ */
+        .active-sessions-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(180px, 1fr)); gap: 10px; }
+
         /* â”€â”€ SESSION LIST â”€â”€ */
         .session-list .s-item { display: flex; align-items: center; gap: 12px; padding: 11px 0; border-bottom: 1px solid var(--border); }
         .s-item:last-child { border-bottom: none; }
@@ -478,6 +481,11 @@
                 <div class="card">
                     <div class="card-header"><i class="fas fa-book" style="color:var(--success);font-size:.7rem;"></i> <span data-i18n="course_overview">Course Overview</span> <span style="font-size:.68rem;color:var(--text-dim);font-weight:400;" id="courseCount"></span></div>
                     <div class="card-body" id="courseMiniList"><div class="empty-muted" data-i18n="no_courses">No courses</div></div>
+                </div>
+
+                <div class="card" id="activeSessionsCard">
+                    <div class="card-header"><i class="fas fa-play-circle" style="color:var(--success);font-size:.7rem;"></i> <span data-i18n="active_course_sessions">Active Course Sessions</span> <span style="font-size:.62rem;color:var(--text-dim);font-weight:400;margin-left:auto;" id="activeSessionCount"></span></div>
+                    <div class="card-body" id="activeSessionsList"><div class="empty-muted" data-i18n="loading">Loading...</div></div>
                 </div>
 
                 <div class="card">
@@ -1024,6 +1032,7 @@
         renderTodaySchedule();
         renderRecent();
         renderCourseMiniList();
+        renderActiveSessions();
         renderSessions();
         renderCourses();
         renderNetwork();
@@ -1112,6 +1121,46 @@
             var riskLabel = t(c.risk || 'low');
             return '<div class="course-card" style="cursor:pointer;" onclick="openCourseDrawer(' + JSON.stringify(c).replace(/"/g, '&quot;') + ')"><div class="cc-top"><span class="cc-code">' + (c.course_id || '') + '</span><span class="risk-badge ' + (c.risk || 'low') + '">' + riskLabel + '</span></div><div class="cc-name">' + (c.course_name || '') + '</div><div class="cc-lecturer">' + (c.lecturer_name || '') + '</div><div class="bar-track"><div class="bar-fill ' + barClass + '" style="width:' + c.rate + '%"></div></div><div class="cc-footer"><span>' + t('attended') + ': ' + c.present + '/' + c.total + '</span><span>' + c.rate + '%</span></div></div>';
         }).join('') + '</div>';
+    }
+
+    function renderActiveSessions() {
+        var container = document.getElementById('activeSessionsList');
+        var countEl = document.getElementById('activeSessionCount');
+        var sessions = dashboardData && dashboardData.upcoming ? dashboardData.upcoming : [];
+        var active = sessions.filter(function(s) { return s.is_active === true; });
+        countEl.textContent = active.length ? (active.length + ' active') : '';
+        if (!active.length) {
+            container.innerHTML = '<div class="empty-muted">No course session has been created yet.</div>';
+            return;
+        }
+        container.innerHTML = '<div class="active-sessions-grid">' + active.map(function(s) {
+            var qr = s.qr_code || '';
+            var code = s.session_code || '';
+            var courseName = s.course_name || '';
+            var lecturerName = s.lecturer_name || '';
+            var qrHtml = qr ? '<img src="' + qr + '" alt="QR Code" style="width:120px;height:120px;display:block;margin:0 auto 8px;border-radius:6px;background:#fff;padding:4px;">' : '';
+            var codeHtml = code ? '<div style="font-size:.8rem;font-weight:700;letter-spacing:2px;text-align:center;color:var(--text);margin-bottom:8px;font-family:monospace;">' + code + '</div>' : '';
+            return '<div style="background:var(--bg-card-alt);border:1px solid var(--border);border-radius:var(--radius);padding:14px;text-align:center;">' +
+                qrHtml +
+                codeHtml +
+                '<div style="font-size:.78rem;font-weight:600;color:var(--text);margin-bottom:2px;">' + courseName + '</div>' +
+                '<div style="font-size:.65rem;color:var(--text-dim);margin-bottom:10px;">' + lecturerName + '</div>' +
+                '<button class="btn btn-primary btn-sm" style="width:100%;" onclick="joinSession(\'' + code.replace(/'/g, "\\'") + '\')"><i class="fas fa-sign-in-alt"></i> <span>Join Session</span></button>' +
+                '</div>';
+        }).join('') + '</div>';
+    }
+
+    function joinSession(sessionCode) {
+        var sessions = dashboardData && dashboardData.upcoming ? dashboardData.upcoming : [];
+        var session = null;
+        for (var i = 0; i < sessions.length; i++) {
+            if (sessions[i].session_code === sessionCode) { session = sessions[i]; break; }
+        }
+        if (!session) { showToast(t('session_not_found') || 'Session not found', 'error'); return; }
+        activeSession = session;
+        document.getElementById('sessionCode').value = sessionCode;
+        switchSection('mark-attendance');
+        setTimeout(function() { verifySessionCode(); }, 150);
     }
 
     function renderCourses() {

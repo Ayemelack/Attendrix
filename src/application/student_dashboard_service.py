@@ -53,6 +53,14 @@ class StudentDashboardService:
                     enriched['course_name'] = cinfo['name']
                 if not enriched.get('lecturer_name'):
                     enriched['lecturer_name'] = cinfo['lecturer_name']
+        # Ensure session_code and qr_code are included
+        if not enriched.get('qr_code') and enriched.get('session_code') and enriched.get('is_active'):
+            try:
+                from src.application.attendance_security_service import AttendanceSecurityService
+                sec_svc = AttendanceSecurityService(self.fb)
+                enriched['qr_code'] = sec_svc._generate_qr_code(enriched['session_code'])
+            except Exception:
+                pass
         return enriched
 
     # ── MAIN DASHBOARD ──
