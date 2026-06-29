@@ -417,7 +417,7 @@
 
         <!-- Network Status Bar -->
         <div class="network-bar" id="networkBar">
-            <span class="item"><span class="conn-quality conn-online" id="connQuality"><span class="cq-dot" id="connDot"></span> <span id="connLabel">Online</span> <span id="connLatency" style="font-weight:400;opacity:.6;">â€”ms</span></span></span>
+            <span class="item"><span class="conn-quality conn-online" id="connQuality"><span class="cq-dot" id="connDot"></span> <span id="connLabel">Online</span> <span id="connLatency" style="font-weight:400;opacity:.6;">—ms</span></span></span>
             <span class="item"><i class="fas fa-microchip" style="font-size:.6rem;"></i> <span id="netBroker">Broker</span></span>
             <span class="item"><i class="fas fa-sync-alt" style="font-size:.6rem;"></i> <span id="netSync" data-i18n="sync_active">Sync Active</span></span>
             <span class="item"><i class="fas fa-cloud-download-alt" style="font-size:.6rem;"></i> <span id="queuePill"></span></span>
@@ -446,23 +446,23 @@
                 <div class="stats-grid" id="statsGrid">
                     <div class="stat-card">
                         <div class="stat-icon purple"><i class="fas fa-chart-line"></i></div>
-                        <div class="stat-value" id="ovRate">â€”</div>
+                        <div class="stat-value" id="ovRate">—</div>
                         <div class="stat-label" data-i18n="attendance_rate">Attendance Rate</div>
                         <div class="stat-trend" id="ovTrend"></div>
                     </div>
                     <div class="stat-card">
                         <div class="stat-icon green"><i class="fas fa-check-circle"></i></div>
-                        <div class="stat-value" id="ovPresent">â€”</div>
+                        <div class="stat-value" id="ovPresent">—</div>
                         <div class="stat-label" data-i18n="present">Present</div>
                     </div>
                     <div class="stat-card">
                         <div class="stat-icon yellow"><i class="fas fa-clock"></i></div>
-                        <div class="stat-value" id="ovLate">â€”</div>
+                        <div class="stat-value" id="ovLate">—</div>
                         <div class="stat-label" data-i18n="late_absent">Late / Absent</div>
                     </div>
                     <div class="stat-card">
                         <div class="stat-icon blue"><i class="fas fa-trophy"></i></div>
-                        <div class="stat-value" id="ovTrust">â€”</div>
+                        <div class="stat-value" id="ovTrust">—</div>
                         <div class="stat-label" data-i18n="trust_level">Trust Level</div>
                     </div>
                 </div>
@@ -525,19 +525,19 @@
                         <div class="card-body" id="queueStatsBody">
                             <div style="display:grid;grid-template-columns:1fr 1fr;gap:12px;">
                                 <div style="text-align:center;padding:8px;background:var(--bg-card-alt);border-radius:var(--radius-sm);">
-                                    <div style="font-size:.85rem;font-weight:700;color:var(--warning);" id="qPending">â€”</div>
+                                    <div style="font-size:.85rem;font-weight:700;color:var(--warning);" id="qPending">—</div>
                                     <div style="font-size:.6rem;color:var(--text-dim);" data-i18n="pending">Pending</div>
                                 </div>
                                 <div style="text-align:center;padding:8px;background:var(--bg-card-alt);border-radius:var(--radius-sm);">
-                                    <div style="font-size:.85rem;font-weight:700;color:var(--danger);" id="qFailed">â€”</div>
+                                    <div style="font-size:.85rem;font-weight:700;color:var(--danger);" id="qFailed">—</div>
                                     <div style="font-size:.6rem;color:var(--text-dim);" data-i18n="failed">Failed</div>
                                 </div>
                                 <div style="text-align:center;padding:8px;background:var(--bg-card-alt);border-radius:var(--radius-sm);">
-                                    <div style="font-size:.85rem;font-weight:700;color:var(--success);" id="qSynced">â€”</div>
+                                    <div style="font-size:.85rem;font-weight:700;color:var(--success);" id="qSynced">—</div>
                                     <div style="font-size:.6rem;color:var(--text-dim);" data-i18n="synced">Synced</div>
                                 </div>
                                 <div style="text-align:center;padding:8px;background:var(--bg-card-alt);border-radius:var(--radius-sm);">
-                                    <div style="font-size:.85rem;font-weight:700;color:var(--info);" id="qEstimate">â€”</div>
+                                    <div style="font-size:.85rem;font-weight:700;color:var(--info);" id="qEstimate">—</div>
                                     <div style="font-size:.6rem;color:var(--text-dim);" data-i18n="recovery">Recovery</div>
                                 </div>
                             </div>
@@ -660,7 +660,7 @@
                                         <circle class="bg" cx="50" cy="50" r="42"/>
                                         <circle class="fg" id="trustArcGauge" cx="50" cy="50" r="42" stroke-dasharray="263.9" stroke-dashoffset="263.9"/>
                                     </svg>
-                                    <div class="center"><span class="num" id="trustNum">â€”</span><span class="lbl" data-i18n="trust_score">Trust</span></div>
+                                    <div class="center"><span class="num" id="trustNum">—</span><span class="lbl" data-i18n="trust_score">Trust</span></div>
                                 </div>
                                 <div style="font-size:.78rem;font-weight:600;" id="trustLabel"></div>
                             </div>
@@ -749,9 +749,9 @@
         <div class="drawer-body" id="drawerBody">
             <div class="drawer-section">
                 <div class="drawer-section-title" data-i18n="course_info">Course Info</div>
-                <div class="drawer-field"><span class="lbl" data-i18n="course_code">Code</span><span class="val" id="drawerCode">â€”</span></div>
-                <div class="drawer-field"><span class="lbl" data-i18n="lecturer">Lecturer</span><span class="val" id="drawerLecturer">â€”</span></div>
-                <div class="drawer-field"><span class="lbl" data-i18n="risk_level">Risk Level</span><span class="val" id="drawerRisk">â€”</span></div>
+                <div class="drawer-field"><span class="lbl" data-i18n="course_code">Code</span><span class="val" id="drawerCode">—</span></div>
+                <div class="drawer-field"><span class="lbl" data-i18n="lecturer">Lecturer</span><span class="val" id="drawerLecturer">—</span></div>
+                <div class="drawer-field"><span class="lbl" data-i18n="risk_level">Risk Level</span><span class="val" id="drawerRisk">—</span></div>
             </div>
             <div class="drawer-section">
                 <div class="drawer-section-title" data-i18n="attendance_breakdown">Attendance Breakdown</div>
@@ -759,7 +759,7 @@
                 <div class="drawer-field"><span class="lbl" data-i18n="late">Late</span><span class="val" style="color:var(--warning);" id="drawerLate">0</span></div>
                 <div class="drawer-field"><span class="lbl" data-i18n="absent">Absent</span><span class="val" style="color:var(--danger);" id="drawerAbsent">0</span></div>
                 <div class="drawer-field"><span class="lbl" data-i18n="suspicious">Suspicious</span><span class="val" style="color:var(--danger);" id="drawerSuspicious">0</span></div>
-                <div class="drawer-field" style="border-top:1px solid var(--border);padding-top:8px;margin-top:4px;"><span class="lbl" data-i18n="overall_rate">Overall Rate</span><span class="val" style="font-weight:700;" id="drawerRate">â€”</span></div>
+                <div class="drawer-field" style="border-top:1px solid var(--border);padding-top:8px;margin-top:4px;"><span class="lbl" data-i18n="overall_rate">Overall Rate</span><span class="val" style="font-weight:700;" id="drawerRate">—</span></div>
             </div>
             <div class="drawer-section">
                 <div class="drawer-section-title" data-i18n="recent_sessions">Recent Sessions</div>
@@ -929,7 +929,7 @@
         } catch(e) { /* silently fail, use embedded translations */ }
     }
 
-    // â”€â”€ INSTITUTION DATA (optional â€” never blocks attendance) â”€â”€
+    // â”€â”€ INSTITUTION DATA (optional — never blocks attendance) â”€â”€
     async function loadInstitutionData() {
         try {
             var token = getToken();
@@ -1021,7 +1021,7 @@
             if (upcoming[i].is_active === true) { activeSession = upcoming[i]; break; }
         }
         renderAll();
-        // Institution data is OPTIONAL â€” fire-and-forget, never blocks attendance flow
+        // Institution data is OPTIONAL — fire-and-forget, never blocks attendance flow
         loadInstitutionData();
     }
 
@@ -1056,12 +1056,12 @@
     function renderStats() {
         if (!dashboardData) return;
         var s = dashboardData.stats || {};
-        document.getElementById('ovRate').textContent = s.rate !== undefined ? s.rate + '%' : 'â€”';
+        document.getElementById('ovRate').textContent = s.rate !== undefined ? s.rate + '%' : '—';
         document.getElementById('ovPresent').textContent = s.present || '0';
         var lateAbsent = (s.late || 0) + (s.absent || 0);
         document.getElementById('ovLate').textContent = lateAbsent;
         var tl = dashboardData.trust_level || {};
-        document.getElementById('ovTrust').textContent = tl.score !== undefined ? tl.score + '%' : 'â€”';
+        document.getElementById('ovTrust').textContent = tl.score !== undefined ? tl.score + '%' : '—';
         var trend = document.getElementById('ovTrend');
         var wr = s.weekly_rate;
         if (wr !== undefined && s.rate !== undefined && s.rate > 0) {
@@ -1107,7 +1107,7 @@
             var clr = r.status === 'present' ? 'var(--success)' : r.status === 'late' ? 'var(--warning)' : r.status === 'suspicious' ? 'var(--danger)' : 'var(--text-dim)';
             var lbl = r.status === 'present' ? t('present_label') : r.status === 'late' ? t('late') : r.status === 'suspicious' ? t('suspicious') : t('absent');
             var time = r.marked_at ? new Date(r.marked_at).toLocaleDateString() : '';
-            return '<div class="feed-item"><span class="feed-dot" style="background:' + clr + '"></span><span class="feed-msg">' + (r.course_name || '') + ' â€” ' + lbl + '</span><span class="feed-time">' + time + '</span></div>';
+            return '<div class="feed-item"><span class="feed-dot" style="background:' + clr + '"></span><span class="feed-msg">' + (r.course_name || '') + ' — ' + lbl + '</span><span class="feed-time">' + time + '</span></div>';
         }).join('');
     }
 
@@ -1324,7 +1324,7 @@
                 _institution_id: (institutionData && institutionData.id) || (activeSession && activeSession.institution_id) || ''
             };
 
-            console.log('PHASE 1 â€” Session verified:', code);
+            console.log('PHASE 1 — Session verified:', code);
             console.log('SESSION:', pendingVerification._session_id);
             console.log('STUDENT:', pendingVerification._student_id);
             console.log('SESSION CODE:', pendingVerification._verified_code);
@@ -1465,7 +1465,7 @@
 
     // â”€â”€ PHASE 3: SUBMIT VERIFY SCAN (called AFTER face capture succeeds) â”€â”€
     async function submitVerifyScan(faceData) {
-        // FIX 2 â€” BLOCK NULL FACE DATA
+        // FIX 2 — BLOCK NULL FACE DATA
         if (!faceData) {
             console.error('face_data is required before verify_scan');
             return;
@@ -1481,7 +1481,7 @@
             return;
         }
 
-        console.log('PHASE 3 â€” Submitting verify_scan with face data');
+        console.log('PHASE 3 — Submitting verify_scan with face data');
 
         var payload = {
             studentId: studentId,
@@ -1561,7 +1561,7 @@
     }
 
     async function confirmMark() {
-        // â”€â”€ FIX 3 â€” VALIDATE BEFORE SUBMIT â”€â”€
+        // â”€â”€ FIX 3 — VALIDATE BEFORE SUBMIT â”€â”€
         var studentId = pendingVerification ? pendingVerification._student_id : null;
         var sessionId = pendingVerification ? pendingVerification._session_id : null;
         var sessionCode = pendingVerification ? pendingVerification._verified_code : null;
@@ -1573,7 +1573,7 @@
             return;
         }
 
-        // â”€â”€ FIX 4 â€” ONLY SUBMIT IF ALL CHECKS PASS â”€â”€
+        // â”€â”€ FIX 4 — ONLY SUBMIT IF ALL CHECKS PASS â”€â”€
         var sessionValid = !!pendingVerification;
         var faceMatched = !!faceDescriptor;
         var serverReady = true;
@@ -1590,7 +1590,7 @@
 
             var token = getToken();
 
-            // â”€â”€ FIX 1 â€” SHOW REAL BACKEND ERROR â”€â”€
+            // â”€â”€ FIX 1 — SHOW REAL BACKEND ERROR â”€â”€
             var response = await fetch('/api/attendance/mark', {
                 method: 'POST',
                 headers: {
@@ -1600,7 +1600,7 @@
                 body: body
             });
 
-            // â”€â”€ FIX 2 â€” NEVER HIDE SERVER RESPONSE â”€â”€
+            // â”€â”€ FIX 2 — NEVER HIDE SERVER RESPONSE â”€â”€
             console.log('STATUS:', response.status);
 
             var data = await response.json();
@@ -1686,12 +1686,12 @@
             video.hidden = false;
             video.muted = true;
 
-            // Step 2: Guard â€” mediaDevices API may be undefined on non-HTTPS or unsupported mobile browsers
+            // Step 2: Guard — mediaDevices API may be undefined on non-HTTPS or unsupported mobile browsers
             if (!navigator.mediaDevices || typeof navigator.mediaDevices.getUserMedia !== 'function') {
                 throw new Error('Camera API not available on this device or browser');
             }
 
-            // Step 3: Start camera IMMEDIATELY â€” critical for iOS Safari user gesture
+            // Step 3: Start camera IMMEDIATELY — critical for iOS Safari user gesture
             console.log('Face capture: Starting camera...');
             status.innerHTML = '<i class="fas fa-spinner fa-pulse"></i> <span>Starting camera...</span>';
             var constraints = { video: { facingMode: 'user', width: { ideal: 640 }, height: { ideal: 480 } } };
@@ -1705,7 +1705,7 @@
             }
             console.log('Camera stream started');
 
-            // Step 3: Pre-load ML models (camera already live â€” models load in background)
+            // Step 3: Pre-load ML models (camera already live — models load in background)
             console.log('Face capture: Loading models...');
             status.innerHTML = '<i class="fas fa-spinner fa-pulse"></i> <span>Loading face models...</span>';
             var modelUrl = 'https://cdn.jsdelivr.net/npm/@vladmandic/face-api/model/';
@@ -1728,7 +1728,7 @@
             // Step 5: Create FaceMatcher with fixed threshold 0.45
             faceMatcher = new window.faceapi.FaceMatcher(labeledDescriptors, 0.45);
 
-            // Step 6: Camera is live â€” user sees themselves
+            // Step 6: Camera is live — user sees themselves
             console.log('Video preview rendered');
             status.className = 'face-att-status';
             status.innerHTML = '<i class="fas fa-camera"></i> <span>Camera Ready</span>';
@@ -1746,7 +1746,7 @@
                 throw new Error('No face detected after multiple attempts');
             }
 
-            // Step 8: Face detected â€” show matching status (camera stays ON)
+            // Step 8: Face detected — show matching status (camera stays ON)
             console.log('Face detected');
             status.innerHTML = '<i class="fas fa-spinner fa-pulse"></i> <span>Matching Face...</span>';
             document.getElementById('flowStatus').textContent = 'Face detected. Matching...';
@@ -1760,7 +1760,7 @@
 
             console.log('[FaceCapture] Best match:', matchLabel, 'distance:', matchDistance);
 
-            // Step 10: RULE â€” If distance > 0.45 (threshold), deny
+            // Step 10: RULE — If distance > 0.45 (threshold), deny
             if (matchDistance > 0.45) {
                 stopCamera();
                 attendanceFaceDescriptor = null;
@@ -1773,7 +1773,7 @@
                 return;
             }
 
-            // Step 11: RULE â€” If label is "unknown", block attendance
+            // Step 11: RULE — If label is "unknown", block attendance
             if (matchLabel === 'unknown') {
                 stopCamera();
                 attendanceFaceDescriptor = null;
@@ -1786,7 +1786,7 @@
                 return;
             }
 
-            // Step 12: RULE â€” If confidence < 0.55, reject
+            // Step 12: RULE — If confidence < 0.55, reject
             var confidence = Math.max(0, 1 - matchDistance);
             if (confidence < 0.55) {
                 stopCamera();
@@ -1800,7 +1800,7 @@
                 return;
             }
 
-            // Step 13: Face matched â€” camera stays ON until onFaceVerified stops it
+            // Step 13: Face matched — camera stays ON until onFaceVerified stops it
             console.log('Face matched');
             attendanceFaceDescriptor = capturedDescriptor;
             onFaceVerified(capturedDescriptor, confidence);
@@ -1964,7 +1964,7 @@
         var vpn = securityData.vpn_detected;
         var trustedColor = trusted === true ? 'var(--success)' : trusted === false ? 'var(--danger)' : 'var(--text-dim)';
         var trustedLabel = trusted === true ? t('trusted') : trusted === false ? t('not_trusted') : (currentLang === 'fr' ? 'Non Ã©valuÃ©' : 'Not Evaluated');
-        deviceBody.innerHTML = '<div class="feed-item"><span class="feed-dot" style="background:' + trustedColor + '"></span><span class="feed-msg">' + (currentLang === 'fr' ? 'Appareil de confiance' : 'Trusted Device') + '</span><span style="font-size:.7rem;font-weight:600;color:' + trustedColor + '">' + trustedLabel + '</span></div><div class="feed-item"><span class="feed-dot" style="background:' + (vpn ? 'var(--warning)' : 'var(--success)') + '"></span><span class="feed-msg">VPN ' + (currentLang === 'fr' ? 'DÃ©tectÃ©' : 'Detected') + '</span><span style="font-size:.7rem;font-weight:600;color:' + (vpn ? 'var(--warning)' : 'var(--success)') + '">' + (vpn ? t('high') : t('low')) + '</span></div><div class="feed-item"><span class="feed-dot" style="background:var(--info);"></span><span class="feed-msg">' + (currentLang === 'fr' ? 'DerniÃ¨re connexion' : 'Last Login') + '</span><span style="font-size:.7rem;color:var(--text-dim);">' + (securityData.last_login ? new Date(securityData.last_login).toLocaleDateString() : 'â€”') + '</span></div>';
+        deviceBody.innerHTML = '<div class="feed-item"><span class="feed-dot" style="background:' + trustedColor + '"></span><span class="feed-msg">' + (currentLang === 'fr' ? 'Appareil de confiance' : 'Trusted Device') + '</span><span style="font-size:.7rem;font-weight:600;color:' + trustedColor + '">' + trustedLabel + '</span></div><div class="feed-item"><span class="feed-dot" style="background:' + (vpn ? 'var(--warning)' : 'var(--success)') + '"></span><span class="feed-msg">VPN ' + (currentLang === 'fr' ? 'DÃ©tectÃ©' : 'Detected') + '</span><span style="font-size:.7rem;font-weight:600;color:' + (vpn ? 'var(--warning)' : 'var(--success)') + '">' + (vpn ? t('high') : t('low')) + '</span></div><div class="feed-item"><span class="feed-dot" style="background:var(--info);"></span><span class="feed-msg">' + (currentLang === 'fr' ? 'DerniÃ¨re connexion' : 'Last Login') + '</span><span style="font-size:.7rem;color:var(--text-dim);">' + (securityData.last_login ? new Date(securityData.last_login).toLocaleDateString() : '—') + '</span></div>';
 
         var eventsBody = document.getElementById('securityEventsBody');
         var events = securityData.events || [];
@@ -1972,7 +1972,7 @@
             eventsBody.innerHTML = events.map(function(e) {
                 var clr = e.severity === 'critical' ? 'var(--danger)' : e.severity === 'high' ? 'var(--warning)' : 'var(--info)';
                 var time = e.created_at ? new Date(e.created_at).toLocaleDateString() : '';
-                return '<div class="feed-item"><span class="feed-dot" style="background:' + clr + '"></span><span class="feed-msg">' + (e.description || e.event_type || 'â€”') + '</span><span class="feed-time">' + time + '</span></div>';
+                return '<div class="feed-item"><span class="feed-dot" style="background:' + clr + '"></span><span class="feed-msg">' + (e.description || e.event_type || '—') + '</span><span class="feed-time">' + time + '</span></div>';
             }).join('');
         } else {
             eventsBody.innerHTML = '<div class="empty-muted">' + t('no_events') + '</div>';
@@ -2123,7 +2123,7 @@
         tbody.innerHTML = data.history.map(function(r) {
             var statusLabel = r.status === 'present' ? t('present_label') : r.status === 'late' ? t('late') : r.status === 'suspicious' ? t('suspicious') : r.status === 'absent' ? t('absent') : r.status;
             var statusClass = r.status === 'present' ? 'pill-green' : r.status === 'late' ? 'pill-yellow' : r.status === 'suspicious' || r.status === 'absent' ? 'pill-red' : 'pill-gray';
-            var date = r.marked_at ? new Date(r.marked_at).toLocaleDateString(currentLang === 'fr' ? 'fr' : 'en', { day:'numeric', month:'short' }) : 'â€”';
+            var date = r.marked_at ? new Date(r.marked_at).toLocaleDateString(currentLang === 'fr' ? 'fr' : 'en', { day:'numeric', month:'short' }) : '—';
             return '<tr><td>' + date + '</td><td class="cell-name">' + (r.course_name || '') + '</td><td><span class="pill ' + statusClass + '">' + statusLabel + '</span></td><td>' + (r.lecturer_name || '') + '</td></tr>';
         }).join('');
         if (data.total_pages > 1) {
@@ -2159,7 +2159,7 @@
         startOfWeek.setDate(now.getDate() - now.getDay());
         var weekEnd = new Date(startOfWeek);
         weekEnd.setDate(startOfWeek.getDate() + 6);
-        if (weekLabel) weekLabel.textContent = startOfWeek.getDate() + ' ' + months[startOfWeek.getMonth()] + ' â€” ' + weekEnd.getDate() + ' ' + months[weekEnd.getMonth()];
+        if (weekLabel) weekLabel.textContent = startOfWeek.getDate() + ' ' + months[startOfWeek.getMonth()] + ' — ' + weekEnd.getDate() + ' ' + months[weekEnd.getMonth()];
 
         var eventsByDay = {};
         sessions.forEach(function(s) {
@@ -2213,13 +2213,13 @@
     function openCourseDrawer(course) {
         if (!course) return;
         document.getElementById('drawerTitle').textContent = course.course_name || '';
-        document.getElementById('drawerCode').textContent = course.course_id || 'â€”';
+        document.getElementById('drawerCode').textContent = course.course_id || '—';
         document.getElementById('drawerLecturer').textContent = course.lecturer_name || '';
         document.getElementById('drawerPresent').textContent = course.present || 0;
         document.getElementById('drawerLate').textContent = course.late || 0;
         document.getElementById('drawerAbsent').textContent = course.absent || 0;
         document.getElementById('drawerSuspicious').textContent = course.suspicious || 0;
-        document.getElementById('drawerRate').textContent = course.rate !== undefined ? course.rate + '%' : 'â€”';
+        document.getElementById('drawerRate').textContent = course.rate !== undefined ? course.rate + '%' : '—';
         var riskEl = document.getElementById('drawerRisk');
         var riskClass = course.risk === 'low' ? 'pill-green' : course.risk === 'medium' ? 'pill-yellow' : 'pill-red';
         var riskText = t(course.risk || 'low');
@@ -2232,7 +2232,7 @@
             sessionsEl.innerHTML = courseSessions.slice(0, 8).map(function(s) {
                 var time = s.created_at ? new Date(s.created_at).toLocaleDateString(currentLang === 'fr' ? 'fr' : 'en', { day:'numeric', month:'short' }) : '';
                 var active = s.is_active === true;
-                return '<div class="feed-item"><span class="feed-dot" style="background:' + (active ? 'var(--success)' : 'var(--text-dim)') + '"></span><span class="feed-msg">' + time + ' â€” ' + (active ? t('active_now') : t('past')) + '</span></div>';
+                return '<div class="feed-item"><span class="feed-dot" style="background:' + (active ? 'var(--success)' : 'var(--text-dim)') + '"></span><span class="feed-msg">' + time + ' — ' + (active ? t('active_now') : t('past')) + '</span></div>';
             }).join('');
         } else {
             sessionsEl.innerHTML = '<div class="empty-muted">' + t('no_records') + '</div>';
@@ -2256,7 +2256,7 @@
         var est = dashboardData.sync_estimate || {};
         var recoveryText = est.estimated_recovery_mins > 0.5
             ? '~' + Math.ceil(est.estimated_recovery_mins) + 'm'
-            : est.estimated_seconds > 0 ? '~' + Math.ceil(est.estimated_seconds) + 's' : 'â€”';
+            : est.estimated_seconds > 0 ? '~' + Math.ceil(est.estimated_seconds) + 's' : '—';
         document.getElementById('qEstimate').textContent = recoveryText;
         var pill = document.getElementById('queuePill');
         if (qs.total > 0) {
