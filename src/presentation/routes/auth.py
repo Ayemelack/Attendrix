@@ -232,6 +232,28 @@ def login():
                 SecurityAuditLogger.log_event('login_success',
                     f'Successful login: {sanitized_email}', risk_score=0)
                 enhanced_rate_limiter.clear(email_rate_key)
+                try:
+                    from src.application.network_presence_service import presence_service
+                    user_data = result.get('user', {})
+                    if user_data:
+                        client_ip = request.remote_addr
+                        try:
+                            from src.infrastructure.cloudflare_security import get_client_ip
+                            cf_ip = get_client_ip()
+                            if cf_ip:
+                                client_ip = cf_ip
+                        except:
+                            pass
+                        presence_service.update_presence(
+                            user_id=user_data.get('id'),
+                            institution_id=user_data.get('institution_id'),
+                            email=user_data.get('email'),
+                            role=user_data.get('role'),
+                            ip_address=client_ip,
+                            user_agent=request.headers.get('User-Agent', '')
+                        )
+                except Exception as login_pres_err:
+                    logger.error(f"Presence tracking error on login: {login_pres_err}")
                 return jsonify(result), 200
             SecurityAuditLogger.log_event('login_failed',
                 f'Failed login attempt: {sanitized_email}', risk_score=50)

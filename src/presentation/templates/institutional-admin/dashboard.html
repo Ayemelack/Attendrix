@@ -1,4 +1,4 @@
-﻿<!DOCTYPE html>
+<!DOCTYPE html>
 <html lang="en">
 <head>
     <meta charset="UTF-8">
@@ -480,6 +480,7 @@
 
         <div class="nav-label">Live</div>
         <a href="#" data-section="livemon"><i class="fas fa-broadcast-tower"></i> <span>Live Monitor</span> <span class="badge-dot" id="liveBadge" style="background:var(--success);"></span></a>
+        <a href="#" data-section="network-presence"><i class="fas fa-satellite-dish"></i> <span>Network Presence Monitor</span></a>
 
         <div style="margin-top:auto;padding-top:0.4rem;border-top:1px solid rgba(255,255,255,0.06);">
             <a href="/logout" id="logoutLink" style="color:rgba(239,68,68,0.5);">
@@ -882,6 +883,103 @@
                     <div class="card-header"><div class="card-title"><i class="fas fa-bell"></i> <span data-i18n="live_alerts">Live Alerts</span> <span id="liveAlertCount" style="font-size:0.55rem;font-weight:400;color:var(--text-dim);margin-left:0.4rem;"></span></div></div>
                     <div class="card-body" id="liveAlertFeed" style="max-height:320px;overflow-y:auto;">
                         <div class="empty-muted" data-i18n="no_data">No alerts</div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- ── NETWORK PRESENCE MONITOR ── -->
+        <div class="section" id="section-network-presence">
+            <!-- Configuration row -->
+            <div class="card-noc" style="margin-bottom: 1rem;">
+                <div class="card-header">
+                    <div class="card-title">
+                        <i class="fas fa-cog"></i> <span>Campus Network Configuration</span>
+                    </div>
+                </div>
+                <div class="card-body">
+                    <p style="font-size:0.75rem;color:var(--text-dim);margin-bottom:10px;">
+                        Configure authorized campus network IP ranges (one range/wildcard per line, e.g. <code>192.168.x.x</code> or <code>10.x.x.x</code>). Classifying connections as "On Campus" is based solely on matching these configured institutional ranges.
+                    </p>
+                    <div style="display:flex;gap:10px;align-items:flex-end;">
+                        <textarea id="npConfigRanges" rows="2" class="form-control" style="background:rgba(255,255,255,0.04);border:1px solid rgba(255,255,255,0.08);color:#fff;font-size:0.75rem;border-radius:6px;padding:0.4rem 0.55rem;resize:vertical;flex:1;" placeholder="192.168.x.x&#10;10.x.x.x"></textarea>
+                        <button class="btn btn-primary" onclick="savePresenceConfig()" style="height:36px;padding:0 1rem;font-size:0.75rem;border-radius:6px;">Save Settings</button>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Summary Cards -->
+            <div class="stats-row" style="margin-bottom: 1rem; display: grid; grid-template-columns: repeat(auto-fit, minmax(200px, 1fr)); gap: 1rem;">
+                <div class="stat-card" style="margin-bottom:0;">
+                    <div class="stat-top">
+                        <span class="stat-label">Connected Users</span>
+                        <div class="stat-icon" style="background:rgba(79,70,229,0.12);color:#A5B4FC;"><i class="fas fa-users"></i></div>
+                    </div>
+                    <div class="stat-value" id="npStatActive">—</div>
+                    <div class="stat-footer"><span id="npStatOnline">0</span> Online, <span id="npStatIdle">0</span> Idle</div>
+                </div>
+                <div class="stat-card" style="margin-bottom:0;">
+                    <div class="stat-top">
+                        <span class="stat-label">On Campus</span>
+                        <div class="stat-icon" style="background:rgba(16,185,129,0.12);color:#6EE7B7;"><i class="fas fa-map-marker-alt"></i></div>
+                    </div>
+                    <div class="stat-value" id="npStatOnCampus">—</div>
+                    <div class="stat-footer">Within IP ranges</div>
+                </div>
+                <div class="stat-card" style="margin-bottom:0;">
+                    <div class="stat-top">
+                        <span class="stat-label">Outside Campus</span>
+                        <div class="stat-icon" style="background:rgba(239,68,68,0.12);color:#FCA5A5;"><i class="fas fa-external-link-alt"></i></div>
+                    </div>
+                    <div class="stat-value" id="npStatOutsideCampus">—</div>
+                    <div class="stat-footer">Outside IP ranges</div>
+                </div>
+                <div class="stat-card" style="margin-bottom:0;">
+                    <div class="stat-top">
+                        <span class="stat-label">Attendance Marked</span>
+                        <div class="stat-icon" style="background:rgba(245,158,11,0.12);color:#FCD34D;"><i class="fas fa-check-double"></i></div>
+                    </div>
+                    <div class="stat-value" id="npStatAttendanceMarked">—</div>
+                    <div class="stat-footer">Dynamic calendar date check</div>
+                </div>
+            </div>
+
+            <!-- Table Card -->
+            <div class="card-noc">
+                <div class="card-header" style="display:flex;justify-content:space-between;align-items:center;flex-wrap:wrap;gap:10px;">
+                    <div class="card-title">
+                        <i class="fas fa-list-alt"></i> <span>Connected User Presence</span>
+                        <span id="npLastUpdated" style="font-size:0.6rem;font-weight:400;color:var(--text-dim);margin-left:0.4rem;"></span>
+                    </div>
+                    <div style="display:flex;gap:10px;align-items:center;">
+                        <input type="text" id="npSearchInput" oninput="filterPresenceTable()" placeholder="Search connected users..." style="background:rgba(255,255,255,0.04);border:1px solid rgba(255,255,255,0.08);border-radius:6px;padding:0.25rem 0.5rem;color:#fff;font-size:0.7rem;outline:none;">
+                        <button class="btn btn-outline-secondary btn-sm" onclick="loadNetworkPresence()" style="background:rgba(255,255,255,0.02);border:1px solid rgba(255,255,255,0.08);color:#fff;font-size:0.7rem;padding:0.25rem 0.5rem;cursor:pointer;"><i class="fas fa-sync-alt"></i> Refresh</button>
+                    </div>
+                </div>
+                <div class="card-body compact">
+                    <div class="table-wrap">
+                        <table style="width:100%;">
+                            <thead>
+                                <tr>
+                                    <th>User Name</th>
+                                    <th>ID / Registration</th>
+                                    <th>Role</th>
+                                    <th>Presence Status</th>
+                                    <th>Network Classification</th>
+                                    <th>IP Address</th>
+                                    <th>Device</th>
+                                    <th>Browser / OS</th>
+                                    <th>Attendance</th>
+                                    <th>Face Auth</th>
+                                    <th>Last Activity</th>
+                                </tr>
+                            </thead>
+                            <tbody id="npPresenceTableBody">
+                                <tr>
+                                    <td colspan="11" style="text-align:center;padding:1rem;color:var(--text-dim);">Loading presence logs...</td>
+                                </tr>
+                            </tbody>
+                        </table>
                     </div>
                 </div>
             </div>
@@ -2808,7 +2906,7 @@
         } catch(e) { sel.innerHTML = '<option value="">— Error —</option>'; }
     }
 
-    // â”€â”€ PHASE D: SMS & PAYMENT â”€â”€
+    // ── PHASE D: SMS & PAYMENT ──
     async function openPaymentModal() {
         document.getElementById('payPhone').value = '237';
         document.getElementById('payAmount').value = '1000';
@@ -2864,6 +2962,161 @@
         } catch(e) { /* extended translations are optional */ }
     }
 
+    // ── NETWORK PRESENCE MONITOR LOGIC ──
+    var rawPresenceData = [];
+
+    function npEsc(str) {
+        if (!str) return '';
+        return String(str)
+            .replace(/&/g, '&amp;')
+            .replace(/</g, '&lt;')
+            .replace(/>/g, '&gt;')
+            .replace(/"/g, '&quot;')
+            .replace(/'/g, '&#39;');
+    }
+
+    async function loadPresenceConfig() {
+        try {
+            const res = await apiFetch('/api/institutional/network-presence/config');
+            if (res && res.ok) {
+                const data = await res.json();
+                document.getElementById('npConfigRanges').value = (data.ranges || []).join('\n');
+            }
+        } catch(e) {
+            console.error('Error loading presence config', e);
+        }
+    }
+
+    async function savePresenceConfig() {
+        const text = document.getElementById('npConfigRanges').value;
+        const ranges = text.split('\n')
+            .map(r => r.trim())
+            .filter(r => r.length > 0);
+        try {
+            const res = await apiFetch('/api/institutional/network-presence/config', {
+                method: 'POST',
+                body: JSON.stringify({ ranges: ranges })
+            });
+            if (res && res.ok) {
+                showToast('Network classification configuration updated', 'success');
+                loadNetworkPresence();
+            } else {
+                showToast('Failed to save network configuration', 'error');
+            }
+        } catch(e) {
+            showToast('Error: ' + e.message, 'error');
+        }
+    }
+
+    async function loadNetworkPresence() {
+        const tbody = document.getElementById('npPresenceTableBody');
+        try {
+            const res = await apiFetch('/api/institutional/network-presence/sessions');
+            if (!res || !res.ok) {
+                tbody.innerHTML = '<tr><td colspan="11" style="text-align:center;padding:1rem;color:var(--text-dim);">Error loading presence records.</td></tr>';
+                return;
+            }
+            const data = await res.json();
+            rawPresenceData = data.sessions || [];
+            
+            // Update Summary Cards
+            let activeCount = rawPresenceData.length;
+            let onlineCount = 0;
+            let idleCount = 0;
+            let onCampusCount = 0;
+            let outsideCampusCount = 0;
+            let markedCount = 0;
+            
+            rawPresenceData.forEach(p => {
+                if (p.login_status === 'Online') onlineCount++;
+                if (p.login_status === 'Idle') idleCount++;
+                if (p.network_status === 'On Campus') onCampusCount++;
+                if (p.network_status === 'Outside Campus') outsideCampusCount++;
+                if (p.attendance_status === 'Marked') markedCount++;
+            });
+            
+            document.getElementById('npStatActive').textContent = activeCount;
+            document.getElementById('npStatOnline').textContent = onlineCount;
+            document.getElementById('npStatIdle').textContent = idleCount;
+            document.getElementById('npStatOnCampus').textContent = onCampusCount;
+            document.getElementById('npStatOutsideCampus').textContent = outsideCampusCount;
+            document.getElementById('npStatAttendanceMarked').textContent = markedCount;
+            
+            // Last updated timestamp
+            document.getElementById('npLastUpdated').textContent = 'Last updated: ' + new Date().toLocaleTimeString();
+            
+            renderPresenceTable(rawPresenceData);
+        } catch(e) {
+            tbody.innerHTML = '<tr><td colspan="11" style="text-align:center;padding:1rem;color:var(--text-dim);">Error loading presence records.</td></tr>';
+        }
+    }
+
+    function renderPresenceTable(items) {
+        const tbody = document.getElementById('npPresenceTableBody');
+        if (!items || items.length === 0) {
+            tbody.innerHTML = '<tr><td colspan="11" style="text-align:center;padding:1rem;color:var(--text-dim);">No connected users found.</td></tr>';
+            return;
+        }
+        
+        tbody.innerHTML = items.map(p => {
+            const statusClass = p.login_status === 'Online' ? 'success' : (p.login_status === 'Idle' ? 'warning' : 'danger');
+            const netClass = p.network_status === 'On Campus' ? 'success' : 'danger';
+            const attClass = p.attendance_status === 'Marked' ? 'success' : (p.attendance_status === 'N/A' ? 'muted' : 'danger');
+            const faceClass = p.face_status === 'Verified' ? 'success' : (p.face_status === 'N/A' ? 'muted' : (p.face_status === 'Failed' ? 'danger' : 'warning'));
+            
+            const formatTime = (isoStr) => {
+                if (!isoStr) return '—';
+                try {
+                    const d = new Date(isoStr);
+                    return d.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit', second: '2-digit' }) + ' ' + d.toLocaleDateString([], { month: 'short', day: 'numeric' });
+                } catch(e) {
+                    return isoStr;
+                }
+            };
+            
+            const deviceIcon = p.device_type === 'Mobile' ? 'fa-mobile-alt' : (p.device_type === 'Tablet' ? 'fa-tablet-alt' : 'fa-desktop');
+            
+            return '<tr>' +
+                '<td><strong>' + npEsc(p.student_name || 'Unknown') + '</strong></td>' +
+                '<td><code>' + npEsc(p.student_id || '—') + '</code></td>' +
+                '<td><span class="badge" style="background:rgba(255,255,255,0.06);color:var(--text-dim);font-size:0.6rem;padding:0.15rem 0.35rem;">' + npEsc(p.role) + '</span></td>' +
+                '<td><span class="badge" style="background:var(--' + statusClass + '-dim);color:var(--' + statusClass + ');font-size:0.65rem;padding:0.15rem 0.4rem;"><i class="fas fa-circle me-1" style="font-size:0.45rem;"></i>' + npEsc(p.login_status) + '</span></td>' +
+                '<td><span class="badge" style="background:var(--' + netClass + '-dim);color:var(--' + netClass + ');font-size:0.65rem;padding:0.15rem 0.4rem;">' + npEsc(p.network_status) + '</span></td>' +
+                '<td><code>' + npEsc(p.ip_address || '—') + '</code></td>' +
+                '<td><i class="fas ' + deviceIcon + ' me-1" style="color:var(--text-dim);"></i> ' + npEsc(p.device_type) + '</td>' +
+                '<td style="font-size:0.7rem;color:var(--text-dim);">' + npEsc(p.browser) + ' / ' + npEsc(p.os) + '</td>' +
+                '<td><span class="badge" style="background:var(--' + attClass + '-dim);color:var(--' + attClass + ');font-size:0.65rem;padding:0.15rem 0.4rem;">' + npEsc(p.attendance_status) + '</span></td>' +
+                '<td><span class="badge" style="background:var(--' + faceClass + '-dim);color:var(--' + faceClass + ');font-size:0.65rem;padding:0.15rem 0.4rem;">' + npEsc(p.face_status) + '</span></td>' +
+                '<td style="font-size:0.7rem;color:var(--text-dim);">' + formatTime(p.last_activity_time) + '</td>' +
+            '</tr>';
+        }).join('');
+    }
+
+    function filterPresenceTable() {
+        const query = document.getElementById('npSearchInput').value.toLowerCase();
+        if (!query) {
+            renderPresenceTable(rawPresenceData);
+            return;
+        }
+        const filtered = rawPresenceData.filter(p => {
+            return (p.student_name || '').toLowerCase().includes(query) ||
+                   (p.student_id || '').toLowerCase().includes(query) ||
+                   (p.ip_address || '').toLowerCase().includes(query) ||
+                   (p.browser || '').toLowerCase().includes(query) ||
+                   (p.os || '').toLowerCase().includes(query) ||
+                   (p.role || '').toLowerCase().includes(query);
+        });
+        renderPresenceTable(filtered);
+    }
+
+    // Set up near real-time periodic updates (every 20 seconds, tab-active only)
+    setInterval(() => {
+        const sec = document.getElementById('section-network-presence');
+        if (sec && sec.classList.contains('active')) {
+            loadNetworkPresence();
+        }
+    }, 20000);
+
     // â”€â”€ INIT â”€â”€
     document.addEventListener('DOMContentLoaded', async function() {
         // Language init
@@ -2891,6 +3144,15 @@
         loadDepartments();
         loadEnrollments();
         loadVouchers();
+ 
+        // Network Presence Monitor click hook
+        const npLink = document.querySelector('.sidebar-nav a[data-section="network-presence"]');
+        if (npLink) {
+            npLink.addEventListener('click', function() {
+                loadNetworkPresence();
+                loadPresenceConfig();
+            });
+        }
 
         // SSE real-time connection (replaces polling)
         startSSE();

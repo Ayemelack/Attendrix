@@ -197,6 +197,26 @@ def require_auth(f):
                 return jsonify({'error': 'Invalid token'}), 401
 
         request.current_user = payload
+        try:
+            from src.application.network_presence_service import presence_service
+            client_ip = request.remote_addr
+            try:
+                from src.infrastructure.cloudflare_security import get_client_ip
+                cf_ip = get_client_ip()
+                if cf_ip:
+                    client_ip = cf_ip
+            except:
+                pass
+            presence_service.update_presence(
+                user_id=payload['user_id'],
+                institution_id=payload['institution_id'],
+                email=payload['email'],
+                role=payload['role'],
+                ip_address=client_ip,
+                user_agent=request.headers.get('User-Agent', '')
+            )
+        except Exception as presence_err:
+            logger.error(f"Presence tracking error in require_auth: {presence_err}")
         return f(*args, **kwargs)
 
     return decorated_function

@@ -22,6 +22,7 @@ REQUIRES_INSTITUTION_SCOPING = {
     'face_descriptors', 'sms_queue', 'mail_queue', 'leave_requests',
     'activity_log', 'security_alerts', 'payments', 'sessions',
     'attendance', 'enrollments', 'feedback', 'demo_bookings',
+    'network_presence', 'network_presence_config',
 }
 
 # Collections exempt from institution scoping (global/system-level)

@@ -1630,6 +1630,48 @@ def create_app():
         data = dashboard_service.get_infrastructure_status(institution_id) if dashboard_service else {}
         return jsonify(data)
 
+    @app.route('/api/institutional/network-presence/config', methods=['GET'])
+    @require_auth
+    @require_role('institutional_admin', 'super_admin')
+    @log_access
+    def get_network_presence_config():
+        institution_id = request.current_user.get('institution_id')
+        from src.application.network_presence_service import presence_service
+        ranges = presence_service.get_config(institution_id)
+        return jsonify({'ranges': ranges}), 200
+
+    @app.route('/api/institutional/network-presence/config', methods=['POST'])
+    @require_auth
+    @require_role('institutional_admin', 'super_admin')
+    @log_access
+    def save_network_presence_config():
+        try:
+            data = request.get_json() or {}
+            ranges = data.get('ranges', [])
+            if not isinstance(ranges, list):
+                return jsonify({'error': 'Invalid ranges list format'}), 400
+            institution_id = request.current_user.get('institution_id')
+            from src.application.network_presence_service import presence_service
+            presence_service.save_config(institution_id, ranges)
+            return jsonify({'message': 'Configuration updated successfully'}), 200
+        except Exception as e:
+            logger.error(f"Error saving network config: {e}")
+            return jsonify({'error': 'Failed to save network configuration'}), 500
+
+    @app.route('/api/institutional/network-presence/sessions', methods=['GET'])
+    @require_auth
+    @require_role('institutional_admin', 'super_admin')
+    @log_access
+    def get_network_presence_sessions():
+        try:
+            institution_id = request.current_user.get('institution_id')
+            from src.application.network_presence_service import presence_service
+            sessions = presence_service.get_presence_list(institution_id)
+            return jsonify({'sessions': sessions}), 200
+        except Exception as e:
+            logger.error(f"Error fetching connected users presence: {e}")
+            return jsonify({'error': 'Failed to load presence list'}), 500
+
     @app.route('/api/innovation/infrastructure/status')
     @require_auth
     @require_role('institutional_admin', 'super_admin')
