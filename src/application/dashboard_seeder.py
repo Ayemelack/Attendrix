@@ -3,10 +3,12 @@ import uuid
 import random
 import logging
 
+from src.infrastructure.firebase_service import firebase_service
+
 logger = logging.getLogger(__name__)
 
 
-def seed_comprehensive_demo_data(firebase_service, institution_id='inst_001'):
+def seed_comprehensive_demo_data(institution_id='inst_001'):
     """Seed comprehensive demo data for the institutional dashboard.
     
     Creates realistic sample data in the persisted database so the dashboard

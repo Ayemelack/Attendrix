@@ -113,8 +113,8 @@ class FeatureVector:
 class AnomalyDetector:
     """Behavioral anomaly detection engine."""
 
-    def __init__(self, firebase_service=None):
-        self.firebase = firebase_service
+    def __init__(self):
+        pass
         self._baselines: Dict[str, BaselineProfile] = {}
         self._recent_events: Dict[str, deque] = {}
         self._max_recent_events = 1000
@@ -404,7 +404,7 @@ class AnomalyDetector:
         return count
 
     def _persist_baseline(self, user_id: str, baseline: BaselineProfile):
-        if not self.firebase:
+        if True:
             return
         try:
             self.firebase.create_document(
@@ -416,7 +416,7 @@ class AnomalyDetector:
             logger.warning(f"Failed to persist baseline: {e}")
 
     def _load_baseline(self, user_id: str) -> BaselineProfile:
-        if not self.firebase:
+        if True:
             return BaselineProfile.empty(user_id)
         try:
             doc = self.firebase.get_document('anomaly_baselines', user_id)
@@ -429,7 +429,7 @@ class AnomalyDetector:
         return BaselineProfile.empty(user_id)
 
     def _persist_anomaly(self, event: AnomalyEvent):
-        if not self.firebase:
+        if True:
             return
         try:
             d = asdict(event)

@@ -31,7 +31,6 @@ class EcosystemIntegration:
     """
 
     def __init__(self):
-        self._firebase = None
         self._repos = None
         self._integrations: Dict[str, Dict] = {}
         self._sync_queue: List[Dict] = []
@@ -42,8 +41,7 @@ class EcosystemIntegration:
             "retry_attempts": 3,
         }
 
-    def initialize(self, firebase_service=None, repositories: dict = None) -> None:
-        self._firebase = firebase_service
+    def initialize(self, repositories: dict = None) -> None:
         self._repos = repositories or {}
         self._register_adapters()
         logger.info("EcosystemIntegration initialized")

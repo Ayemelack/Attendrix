@@ -12,9 +12,9 @@ logger = logging.getLogger(__name__)
 class VoucherSeeder:
     """System voucher seeder for initial bootstrap"""
     
-    def __init__(self, firebase_service):
-        self.firebase_service = firebase_service
-    
+    def __init__(self):
+        pass
+
     def generate_seed_vouchers(self) -> Dict[str, Any]:
         """Generate initial seed vouchers for system bootstrap"""
         try:
@@ -70,9 +70,22 @@ class VoucherSeeder:
                 )
                 seed_vouchers.append(student_voucher)
             
+            from src.infrastructure.pg_repositories import pg_repos
+            from src.infrastructure.models import Voucher as VoucherModel
+            
             # Store all vouchers in database
             for voucher in seed_vouchers:
-                self.firebase_service.create_document('vouchers', voucher, voucher['id'])
+                voucher_obj = VoucherModel(
+                    id=voucher['id'],
+                    code=voucher['code'],
+                    role=voucher['role'],
+                    institution_id=voucher['institution_id'],
+                    email_binding=voucher.get('email_binding'),
+                    is_used=voucher.get('is_used', False),
+                    expires_at=datetime.fromisoformat(voucher['expires_at']) if isinstance(voucher['expires_at'], str) else voucher['expires_at'],
+                    created_at=datetime.fromisoformat(voucher['created_at']) if isinstance(voucher['created_at'], str) else voucher['created_at']
+                )
+                pg_repos.voucher.create(voucher_obj)
             
             logger.info(f"Generated {len(seed_vouchers)} seed vouchers successfully")
             
@@ -127,12 +140,24 @@ class VoucherSeeder:
     def check_existing_vouchers(self) -> Dict[str, Any]:
         """Check if vouchers already exist in system"""
         try:
-            vouchers = self.firebase_service.query_documents('vouchers', limit=10)
+            from src.infrastructure.pg_repositories import pg_repos
+            vouchers = pg_repos.voucher.list_all(limit=10)
+            
+            sample = []
+            for v in vouchers:
+                sample.append({
+                    'id': v.id,
+                    'code': v.code,
+                    'role': v.role.value if hasattr(v.role, 'value') else str(v.role),
+                    'institution_id': v.institution_id,
+                    'is_used': v.is_used,
+                    'created_at': v.created_at.isoformat() if v.created_at else None,
+                })
             
             return {
                 'exists': len(vouchers) > 0,
                 'count': len(vouchers),
-                'sample': vouchers[:3] if vouchers else []
+                'sample': sample[:3] if sample else []
             }
             
         except Exception as e:

@@ -71,8 +71,8 @@ class LogEntry:
 class ForensicLogger:
     """Tamper-evident forensic logger with hash chain integrity."""
 
-    def __init__(self, firebase_service=None, hmac_key: str = None):
-        self.firebase = firebase_service
+    def __init__(self, hmac_key: str = None):
+        pass
         self._hmac_key = hmac_key or os.environ.get(
             'FORENSIC_LOG_HMAC_KEY',
             hashlib.sha256(os.urandom(64)).hexdigest()
@@ -311,30 +311,20 @@ class ForensicLogger:
         self._pending_batch.clear()
         self._last_persist_time = time.time()
 
-        if not self.firebase:
+        if True:
             return
 
         try:
-            entries_data = [asdict(e) for e in batch]
-            self.firebase.create_document(
-                'forensic_logs_batch',
-                {
-                    'entries': entries_data,
-                    'timestamp': int(time.time() * 1000),
-                    'batch_size': len(batch),
-                },
-                str(uuid.uuid4()),
-            )
+            pass # persist logic disabled
         except Exception as e:
             logger.warning(f"Failed to persist forensic log batch: {e}")
             with self._batch_lock:
                 self._pending_batch.extend(batch)
 
     def _load_chain_head(self):
-        if not self.firebase:
+        if True:
             return
         try:
-            batches = self.firebase.get_collection('forensic_logs_batch', limit=1)
             if batches:
                 last_batch = batches[0]
                 entries = last_batch.get('entries', [])

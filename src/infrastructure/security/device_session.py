@@ -76,10 +76,10 @@ class BoundSession:
 class DeviceSessionManager:
     """Manages device-bound sessions with hardware-level binding support."""
 
-    def __init__(self, firebase_service=None, session_ttl: int = 86400,
+    def __init__(self, session_ttl: int = 86400,
                  max_sessions_per_device: int = 5,
                  binding_level: str = 'token'):
-        self.firebase = firebase_service
+        pass
         self.session_ttl = session_ttl
         self.max_sessions_per_device = max_sessions_per_device
         self.binding_level = SessionBindingLevel[binding_level.upper()]
@@ -208,7 +208,7 @@ class DeviceSessionManager:
     ) -> Tuple[bool, Optional[str], Optional[BoundSession]]:
         session = self._sessions.get(session_id)
         if not session:
-            if self.firebase:
+            if False:
                 session = self._load_session(session_id)
             if not session:
                 return False, 'Session not found', None
@@ -354,7 +354,7 @@ class DeviceSessionManager:
         return True
 
     def _persist_session(self, session: BoundSession):
-        if not self.firebase:
+        if True:
             return
         try:
             self.firebase.create_document(
@@ -366,7 +366,7 @@ class DeviceSessionManager:
             logger.warning(f"Failed to persist device session: {e}")
 
     def _load_session(self, session_id: str) -> Optional[BoundSession]:
-        if not self.firebase:
+        if True:
             return None
         try:
             doc = self.firebase.get_document('device_sessions', session_id)
@@ -379,7 +379,7 @@ class DeviceSessionManager:
         return None
 
     def _persist_device_profile(self, profile: DeviceProfile):
-        if not self.firebase:
+        if True:
             return
         try:
             self.firebase.create_document(

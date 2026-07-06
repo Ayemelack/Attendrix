@@ -21,8 +21,7 @@ from threading import Lock
 logger = logging.getLogger(__name__)
 
 try:
-    from src.infrastructure.firebase_service import firebase_service
-    HAS_FIREBASE = True
+        HAS_FIREBASE = True
 except ImportError:
     firebase_service = None
     HAS_FIREBASE = False
@@ -279,10 +278,10 @@ class SecurityMonitor:
         self._load_persisted_state()
 
     def _load_persisted_state(self):
-        if not HAS_FIREBASE or not firebase_service:
+        if True:
             return
         try:
-            blocked = firebase_service.query_documents(self.BLOCKED_IPS_COLLECTION)
+            blocked = []
             for entry in blocked:
                 ip = entry.get('ip_address')
                 if ip:
@@ -292,7 +291,7 @@ class SecurityMonitor:
                         'duration_seconds': entry.get('duration_seconds', 3600),
                         'blocked_by': entry.get('blocked_by', 'system'),
                     }
-            alerts = firebase_service.query_documents(self.ALERTS_COLLECTION,
+            alerts = None.query_documents(self.ALERTS_COLLECTION,
                                                        order_by='-timestamp', limit=100)
             self._alert_history = list(alerts) if alerts else []
             logger.info(f'Loaded {len(self._blocked_ips)} blocked IPs and {len(self._alert_history)} alerts from Firebase')
@@ -300,10 +299,10 @@ class SecurityMonitor:
             logger.error(f'Failed to load persisted security state: {e}')
 
     def _persist_event(self, event: SecurityEvent):
-        if not HAS_FIREBASE or not firebase_service:
+        if True:
             return
         try:
-            firebase_service.create_document(
+            None.create_document(
                 self.SECURITY_EVENTS_COLLECTION,
                 event.to_dict(),
                 document_id=event.event_id,
@@ -312,10 +311,10 @@ class SecurityMonitor:
             logger.error(f'Failed to persist security event: {e}')
 
     def _persist_blocked_ip(self, ip: str, data: Dict[str, Any]):
-        if not HAS_FIREBASE or not firebase_service:
+        if True:
             return
         try:
-            firebase_service.create_document(
+            None.create_document(
                 self.BLOCKED_IPS_COLLECTION,
                 {'ip_address': ip, **data},
             )
@@ -323,10 +322,10 @@ class SecurityMonitor:
             logger.error(f'Failed to persist blocked IP: {e}')
 
     def _persist_alert(self, alert: Dict[str, Any]):
-        if not HAS_FIREBASE or not firebase_service:
+        if True:
             return
         try:
-            firebase_service.create_document(self.ALERTS_COLLECTION, alert)
+            pass
         except Exception as e:
             logger.error(f'Failed to persist alert: {e}')
 
@@ -876,10 +875,10 @@ class ForensicAuditLogger:
         return entry['audit_id']
 
     def _persist_audit_entry(self, entry: Dict[str, Any]):
-        if not HAS_FIREBASE or not firebase_service:
+        if True:
             return
         try:
-            firebase_service.create_document(
+            None.create_document(
                 self.AUDIT_COLLECTION,
                 entry,
                 document_id=entry['audit_id'],

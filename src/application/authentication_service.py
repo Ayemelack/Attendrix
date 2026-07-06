@@ -23,10 +23,10 @@ class AuthenticationService:
     New code should import from src.application.auth_service directly.
     """
     
-    def __init__(self, firebase_service=None):
+    def __init__(self):
         logger.warning("AuthenticationService (deprecated) instantiated - use auth_service from src.application.auth_service")
         self._delegate = _active_auth_service
-        self.firebase_service = firebase_service
+        
     
     def authenticate_user(self, email: str, password: str, remember_me: bool = False,
                          device_fingerprint: Optional[str] = None,

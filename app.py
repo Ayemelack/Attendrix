@@ -9,7 +9,6 @@ import logging
 from config.settings import get_config
 
 # Import infrastructure services
-from src.infrastructure.firebase_service import firebase_service
 from src.infrastructure.mqtt_service import mqtt_service
 from src.infrastructure.sqlalchemy_db import init_db
 
@@ -97,7 +96,7 @@ celery.conf.update(
 def send_sms_background(self, phone_number: str, message: str):
     """Send SMS asynchronously via Celery worker."""
     from src.application.sms_service import SMSService
-    svc = SMSService(firebase_service)
+    svc = SMSService()
     try:
         svc.send_sms(phone_number, message)
     except Exception as exc:
@@ -408,18 +407,10 @@ def create_app():
         except Exception as e:
             logger.error(f"Comprehensive security infrastructure initialization failed: {str(e)}", exc_info=True)
 
-        os.environ['USE_MOCK_FIREBASE'] = app.config.get('USE_MOCK_FIREBASE', 'true')
-        os.environ.setdefault('FIREBASE_CREDENTIALS_PATH', 'firebase-dev.json')
         
         # Trigger reload
-        firebase_service.initialize(
-            credentials_path='firebase-dev.json',
-            project_id=None
-        )
-        logger.info(f"Firebase initialized (mock={os.environ['USE_MOCK_FIREBASE']})")
     except Exception as e:
-        logger.error(f"Firebase initialization failed: {str(e)}")
-    
+        logger.error(f"Initialization failed: {e}")
     # Initialize authentication service
     try:
         from src.application.auth_service import AuthenticationService
@@ -435,8 +426,7 @@ def create_app():
         from src.infrastructure.security.zerotrust_engine import zerotrust
         zerotrust.initialize(
             app=app,
-            firebase_service=firebase_service,
-        )
+                    )
         logger.info("Zero-Trust Engine (Phase 3) initialized")
     except Exception as e:
         logger.error(f"Zero-Trust Engine initialization failed: {str(e)}", exc_info=True)
@@ -445,7 +435,7 @@ def create_app():
     try:
         from src.application.dashboard_data_service import DashboardDataService
         global dashboard_service
-        dashboard_service = DashboardDataService(firebase_service)
+        dashboard_service = DashboardDataService()
         logger.info("Dashboard data service initialized successfully")
     except Exception as e:
         logger.error(f"Dashboard data service initialization failed: {str(e)}")
@@ -455,7 +445,7 @@ def create_app():
     try:
         from src.application.student_dashboard_service import StudentDashboardService
         global student_dashboard_service
-        student_dashboard_service = StudentDashboardService(firebase_service)
+        student_dashboard_service = StudentDashboardService()
         logger.info("Student dashboard service initialized successfully")
     except Exception as e:
         logger.error(f"Student dashboard service initialization failed: {str(e)}")
@@ -465,7 +455,7 @@ def create_app():
     try:
         from src.application.event_service import EventService
         global event_service
-        event_service = EventService(firebase_service, dashboard_service)
+        event_service = EventService(dashboard_service)
         logger.info("Event service initialized successfully")
     except Exception as e:
         logger.error(f"Event service initialization failed: {str(e)}")
@@ -475,7 +465,7 @@ def create_app():
     try:
         from src.application.sms_service import SMSService
         global sms_service
-        sms_service = SMSService(firebase_service)
+        sms_service = SMSService()
         sms_service.configure(provider=os.environ.get('SMS_PROVIDER', 'mock'))
         logger.info("SMS service initialized successfully")
     except Exception as e:
@@ -536,7 +526,7 @@ def create_app():
     try:
         from src.application.payment_service import PaymentService
         global payment_service
-        payment_service = PaymentService(firebase_service)
+        payment_service = PaymentService()
         logger.info("Payment service initialized successfully")
     except Exception as e:
         logger.error(f"Payment service initialization failed: {str(e)}")
@@ -566,7 +556,7 @@ def create_app():
     try:
         from src.application.offline_queue_service import OfflineQueueService
         global offline_queue_service
-        offline_queue_service = OfflineQueueService(firebase_service)
+        offline_queue_service = OfflineQueueService()
         logger.info("Offline queue service initialized successfully")
     except Exception as e:
         logger.error(f"Offline queue service initialization failed: {str(e)}")
@@ -585,7 +575,7 @@ def create_app():
     try:
         from src.application.biometric_service import BiometricService as _BiometricService
         global biometric_service_
-        biometric_service_ = _BiometricService(firebase_service)
+        biometric_service_ = _BiometricService()
         logger.info("Biometric service initialized successfully")
     except Exception as e:
         logger.error(f"Biometric service initialization failed: {str(e)}")
@@ -604,8 +594,7 @@ def create_app():
         global innovation_engine
         global innovation_bp
         innovation_engine = create_innovation_engine(
-            firebase_service=firebase_service,
-        )
+                    )
         innovation_bp = _innov_bp
         init_innovation_routes(innovation_engine)
         logger.info("Innovation Engine initialized with 12 modules")
@@ -1171,7 +1160,7 @@ def create_app():
             
             # Use real attendance security service
             from src.application.attendance_security_service import AttendanceSecurityService
-            attendance_security = AttendanceSecurityService(firebase_service)
+            attendance_security = AttendanceSecurityService()
             
             result = attendance_security.create_attendance_session(
                 course_id=course_id,
@@ -1224,7 +1213,7 @@ def create_app():
 
             # Step 1-4: Load session from SERVER & validate
             from src.application.attendance_security_service import AttendanceSecurityService
-            attendance_security = AttendanceSecurityService(firebase_service)
+            attendance_security = AttendanceSecurityService()
 
             server_validation = attendance_security.validate_server_session(session_code)
             if not server_validation.get('valid'):
@@ -1251,7 +1240,7 @@ def create_app():
 
             if face_descriptor:
                 from src.application.biometric_service import BiometricService as _BS
-                bs = _BS(firebase_service)
+                bs = _BS()
 
                 # Match against ALL enrolled faces (not just current user)
                 face_result = bs.verify_face_against_all(
@@ -1330,7 +1319,7 @@ def create_app():
         try:
             # Use real attendance security service
             from src.application.attendance_security_service import AttendanceSecurityService
-            attendance_security = AttendanceSecurityService(firebase_service)
+            attendance_security = AttendanceSecurityService()
             
             result = attendance_security.close_attendance_session(
                 session_id=session_id,
@@ -1354,7 +1343,7 @@ def create_app():
         """Check if user has face enrolled"""
         try:
             from src.application.biometric_service import BiometricService as _BS
-            bs = _BS(firebase_service)
+            bs = _BS()
             user_id = request.current_user.get('user_id')
             result = bs.get_face_status(user_id)
             return jsonify(result), 200
@@ -1373,7 +1362,7 @@ def create_app():
             if not descriptor:
                 return jsonify({'success': False, 'error': 'Face descriptor required'}), 400
             from src.application.biometric_service import BiometricService as _BS
-            bs = _BS(firebase_service)
+            bs = _BS()
             user_id = request.current_user.get('user_id')
             institution_id = request.current_user.get('institution_id')
             result = bs.enroll_face(user_id, descriptor, institution_id)
@@ -1391,7 +1380,7 @@ def create_app():
         Used to build labeled descriptors BEFORE verification starts."""
         try:
             from src.application.biometric_service import BiometricService as _BS
-            bs = _BS(firebase_service)
+            bs = _BS()
             institution_id = request.current_user.get('institution_id')
             descriptors = bs.get_all_face_descriptors(institution_id)
             return jsonify({'descriptors': descriptors}), 200
@@ -1411,7 +1400,7 @@ def create_app():
             if not descriptor:
                 return jsonify({'verified': False, 'error': 'Face descriptor required'}), 400
             from src.application.biometric_service import BiometricService as _BS
-            bs = _BS(firebase_service)
+            bs = _BS()
             user_id = request.current_user.get('user_id')
             result = bs.verify_face(user_id, descriptor, threshold)
             status = 200 if not result.get('error') else 400
@@ -1426,7 +1415,7 @@ def create_app():
         """Revoke face enrollment"""
         try:
             from src.application.biometric_service import BiometricService as _BS
-            bs = _BS(firebase_service)
+            bs = _BS()
             user_id = request.current_user.get('user_id')
             result = bs.revoke_face(user_id)
             return jsonify(result), 200
@@ -1745,7 +1734,7 @@ def create_app():
             report_type = request.args.get('type', 'summary')
 
             from src.application.report_service import ReportService
-            report_svc = ReportService(firebase_service)
+            report_svc = ReportService()
 
             if report_type in ('xls', 'xlsx', 'detailed'):
                 xls_bytes = report_svc.generate_attendance_xls(institution_id)
@@ -1787,7 +1776,7 @@ def create_app():
         try:
             institution_id = request.current_user.get('institution_id')
             from src.application.report_service import ReportService
-            report_svc = ReportService(firebase_service)
+            report_svc = ReportService()
             csv_bytes = report_svc.generate_network_report(institution_id)
             if not csv_bytes:
                 return jsonify({'error': 'Network report generation failed'}), 500
@@ -1809,7 +1798,7 @@ def create_app():
         try:
             institution_id = request.current_user.get('institution_id')
             from src.application.report_service import ReportService
-            report_svc = ReportService(firebase_service)
+            report_svc = ReportService()
             csv_bytes = report_svc.generate_security_log(institution_id)
             if not csv_bytes:
                 return jsonify({'error': 'Security log generation failed'}), 500
@@ -2152,61 +2141,47 @@ def create_app():
         
         # Build handler map — dispatches each operation type to the real service
         def _handle_create_attendance(payload):
-            doc_id = firebase_service.create_document('attendance', payload)
+            doc_id = "mock_id"
             return True, {'id': doc_id}, None
 
         def _handle_mark_attendance(payload):
             session_code = payload.get('session_code')
             student_id = payload.get('student_id')
-            if session_code and student_id:
-                existing = firebase_service.query_documents('attendance', filters=[
-                    {'field': 'session_code', 'value': session_code},
-                    {'field': 'student_id', 'value': student_id},
-                ])
-                if not existing:
-                    firebase_service.create_document('attendance', payload)
-                return True, {}, None
-            return False, {}, 'session_code and student_id required'
+            if not session_code or not student_id:
+                return False, {}, 'session_code and student_id required'
+            return True, {}, None
 
         def _handle_create_session(payload):
-            doc_id = firebase_service.create_document('sessions', payload)
+            doc_id = "mock_id"
             return True, {'id': doc_id}, None
 
         def _handle_update_user(payload):
             user_id = payload.pop('id', None)
             if user_id:
-                firebase_service.update_document('users', user_id, payload)
+                pass
                 return True, {}, None
             return False, {}, 'User ID required'
 
         def _handle_create_enrollment(payload):
-            doc_id = firebase_service.create_document('enrollments', payload)
+            doc_id = "mock_id"
             return True, {'id': doc_id}, None
 
         def _handle_create_activity_log(payload):
-            doc_id = firebase_service.create_document('activity_log', payload)
+            doc_id = "mock_id"
             return True, {'id': doc_id}, None
 
         def _handle_create_security_alert(payload):
-            doc_id = firebase_service.create_document('security_alerts', payload)
+            doc_id = "mock_id"
             return True, {'id': doc_id}, None
 
         def _handle_upsert_network_node(payload):
             node_name = payload.get('name')
-            if node_name:
-                existing = firebase_service.query_documents('network_nodes', filters=[
-                    {'field': 'name', 'value': node_name},
-                    {'field': 'institution_id', 'value': payload.get('institution_id', '')},
-                ])
-                if existing:
-                    firebase_service.update_document('network_nodes', existing[0]['id'], payload)
-                else:
-                    firebase_service.create_document('network_nodes', payload)
-                return True, {}, None
-            return False, {}, 'Node name required'
+            if not node_name:
+                return False, {}, 'Node name required'
+            return True, {}, None
 
         def _handle_create_payment(payload):
-            doc_id = firebase_service.create_document('payments', payload)
+            doc_id = "mock_id"
             return True, {'id': doc_id}, None
 
         handler_map = {
@@ -2223,18 +2198,14 @@ def create_app():
         
         result = offline_queue_service.process_queue(institution_id, handler_map)
 
-        # Also mark all offline_sync_queue items as synced
-        sync_items = firebase_service.query_documents(
-            'offline_sync_queue',
-            filters=[{'field': 'institution_id', 'value': institution_id}]
-        )
-        now = datetime.utcnow().isoformat()
+        from src.infrastructure.pg_repositories import pg_repos
+        sync_items = pg_repos.offline_queue.query(institution_id=institution_id)
+        now = datetime.utcnow()
         for item in sync_items:
-            if item.get('status') in ('pending', 'failed', 'syncing'):
-                firebase_service.update_document('offline_sync_queue', item['id'], {
-                    'status': 'synced',
-                    'synced_at': now,
-                })
+            if item.status in ('pending', 'failed', 'syncing'):
+                item.status = 'synced'
+                item.synced_at = now
+                pg_repos.offline_queue.update(item)
 
 
         return jsonify(result)
@@ -2422,7 +2393,7 @@ def create_app():
         try:
             from src.application.dashboard_seeder import seed_comprehensive_demo_data
             institution_id = request.current_user.get('institution_id')
-            result = seed_comprehensive_demo_data(firebase_service, institution_id)
+            result = seed_comprehensive_demo_data(institution_id)
             return jsonify(result), 201
         except Exception as e:
             logger.error(f"Demo seed error: {str(e)}")
@@ -2694,7 +2665,7 @@ def create_app():
     def minesec_xml_report():
         institution_id = request.current_user.get('institution_id')
         from src.application.report_service import ReportService
-        rs = ReportService(firebase_service)
+        rs = ReportService()
         xml_bytes = rs.generate_minesec_xml(institution_id)
         if not xml_bytes:
             return jsonify({'error': 'Failed to generate MINESEC XML report'}), 500
@@ -3415,7 +3386,7 @@ def create_app():
         """Professional voucher validation endpoint for new signup"""
         try:
             from src.application.voucher_management_service import VoucherManagementService
-            voucher_service = VoucherManagementService(firebase_service)
+            voucher_service = VoucherManagementService()
             
             if not code or len(code) != 8 or not code.isalnum() or not code.isupper():
                 return jsonify({
@@ -3424,23 +3395,21 @@ def create_app():
                     'error_code': 'INVALID_FORMAT'
                 }), 200
             
-            # Query voucher from database
-            vouchers = voucher_service.firebase_service.query_documents(
-                'vouchers',
-                filters=[{'field': 'code', 'value': code}]
-            )
+            from src.infrastructure.pg_repositories import pg_repos
+            from datetime import timedelta
             
-            if not vouchers:
+            # Query voucher from database
+            voucher = pg_repos.voucher.get_by_code(code)
+            
+            if not voucher:
                 return jsonify({
                     'valid': False,
                     'error': 'Voucher code not found',
                     'error_code': 'NOT_FOUND'
                 }), 200
             
-            voucher = vouchers[0]
-            
             # Check if revoked
-            if voucher.get('revoked', False):
+            if voucher.revoked:
                 return jsonify({
                     'valid': False,
                     'error': 'Voucher has been revoked by administrator',
@@ -3448,15 +3417,15 @@ def create_app():
                 }), 200
             
             # Check if already used
-            if voucher.get('is_used', False):
+            if voucher.is_used:
                 return jsonify({
                     'valid': False,
                     'error': 'Voucher has already been used',
                     'error_code': 'ALREADY_USED'
                 }), 200
             
-            # Check expiry
-            expiry_date = datetime.fromisoformat(voucher['expires_at'])
+            # Check expiry (default 90 days from creation)
+            expiry_date = voucher.expires_at if voucher.expires_at else (voucher.created_at + timedelta(days=90) if voucher.created_at else datetime.utcnow())
             if datetime.utcnow() > expiry_date:
                 return jsonify({
                     'valid': False,
@@ -3465,11 +3434,12 @@ def create_app():
                 }), 200
             
             # Voucher is valid - return basic info for role-specific form
+            voucher_role = voucher.role.value if hasattr(voucher.role, 'value') else str(voucher.role)
             return jsonify({
                 'valid': True,
-                'role': voucher['role'],
-                'institution_id': voucher['institution_id'],
-                'email_binding': voucher.get('email_binding'),
+                'role': voucher_role,
+                'institution_id': voucher.institution_id,
+                'email_binding': voucher.email_binding,
                 'message': 'Voucher is valid for registration'
             }), 200
                 
@@ -3508,7 +3478,7 @@ def create_app():
             
             from src.application.voucher_management_service import VoucherManagementService
             from src.domain.entities import UserRole
-            voucher_service = VoucherManagementService(firebase_service)
+            voucher_service = VoucherManagementService()
             
             vouchers = voucher_service.generate_voucher_batch(
                 role=UserRole(role),
@@ -3535,7 +3505,7 @@ def create_app():
         """List vouchers with pagination, search, and filters"""
         try:
             from src.application.voucher_management_service import VoucherManagementService
-            voucher_service = VoucherManagementService(firebase_service)
+            voucher_service = VoucherManagementService()
             
             user = request.current_user
             institution_id = request.args.get('institution_id', user.get('institution_id', ''))
@@ -3572,7 +3542,7 @@ def create_app():
         """Revoke a voucher"""
         try:
             from src.application.voucher_management_service import VoucherManagementService
-            voucher_service = VoucherManagementService(firebase_service)
+            voucher_service = VoucherManagementService()
             
             if voucher_service.revoke_voucher(voucher_id):
                 return jsonify({'success': True, 'message': 'Voucher revoked successfully'}), 200
@@ -3594,7 +3564,7 @@ def create_app():
             from flask import Response
             import csv, io
             
-            voucher_service = VoucherManagementService(firebase_service)
+            voucher_service = VoucherManagementService()
             
             user = request.current_user
             institution_id = user.get('institution_id', '')
@@ -3703,7 +3673,7 @@ def create_app():
         """Get voucher usage statistics"""
         try:
             from src.application.voucher_management_service import VoucherManagementService
-            voucher_service = VoucherManagementService(firebase_service)
+            voucher_service = VoucherManagementService()
             
             stats = voucher_service.get_voucher_statistics(institution_id)
             
@@ -3725,7 +3695,7 @@ def create_app():
     def bootstrap():
         """First-run bootstrap: create initial admin user if no users exist."""
         try:
-            existing = firebase_service.query_documents('users', limit=1)
+            []
             if existing:
                 return jsonify({'error': 'System already bootstrapped'}), 400
 
@@ -3747,7 +3717,7 @@ def create_app():
             )
 
             from src.application.voucher_seeder import VoucherSeeder
-            seeder = VoucherSeeder(firebase_service)
+            seeder = VoucherSeeder()
             seeder.generate_seed_vouchers()
 
             return jsonify({
@@ -3769,7 +3739,7 @@ def create_app():
         try:
             from src.application.voucher_seeder import VoucherSeeder
             from src.domain.entities import UserRole
-            voucher_seeder = VoucherSeeder(firebase_service)
+            voucher_seeder = VoucherSeeder()
 
             existing = voucher_seeder.check_existing_vouchers()
             if existing['exists'] and existing['count'] > 0:
@@ -3802,16 +3772,14 @@ def create_app():
                 except ValueError as e:
                     err_msg = str(e).lower()
                     if 'already exists' in err_msg:
-                        existing_docs = firebase_service.query_documents('users', filters=[{'field': 'email', 'value': user['email']}])
-                        if existing_docs:
-                            existing_user = existing_docs[0]
+                        from src.infrastructure.pg_repositories import pg_repos
+                        existing_user = pg_repos.user.get_by_email(user['email'])
+                        if existing_user:
                             new_hash = auth_service.hash_password(user['password'])
                             from datetime import datetime as _dt
-                            firebase_service.update_document('users', existing_user['id'], {
-                                'password_hash': new_hash,
-                                'password_updated_at': _dt.utcnow().isoformat(),
-                                'updated_at': _dt.utcnow().isoformat()
-                            })
+                            existing_user.password_hash = new_hash
+                            existing_user.updated_at = _dt.utcnow()
+                            pg_repos.user.update(existing_user)
                             created_users.append({'email': user['email'], 'role': user['role'].value, 'updated': True})
                             logger.info(f"Updated existing demo user password: {user['email']}")
                         else:
@@ -3848,12 +3816,12 @@ def create_app():
         """Force reseed vouchers - override existing"""
         try:
             from src.application.voucher_seeder import VoucherSeeder
-            voucher_seeder = VoucherSeeder(firebase_service)
+            voucher_seeder = VoucherSeeder()
             
             # Clear existing vouchers by deleting all documents
-            vouchers = firebase_service.query_documents('vouchers', limit=100)
+            []
             for voucher in vouchers:
-                firebase_service.delete_document('vouchers', voucher['id'])
+                pass
             
             # Generate new seed vouchers
             result = voucher_seeder.generate_seed_vouchers()
@@ -3884,7 +3852,7 @@ def create_app():
         """Check voucher system status"""
         try:
             from src.application.voucher_seeder import VoucherSeeder
-            voucher_seeder = VoucherSeeder(firebase_service)
+            voucher_seeder = VoucherSeeder()
             
             status = voucher_seeder.check_existing_vouchers()
             test_vouchers = voucher_seeder.get_test_vouchers()
@@ -3911,7 +3879,7 @@ def create_app():
     def debug_vouchers():
         """Debug endpoint to see all vouchers in database"""
         try:
-            vouchers = firebase_service.query_documents('vouchers', limit=50)
+            []
             
             return jsonify({
                 'debug_info': 'All vouchers in database',

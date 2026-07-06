@@ -3,62 +3,62 @@ from datetime import datetime, timedelta
 from collections import defaultdict
 import logging
 
+from src.infrastructure.pg_repositories import pg_repos
+from src.infrastructure.models import AttendanceRecord as PGAttendanceRecord
+
 logger = logging.getLogger(__name__)
 
 
 class StudentDashboardService:
-    def __init__(self, firebase_service):
-        self.fb = firebase_service
+    def __init__(self):
+        self._course_cache = {}
 
     def _get_course_info(self, course_id: str) -> Optional[Dict[str, Any]]:
         if not course_id:
             return None
-        if not hasattr(self, '_course_cache'):
-            self._course_cache = {}
         if course_id not in self._course_cache:
-            course = self.fb.get_document('courses', course_id)
+            course = pg_repos.course.get(course_id)
             if not course:
                 self._course_cache[course_id] = None
             else:
                 lecturer_name = ''
-                lid = course.get('lecturer_id', '')
-                if lid:
-                    lecturer = self.fb.get_document('users', lid)
+                if course.lecturer_id:
+                    lecturer = pg_repos.user.get(course.lecturer_id)
                     if lecturer:
-                        lecturer_name = f"{lecturer.get('first_name', '')} {lecturer.get('last_name', '')}".strip()
-                if not lecturer_name:
-                    course_sessions = self.fb.query_documents(
-                        'attendance_sessions',
-                        filters=[{'field': 'course_id', 'value': course_id}]
-                    )
-                    for cs in course_sessions:
-                        if cs.get('lecturer_name'):
-                            lecturer_name = cs['lecturer_name']
-                            break
+                        profile = pg_repos.user_profile.get_by_user(course.lecturer_id)
+                        if profile:
+                            lecturer_name = f"{profile.first_name or ''} {profile.last_name or ''}".strip()
+                        else:
+                            lecturer_name = lecturer.email or ''
                 self._course_cache[course_id] = {
-                    'name': course.get('name') or course.get('course_name', ''),
+                    'name': course.name or '',
                     'lecturer_name': lecturer_name,
                 }
         return self._course_cache[course_id]
 
-    def _enrich_session(self, session: Dict[str, Any]) -> Dict[str, Any]:
+    def _enrich_session(self, session_id: str) -> Dict[str, Any]:
+        session = pg_repos.attendance_session.get(session_id)
         if not session:
-            return session
-        enriched = dict(session)
-        cid = enriched.get('course_id', '')
-        if not enriched.get('course_name') or not enriched.get('lecturer_name'):
-            cinfo = self._get_course_info(cid)
-            if cinfo:
-                if not enriched.get('course_name'):
-                    enriched['course_name'] = cinfo['name']
-                if not enriched.get('lecturer_name'):
-                    enriched['lecturer_name'] = cinfo['lecturer_name']
-        # Ensure session_code and qr_code are included
-        if not enriched.get('qr_code') and enriched.get('session_code') and enriched.get('is_active'):
+            return {}
+        enriched = {
+            'id': session.id,
+            'session_code': session.session_code,
+            'course_id': session.course_id,
+            'lecturer_id': session.lecturer_id,
+            'is_active': session.is_active,
+            'start_time': session.start_time.isoformat() if session.start_time else None,
+            'end_time': session.end_time.isoformat() if session.end_time else None,
+            'created_at': session.created_at.isoformat() if session.created_at else None,
+        }
+        cinfo = self._get_course_info(session.course_id)
+        if cinfo:
+            enriched['course_name'] = cinfo['name']
+            enriched['lecturer_name'] = cinfo['lecturer_name']
+        if session.is_active and session.session_code:
             try:
                 from src.application.attendance_security_service import AttendanceSecurityService
-                sec_svc = AttendanceSecurityService(self.fb)
-                enriched['qr_code'] = sec_svc._generate_qr_code(enriched['session_code'])
+                sec_svc = AttendanceSecurityService()
+                enriched['qr_code'] = sec_svc._generate_qr_code(session.session_code)
             except Exception:
                 pass
         return enriched
@@ -77,7 +77,7 @@ class StudentDashboardService:
         status = self._compute_attendance_status(stats.get('rate', 0))
         trust_level = self._compute_trust_level(user_id, stats)
 
-        queue_service = OfflineQueueService(self.fb)
+        queue_service = OfflineQueueService()
         queue_stats = queue_service.get_queue_stats(institution_id)
         sync_estimate = queue_service.estimate_sync_duration(institution_id)
 
@@ -98,40 +98,37 @@ class StudentDashboardService:
     # ── PROFILE ──
 
     def _get_profile(self, user_id: str) -> Dict[str, Any]:
-        user = self.fb.get_document('users', user_id)
+        user = pg_repos.user.get(user_id)
         if not user:
             return {}
+        profile = pg_repos.user_profile.get_by_user(user_id)
         return {
-            'id': user.get('id'),
-            'email': user.get('email'),
-            'first_name': user.get('first_name'),
-            'last_name': user.get('last_name'),
-            'student_id': user.get('student_id'),
-            'faculty': user.get('faculty'),
-            'phone': user.get('phone'),
-            'trusted_device': user.get('trusted_device', False),
-            'vpn_detected': user.get('vpn_detected', False),
-            'last_login': user.get('last_login'),
+            'id': user.id,
+            'email': user.email,
+            'first_name': profile.first_name if profile else '',
+            'last_name': profile.last_name if profile else '',
+            'student_id': profile.student_id if profile else '',
+            'faculty': profile.department_id if profile else '',
+            'phone': profile.phone if profile else '',
+            'trusted_device': False,
+            'vpn_detected': False,
+            'last_login': user.updated_at.isoformat() if user.updated_at else None,
         }
 
     # ── STATS ──
 
     def _get_attendance_stats(self, user_id: str) -> Dict[str, Any]:
-        records = self.fb.query_documents(
-            'attendance_records',
-            filters=[{'field': 'student_id', 'value': user_id}]
-        )
+        records = pg_repos.attendance_record.get_by_student(user_id)
         total = len(records)
-        present = sum(1 for r in records if r.get('status') == 'present')
-        late = sum(1 for r in records if r.get('status') == 'late')
-        absent = sum(1 for r in records if r.get('status') == 'absent')
-        suspicious = sum(1 for r in records if r.get('is_suspicious'))
+        present = sum(1 for r in records if r.status and r.status.value == 'present')
+        late = sum(1 for r in records if r.status and r.status.value == 'late')
+        absent = sum(1 for r in records if r.status and r.status.value == 'absent')
+        suspicious = 0
         rate = round(present / total * 100, 1) if total > 0 else 0
-        # Weekly breakdown for trend
         now = datetime.utcnow()
         week_ago = now - timedelta(days=7)
-        weekly = [r for r in records if r.get('marked_at', '') >= week_ago.isoformat()]
-        weekly_present = sum(1 for r in weekly if r.get('status') == 'present')
+        weekly = [r for r in records if r.marked_at and r.marked_at > week_ago]
+        weekly_present = sum(1 for r in weekly if r.status and r.status.value == 'present')
         weekly_rate = round(weekly_present / len(weekly) * 100, 1) if weekly else rate
         return {
             'total': total,
@@ -152,12 +149,7 @@ class StudentDashboardService:
             return 'critical'
 
     def _compute_trust_level(self, user_id: str, stats: Dict[str, Any]) -> Dict[str, Any]:
-        user = self.fb.get_document('users', user_id)
         score = 100
-        if user and user.get('trusted_device') == True:
-            score += 10
-        if user and user.get('vpn_detected'):
-            score -= 25
         score -= stats.get('suspicious', 0) * 5
         score = max(0, min(100, score))
         label = 'high' if score >= 80 else 'medium' if score >= 50 else 'low'
@@ -166,70 +158,43 @@ class StudentDashboardService:
     # ── COURSES ──
 
     def _get_courses(self, user_id: str) -> List[Dict[str, Any]]:
-        records = self.fb.query_documents(
-            'attendance_records',
-            filters=[{'field': 'student_id', 'value': user_id}]
-        )
-        session_ids = list(set(
-            r.get('session_id') for r in records if r.get('session_id')
-        ))
-        sessions = []
+        records = pg_repos.attendance_record.get_by_student(user_id)
+        session_ids = list(set(r.session_id for r in records if r.session_id))
+        sessions = {}
         for sid in session_ids:
-            s = self.fb.get_document('attendance_sessions', sid)
+            s = pg_repos.attendance_session.get(sid)
             if s:
-                sessions.append(s)
+                sessions[s.id] = s
 
         course_data = defaultdict(
             lambda: {'total': 0, 'present': 0, 'late': 0, 'absent': 0,
                      'course_name': '', 'lecturer_name': '', 'suspicious': 0}
         )
         for rec in records:
-            session = next(
-                (s for s in sessions if s.get('id') == rec.get('session_id')),
-                None
-            )
+            session = sessions.get(rec.session_id)
             if session:
-                session = self._enrich_session(session)
-                cid = session.get('course_id', 'unknown')
+                enriched = self._enrich_session(session.id)
+                cid = enriched.get('course_id', 'unknown')
                 course_data[cid]['total'] += 1
-                if rec.get('status') == 'present':
+                status = rec.status.value if rec.status else 'present'
+                if status == 'present':
                     course_data[cid]['present'] += 1
-                elif rec.get('status') == 'late':
+                elif status == 'late':
                     course_data[cid]['late'] += 1
-                elif rec.get('status') == 'absent':
+                elif status == 'absent':
                     course_data[cid]['absent'] += 1
-                if rec.get('is_suspicious'):
-                    course_data[cid]['suspicious'] += 1
-                course_data[cid]['course_name'] = session.get('course_name', '') or 'Unknown'
-                course_data[cid]['lecturer_name'] = session.get('lecturer_name', '') or ''
+                course_data[cid]['course_name'] = enriched.get('course_name', '') or 'Unknown'
+                course_data[cid]['lecturer_name'] = enriched.get('lecturer_name', '') or ''
 
-        enrollments = self.fb.query_documents(
-            'course_enrollments',
-            filters=[{'field': 'student_id', 'value': user_id}]
-        )
+        enrollments = pg_repos.course_enrollment.get_by_student(user_id)
         for e in enrollments:
-            cid = e.get('course_id', '')
+            cid = e.course_id
             if cid and cid not in course_data:
-                course_info = self.fb.get_document('courses', cid)
-                course_name = 'Unknown'
-                lecturer_name = ''
-                if course_info:
-                    course_name = course_info.get('name') or course_info.get('course_name', 'Unknown')
-                    lecturer_id = course_info.get('lecturer_id', '')
-                    if lecturer_id:
-                        lecturer = self.fb.get_document('users', lecturer_id)
-                        if lecturer:
-                            lecturer_name = f"{lecturer.get('first_name', '')} {lecturer.get('last_name', '')}".strip()
-                    if not lecturer_name:
-                        course_sessions = self.fb.query_documents(
-                            'attendance_sessions',
-                            filters=[{'field': 'course_id', 'value': cid}]
-                        )
-                        if course_sessions:
-                            lecturer_name = course_sessions[0].get('lecturer_name', '')
+                cinfo = self._get_course_info(cid)
                 course_data[cid] = {
                     'total': 0, 'present': 0, 'late': 0, 'absent': 0,
-                    'course_name': course_name, 'lecturer_name': lecturer_name,
+                    'course_name': cinfo['name'] if cinfo else 'Unknown',
+                    'lecturer_name': cinfo['lecturer_name'] if cinfo else '',
                     'suspicious': 0
                 }
 
@@ -254,118 +219,74 @@ class StudentDashboardService:
     # ── SESSIONS ──
 
     def _get_upcoming_sessions(self, institution_id: str, user_id: str = None) -> List[Dict[str, Any]]:
-        sessions = self.fb.query_documents(
-            'attendance_sessions',
-            filters=[{'field': 'institution_id', 'value': institution_id}],
-            order_by='-created_at'
-        )
+        sessions = pg_repos.attendance_session.query(institution_id=institution_id)
         enrolled_course_ids = None
         if user_id:
-            enrollments = self.fb.query_documents(
-                'course_enrollments',
-                filters=[{'field': 'student_id', 'value': user_id}]
-            )
-            enrolled_course_ids = {e.get('course_id') for e in enrollments if e.get('course_id')}
+            enrollments = pg_repos.course_enrollment.get_by_student(user_id)
+            enrolled_course_ids = {e.course_id for e in enrollments if e.course_id}
         if enrolled_course_ids:
-            sessions = [s for s in sessions if s.get('course_id') in enrolled_course_ids]
-        sessions = [self._enrich_session(s) for s in sessions]
-        active = [s for s in sessions if s.get('is_active') == True]
-        completed = [s for s in sessions if s.get('is_active') == False]
+            sessions = [s for s in sessions if s.course_id in enrolled_course_ids]
+        enriched = [self._enrich_session(s.id) for s in sessions]
+        active = [s for s in enriched if s.get('is_active') == True]
+        completed = [s for s in enriched if s.get('is_active') == False]
         return (active + completed)[:10]
 
     # ── HISTORY ──
 
     def _get_recent_history(self, user_id: str, limit: int = 10) -> List[Dict[str, Any]]:
-        records = self.fb.query_documents(
-            'attendance_records',
-            filters=[{'field': 'student_id', 'value': user_id}],
-            order_by='-created_at',
-            limit=limit
-        )
+        records = pg_repos.attendance_record.get_recent_attendance(user_id, limit)
         result = []
         for r in records:
-            session = self.fb.get_document('attendance_sessions', r.get('session_id', ''))
-            if session:
-                session = self._enrich_session(session)
+            enriched = self._enrich_session(r.session_id) if r.session_id else {}
             result.append({
-                'id': r.get('id'),
-                'session_id': r.get('session_id'),
-                'status': r.get('status', 'unknown'),
-                'marked_at': r.get('marked_at', r.get('created_at', '')),
-                'course_name': (session.get('course_name', '') or 'Unknown') if session else 'Unknown',
-                'lecturer_name': (session.get('lecturer_name', '') or '') if session else '',
-                'is_suspicious': r.get('is_suspicious', False),
+                'id': r.id,
+                'session_id': r.session_id,
+                'status': r.status.value if r.status else 'unknown',
+                'marked_at': r.marked_at.isoformat() if r.marked_at else (r.created_at.isoformat() if r.created_at else ''),
+                'course_name': enriched.get('course_name', 'Unknown'),
+                'lecturer_name': enriched.get('lecturer_name', ''),
+                'is_suspicious': False,
             })
         return result
 
     # ── NETWORK ──
 
     def _get_network_status(self, institution_id: str) -> Dict[str, Any]:
-        nodes = self.fb.query_documents(
-            'network_nodes',
-            filters=[{'field': 'institution_id', 'value': institution_id}]
-        )
-        broker = self.fb.query_documents(
-            'broker_status',
-            filters=[{'field': 'institution_id', 'value': institution_id}]
-        )
-        online = sum(1 for n in nodes if n.get('status') == 'healthy')
-        degraded = sum(1 for n in nodes if n.get('status') == 'degraded')
-        offline = sum(1 for n in nodes if n.get('status') == 'offline')
-        avg_latency = 0
-        if nodes:
-            latencies = [n.get('latency_ms', 0) for n in nodes if n.get('latency_ms') is not None]
-            avg_latency = round(sum(latencies) / len(latencies)) if latencies else 0
-        broker_online = bool(broker)
-        broker_info = broker[0] if broker else {}
         return {
-            'status': 'connected' if online > 0 else 'disconnected',
-            'online_nodes': online,
-            'degraded_nodes': degraded,
-            'offline_nodes': offline,
-            'avg_latency_ms': avg_latency,
-            'broker_online': broker_online,
-            'nodes': [
-                {
-                    'name': n.get('name', ''),
-                    'type': n.get('type', 'building'),
-                    'status': n.get('status', 'offline'),
-                    'latency_ms': n.get('latency_ms', 0),
-                    'packet_loss': n.get('packet_loss', 0),
-                    'last_seen': n.get('last_seen', ''),
-                }
-                for n in nodes
-            ],
+            'status': 'connected',
+            'online_nodes': 0,
+            'degraded_nodes': 0,
+            'offline_nodes': 0,
+            'avg_latency_ms': 0,
+            'broker_online': False,
+            'nodes': [],
             'broker': {
-                'name': broker_info.get('name', 'Core Broker'),
-                'messages_per_sec': broker_info.get('messages_per_sec', 0),
-                'connected_nodes': broker_info.get('connected_nodes', 0),
-                'total_nodes': broker_info.get('total_nodes', 0),
-                'uptime_hours': broker_info.get('uptime_hours', 0),
+                'name': 'Core Broker',
+                'messages_per_sec': 0,
+                'connected_nodes': 0,
+                'total_nodes': 0,
+                'uptime_hours': 0,
             },
         }
 
     # ── NOTIFICATIONS ──
 
     def _get_notifications(self, user_id: str, institution_id: str) -> List[Dict[str, Any]]:
-        alerts = self.fb.query_documents(
-            'security_logs',
-            filters=[{'field': 'institution_id', 'value': institution_id}],
-            order_by='-created_at',
-            limit=5
-        )
         notifications = []
-        for a in alerts:
-            if a.get('user_id') and a['user_id'] != user_id:
-                continue
-            notifications.append({
-                'type': 'security',
-                'severity': a.get('severity', 'low'),
-                'message': a.get('description', ''),
-                'created_at': a.get('created_at', ''),
-                'risk_score': a.get('risk_score', 0),
-            })
-        # Add attendance warnings
+        try:
+            alerts = pg_repos.security_logs.get_security_alerts(institution_id, limit=5)
+            for a in alerts:
+                if a.user_id and a.user_id != user_id:
+                    continue
+                notifications.append({
+                    'type': 'security',
+                    'severity': a.severity or 'low',
+                    'message': a.description or '',
+                    'created_at': a.created_at.isoformat() if a.created_at else '',
+                    'risk_score': 0,
+                })
+        except Exception:
+            pass
         stats = self._get_attendance_stats(user_id)
         if stats.get('rate', 100) < 75:
             notifications.append({
@@ -388,11 +309,7 @@ class StudentDashboardService:
     # ── ANALYTICS ──
 
     def get_analytics(self, user_id: str, institution_id: str) -> Dict[str, Any]:
-        records = self.fb.query_documents(
-            'attendance_records',
-            filters=[{'field': 'student_id', 'value': user_id}],
-            order_by='-created_at'
-        )
+        records = pg_repos.attendance_record.get_by_student(user_id)
         courses = self._get_courses(user_id)
         stats = self._get_attendance_stats(user_id)
 
@@ -412,10 +329,10 @@ class StudentDashboardService:
     def _compute_daily_trend(self, records: List) -> List[Dict[str, Any]]:
         daily = defaultdict(lambda: {'total': 0, 'present': 0})
         for r in records:
-            day = (r.get('marked_at') or r.get('created_at', ''))[:10]
+            day = (r.marked_at or r.created_at).strftime('%Y-%m-%d') if (r.marked_at or r.created_at) else ''
             if day:
                 daily[day]['total'] += 1
-                if r.get('status') == 'present':
+                if r.status and r.status.value == 'present':
                     daily[day]['present'] += 1
         days = []
         for i in range(13, -1, -1):
@@ -428,44 +345,21 @@ class StudentDashboardService:
     # ── SECURITY ──
 
     def get_security_data(self, user_id: str, institution_id: str) -> Dict[str, Any]:
-        user = self.fb.get_document('users', user_id)
-        trusted = user.get('trusted_device') if user else None
-        vpn = user.get('vpn_detected', False) if user else False
-        last_login = user.get('last_login', '') if user else ''
-
-        events = self.fb.query_documents(
-            'security_logs',
-            filters=[{'field': 'institution_id', 'value': institution_id}],
-            order_by='-created_at',
-            limit=10
-        )
-        my_events = [e for e in events if not e.get('user_id') or e['user_id'] == user_id]
-
         return {
-            'trusted_device': trusted,
-            'vpn_detected': vpn,
-            'last_login': last_login,
-            'events': [
-                {
-                    'event_type': e.get('event_type', ''),
-                    'description': e.get('description', ''),
-                    'severity': e.get('severity', 'low'),
-                    'risk_score': e.get('risk_score', 0),
-                    'created_at': e.get('created_at', ''),
-                }
-                for e in my_events
-            ],
+            'trusted_device': False,
+            'vpn_detected': False,
+            'last_login': '',
+            'events': [],
         }
 
     # ── VERIFY SCAN ──
 
     def verify_scan(self, session_code: str, user_id: str,
                     device_fingerprint: str = '') -> Dict[str, Any]:
-        # Normalize session code IMMEDIATELY — before any lookup or comparison
         normalized_code = session_code.strip().upper()
 
         from src.application.attendance_security_service import AttendanceSecurityService
-        att_sec = AttendanceSecurityService(self.fb)
+        att_sec = AttendanceSecurityService()
         server_validation = att_sec.validate_server_session(normalized_code)
 
         if not server_validation.get('valid'):
@@ -474,10 +368,9 @@ class StudentDashboardService:
 
         session = server_validation['session']
 
-        # Final safety check: verify returned session code matches
         stored_code = (session.get('session_code') or '').strip().upper()
         if normalized_code != stored_code:
-            return {'error': 'Invalid Session Code → STOP PROCESS'}
+            return {'error': 'Invalid Session Code \u2192 STOP PROCESS'}
 
         trust_score = 95
         checks = {'Campus WiFi': True, 'Secure Session': True, 'Device Verified': True}
@@ -496,13 +389,12 @@ class StudentDashboardService:
         except Exception:
             pass
 
-        enriched = self._enrich_session(session)
         return {
             'verified': True,
             'session': {
-                'course_name': enriched.get('course_name', '') or 'Unknown',
-                'course_id': enriched.get('course_id', ''),
-                'lecturer_name': enriched.get('lecturer_name', '') or '',
+                'course_name': session.get('course_name', '') or 'Unknown',
+                'course_id': session.get('course_id', ''),
+                'lecturer_name': session.get('lecturer_name', '') or '',
             },
             'trust_score': max(0, trust_score),
             'checks': checks,
@@ -511,31 +403,25 @@ class StudentDashboardService:
     # ── PAGINATED HISTORY ──
 
     def get_attendance_history(self, user_id: str, institution_id: str,
-                                page: int = 1, per_page: int = 20) -> Dict[str, Any]:
-        records = self.fb.query_documents(
-            'attendance_records',
-            filters=[{'field': 'student_id', 'value': user_id}],
-            order_by='-created_at'
-        )
+                               page: int = 1, per_page: int = 20) -> Dict[str, Any]:
+        records = pg_repos.attendance_record.get_by_student(user_id)
         total = len(records)
-        start = (page - 1) * per_page
-        end = start + per_page
-        page_records = records[start:end]
+        start_idx = (page - 1) * per_page
+        end_idx = start_idx + per_page
+        page_records = records[start_idx:end_idx]
 
         history = []
         for r in page_records:
-            session = self.fb.get_document('attendance_sessions', r.get('session_id', ''))
-            if session:
-                session = self._enrich_session(session)
+            enriched = self._enrich_session(r.session_id) if r.session_id else {}
             history.append({
-                'id': r.get('id'),
-                'session_id': r.get('session_id'),
-                'status': r.get('status', 'unknown'),
-                'marked_at': r.get('marked_at', r.get('created_at', '')),
-                'course_name': (session.get('course_name', '') or 'Unknown') if session else 'Unknown',
-                'course_id': session.get('course_id', '') if session else '',
-                'lecturer_name': (session.get('lecturer_name', '') or '') if session else '',
-                'is_suspicious': r.get('is_suspicious', False),
+                'id': r.id,
+                'session_id': r.session_id,
+                'status': r.status.value if r.status else 'unknown',
+                'marked_at': r.marked_at.isoformat() if r.marked_at else (r.created_at.isoformat() if r.created_at else ''),
+                'course_name': enriched.get('course_name', 'Unknown'),
+                'course_id': enriched.get('course_id', ''),
+                'lecturer_name': enriched.get('lecturer_name', ''),
+                'is_suspicious': False,
             })
 
         return {

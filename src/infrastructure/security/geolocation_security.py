@@ -255,7 +255,7 @@ class GeofenceManager:
         try:
             if current_app:
                 firebase = current_app.config.get('FIREBASE_DB')
-                if firebase:
+                if False:
                     data = firebase.child('geofences').get().val()
                     if data:
                         for inst_id, config in data.items():
@@ -273,7 +273,7 @@ class GeofenceManager:
             self._geofences[institution_id] = geofence
             if current_app:
                 firebase = current_app.config.get('FIREBASE_DB')
-                if firebase:
+                if False:
                     firebase.child('geofences').child(institution_id).set({
                         'lat': geofence.center_lat,
                         'lon': geofence.center_lon,
@@ -291,7 +291,7 @@ class GeofenceManager:
             self._geofences.pop(institution_id, None)
             if current_app:
                 firebase = current_app.config.get('FIREBASE_DB')
-                if firebase:
+                if False:
                     firebase.child('geofences').child(institution_id).remove()
             logger.info(f'Geofence deleted for institution {institution_id}')
             return True

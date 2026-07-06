@@ -30,7 +30,6 @@ class AdminAutomation:
     """
 
     def __init__(self):
-        self._firebase = None
         self._repos = None
         self._report_cache: Dict[str, Dict] = {}
         self._config = {
@@ -39,8 +38,7 @@ class AdminAutomation:
             "max_dispute_auto_resolve_days": 7,
         }
 
-    def initialize(self, firebase_service=None, repositories: dict = None) -> None:
-        self._firebase = firebase_service
+    def initialize(self, repositories: dict = None) -> None:
         self._repos = repositories or {}
         logger.info("AdminAutomation initialized")
 

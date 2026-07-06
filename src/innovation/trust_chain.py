@@ -31,7 +31,6 @@ class TrustChain:
     """
 
     def __init__(self):
-        self._firebase = None
         self._repos = None
         self._chains: Dict[str, List[AuditChainEntry]] = defaultdict(list)
         self._config = {
@@ -41,8 +40,7 @@ class TrustChain:
             "consensus_required": False,     # enable for full decentralization
         }
 
-    def initialize(self, firebase_service=None, repositories: dict = None) -> None:
-        self._firebase = firebase_service
+    def initialize(self, repositories: dict = None) -> None:
         self._repos = repositories or {}
         registry.subscribe(InnovationEvent.ATTENDANCE_MARKED, self._on_attendance)
         logger.info("TrustChain initialized")

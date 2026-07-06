@@ -28,7 +28,6 @@ class InfrastructureNet:
     """
 
     def __init__(self):
-        self._firebase = None
         self._repos = None
         self._node_health: Dict[str, Dict] = {}
         self._sync_history: List[Dict] = []
@@ -42,8 +41,7 @@ class InfrastructureNet:
         }
         self._seed_default_nodes()
 
-    def initialize(self, firebase_service=None, repositories: dict = None) -> None:
-        self._firebase = firebase_service
+    def initialize(self, repositories: dict = None) -> None:
         self._repos = repositories or {}
         registry.subscribe(InnovationEvent.SYNC_COMPLETED, self._on_sync)
 

@@ -27,7 +27,6 @@ class ParticipationIntelligence:
     """
 
     def __init__(self):
-        self._firebase = None
         self._repos = None
         self._session_cache: Dict[str, Dict] = {}
         self._config = {
@@ -37,8 +36,7 @@ class ParticipationIntelligence:
             "interaction_density_window": 5,  # minutes
         }
 
-    def initialize(self, firebase_service=None, repositories: dict = None) -> None:
-        self._firebase = firebase_service
+    def initialize(self, repositories: dict = None) -> None:
         self._repos = repositories or {}
         registry.subscribe(InnovationEvent.ATTENDANCE_MARKED, self._on_attendance)
         registry.subscribe(InnovationEvent.SESSION_ENDED, self._on_session_end)

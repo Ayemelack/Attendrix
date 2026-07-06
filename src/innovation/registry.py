@@ -65,13 +65,13 @@ class InnovationRegistry:
             except Exception as e:
                 logger.error(f"Handler {handler.__name__} failed for {event_key}: {e}")
 
-    def initialize_all(self, firebase_service=None, repositories: Dict[str, Any] = None) -> None:
+    def initialize_all(self, repositories: Dict[str, Any] = None) -> None:
         if self._initialized:
             return
         for name, module in self._modules.items():
             if hasattr(module, 'initialize'):
                 try:
-                    module.initialize(firebase_service=firebase_service, repositories=repositories)
+                    module.initialize(repositories=repositories)
                     logger.info(f"Initialized innovation module: {name}")
                 except Exception as e:
                     logger.error(f"Failed to initialize {name}: {e}")

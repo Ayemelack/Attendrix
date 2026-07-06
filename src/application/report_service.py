@@ -11,8 +11,8 @@ logger = logging.getLogger(__name__)
 class ReportService:
     """Professional report generation service using ReportLab."""
 
-    def __init__(self, firebase_service):
-        self.fb = firebase_service
+    def __init__(self):
+        pass
 
     def generate_attendance_report(self, institution_id: str,
                                    report_type: str = 'summary') -> Optional[bytes]:

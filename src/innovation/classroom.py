@@ -28,7 +28,6 @@ class SmartClassroomIntelligence:
     """
 
     def __init__(self):
-        self._firebase = None
         self._repos = None
         self._classroom_cache: Dict[str, ClassroomIntelligence] = {}
         self._config = {
@@ -37,8 +36,7 @@ class SmartClassroomIntelligence:
             "optimization_lookback_days": 30,
         }
 
-    def initialize(self, firebase_service=None, repositories: dict = None) -> None:
-        self._firebase = firebase_service
+    def initialize(self, repositories: dict = None) -> None:
         self._repos = repositories or {}
         registry.subscribe(InnovationEvent.ATTENDANCE_MARKED, self._on_attendance)
         logger.info("SmartClassroomIntelligence initialized")

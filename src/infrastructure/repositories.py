@@ -9,7 +9,7 @@ from src.domain.entities import (
     UserRole, AttendanceStatus, LeaveStatus, SessionStatus, DemoBooking,
     DemoBookingStatus
 )
-from src.infrastructure.firebase_service import firebase_service
+
 
 logger = logging.getLogger(__name__)
 
@@ -19,7 +19,7 @@ class BaseRepository:
     
     def __init__(self, collection_name: str):
         self.collection_name = collection_name
-        self.firebase_service = firebase_service
+        pass
     
     def create(self, entity_data: Dict[str, Any], document_id: str = None) -> Optional[str]:
         """Create entity in Firestore"""

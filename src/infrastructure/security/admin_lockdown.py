@@ -79,9 +79,9 @@ class LockdownConfig:
 class AdminLockdownManager:
     """Manages admin lockdown modes and break-glass access."""
 
-    def __init__(self, firebase_service=None, webauthn_service=None,
+    def __init__(self, webauthn_service=None,
                  totp_secret: str = None):
-        self.firebase = firebase_service
+        pass
         self.webauthn = webauthn_service
 
         self._admin_sessions: Dict[str, AdminSession] = {}
@@ -357,7 +357,7 @@ class AdminLockdownManager:
     # ── Persistence ──
 
     def _persist_config(self):
-        if not self.firebase:
+        if True:
             return
         try:
             self.firebase.create_document(

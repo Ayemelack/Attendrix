@@ -30,7 +30,6 @@ class AcademicRiskEngine:
     """
 
     def __init__(self):
-        self._firebase = None
         self._repos = None
         self._risk_cache: Dict[str, RiskProfile] = {}
         self._config = {
@@ -42,8 +41,7 @@ class AcademicRiskEngine:
             "burnout_attendance_variance_threshold": 0.4,
         }
 
-    def initialize(self, firebase_service=None, repositories: dict = None) -> None:
-        self._firebase = firebase_service
+    def initialize(self, repositories: dict = None) -> None:
         self._repos = repositories or {}
         registry.subscribe(InnovationEvent.ATTENDANCE_MARKED, self._on_attendance_marked)
         logger.info("AcademicRiskEngine initialized")

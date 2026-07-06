@@ -12,8 +12,8 @@ class SMSService:
     Supports Twilio, Africa's Talking, and a mock mode for development.
     """
 
-    def __init__(self, firebase_service=None):
-        self.fb = firebase_service
+    def __init__(self):
+        
         self._provider = None
         self._config = {}
 

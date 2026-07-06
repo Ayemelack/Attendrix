@@ -26,7 +26,6 @@ class ReputationSystem:
     """
 
     def __init__(self):
-        self._firebase = None
         self._repos = None
         self._scores: Dict[str, ReputationScore] = {}
         self._config = {
@@ -38,8 +37,7 @@ class ReputationSystem:
             "top_performer_threshold": 0.9,
         }
 
-    def initialize(self, firebase_service=None, repositories: dict = None) -> None:
-        self._firebase = firebase_service
+    def initialize(self, repositories: dict = None) -> None:
         self._repos = repositories or {}
         registry.subscribe(InnovationEvent.ATTENDANCE_MARKED, self._on_attendance)
         logger.info("ReputationSystem initialized")

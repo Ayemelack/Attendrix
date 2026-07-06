@@ -52,7 +52,7 @@ class ZeroTrustEngine:
         self._init_order = []
         self._module_health: Dict[str, ModuleHealth] = {}
 
-    def initialize(self, app=None, firebase_service=None):
+    def initialize(self, app=None):
         """Initialize all Phase 3 modules in dependency order."""
         if self._initialized:
             logger.warning("ZeroTrustEngine already initialized")
@@ -64,7 +64,7 @@ class ZeroTrustEngine:
         try:
             from src.infrastructure.security.webauthn_service import webauthn_service as ws
             self.webauthn = ws
-            self.webauthn.firebase = firebase_service
+            pass
             if self.webauthn.is_available():
                 self._register_health('webauthn', '3A', True, 'operational')
                 self._init_order.append('webauthn')
@@ -81,7 +81,7 @@ class ZeroTrustEngine:
         try:
             from src.infrastructure.security.device_session import device_session_manager as dsm
             self.device_session = dsm
-            self.device_session.firebase = firebase_service
+            pass
             self._register_health('device_session', '3B', True, 'operational')
             self._init_order.append('device_session')
             logger.info("  [3B] Device-bound session security initialized")
@@ -104,7 +104,7 @@ class ZeroTrustEngine:
         try:
             from src.infrastructure.security.anomaly_detection import anomaly_detector as ad
             self.anomaly = ad
-            self.anomaly.firebase = firebase_service
+            pass
             self._register_health('anomaly', '3D', True, 'operational')
             self._init_order.append('anomaly')
             logger.info("  [3D] Anomaly detection initialized")
@@ -116,7 +116,7 @@ class ZeroTrustEngine:
         try:
             from src.infrastructure.security.mitre_attack import mitre_framework as mf
             self.mitre = mf
-            self.mitre.firebase = firebase_service
+            pass
             self.mitre.anomaly_detector = self.anomaly
             self.mitre.device_session = self.device_session
             self._register_health('mitre', '3E', True, 'operational')
@@ -130,7 +130,7 @@ class ZeroTrustEngine:
         try:
             from src.infrastructure.security.forensic_logging import forensic_logger as fl
             self.forensic = fl
-            self.forensic.firebase = firebase_service
+            pass
             self._register_health('forensic', '3F', True, 'operational')
             self._init_order.append('forensic')
             logger.info("  [3F] Forensic logging initialized")
@@ -142,7 +142,7 @@ class ZeroTrustEngine:
         try:
             from src.infrastructure.security.admin_lockdown import admin_lockdown as al
             self.admin_lockdown = al
-            self.admin_lockdown.firebase = firebase_service
+            pass
             self._register_health('admin_lockdown', '3G', True, 'operational')
             self._init_order.append('admin_lockdown')
             logger.info("  [3G] Admin lockdown initialized")

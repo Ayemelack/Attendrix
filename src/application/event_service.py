@@ -14,8 +14,8 @@ class EventService:
     It polls the database for changes and pushes only delta updates.
     """
 
-    def __init__(self, firebase_service, dashboard_service):
-        self.fb = firebase_service
+    def __init__(self, dashboard_service):
+        
         self.dashboard = dashboard_service
 
     def generate_stream(self, institution_id: str, user_id: str):

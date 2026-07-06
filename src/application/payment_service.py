@@ -12,8 +12,8 @@ class PaymentService:
     Supports mock mode for development and real API integration via REST.
     """
 
-    def __init__(self, firebase_service=None):
-        self.fb = firebase_service
+    def __init__(self):
+        
         self._providers = {
             'mtn': {'name': 'MTN MoMo', 'enabled': False, 'api_key': '', 'api_secret': '', 'collection_primary_key': ''},
             'orange': {'name': 'Orange Money', 'enabled': False, 'api_key': '', 'api_secret': '', 'merchant_code': ''},

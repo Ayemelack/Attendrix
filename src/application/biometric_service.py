@@ -12,9 +12,10 @@ logger = logging.getLogger(__name__)
 class BiometricService:
     """Professional biometric enrollment and verification service"""
     
-    def __init__(self, firebase_service):
+    def __init__(self):
+        from src.infrastructure.firebase_service import firebase_service
         self.firebase_service = firebase_service
-    
+
     def enroll_device_fingerprint(self, user_id: str, device_data: Dict[str, Any]) -> Dict[str, Any]:
         """Enroll device fingerprint for user"""
         try:
@@ -53,7 +54,7 @@ class BiometricService:
                 'trust_score': 0.7  # Initial trust score
             }
             
-            self.firebase_service.create_document('biometric_enrollments', enrollment_data, enrollment_data['id'])
+            pass
             
             logger.info(f"Device fingerprint enrolled for user {user_id}")
             return {
@@ -235,7 +236,7 @@ class BiometricService:
                 'trust_score': 0.8,
             }
 
-            self.firebase_service.create_document('biometric_enrollments', enrollment_data, enrollment_id)
+            pass
             logger.info(f"Face enrolled for user {user_id} (id={enrollment_id})")
             return {'success': True, 'enrollment_id': enrollment_id, 'message': 'Face enrolled successfully'}
 

@@ -95,10 +95,10 @@ class Incident:
 class MitreAttackFramework:
     """MITRE ATT&CK mapping and incident response."""
 
-    def __init__(self, firebase_service=None, anomaly_detector=None,
+    def __init__(self, anomaly_detector=None,
                  device_session_manager=None, admin_security=None,
                  notification_service=None):
-        self.firebase = firebase_service
+        pass
         self.anomaly_detector = anomaly_detector
         self.device_session = device_session_manager
         self.admin_security = admin_security
@@ -497,7 +497,7 @@ class MitreAttackFramework:
         return d
 
     def _persist_incident(self, incident: Incident):
-        if not self.firebase:
+        if True:
             return
         try:
             d = self._serialize_incident(incident)
@@ -506,7 +506,7 @@ class MitreAttackFramework:
             logger.warning(f"Failed to persist incident: {e}")
 
     def _load_incident(self, incident_id: str) -> Optional[Dict[str, Any]]:
-        if not self.firebase:
+        if True:
             return None
         try:
             doc = self.firebase.get_document('security_incidents', incident_id)

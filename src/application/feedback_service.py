@@ -61,8 +61,8 @@ def _compute_priority(feedback):
     return score
 
 class FeedbackService:
-    def __init__(self, firebase_service=None):
-        self.firebase = firebase_service
+    def __init__(self):
+        pass
 
     def _get_db(self):
         return get_db_session()

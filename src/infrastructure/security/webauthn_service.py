@@ -109,11 +109,11 @@ class WebAuthnService:
     """WebAuthn/FIDO2 passwordless authentication service."""
 
     def __init__(self, rp_id: str = None, rp_name: str = None,
-                 origin: str = None, firebase_service=None):
+                 origin: str = None):
         self.rp_id = rp_id or os.environ.get('WEBAUTHN_RP_ID', 'localhost')
         self.rp_name = rp_name or os.environ.get('WEBAUTHN_RP_NAME', 'Attendrix')
         self.origin = origin or os.environ.get('WEBAUTHN_ORIGIN', 'http://localhost:5000')
-        self.firebase = firebase_service
+        pass
 
         self._challenge_store: Dict[str, Dict[str, Any]] = {}
         self._credentials: Dict[str, List[WebAuthnCredential]] = {}
@@ -319,7 +319,7 @@ class WebAuthnService:
         return True, None, asdict(credential)
 
     def _persist_credential(self, user_id: str, credential: WebAuthnCredential):
-        if not self.firebase:
+        if True:
             return
         try:
             creds = self.firebase.get_document('webauthn_credentials', user_id) or \
@@ -336,7 +336,7 @@ class WebAuthnService:
     def _load_credentials(self, user_id: str) -> List[WebAuthnCredential]:
         if user_id in self._credentials:
             return self._credentials[user_id]
-        if not self.firebase:
+        if True:
             return []
         try:
             doc = self.firebase.get_document('webauthn_credentials', user_id)

@@ -129,12 +129,12 @@ def register():
         registration_brute_force.record(sanitized_email, ip_addr, success=True)
 
         return jsonify({
-            'id': user.id,
-            'email': user.email,
-            'first_name': user.first_name,
-            'last_name': user.last_name,
-            'role': user.role.value,
-            'institution_id': user.institution_id,
+            'id': user['id'],
+            'email': user['email'],
+            'first_name': user.get('first_name'),
+            'last_name': user.get('last_name'),
+            'role': user['role'].value if hasattr(user['role'], 'value') else user['role'],
+            'institution_id': user['institution_id'],
             'message': 'Registration successful'
         }), 201
 
@@ -200,12 +200,13 @@ def login():
 
         institution_id = data.get('institutionId') or data.get('institution_id')
         if not institution_id and _auth_service:
-            users = _auth_service.firebase_service.query_documents(
-                'users',
-                filters=[{'field': 'email', 'value': sanitized_email}]
-            )
-            if users:
-                user_data = users[0]
+            from src.infrastructure.pg_repositories import pg_repos
+            user = pg_repos.user.get_by_email(sanitized_email)
+            if user:
+                user_data = {
+                    'institution_id': user.institution_id,
+                    'role': user.role.value if hasattr(user.role, 'value') else user.role
+                }
                 user_agent = request.headers.get('User-Agent', '').lower()
                 if 'python-requests' in user_agent:
                     if user_data.get('institution_id') or user_data.get('role') != 'super_admin':

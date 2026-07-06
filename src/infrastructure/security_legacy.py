@@ -771,19 +771,24 @@ class SecurityAuditLogger:
             if user_agent is None:
                 user_agent = request.headers.get('User-Agent')
 
+            inst_id = 'system'
+            if hasattr(request, 'current_user') and request.current_user:
+                inst_id = request.current_user.get('institution_id', 'system')
+                
             event_data = {
+                'institution_id': inst_id,
                 'user_id': user_id,
                 'event_type': event_type,
-                'description': description,
+                'severity': 'HIGH' if risk_score >= 50 else 'LOW',
+                'description': f"{description} | UA: {user_agent} | Risk: {risk_score}",
                 'ip_address': ip_address,
-                'user_agent': user_agent,
-                'risk_score': risk_score,
-                'metadata': json.dumps(metadata) if metadata else None,
-                'created_at': datetime.utcnow().isoformat()
+                'created_at': datetime.utcnow()
             }
 
-            from src.infrastructure.repositories import security_log_repo
-            security_log_repo.create(event_data)
+            from src.infrastructure.pg_repositories import pg_repos
+            from src.infrastructure.models import SecurityLog
+            security_log = SecurityLog(**event_data)
+            pg_repos.security_logs.create(security_log)
 
             log_level = logging.WARNING if risk_score >= 50 else logging.INFO
             logger.log(log_level, f"Security event [{event_type}]: {description} - User: {user_id} - IP: {ip_address}")

@@ -2,6 +2,10 @@ from typing import Dict, Any, List, Optional
 from datetime import datetime, timedelta
 import logging
 
+from src.infrastructure.pg_repositories import pg_repos
+from src.domain.entities import UserRole
+from src.infrastructure.models import User, UserProfile, Department, Course, CourseEnrollment, EnrollmentStatus
+
 logger = logging.getLogger(__name__)
 
 
@@ -12,8 +16,9 @@ class DashboardDataService:
     Returns empty defaults when no data exists — no random generation.
     """
 
-    def __init__(self, firebase_service):
-        self.fb = firebase_service
+    def __init__(self):
+        from src.infrastructure.firebase_service import FirebaseService
+        self.fb = FirebaseService()
 
     # ── HELPERS ──
 
@@ -1003,13 +1008,19 @@ class DashboardDataService:
     # ── USER MANAGEMENT ──
 
     def list_users(self, institution_id: str, search: str = '', page: int = 1, per_page: int = 20) -> Dict[str, Any]:
-        from src.infrastructure.repositories import user_repo, user_profile_repo
-        all_users = user_repo.get_by_institution(institution_id)
+        all_users: List[User] = pg_repos.user.query(institution_id=institution_id)
         if search:
             q = search.lower()
-            all_users = [u for u in all_users if q in u.get('first_name', '').lower() or q in u.get('last_name', '').lower() or q in u.get('email', '').lower()]
+            filtered = []
+            for u in all_users:
+                p = pg_repos.user_profile.get_by_user(u.id)
+                name = f"{p.first_name or ''} {p.last_name or ''}".lower() if p else ''
+                email = (u.email or '').lower()
+                if q in name or q in email:
+                    filtered.append(u)
+            all_users = filtered
         total = len(all_users)
-        all_users.sort(key=lambda u: u.get('created_at', ''), reverse=True)
+        all_users.sort(key=lambda u: u.created_at or datetime.min, reverse=True)
         total_pages = max(1, (total + per_page - 1) // per_page)
         page = max(1, min(page, total_pages))
         start = (page - 1) * per_page
@@ -1017,108 +1028,103 @@ class DashboardDataService:
         result = []
         dept_cache = {}
         for u in users:
-            profile = user_profile_repo.get_by_user(u.get('id', ''))
-            dept_id = profile.get('department_id', '') if profile else ''
+            profile = pg_repos.user_profile.get_by_user(u.id)
+            dept_id = profile.department_id if profile and profile.department_id else ''
             dept_name = ''
             if dept_id:
                 if dept_id not in dept_cache:
-                    d = self.fb.get_document('departments', dept_id)
-                    dept_cache[dept_id] = d.get('name', dept_id) if d else dept_id
+                    d = pg_repos.department.get(dept_id)
+                    dept_cache[dept_id] = d.name if d else dept_id
                 dept_name = dept_cache[dept_id]
             result.append({
-                'id': u.get('id', ''),
-                'email': u.get('email', ''),
-                'first_name': u.get('first_name', ''),
-                'last_name': u.get('last_name', ''),
-                'role': u.get('role', ''),
-                'phone': u.get('phone', ''),
-                'is_active': u.get('is_active', True),
+                'id': u.id,
+                'email': u.email or '',
+                'first_name': profile.first_name if profile else '',
+                'last_name': profile.last_name if profile else '',
+                'role': u.role.value if u.role else '',
+                'phone': profile.phone if profile else '',
+                'is_active': u.is_active,
                 'department_id': dept_id,
                 'department_name': dept_name,
-                'last_login': u.get('last_login', ''),
-                'created_at': u.get('created_at', ''),
+                'last_login': '',
+                'created_at': u.created_at.isoformat() if u.created_at else '',
             })
         return {'users': result, 'total': total, 'page': page, 'per_page': per_page, 'total_pages': total_pages}
 
     def create_user(self, institution_id: str, data: Dict[str, Any]) -> str:
-        from src.infrastructure.repositories import user_repo
         import uuid, hashlib
         user_id = str(uuid.uuid4())
         password_hash = hashlib.sha256((data.get('password', 'default123')).encode()).hexdigest()
-        doc = {
-            'id': user_id,
-            'email': data.get('email', ''),
-            'password_hash': password_hash,
-            'first_name': data.get('first_name', ''),
-            'last_name': data.get('last_name', ''),
-            'role': data.get('role', 'student'),
-            'institution_id': institution_id,
-            'phone': data.get('phone', ''),
-            'is_active': True,
-            'email_verified': False,
-            'created_at': self._now(),
-            'updated_at': self._now(),
-        }
-        user_repo.firebase_service.create_document('users', doc, user_id)
-        # Create profile if department provided
+        user = User(
+            id=user_id,
+            email=data.get('email', ''),
+            password_hash=password_hash,
+            role=UserRole(data.get('role', 'student')),
+            institution_id=institution_id,
+            is_active=True,
+        )
+        pg_repos.user.create(user)
         dept_id = data.get('department_id', '')
-        if dept_id:
-            profile = {
-                'id': str(uuid.uuid4()),
-                'user_id': user_id,
-                'institution_id': institution_id,
-                'department_id': dept_id,
-                'employee_id': data.get('employee_id', ''),
-                'student_id': data.get('student_id', ''),
-                'join_date': self._now(),
-            }
-            from src.infrastructure.repositories import user_profile_repo
-            user_profile_repo.firebase_service.create_document('user_profiles', profile, profile['id'])
+        profile = UserProfile(
+            id=str(uuid.uuid4()),
+            user_id=user_id,
+            first_name=data.get('first_name', ''),
+            last_name=data.get('last_name', ''),
+            phone=data.get('phone', ''),
+            department_id=dept_id or None,
+            employee_id=data.get('employee_id', ''),
+            student_id=data.get('student_id', ''),
+        )
+        pg_repos.user_profile.create(profile)
         return user_id
 
     def update_user(self, institution_id: str, user_id: str, data: Dict[str, Any]) -> bool:
-        from src.infrastructure.repositories import user_repo
-        user = user_repo.get_by_id(user_id)
-        if not user or user.get('institution_id') != institution_id:
+        user: Optional[User] = pg_repos.user.get(user_id)
+        if not user or user.institution_id != institution_id:
             return False
-        update = {}
-        for k in ('first_name', 'last_name', 'email', 'phone', 'role'):
+        for k in ('email',):
             if k in data:
-                update[k] = data[k]
+                setattr(user, k, data[k])
+        if 'role' in data:
+            user.role = UserRole(data['role'])
         if 'is_active' in data:
-            update['is_active'] = data['is_active']
-        update['updated_at'] = self._now()
-        return user_repo.update(user_id, update)
+            user.is_active = data['is_active']
+        pg_repos.user.update(user)
+        profile = pg_repos.user_profile.get_by_user(user_id)
+        if profile:
+            for k in ('first_name', 'last_name', 'phone'):
+                if k in data:
+                    setattr(profile, k, data[k])
+            pg_repos.user_profile.update(profile)
+        return True
 
     def toggle_user_status(self, institution_id: str, user_id: str) -> bool:
-        from src.infrastructure.repositories import user_repo
-        user = user_repo.get_by_id(user_id)
-        if not user or user.get('institution_id') != institution_id:
+        user: Optional[User] = pg_repos.user.get(user_id)
+        if not user or user.institution_id != institution_id:
             return False
-        return user_repo.update(user_id, {'is_active': not user.get('is_active', True), 'updated_at': self._now()})
+        user.is_active = not user.is_active
+        pg_repos.user.update(user)
+        return True
 
     def delete_user(self, institution_id: str, user_id: str) -> bool:
-        """Delete a user and their Firebase Auth account"""
-        from src.infrastructure.repositories import user_repo
-        user = user_repo.get_by_id(user_id)
-        if not user or user.get('institution_id') != institution_id:
+        user: Optional[User] = pg_repos.user.get(user_id)
+        if not user or user.institution_id != institution_id:
             return False
-        try:
-            self.fb.delete_user(user_id)
-        except Exception:
-            pass  # Firebase Auth delete is best-effort
-        return user_repo.delete(user_id)
+        profile = pg_repos.user_profile.get_by_user(user_id)
+        if profile:
+            pg_repos.user_profile.delete(profile)
+        pg_repos.user.delete(user)
+        return True
 
     # ── COURSE MANAGEMENT ──
 
     def list_courses(self, institution_id: str, search: str = '', page: int = 1, per_page: int = 20) -> Dict[str, Any]:
-        from src.infrastructure.repositories import course_repo
-        all_courses = course_repo.get_by_institution(institution_id)
+        all_courses: List[Course] = pg_repos.course.query(institution_id=institution_id)
         if search:
             q = search.lower()
-            all_courses = [c for c in all_courses if q in c.get('name', '').lower() or q in c.get('code', '').lower()]
+            all_courses = [c for c in all_courses if q in (c.name or '').lower() or q in (c.code or '').lower()]
         total = len(all_courses)
-        all_courses.sort(key=lambda c: c.get('created_at', ''), reverse=True)
+        all_courses.sort(key=lambda c: c.created_at or datetime.min, reverse=True)
         total_pages = max(1, (total + per_page - 1) // per_page)
         page = max(1, min(page, total_pages))
         start = (page - 1) * per_page
@@ -1128,81 +1134,81 @@ class DashboardDataService:
         user_cache = {}
         for c in courses:
             dept_name = ''
-            did = c.get('department_id', '')
+            did = c.department_id or ''
             if did:
                 if did not in dept_cache:
-                    d = self.fb.get_document('departments', did)
-                    dept_cache[did] = d.get('name', did) if d else did
+                    d = pg_repos.department.get(did)
+                    dept_cache[did] = d.name if d else did
                 dept_name = dept_cache[did]
             lecturer_name = ''
-            lid = c.get('lecturer_id', '')
+            lid = c.lecturer_id or ''
             if lid:
                 if lid not in user_cache:
-                    u = self.fb.get_document('users', lid)
-                    user_cache[lid] = f"{u.get('first_name','')} {u.get('last_name','')}".strip() if u else lid
+                    u = pg_repos.user.get(lid)
+                    if u:
+                        p = pg_repos.user_profile.get_by_user(lid)
+                        user_cache[lid] = f"{p.first_name or ''} {p.last_name or ''}".strip() if p else lid
+                    else:
+                        user_cache[lid] = lid
                 lecturer_name = user_cache[lid]
             result.append({
-                'id': c.get('id', ''),
-                'code': c.get('code', ''),
-                'name': c.get('name', ''),
+                'id': c.id,
+                'code': c.code or '',
+                'name': c.name or '',
                 'department_id': did,
                 'department_name': dept_name,
                 'lecturer_id': lid,
                 'lecturer_name': lecturer_name,
-                'description': c.get('description', ''),
-                'credits': c.get('credits', 0),
-                'is_active': c.get('is_active', True),
-                'created_at': c.get('created_at', ''),
+                'description': c.description or '',
+                'credits': c.credits or 0,
+                'is_active': c.is_active,
+                'created_at': c.created_at.isoformat() if c.created_at else '',
             })
         return {'courses': result, 'total': total, 'page': page, 'per_page': per_page, 'total_pages': total_pages}
 
     def create_course(self, institution_id: str, data: Dict[str, Any]) -> str:
-        from src.infrastructure.repositories import course_repo
         import uuid
         course_id = str(uuid.uuid4())
-        doc = {
-            'id': course_id,
-            'institution_id': institution_id,
-            'department_id': data.get('department_id', ''),
-            'code': data.get('code', ''),
-            'name': data.get('name', ''),
-            'lecturer_id': data.get('lecturer_id', ''),
-            'description': data.get('description', ''),
-            'credits': data.get('credits', 0),
-            'is_active': True,
-            'created_at': self._now(),
-        }
-        course_repo.firebase_service.create_document('courses', doc, course_id)
+        course = Course(
+            id=course_id,
+            institution_id=institution_id,
+            department_id=data.get('department_id', '') or None,
+            code=data.get('code', ''),
+            name=data.get('name', ''),
+            lecturer_id=data.get('lecturer_id', '') or None,
+            description=data.get('description', ''),
+            credits=data.get('credits', 0),
+            is_active=True,
+        )
+        pg_repos.course.create(course)
         return course_id
 
     def update_course(self, institution_id: str, course_id: str, data: Dict[str, Any]) -> bool:
-        from src.infrastructure.repositories import course_repo
-        course = course_repo.get_by_id(course_id)
-        if not course or course.get('institution_id') != institution_id:
+        course: Optional[Course] = pg_repos.course.get(course_id)
+        if not course or course.institution_id != institution_id:
             return False
-        update = {}
         for k in ('code', 'name', 'department_id', 'lecturer_id', 'description', 'credits', 'is_active'):
             if k in data:
-                update[k] = data[k]
-        return course_repo.update(course_id, update)
+                setattr(course, k, data[k])
+        pg_repos.course.update(course)
+        return True
 
     def delete_course(self, institution_id: str, course_id: str) -> bool:
-        from src.infrastructure.repositories import course_repo
-        course = course_repo.get_by_id(course_id)
-        if not course or course.get('institution_id') != institution_id:
+        course: Optional[Course] = pg_repos.course.get(course_id)
+        if not course or course.institution_id != institution_id:
             return False
-        return course_repo.delete(course_id)
+        pg_repos.course.delete(course)
+        return True
 
     # ── DEPARTMENT MANAGEMENT ──
 
     def list_departments(self, institution_id: str, search: str = '', page: int = 1, per_page: int = 20) -> Dict[str, Any]:
-        from src.infrastructure.repositories import department_repo
-        all_depts = department_repo.get_by_institution(institution_id)
+        all_depts: List[Department] = pg_repos.department.query(institution_id=institution_id)
         if search:
             q = search.lower()
-            all_depts = [d for d in all_depts if q in d.get('name', '').lower() or q in d.get('code', '').lower()]
+            all_depts = [d for d in all_depts if q in (d.name or '').lower() or q in (d.code or '').lower()]
         total = len(all_depts)
-        all_depts.sort(key=lambda d: d.get('created_at', ''), reverse=True)
+        all_depts.sort(key=lambda d: d.created_at or datetime.min, reverse=True)
         total_pages = max(1, (total + per_page - 1) // per_page)
         page = max(1, min(page, total_pages))
         start = (page - 1) * per_page
@@ -1211,122 +1217,125 @@ class DashboardDataService:
         head_cache = {}
         for d in depts:
             head_name = ''
-            hid = d.get('head_id', '')
+            hid = d.head_id or ''
             if hid:
                 if hid not in head_cache:
-                    u = self.fb.get_document('users', hid)
-                    head_cache[hid] = f"{u.get('first_name','')} {u.get('last_name','')}".strip() if u else hid
+                    u = pg_repos.user.get(hid)
+                    if u:
+                        p = pg_repos.user_profile.get_by_user(hid)
+                        head_cache[hid] = f"{p.first_name or ''} {p.last_name or ''}".strip() if p else hid
+                    else:
+                        head_cache[hid] = hid
                 head_name = head_cache[hid]
             result.append({
-                'id': d.get('id', ''),
-                'name': d.get('name', ''),
-                'code': d.get('code', ''),
+                'id': d.id,
+                'name': d.name or '',
+                'code': d.code or '',
                 'head_id': hid,
                 'head_name': head_name,
-                'description': d.get('description', ''),
-                'is_active': d.get('is_active', True),
-                'created_at': d.get('created_at', ''),
+                'description': d.description or '',
+                'is_active': d.is_active,
+                'created_at': d.created_at.isoformat() if d.created_at else '',
             })
         return {'departments': result, 'total': total, 'page': page, 'per_page': per_page, 'total_pages': total_pages}
 
     def create_department(self, institution_id: str, data: Dict[str, Any]) -> str:
-        from src.infrastructure.repositories import department_repo
         import uuid
         dept_id = str(uuid.uuid4())
-        doc = {
-            'id': dept_id,
-            'institution_id': institution_id,
-            'name': data.get('name', ''),
-            'code': data.get('code', ''),
-            'head_id': data.get('head_id', ''),
-            'description': data.get('description', ''),
-            'is_active': True,
-            'created_at': self._now(),
-        }
-        department_repo.firebase_service.create_document('departments', doc, dept_id)
+        dept = Department(
+            id=dept_id,
+            institution_id=institution_id,
+            name=data.get('name', ''),
+            code=data.get('code', ''),
+            head_id=data.get('head_id', '') or None,
+            description=data.get('description', ''),
+            is_active=True,
+        )
+        pg_repos.department.create(dept)
         return dept_id
 
     def update_department(self, institution_id: str, dept_id: str, data: Dict[str, Any]) -> bool:
-        from src.infrastructure.repositories import department_repo
-        dept = department_repo.get_by_id(dept_id)
-        if not dept or dept.get('institution_id') != institution_id:
+        dept: Optional[Department] = pg_repos.department.get(dept_id)
+        if not dept or dept.institution_id != institution_id:
             return False
-        update = {}
         for k in ('name', 'code', 'head_id', 'description', 'is_active'):
             if k in data:
-                update[k] = data[k]
-        return department_repo.update(dept_id, update)
+                setattr(dept, k, data[k])
+        pg_repos.department.update(dept)
+        return True
 
     def delete_department(self, institution_id: str, dept_id: str) -> bool:
-        from src.infrastructure.repositories import department_repo
-        dept = department_repo.get_by_id(dept_id)
-        if not dept or dept.get('institution_id') != institution_id:
+        dept: Optional[Department] = pg_repos.department.get(dept_id)
+        if not dept or dept.institution_id != institution_id:
             return False
-        return department_repo.delete(dept_id)
+        pg_repos.department.delete(dept)
+        return True
 
     # ── ENROLLMENT MANAGEMENT ──
 
     def list_enrollments(self, institution_id: str, search: str = '', page: int = 1, per_page: int = 20) -> Dict[str, Any]:
-        from src.infrastructure.repositories import course_enrollment_repo, course_repo, user_repo
-        all_enrollments = course_enrollment_repo.list_all(order_by='-created_at')
-        # Resolve course IDs to this institution
-        inst_courses = set(c['id'] for c in course_repo.get_by_institution(institution_id))
-        all_enrollments = [e for e in all_enrollments if e.get('course_id') in inst_courses]
+        all_enrollments: List[CourseEnrollment] = pg_repos.course_enrollment.list_all()
+        inst_courses = set(c.id for c in pg_repos.course.query(institution_id=institution_id))
+        all_enrollments = [e for e in all_enrollments if e.course_id in inst_courses]
         if search:
             q = search.lower()
-            all_enrollments = [e for e in all_enrollments if q in e.get('student_id', '').lower()]
+            all_enrollments = [e for e in all_enrollments if q in (e.student_id or '').lower()]
         total = len(all_enrollments)
+        all_enrollments.sort(key=lambda e: e.created_at or datetime.min, reverse=True)
         total_pages = max(1, (total + per_page - 1) // per_page)
         page = max(1, min(page, total_pages))
         enrollments = all_enrollments[(page - 1) * per_page:page * per_page]
         result = []
         for e in enrollments:
-            student = user_repo.get_by_id(e.get('student_id', ''))
-            course = course_repo.get_by_id(e.get('course_id', ''))
+            student = pg_repos.user.get(e.student_id)
+            student_profile = pg_repos.user_profile.get_by_user(e.student_id) if student else None
+            course = pg_repos.course.get(e.course_id)
+            student_name = f"{student_profile.first_name or ''} {student_profile.last_name or ''}".strip() if student_profile else e.student_id
             result.append({
-                'id': e.get('id', ''),
-                'course_id': e.get('course_id', ''),
-                'course_name': course.get('name', e.get('course_id', '')) if course else e.get('course_id', ''),
-                'course_code': course.get('code', '') if course else '',
-                'student_id': e.get('student_id', ''),
-                'student_name': f"{student.get('first_name', '')} {student.get('last_name', '')}".strip() if student else e.get('student_id', ''),
-                'enrollment_date': e.get('enrollment_date', e.get('created_at', '')),
-                'is_active': e.get('is_active', True),
-                'created_at': e.get('created_at', ''),
+                'id': e.id,
+                'course_id': e.course_id,
+                'course_name': course.name if course else e.course_id,
+                'course_code': course.code if course else '',
+                'student_id': e.student_id,
+                'student_name': student_name,
+                'enrollment_date': e.enrollment_date.isoformat() if e.enrollment_date else '',
+                'is_active': e.status == EnrollmentStatus.ENROLLED,
+                'created_at': e.created_at.isoformat() if e.created_at else '',
             })
         return {'enrollments': result, 'total': total, 'page': page, 'per_page': per_page, 'total_pages': total_pages}
 
     def create_enrollment(self, institution_id: str, data: Dict[str, Any]) -> str:
-        from src.infrastructure.repositories import course_enrollment_repo
         import uuid
         enrollment_id = str(uuid.uuid4())
-        doc = {
-            'id': enrollment_id,
-            'course_id': data.get('course_id', ''),
-            'student_id': data.get('student_id', ''),
-            'institution_id': institution_id,
-            'enrollment_date': self._now(),
-            'is_active': True,
-            'created_at': self._now(),
-            'updated_at': self._now(),
-        }
-        course_enrollment_repo.firebase_service.create_document('course_enrollments', doc, enrollment_id)
+        enrollment = CourseEnrollment(
+            id=enrollment_id,
+            course_id=data.get('course_id', ''),
+            student_id=data.get('student_id', ''),
+            status=EnrollmentStatus.ENROLLED,
+        )
+        pg_repos.course_enrollment.create(enrollment)
         return enrollment_id
 
     def delete_enrollment(self, institution_id: str, enrollment_id: str) -> bool:
-        from src.infrastructure.repositories import course_enrollment_repo
-        enrollment = course_enrollment_repo.get_by_id(enrollment_id)
-        if not enrollment or enrollment.get('institution_id') != institution_id:
+        enrollment: Optional[CourseEnrollment] = pg_repos.course_enrollment.get(enrollment_id)
+        if not enrollment:
             return False
-        return course_enrollment_repo.delete(enrollment_id)
+        course = pg_repos.course.get(enrollment.course_id)
+        if not course or course.institution_id != institution_id:
+            return False
+        pg_repos.course_enrollment.delete(enrollment)
+        return True
 
     # ── LOOKUP HELPERS ──
 
     def list_lecturers(self, institution_id: str) -> List[Dict[str, str]]:
-        from src.infrastructure.repositories import user_repo
-        from src.domain.entities import UserRole
-        users = user_repo.get_by_institution_and_role(institution_id, UserRole.LECTURER)
-        return [{'id': u['id'], 'name': f"{u.get('first_name', '')} {u.get('last_name', '')}".strip()} for u in users]
+        users: List[User] = pg_repos.user.query(institution_id=institution_id, role=UserRole.LECTURER)
+        result = []
+        for u in users:
+            p = pg_repos.user_profile.get_by_user(u.id)
+            name = f"{p.first_name or ''} {p.last_name or ''}".strip() if p else ''
+            result.append({'id': u.id, 'name': name})
+        return result
 
     def list_roles(self) -> List[Dict[str, str]]:
         return [

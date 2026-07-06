@@ -33,7 +33,6 @@ class SmartIntervention:
     """
 
     def __init__(self):
-        self._firebase = None
         self._repos = None
         self._interventions: Dict[str, List[InterventionRecord]] = defaultdict(list)
         self._config = {
@@ -45,8 +44,7 @@ class SmartIntervention:
             "parental_notification": False,
         }
 
-    def initialize(self, firebase_service=None, repositories: dict = None) -> None:
-        self._firebase = firebase_service
+    def initialize(self, repositories: dict = None) -> None:
         self._repos = repositories or {}
         registry.subscribe(InnovationEvent.RISK_THRESHOLD_CROSSED, self._on_risk_event)
         logger.info("SmartIntervention initialized")

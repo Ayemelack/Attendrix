@@ -30,7 +30,7 @@ class InnovationEngine:
 
     Usage:
         engine = InnovationEngine()
-        engine.initialize(firebase_service=firebase, repositories=repos)
+        engine.initialize(repositories=repos)
         engine.risk_engine.predict_dropout_risk(...)
     """
 
@@ -49,8 +49,7 @@ class InnovationEngine:
         self.ecosystem: Optional[EcosystemIntegration] = None
         self._initialized = False
 
-    def initialize(self, firebase_service=None,
-                   repositories: Dict[str, Any] = None) -> None:
+    def initialize(self, repositories: Dict[str, Any] = None) -> None:
         """Initialize all innovation modules."""
         if self._initialized:
             return
@@ -87,7 +86,6 @@ class InnovationEngine:
             registry.register(name, module)
 
         registry.initialize_all(
-            firebase_service=firebase_service,
             repositories=repositories
         )
 
@@ -105,12 +103,10 @@ class InnovationEngine:
         logger.info("InnovationEngine cleaned up")
 
 
-def create_innovation_engine(firebase_service=None,
-                              repositories: Dict[str, Any] = None) -> InnovationEngine:
+def create_innovation_engine(repositories: Dict[str, Any] = None) -> InnovationEngine:
     """Factory function to create and initialize the innovation engine."""
     engine = InnovationEngine()
     engine.initialize(
-        firebase_service=firebase_service,
         repositories=repositories
     )
     return engine

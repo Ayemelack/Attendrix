@@ -2,7 +2,6 @@ import logging
 import time
 from datetime import datetime, date
 from typing import Dict, Any, List, Optional
-from src.infrastructure.firebase_service import firebase_service
 
 logger = logging.getLogger(__name__)
 
@@ -79,7 +78,8 @@ def ip_matches_range(ip: str, range_str: str) -> bool:
 class NetworkPresenceService:
     """Passive presence monitoring service for connected users."""
     def __init__(self):
-        self.firebase_service = firebase_service
+        from src.infrastructure.firebase_service import firebase_service
+        self._legacy_firebase = firebase_service
         self.last_write_times = {}  # user_id -> float timestamp
         self.user_info_cache = {}  # user_id -> {"name": str, "student_id": str}
 
@@ -98,7 +98,7 @@ class NetworkPresenceService:
             # Retrieve first/last name and student_id (cache values to minimize db reads)
             user_info = self.user_info_cache.get(user_id)
             if not user_info:
-                user_doc = self.firebase_service.get_document('users', user_id)
+                user_doc = self._legacy_firebase.get_document('users', user_id)
                 if user_doc:
                     first_name = user_doc.get('first_name', '')
                     last_name = user_doc.get('last_name', '')
@@ -128,13 +128,13 @@ class NetworkPresenceService:
             }
             
             # Check existing doc to preserve the initial login_time
-            existing = self.firebase_service.get_document('network_presence', user_id)
+            existing = self._legacy_firebase.get_document('network_presence', user_id)
             if existing:
                 presence_data['login_time'] = existing.get('login_time', datetime.utcnow().isoformat())
-                self.firebase_service.update_document('network_presence', user_id, presence_data)
+                self._legacy_firebase.update_document('network_presence', user_id, presence_data)
             else:
                 presence_data['login_time'] = datetime.utcnow().isoformat()
-                self.firebase_service.create_document('network_presence', presence_data, user_id)
+                self._legacy_firebase.create_document('network_presence', presence_data, user_id)
                 
         except Exception as e:
             logger.error(f"Failed to update user presence: {e}")
@@ -143,13 +143,13 @@ class NetworkPresenceService:
         """Retrieve connected users presence with dynamic attendance matches."""
         try:
             # Query presence list
-            presences = self.firebase_service.query_documents(
+            presences = self._legacy_firebase.query_documents(
                 'network_presence',
                 filters=[{'field': 'institution_id', 'value': institution_id}]
             )
             
             # Query IP ranges config
-            config_doc = self.firebase_service.get_document('network_presence_config', institution_id)
+            config_doc = self._legacy_firebase.get_document('network_presence_config', institution_id)
             ranges = config_doc.get('ranges', []) if config_doc else []
             
             # Get current day in UTC
@@ -187,7 +187,7 @@ class NetworkPresenceService:
                 
                 if p.get('role') == 'student':
                     student_id = p.get('user_id')
-                    records = self.firebase_service.query_documents(
+                    records = self._legacy_firebase.query_documents(
                         'attendance_records',
                         filters=[
                             {'field': 'student_id', 'value': student_id},
@@ -240,7 +240,7 @@ class NetworkPresenceService:
     def get_config(self, institution_id: str) -> List[str]:
         """Fetch institutional network ranges."""
         try:
-            doc = self.firebase_service.get_document('network_presence_config', institution_id)
+            doc = self._legacy_firebase.get_document('network_presence_config', institution_id)
             if doc:
                 return doc.get('ranges', [])
             return []
@@ -257,11 +257,11 @@ class NetworkPresenceService:
                 'ranges': ranges,
                 'updated_at': datetime.utcnow().isoformat()
             }
-            doc = self.firebase_service.get_document('network_presence_config', institution_id)
+            doc = self._legacy_firebase.get_document('network_presence_config', institution_id)
             if doc:
-                self.firebase_service.update_document('network_presence_config', institution_id, data)
+                self._legacy_firebase.update_document('network_presence_config', institution_id, data)
             else:
-                self.firebase_service.create_document('network_presence_config', data, institution_id)
+                self._legacy_firebase.create_document('network_presence_config', data, institution_id)
         except Exception as e:
             logger.error(f"Failed to save IP config: {e}")
 

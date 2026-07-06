@@ -27,7 +27,6 @@ class SecurityEmergency:
     """
 
     def __init__(self):
-        self._firebase = None
         self._repos = None
         self._active_emergencies: Dict[str, EmergencyReport] = {}
         self._config = {
@@ -36,8 +35,7 @@ class SecurityEmergency:
             "auto_declare_missing_after_minutes": 15,
         }
 
-    def initialize(self, firebase_service=None, repositories: dict = None) -> None:
-        self._firebase = firebase_service
+    def initialize(self, repositories: dict = None) -> None:
         self._repos = repositories or {}
         logger.info("SecurityEmergency initialized")
 
