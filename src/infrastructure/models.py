@@ -189,6 +189,12 @@ class Voucher(Base):
     revoked_at = Column(DateTime, nullable=True)
     created_at = Column(DateTime, default=datetime.utcnow)
 
+    assigned_to_email = Column(String(255), nullable=True)
+    assigned_to_name = Column(String(255), nullable=True)
+    assigned_at = Column(DateTime, nullable=True)
+    email_sent_status = Column(String(50), nullable=True)
+    email_sent_at = Column(DateTime, nullable=True)
+
     # Relationships
     user = relationship("User", back_populates="vouchers_used")
 

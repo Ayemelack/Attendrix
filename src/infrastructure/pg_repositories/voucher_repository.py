@@ -9,6 +9,9 @@ class PostgresVoucherRepository(SqlAlchemyRepository[Voucher]):
     def get_by_code(self, code: str) -> Optional[Voucher]:
         return self.get_by(code=code)
 
+    def add(self, entity: Voucher) -> Voucher:
+        return self.create(entity)
+
     def mark_as_used(self, voucher_id: str, user_id: str) -> bool:
         from datetime import datetime
         voucher = self.get(voucher_id)
