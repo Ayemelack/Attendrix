@@ -1,0 +1,1916 @@
+[
+  {
+    "file": "src\\application\\attendance_security_service.py",
+    "line": 227,
+    "content": "logger.info(f\"Session {session_code}: passed explicit end_time {session_end.isoformat()}, rejecting\")",
+    "pattern": "pass"
+  },
+  {
+    "file": "src\\application\\attendance_security_service.py",
+    "line": 270,
+    "content": "# Query DIRECTLY from server (reloads from disk, bypasses cache)",
+    "pattern": "pass"
+  },
+  {
+    "file": "src\\application\\attendance_security_service.py",
+    "line": 310,
+    "content": "logger.info(f\"Server session {normalized_code}: passed explicit end_time {session_end.isoformat()}, rejecting\")",
+    "pattern": "pass"
+  },
+  {
+    "file": "src\\application\\authentication_service.py",
+    "line": 31,
+    "content": "def authenticate_user(self, email: str, password: str, remember_me: bool = False,",
+    "pattern": "pass"
+  },
+  {
+    "file": "src\\application\\authentication_service.py",
+    "line": 35,
+    "content": "return self._delegate.authenticate_user(email, password, remember_me,",
+    "pattern": "pass"
+  },
+  {
+    "file": "src\\application\\authentication_service.py",
+    "line": 38,
+    "content": "def register_user(self, email: str, password: str, first_name: str, last_name: str,",
+    "pattern": "pass"
+  },
+  {
+    "file": "src\\application\\authentication_service.py",
+    "line": 41,
+    "content": "return self._delegate.register_user(email, password, first_name, last_name,",
+    "pattern": "pass"
+  },
+  {
+    "file": "src\\application\\authentication_service.py",
+    "line": 47,
+    "content": "def _verify_password(self, password: str, password_hash: str) -> bool:",
+    "pattern": "pass"
+  },
+  {
+    "file": "src\\application\\authentication_service.py",
+    "line": 48,
+    "content": "return self._delegate.verify_password(password, password_hash)",
+    "pattern": "pass"
+  },
+  {
+    "file": "src\\application\\authentication_service.py",
+    "line": 50,
+    "content": "def _hash_password(self, password: str) -> str:",
+    "pattern": "pass"
+  },
+  {
+    "file": "src\\application\\authentication_service.py",
+    "line": 51,
+    "content": "return self._delegate.hash_password(password)",
+    "pattern": "pass"
+  },
+  {
+    "file": "src\\application\\auth_service.py",
+    "line": 21,
+    "content": "pass",
+    "pattern": "pass"
+  },
+  {
+    "file": "src\\application\\auth_service.py",
+    "line": 23,
+    "content": "def hash_password(self, password: str) -> str:",
+    "pattern": "pass"
+  },
+  {
+    "file": "src\\application\\auth_service.py",
+    "line": 25,
+    "content": "return bcrypt.hashpw(password.encode('utf-8'), salt).decode('utf-8')",
+    "pattern": "pass"
+  },
+  {
+    "file": "src\\application\\auth_service.py",
+    "line": 27,
+    "content": "def verify_password(self, password: str, hashed_password: str) -> bool:",
+    "pattern": "pass"
+  },
+  {
+    "file": "src\\application\\auth_service.py",
+    "line": 29,
+    "content": "return bcrypt.checkpw(password.encode('utf-8'), hashed_password.encode('utf-8'))",
+    "pattern": "pass"
+  },
+  {
+    "file": "src\\application\\auth_service.py",
+    "line": 33,
+    "content": "def register_user(self, email: str, password: str, first_name: str, last_name: str,",
+    "pattern": "pass"
+  },
+  {
+    "file": "src\\application\\auth_service.py",
+    "line": 40,
+    "content": "password_hash = self.hash_password(password)",
+    "pattern": "pass"
+  },
+  {
+    "file": "src\\application\\auth_service.py",
+    "line": 47,
+    "content": "'password_hash': password_hash,",
+    "pattern": "pass"
+  },
+  {
+    "file": "src\\application\\auth_service.py",
+    "line": 69,
+    "content": "if 'password_hash' in result:",
+    "pattern": "pass"
+  },
+  {
+    "file": "src\\application\\auth_service.py",
+    "line": 70,
+    "content": "del result['password_hash']",
+    "pattern": "pass"
+  },
+  {
+    "file": "src\\application\\auth_service.py",
+    "line": 77,
+    "content": "pass",
+    "pattern": "pass"
+  },
+  {
+    "file": "src\\application\\auth_service.py",
+    "line": 82,
+    "content": "def _check_password_expired(self, user_data: Dict[str, Any]) -> Optional[Dict[str, Any]]:",
+    "pattern": "pass"
+  },
+  {
+    "file": "src\\application\\auth_service.py",
+    "line": 85,
+    "content": "def authenticate_user(self, email: str, password: str, remember_me: bool = False,",
+    "pattern": "pass"
+  },
+  {
+    "file": "src\\application\\auth_service.py",
+    "line": 93,
+    "content": "if not self.verify_password(password, user.password_hash):",
+    "pattern": "pass"
+  },
+  {
+    "file": "src\\application\\auth_service.py",
+    "line": 156,
+    "content": "def change_password(self, user_id: str, current_password: str,",
+    "pattern": "pass"
+  },
+  {
+    "file": "src\\application\\auth_service.py",
+    "line": 157,
+    "content": "new_password: str, ip_address: str = None,",
+    "pattern": "pass"
+  },
+  {
+    "file": "src\\application\\auth_service.py",
+    "line": 160,
+    "content": "if not user or not self.verify_password(current_password, user.password_hash):",
+    "pattern": "pass"
+  },
+  {
+    "file": "src\\application\\auth_service.py",
+    "line": 162,
+    "content": "new_hash = self.hash_password(new_password)",
+    "pattern": "pass"
+  },
+  {
+    "file": "src\\application\\auth_service.py",
+    "line": 163,
+    "content": "pg_repos.user.update(user_id, {'password_hash': new_hash})",
+    "pattern": "pass"
+  },
+  {
+    "file": "src\\application\\auth_service.py",
+    "line": 166,
+    "content": "def reset_password(self, email: str) -> Optional[str]:",
+    "pattern": "pass"
+  },
+  {
+    "file": "src\\application\\auth_service.py",
+    "line": 200,
+    "content": "pass",
+    "pattern": "pass"
+  },
+  {
+    "file": "src\\application\\auth_service.py",
+    "line": 205,
+    "content": "pass",
+    "pattern": "pass"
+  },
+  {
+    "file": "src\\application\\bilingual.py",
+    "line": 20,
+    "content": "'invalid_credentials': {'en': 'Invalid email or password', 'fr': 'Email ou mot de passe invalide'},",
+    "pattern": "pass"
+  },
+  {
+    "file": "src\\application\\bilingual.py",
+    "line": 23,
+    "content": "'password_required': {'en': 'Please enter your password', 'fr': 'Veuillez entrer votre mot de passe'},",
+    "pattern": "pass"
+  },
+  {
+    "file": "src\\application\\bilingual.py",
+    "line": 25,
+    "content": "'passwords_mismatch': {'en': 'Passwords do not match', 'fr': 'Les mots de passe ne correspondent pas'},",
+    "pattern": "pass"
+  },
+  {
+    "file": "src\\application\\bilingual.py",
+    "line": 116,
+    "content": "pass",
+    "pattern": "pass"
+  },
+  {
+    "file": "src\\application\\biometric_service.py",
+    "line": 16,
+    "content": "pass",
+    "pattern": "pass"
+  },
+  {
+    "file": "src\\application\\biometric_service.py",
+    "line": 56,
+    "content": "pass",
+    "pattern": "pass"
+  },
+  {
+    "file": "src\\application\\biometric_service.py",
+    "line": 238,
+    "content": "pass",
+    "pattern": "pass"
+  },
+  {
+    "file": "src\\application\\dashboard_data_service.py",
+    "line": 16,
+    "content": "pass",
+    "pattern": "pass"
+  },
+  {
+    "file": "src\\application\\dashboard_data_service.py",
+    "line": 71,
+    "content": "EVENT_TYPE_TOKENS = {'login', 'login_failed', 'login_success', 'invalid', 'password'}",
+    "pattern": "pass"
+  },
+  {
+    "file": "src\\application\\dashboard_data_service.py",
+    "line": 260,
+    "content": "pass",
+    "pattern": "pass"
+  },
+  {
+    "file": "src\\application\\dashboard_data_service.py",
+    "line": 784,
+    "content": "{'action': 'compliance_check_passed', 'status': 'completed', 'created_at': self._now()},",
+    "pattern": "pass"
+  },
+  {
+    "file": "src\\application\\dashboard_data_service.py",
+    "line": 1047,
+    "content": "password_hash = hashlib.sha256((data.get('password', 'default123')).encode()).hexdigest()",
+    "pattern": "pass"
+  },
+  {
+    "file": "src\\application\\dashboard_data_service.py",
+    "line": 1051,
+    "content": "'password_hash': password_hash,",
+    "pattern": "pass"
+  },
+  {
+    "file": "src\\application\\dashboard_data_service.py",
+    "line": 1109,
+    "content": "pass  # Firebase Auth delete is best-effort",
+    "pattern": "pass"
+  },
+  {
+    "file": "src\\application\\demo_booking_service.py",
+    "line": 436,
+    "content": "pass",
+    "pattern": "pass"
+  },
+  {
+    "file": "src\\application\\demo_booking_service.py",
+    "line": 462,
+    "content": "pass",
+    "pattern": "pass"
+  },
+  {
+    "file": "src\\application\\demo_booking_service.py",
+    "line": 511,
+    "content": "pass",
+    "pattern": "pass"
+  },
+  {
+    "file": "src\\application\\demo_booking_service.py",
+    "line": 559,
+    "content": "pass",
+    "pattern": "pass"
+  },
+  {
+    "file": "src\\application\\feedback_service.py",
+    "line": 65,
+    "content": "pass",
+    "pattern": "pass"
+  },
+  {
+    "file": "src\\application\\network_presence_service.py",
+    "line": 172,
+    "content": "pass",
+    "pattern": "pass"
+  },
+  {
+    "file": "src\\application\\network_scanner_service.py",
+    "line": 362,
+    "content": "pass",
+    "pattern": "pass"
+  },
+  {
+    "file": "src\\application\\network_scanner_service.py",
+    "line": 364,
+    "content": "pass",
+    "pattern": "pass"
+  },
+  {
+    "file": "src\\application\\network_scanner_service.py",
+    "line": 567,
+    "content": "pass",
+    "pattern": "pass"
+  },
+  {
+    "file": "src\\application\\network_scanner_service.py",
+    "line": 579,
+    "content": "pass",
+    "pattern": "pass"
+  },
+  {
+    "file": "src\\application\\network_scanner_service.py",
+    "line": 600,
+    "content": "pass",
+    "pattern": "pass"
+  },
+  {
+    "file": "src\\application\\network_scanner_service.py",
+    "line": 759,
+    "content": "pass",
+    "pattern": "pass"
+  },
+  {
+    "file": "src\\application\\network_scanner_service.py",
+    "line": 857,
+    "content": "pass",
+    "pattern": "pass"
+  },
+  {
+    "file": "src\\application\\persistent_auth_service.py",
+    "line": 20,
+    "content": "def authenticate_user_with_remember(self, email: str, password: str,",
+    "pattern": "pass"
+  },
+  {
+    "file": "src\\application\\persistent_auth_service.py",
+    "line": 39,
+    "content": "# Verify password",
+    "pattern": "pass"
+  },
+  {
+    "file": "src\\application\\persistent_auth_service.py",
+    "line": 40,
+    "content": "if not self._verify_password(password, user_data['password_hash']):",
+    "pattern": "pass"
+  },
+  {
+    "file": "src\\application\\persistent_auth_service.py",
+    "line": 41,
+    "content": "logger.warning(f\"Invalid password for user: {email}\")",
+    "pattern": "pass"
+  },
+  {
+    "file": "src\\application\\persistent_auth_service.py",
+    "line": 163,
+    "content": "def _verify_password(self, password: str, password_hash: str) -> bool:",
+    "pattern": "pass"
+  },
+  {
+    "file": "src\\application\\persistent_auth_service.py",
+    "line": 164,
+    "content": "\"\"\"Verify password against hash\"\"\"",
+    "pattern": "pass"
+  },
+  {
+    "file": "src\\application\\persistent_auth_service.py",
+    "line": 166,
+    "content": "return bcrypt.checkpw(password.encode('utf-8'), password_hash.encode('utf-8'))",
+    "pattern": "pass"
+  },
+  {
+    "file": "src\\application\\postgres_auth_service.py",
+    "line": 22,
+    "content": "def hash_password(self, password: str) -> str:",
+    "pattern": "pass"
+  },
+  {
+    "file": "src\\application\\postgres_auth_service.py",
+    "line": 24,
+    "content": "hashed = bcrypt.hashpw(password.encode('utf-8'), salt)",
+    "pattern": "pass"
+  },
+  {
+    "file": "src\\application\\postgres_auth_service.py",
+    "line": 27,
+    "content": "def verify_password(self, password: str, hashed_password: str) -> bool:",
+    "pattern": "pass"
+  },
+  {
+    "file": "src\\application\\postgres_auth_service.py",
+    "line": 29,
+    "content": "return bcrypt.checkpw(password.encode('utf-8'), hashed_password.encode('utf-8'))",
+    "pattern": "pass"
+  },
+  {
+    "file": "src\\application\\postgres_auth_service.py",
+    "line": 34,
+    "content": "def register_user(self, email: str, password: str, first_name: str, last_name: str,",
+    "pattern": "pass"
+  },
+  {
+    "file": "src\\application\\postgres_auth_service.py",
+    "line": 45,
+    "content": "if len(password) < 8:",
+    "pattern": "pass"
+  },
+  {
+    "file": "src\\application\\postgres_auth_service.py",
+    "line": 47,
+    "content": "if not re.search(r'[A-Z]', password):",
+    "pattern": "pass"
+  },
+  {
+    "file": "src\\application\\postgres_auth_service.py",
+    "line": 49,
+    "content": "if not re.search(r'[a-z]', password):",
+    "pattern": "pass"
+  },
+  {
+    "file": "src\\application\\postgres_auth_service.py",
+    "line": 51,
+    "content": "if not re.search(r'[0-9]', password):",
+    "pattern": "pass"
+  },
+  {
+    "file": "src\\application\\postgres_auth_service.py",
+    "line": 53,
+    "content": "if not re.search(r'[!@#$%^&*(),.?\\\":{}|<>_\\-]', password):",
+    "pattern": "pass"
+  },
+  {
+    "file": "src\\application\\postgres_auth_service.py",
+    "line": 74,
+    "content": "password_hash = self.hash_password(password)",
+    "pattern": "pass"
+  },
+  {
+    "file": "src\\application\\postgres_auth_service.py",
+    "line": 79,
+    "content": "password_hash=password_hash,",
+    "pattern": "pass"
+  },
+  {
+    "file": "src\\application\\postgres_auth_service.py",
+    "line": 125,
+    "content": "def authenticate_user(self, email: str, password: str, remember_me: bool = False,",
+    "pattern": "pass"
+  },
+  {
+    "file": "src\\application\\postgres_auth_service.py",
+    "line": 129,
+    "content": "if not email or not password:",
+    "pattern": "pass"
+  },
+  {
+    "file": "src\\application\\postgres_auth_service.py",
+    "line": 130,
+    "content": "return {'success': False, 'message': 'Invalid email or password'}",
+    "pattern": "pass"
+  },
+  {
+    "file": "src\\application\\postgres_auth_service.py",
+    "line": 137,
+    "content": "return {'success': False, 'message': 'Invalid email or password'}",
+    "pattern": "pass"
+  },
+  {
+    "file": "src\\application\\postgres_auth_service.py",
+    "line": 140,
+    "content": "return {'success': False, 'message': 'Invalid email or password'}",
+    "pattern": "pass"
+  },
+  {
+    "file": "src\\application\\postgres_auth_service.py",
+    "line": 142,
+    "content": "if not self.verify_password(password, user.password_hash):",
+    "pattern": "pass"
+  },
+  {
+    "file": "src\\application\\postgres_auth_service.py",
+    "line": 143,
+    "content": "return {'success': False, 'message': 'Invalid email or password'}",
+    "pattern": "pass"
+  },
+  {
+    "file": "src\\application\\postgres_auth_service.py",
+    "line": 171,
+    "content": "return {'success': False, 'message': 'Invalid email or password'}",
+    "pattern": "pass"
+  },
+  {
+    "file": "src\\application\\postgres_auth_service.py",
+    "line": 255,
+    "content": "def change_password(self, user_id: str, current_password: str,",
+    "pattern": "pass"
+  },
+  {
+    "file": "src\\application\\postgres_auth_service.py",
+    "line": 256,
+    "content": "new_password: str) -> bool:",
+    "pattern": "pass"
+  },
+  {
+    "file": "src\\application\\postgres_auth_service.py",
+    "line": 262,
+    "content": "if not self.verify_password(current_password, user.password_hash):",
+    "pattern": "pass"
+  },
+  {
+    "file": "src\\application\\postgres_auth_service.py",
+    "line": 265,
+    "content": "if current_password == new_password:",
+    "pattern": "pass"
+  },
+  {
+    "file": "src\\application\\postgres_auth_service.py",
+    "line": 268,
+    "content": "user.password_hash = self.hash_password(new_password)",
+    "pattern": "pass"
+  },
+  {
+    "file": "src\\application\\postgres_auth_service.py",
+    "line": 277,
+    "content": "\"\"\"Update user profile fields (non-password).\"\"\"",
+    "pattern": "pass"
+  },
+  {
+    "file": "src\\application\\rbac.py",
+    "line": 166,
+    "content": "Strict token verification \u2014 no dev bypass. All requests must present",
+    "pattern": "pass"
+  },
+  {
+    "file": "src\\application\\rbac.py",
+    "line": 209,
+    "content": "pass",
+    "pattern": "pass"
+  },
+  {
+    "file": "src\\application\\rbac.py",
+    "line": 240,
+    "content": "pass",
+    "pattern": "pass"
+  },
+  {
+    "file": "src\\application\\rbac.py",
+    "line": 282,
+    "content": "\"\"\"Require admin users to have at least one WebAuthn passkey enrolled.",
+    "pattern": "pass"
+  },
+  {
+    "file": "src\\application\\rbac.py",
+    "line": 286,
+    "content": "passkey (register_begin, register_complete) must NOT use this decorator.",
+    "pattern": "pass"
+  },
+  {
+    "file": "src\\application\\rbac.py",
+    "line": 308,
+    "content": "logger.warning(f\"Admin 2FA block: user {user_id} has no passkey enrolled\")",
+    "pattern": "pass"
+  },
+  {
+    "file": "src\\application\\rbac.py",
+    "line": 311,
+    "content": "'message': 'Enroll a passkey before performing admin actions',",
+    "pattern": "pass"
+  },
+  {
+    "file": "src\\application\\report_service.py",
+    "line": 15,
+    "content": "pass",
+    "pattern": "pass"
+  },
+  {
+    "file": "src\\application\\student_dashboard_service.py",
+    "line": 11,
+    "content": "pass",
+    "pattern": "pass"
+  },
+  {
+    "file": "src\\application\\student_dashboard_service.py",
+    "line": 63,
+    "content": "pass",
+    "pattern": "pass"
+  },
+  {
+    "file": "src\\application\\student_dashboard_service.py",
+    "line": 497,
+    "content": "pass",
+    "pattern": "pass"
+  },
+  {
+    "file": "src\\application\\voucher_management_service.py",
+    "line": 132,
+    "content": "# All validations passed",
+    "pattern": "pass"
+  },
+  {
+    "file": "src\\application\\voucher_seeder.py",
+    "line": 16,
+    "content": "pass",
+    "pattern": "pass"
+  },
+  {
+    "file": "src\\application\\voucher_service.py",
+    "line": 16,
+    "content": "pass",
+    "pattern": "pass"
+  },
+  {
+    "file": "src\\domain\\entities.py",
+    "line": 208,
+    "content": "def __init__(self, id: str, institution_id: str, email: str, password_hash: str,",
+    "pattern": "pass"
+  },
+  {
+    "file": "src\\domain\\entities.py",
+    "line": 217,
+    "content": "self.password_hash = password_hash",
+    "pattern": "pass"
+  },
+  {
+    "file": "src\\domain\\entities.py",
+    "line": 254,
+    "content": "password_hash: str",
+    "pattern": "pass"
+  },
+  {
+    "file": "src\\infrastructure\\cloudflare_security.py",
+    "line": 89,
+    "content": "complementing Cloudflare's edge WAF. Detects attacks that may bypass",
+    "pattern": "pass"
+  },
+  {
+    "file": "src\\infrastructure\\cloudflare_security.py",
+    "line": 174,
+    "content": "r\"/etc/passwd\",",
+    "pattern": "pass"
+  },
+  {
+    "file": "src\\infrastructure\\cloudflare_security.py",
+    "line": 187,
+    "content": "r\"passthru\\s*\\(\",",
+    "pattern": "pass"
+  },
+  {
+    "file": "src\\infrastructure\\cloudflare_security.py",
+    "line": 457,
+    "content": "pass",
+    "pattern": "pass"
+  },
+  {
+    "file": "src\\infrastructure\\cloudflare_security.py",
+    "line": 472,
+    "content": "pass",
+    "pattern": "pass"
+  },
+  {
+    "file": "src\\infrastructure\\cloudflare_security.py",
+    "line": 1403,
+    "content": "{\"id\": \"rl-password-reset\", \"description\": \"Password reset rate limit\", \"limit\": \"3r/m\", \"burst\": 2, \"action\": \"block\"},",
+    "pattern": "pass"
+  },
+  {
+    "file": "src\\infrastructure\\cloudflare_security.py",
+    "line": 1449,
+    "content": "\"privacy_pass\": True,",
+    "pattern": "pass"
+  },
+  {
+    "file": "src\\infrastructure\\cloudflare_security.py",
+    "line": 1529,
+    "content": "'cloudflare_bypass',",
+    "pattern": "pass"
+  },
+  {
+    "file": "src\\infrastructure\\cloudflare_security.py",
+    "line": 1555,
+    "content": "pass",
+    "pattern": "pass"
+  },
+  {
+    "file": "src\\infrastructure\\cloudflare_security.py",
+    "line": 1575,
+    "content": "pass",
+    "pattern": "pass"
+  },
+  {
+    "file": "src\\infrastructure\\cloudflare_security.py",
+    "line": 1579,
+    "content": "# Bypass suspicious UA block in development/testing to allow local scripts, curl, postman, and tests",
+    "pattern": "pass"
+  },
+  {
+    "file": "src\\infrastructure\\cloudflare_security.py",
+    "line": 1601,
+    "content": "'/api/auth/forgot-password',",
+    "pattern": "pass"
+  },
+  {
+    "file": "src\\infrastructure\\cloudflare_security.py",
+    "line": 1602,
+    "content": "'/api/auth/reset-password',",
+    "pattern": "pass"
+  },
+  {
+    "file": "src\\infrastructure\\comprehensive_security.py",
+    "line": 77,
+    "content": "'bypass:isolation': ('super_admin',),",
+    "pattern": "pass"
+  },
+  {
+    "file": "src\\infrastructure\\comprehensive_security.py",
+    "line": 279,
+    "content": "blocked_keys = {'password_hash', 'token', 'secret', 'private_key'}",
+    "pattern": "pass"
+  },
+  {
+    "file": "src\\infrastructure\\comprehensive_security.py",
+    "line": 541,
+    "content": "r'\\bsession\\b', r'\\bpassword\\b', r'\\bsecret\\b',",
+    "pattern": "pass"
+  },
+  {
+    "file": "src\\infrastructure\\comprehensive_security.py",
+    "line": 829,
+    "content": "'mass_email', 'export_all_data', 'force_password_reset',",
+    "pattern": "pass"
+  },
+  {
+    "file": "src\\infrastructure\\comprehensive_security.py",
+    "line": 947,
+    "content": "pass",
+    "pattern": "pass"
+  },
+  {
+    "file": "src\\infrastructure\\comprehensive_security.py",
+    "line": 964,
+    "content": "pass",
+    "pattern": "pass"
+  },
+  {
+    "file": "src\\infrastructure\\comprehensive_security.py",
+    "line": 966,
+    "content": "pass",
+    "pattern": "pass"
+  },
+  {
+    "file": "src\\infrastructure\\comprehensive_security.py",
+    "line": 985,
+    "content": "r\"(?i)select.*from.*(password|token|secret|key)\",",
+    "pattern": "pass"
+  },
+  {
+    "file": "src\\infrastructure\\database_schema.py",
+    "line": 19,
+    "content": "'password_hash': 'string NOT NULL',",
+    "pattern": "pass"
+  },
+  {
+    "file": "src\\infrastructure\\email_service.py",
+    "line": 576,
+    "content": "\"smtp_pass\": os.environ.get(\"SMTP_PASS\", \"\"),",
+    "pattern": "pass"
+  },
+  {
+    "file": "src\\infrastructure\\email_service.py",
+    "line": 641,
+    "content": "server.login(user, self._config[\"smtp_pass\"])",
+    "pattern": "pass"
+  },
+  {
+    "file": "src\\infrastructure\\email_service.py",
+    "line": 700,
+    "content": "password = self._config[\"smtp_pass\"]",
+    "pattern": "pass"
+  },
+  {
+    "file": "src\\infrastructure\\email_service.py",
+    "line": 726,
+    "content": "server.login(user, password)",
+    "pattern": "pass"
+  },
+  {
+    "file": "src\\infrastructure\\firebase_security.py",
+    "line": 214,
+    "content": "'password', 'password_hash', 'token', 'secret', 'secret_key',",
+    "pattern": "pass"
+  },
+  {
+    "file": "src\\infrastructure\\firebase_service.py",
+    "line": 148,
+    "content": "def create_user(self, email: str, password: str, display_name: str = None,",
+    "pattern": "pass"
+  },
+  {
+    "file": "src\\infrastructure\\firebase_service.py",
+    "line": 156,
+    "content": "user_properties = {'email': email, 'password': password, 'email_verified': False}",
+    "pattern": "pass"
+  },
+  {
+    "file": "src\\infrastructure\\firebase_service.py",
+    "line": 496,
+    "content": "In mock mode, bypasses in-memory cache by re-reading from disk.\"\"\"",
+    "pattern": "pass"
+  },
+  {
+    "file": "src\\infrastructure\\firebase_service.py",
+    "line": 521,
+    "content": "Always re-reads from disk to bypass in-memory cache, then applies filters.\"\"\"",
+    "pattern": "pass"
+  },
+  {
+    "file": "src\\infrastructure\\mail_models.py",
+    "line": 34,
+    "content": "PASSWORD_RESET = \"password_reset\"",
+    "pattern": "pass"
+  },
+  {
+    "file": "src\\infrastructure\\mail_models.py",
+    "line": 49,
+    "content": "password = Column(String(255), nullable=False, default='')",
+    "pattern": "pass"
+  },
+  {
+    "file": "src\\infrastructure\\mail_providers.py",
+    "line": 52,
+    "content": "password: str = \"\",",
+    "pattern": "pass"
+  },
+  {
+    "file": "src\\infrastructure\\mail_providers.py",
+    "line": 61,
+    "content": "self.password = password",
+    "pattern": "pass"
+  },
+  {
+    "file": "src\\infrastructure\\mail_providers.py",
+    "line": 106,
+    "content": "server.login(self.username, self.password)",
+    "pattern": "pass"
+  },
+  {
+    "file": "src\\infrastructure\\mail_providers.py",
+    "line": 160,
+    "content": "server.login(self.username, self.password)",
+    "pattern": "pass"
+  },
+  {
+    "file": "src\\infrastructure\\mail_service.py",
+    "line": 39,
+    "content": "MailTemplateCategory.PASSWORD_RESET: \"password_reset.html\",",
+    "pattern": "pass"
+  },
+  {
+    "file": "src\\infrastructure\\mail_service.py",
+    "line": 117,
+    "content": "smtp_pass = os.environ.get(\"SMTP_PASS\", \"\")",
+    "pattern": "pass"
+  },
+  {
+    "file": "src\\infrastructure\\mail_service.py",
+    "line": 130,
+    "content": "password=smtp_pass,",
+    "pattern": "pass"
+  },
+  {
+    "file": "src\\infrastructure\\mail_service.py",
+    "line": 157,
+    "content": "password=profile.password,",
+    "pattern": "pass"
+  },
+  {
+    "file": "src\\infrastructure\\mail_service.py",
+    "line": 164,
+    "content": "api_key=profile.password,",
+    "pattern": "pass"
+  },
+  {
+    "file": "src\\infrastructure\\mail_service.py",
+    "line": 181,
+    "content": "pass",
+    "pattern": "pass"
+  },
+  {
+    "file": "src\\infrastructure\\models.py",
+    "line": 61,
+    "content": "password_hash = Column(String(255), nullable=False)",
+    "pattern": "pass"
+  },
+  {
+    "file": "src\\infrastructure\\mqtt_service.py",
+    "line": 83,
+    "content": "password = os.environ.get('MQTT_PASSWORD')",
+    "pattern": "pass"
+  },
+  {
+    "file": "src\\infrastructure\\mqtt_service.py",
+    "line": 84,
+    "content": "if username and password:",
+    "pattern": "pass"
+  },
+  {
+    "file": "src\\infrastructure\\mqtt_service.py",
+    "line": 85,
+    "content": "self.client.username_pw_set(username, password)",
+    "pattern": "pass"
+  },
+  {
+    "file": "src\\infrastructure\\repositories.py",
+    "line": 22,
+    "content": "pass",
+    "pattern": "pass"
+  },
+  {
+    "file": "src\\infrastructure\\security_legacy.py",
+    "line": 518,
+    "content": "sensitive_keys = {'password', 'password_hash', 'token', 'secret', 'key', 'authorization'}",
+    "pattern": "pass"
+  },
+  {
+    "file": "src\\infrastructure\\security_legacy.py",
+    "line": 1001,
+    "content": "'/api/auth/forgot-password', '/api/auth/reset-password',",
+    "pattern": "pass"
+  },
+  {
+    "file": "src\\infrastructure\\security_legacy.py",
+    "line": 1015,
+    "content": "'/api/auth/change-password': {'limit': 3, 'window': 300, 'block_duration': 1800},",
+    "pattern": "pass"
+  },
+  {
+    "file": "src\\infrastructure\\security_legacy.py",
+    "line": 1212,
+    "content": "\"\"\"Enterprise password policy enforcement.\"\"\"",
+    "pattern": "pass"
+  },
+  {
+    "file": "src\\infrastructure\\security_legacy.py",
+    "line": 1221,
+    "content": "'password', 'password123', '12345678', 'qwerty123', 'admin123',",
+    "pattern": "pass"
+  },
+  {
+    "file": "src\\infrastructure\\security_legacy.py",
+    "line": 1223,
+    "content": "'passw0rd', 'p@ssw0rd', 'Password1', 'password1', 'admin',",
+    "pattern": "pass"
+  },
+  {
+    "file": "src\\infrastructure\\security_legacy.py",
+    "line": 1227,
+    "content": "def validate(cls, password: str) -> Tuple[bool, Optional[str]]:",
+    "pattern": "pass"
+  },
+  {
+    "file": "src\\infrastructure\\security_legacy.py",
+    "line": 1228,
+    "content": "\"\"\"Validate password against policy.\"\"\"",
+    "pattern": "pass"
+  },
+  {
+    "file": "src\\infrastructure\\security_legacy.py",
+    "line": 1229,
+    "content": "if not password or len(password) < cls.MIN_LENGTH:",
+    "pattern": "pass"
+  },
+  {
+    "file": "src\\infrastructure\\security_legacy.py",
+    "line": 1231,
+    "content": "if len(password) > cls.MAX_LENGTH:",
+    "pattern": "pass"
+  },
+  {
+    "file": "src\\infrastructure\\security_legacy.py",
+    "line": 1233,
+    "content": "if cls.REQUIRE_UPPERCASE and not re.search(r'[A-Z]', password):",
+    "pattern": "pass"
+  },
+  {
+    "file": "src\\infrastructure\\security_legacy.py",
+    "line": 1235,
+    "content": "if cls.REQUIRE_LOWERCASE and not re.search(r'[a-z]', password):",
+    "pattern": "pass"
+  },
+  {
+    "file": "src\\infrastructure\\security_legacy.py",
+    "line": 1237,
+    "content": "if cls.REQUIRE_DIGIT and not re.search(r'[0-9]', password):",
+    "pattern": "pass"
+  },
+  {
+    "file": "src\\infrastructure\\security_legacy.py",
+    "line": 1239,
+    "content": "if cls.REQUIRE_SPECIAL and not re.search(r'[!@#$%^&*(),.?\":{}|<>_\\-]', password):",
+    "pattern": "pass"
+  },
+  {
+    "file": "src\\infrastructure\\security_legacy.py",
+    "line": 1241,
+    "content": "if password.lower() in cls.COMMON_PASSWORDS:",
+    "pattern": "pass"
+  },
+  {
+    "file": "src\\infrastructure\\security_legacy.py",
+    "line": 1242,
+    "content": "return False, 'Password is too common. Please choose a stronger password.'",
+    "pattern": "pass"
+  },
+  {
+    "file": "src\\infrastructure\\security_reinforcements.py",
+    "line": 5,
+    "content": "Adds: HTTPS enforcement, brute-force protection, password reset,",
+    "pattern": "pass"
+  },
+  {
+    "file": "src\\infrastructure\\security_reinforcements.py",
+    "line": 151,
+    "content": "log_security_event('password_reset_email_mismatch',",
+    "pattern": "pass"
+  },
+  {
+    "file": "src\\infrastructure\\security_reinforcements.py",
+    "line": 168,
+    "content": "password_reset_manager = PasswordResetManager()",
+    "pattern": "pass"
+  },
+  {
+    "file": "src\\infrastructure\\security_reinforcements.py",
+    "line": 171,
+    "content": "def send_password_reset_email(email: str, reset_link: str):",
+    "pattern": "pass"
+  },
+  {
+    "file": "src\\infrastructure\\security_reinforcements.py",
+    "line": 176,
+    "content": "template_type='password_reset',",
+    "pattern": "pass"
+  },
+  {
+    "file": "src\\infrastructure\\security_reinforcements.py",
+    "line": 188,
+    "content": "logger.error(f'Failed to queue password reset email: {e}')",
+    "pattern": "pass"
+  },
+  {
+    "file": "src\\infrastructure\\security_reinforcements.py",
+    "line": 207,
+    "content": "pass",
+    "pattern": "pass"
+  },
+  {
+    "file": "src\\infrastructure\\security_reinforcements.py",
+    "line": 341,
+    "content": "pass",
+    "pattern": "pass"
+  },
+  {
+    "file": "src\\infrastructure\\security_reinforcements.py",
+    "line": 366,
+    "content": "pass",
+    "pattern": "pass"
+  },
+  {
+    "file": "src\\infrastructure\\security_reinforcements.py",
+    "line": 461,
+    "content": "pass",
+    "pattern": "pass"
+  },
+  {
+    "file": "src\\infrastructure\\security_reinforcements.py",
+    "line": 628,
+    "content": "@security_reinforcement_bp.route('/forgot-password', methods=['POST'])",
+    "pattern": "pass"
+  },
+  {
+    "file": "src\\infrastructure\\security_reinforcements.py",
+    "line": 630,
+    "content": "def forgot_password():",
+    "pattern": "pass"
+  },
+  {
+    "file": "src\\infrastructure\\security_reinforcements.py",
+    "line": 643,
+    "content": "pass",
+    "pattern": "pass"
+  },
+  {
+    "file": "src\\infrastructure\\security_reinforcements.py",
+    "line": 645,
+    "content": "token = password_reset_manager.generate_token(email)",
+    "pattern": "pass"
+  },
+  {
+    "file": "src\\infrastructure\\security_reinforcements.py",
+    "line": 649,
+    "content": "reset_link = f\"{request.host_url.rstrip('/')}/api/auth/reset-password?token={token}&email={email}\"",
+    "pattern": "pass"
+  },
+  {
+    "file": "src\\infrastructure\\security_reinforcements.py",
+    "line": 650,
+    "content": "send_password_reset_email(email, reset_link)",
+    "pattern": "pass"
+  },
+  {
+    "file": "src\\infrastructure\\security_reinforcements.py",
+    "line": 652,
+    "content": "log_security_event('password_reset_requested',",
+    "pattern": "pass"
+  },
+  {
+    "file": "src\\infrastructure\\security_reinforcements.py",
+    "line": 657,
+    "content": "logger.error(f'Forgot password error: {e}')",
+    "pattern": "pass"
+  },
+  {
+    "file": "src\\infrastructure\\security_reinforcements.py",
+    "line": 661,
+    "content": "@security_reinforcement_bp.route('/reset-password', methods=['POST'])",
+    "pattern": "pass"
+  },
+  {
+    "file": "src\\infrastructure\\security_reinforcements.py",
+    "line": 663,
+    "content": "def reset_password_confirm():",
+    "pattern": "pass"
+  },
+  {
+    "file": "src\\infrastructure\\security_reinforcements.py",
+    "line": 668,
+    "content": "new_password = data.get('new_password', '')",
+    "pattern": "pass"
+  },
+  {
+    "file": "src\\infrastructure\\security_reinforcements.py",
+    "line": 670,
+    "content": "if not all([token, email, new_password]):",
+    "pattern": "pass"
+  },
+  {
+    "file": "src\\infrastructure\\security_reinforcements.py",
+    "line": 671,
+    "content": "return jsonify({'error': 'token, email, and new_password required'}), 400",
+    "pattern": "pass"
+  },
+  {
+    "file": "src\\infrastructure\\security_reinforcements.py",
+    "line": 675,
+    "content": "pw_valid, pw_error = PasswordPolicy.validate(new_password)",
+    "pattern": "pass"
+  },
+  {
+    "file": "src\\infrastructure\\security_reinforcements.py",
+    "line": 679,
+    "content": "if len(new_password) < 8:",
+    "pattern": "pass"
+  },
+  {
+    "file": "src\\infrastructure\\security_reinforcements.py",
+    "line": 682,
+    "content": "valid, msg = password_reset_manager.validate_token(token, email)",
+    "pattern": "pass"
+  },
+  {
+    "file": "src\\infrastructure\\security_reinforcements.py",
+    "line": 684,
+    "content": "log_security_event('password_reset_invalid_token',",
+    "pattern": "pass"
+  },
+  {
+    "file": "src\\infrastructure\\security_reinforcements.py",
+    "line": 697,
+    "content": "new_hash = auth_svc.hash_password(new_password)",
+    "pattern": "pass"
+  },
+  {
+    "file": "src\\infrastructure\\security_reinforcements.py",
+    "line": 699,
+    "content": "'password_hash': new_hash,",
+    "pattern": "pass"
+  },
+  {
+    "file": "src\\infrastructure\\security_reinforcements.py",
+    "line": 700,
+    "content": "'password_updated_at': datetime.utcnow().isoformat(),",
+    "pattern": "pass"
+  },
+  {
+    "file": "src\\infrastructure\\security_reinforcements.py",
+    "line": 702,
+    "content": "password_reset_manager.consume_token(token)",
+    "pattern": "pass"
+  },
+  {
+    "file": "src\\infrastructure\\security_reinforcements.py",
+    "line": 703,
+    "content": "password_reset_manager.revoke_for_email(email)",
+    "pattern": "pass"
+  },
+  {
+    "file": "src\\infrastructure\\security_reinforcements.py",
+    "line": 705,
+    "content": "log_security_event('password_reset_completed',",
+    "pattern": "pass"
+  },
+  {
+    "file": "src\\infrastructure\\security_reinforcements.py",
+    "line": 711,
+    "content": "'event_type': 'password_reset_completed',",
+    "pattern": "pass"
+  },
+  {
+    "file": "src\\infrastructure\\security_reinforcements.py",
+    "line": 720,
+    "content": "logger.error(f'Failed to reset password for {email}: {e}')",
+    "pattern": "pass"
+  },
+  {
+    "file": "src\\infrastructure\\security_reinforcements.py",
+    "line": 722,
+    "content": "return jsonify({'error': 'Unable to reset password'}), 500",
+    "pattern": "pass"
+  },
+  {
+    "file": "src\\infrastructure\\security_reinforcements.py",
+    "line": 725,
+    "content": "logger.error(f'Reset password confirm error: {e}')",
+    "pattern": "pass"
+  },
+  {
+    "file": "src\\infrastructure\\security_reinforcements.py",
+    "line": 729,
+    "content": "@security_reinforcement_bp.route('/reset-password', methods=['GET'])",
+    "pattern": "pass"
+  },
+  {
+    "file": "src\\infrastructure\\security_reinforcements.py",
+    "line": 730,
+    "content": "def reset_password_page():",
+    "pattern": "pass"
+  },
+  {
+    "file": "src\\infrastructure\\security_reinforcements.py",
+    "line": 737,
+    "content": "<div class=\"card\"><h1>Reset Password</h1><p>Enter your new password</p>",
+    "pattern": "pass"
+  },
+  {
+    "file": "src\\infrastructure\\security_reinforcements.py",
+    "line": 738,
+    "content": "<form id=\"resetForm\"><input type=\"password\" id=\"password\" placeholder=\"New password\" minlength=\"8\" required>",
+    "pattern": "pass"
+  },
+  {
+    "file": "src\\infrastructure\\security_reinforcements.py",
+    "line": 739,
+    "content": "<input type=\"password\" id=\"confirm\" placeholder=\"Confirm password\" minlength=\"8\" required>",
+    "pattern": "pass"
+  },
+  {
+    "file": "src\\infrastructure\\security_reinforcements.py",
+    "line": 743,
+    "content": "document.getElementById('resetForm').onsubmit=async function(e){e.preventDefault();const p=document.getElementById('password').value,c=document.getElementById('confirm').value,m=document.getElementById('message');if(p!==c){m.className='error';m.textContent='Passwords do not match';return}",
+    "pattern": "pass"
+  },
+  {
+    "file": "src\\infrastructure\\security_reinforcements.py",
+    "line": 744,
+    "content": "try{const r=await fetch('/api/auth/reset-password',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({token:'\"\"\" + token + \"\"\"',email:'\"\"\" + email + \"\"\"',new_password:p})});const d=await r.json();if(r.ok){m.className='success';m.textContent='Password reset successful! You can now login.'}else{m.className='error';m.textContent=d.error||'Reset failed'}}catch(e){m.className='error';m.textContent='Network error'}}",
+    "pattern": "pass"
+  },
+  {
+    "file": "src\\infrastructure\\security_reinforcements.py",
+    "line": 804,
+    "content": "pass",
+    "pattern": "pass"
+  },
+  {
+    "file": "src\\infrastructure\\security_reinforcements.py",
+    "line": 931,
+    "content": "(re.compile(r'(password|secret|token|key|authorization)[=:][^\\s&]+', re.I), r'\\1=[REDACTED]'),",
+    "pattern": "pass"
+  },
+  {
+    "file": "src\\infrastructure\\security_reinforcements.py",
+    "line": 970,
+    "content": "@app.route('/.well-known/change-password')",
+    "pattern": "pass"
+  },
+  {
+    "file": "src\\infrastructure\\security_reinforcements.py",
+    "line": 971,
+    "content": "def change_password_redirect():",
+    "pattern": "pass"
+  },
+  {
+    "file": "src\\infrastructure\\security_reinforcements.py",
+    "line": 1155,
+    "content": "'password reset, token rotation, API keys, webhooks, risk-based auth, '",
+    "pattern": "pass"
+  },
+  {
+    "file": "src\\infrastructure\\security\\abac_engine.py",
+    "line": 485,
+    "content": "user_auth_methods=['password'],",
+    "pattern": "pass"
+  },
+  {
+    "file": "src\\infrastructure\\security\\admin_lockdown.py",
+    "line": 84,
+    "content": "pass",
+    "pattern": "pass"
+  },
+  {
+    "file": "src\\infrastructure\\security\\admin_lockdown.py",
+    "line": 332,
+    "content": "pass",
+    "pattern": "pass"
+  },
+  {
+    "file": "src\\infrastructure\\security\\anomaly_detection.py",
+    "line": 117,
+    "content": "pass",
+    "pattern": "pass"
+  },
+  {
+    "file": "src\\infrastructure\\security\\api_security.py",
+    "line": 142,
+    "content": "pass",
+    "pattern": "pass"
+  },
+  {
+    "file": "src\\infrastructure\\security\\api_security.py",
+    "line": 159,
+    "content": "pass",
+    "pattern": "pass"
+  },
+  {
+    "file": "src\\infrastructure\\security\\api_security.py",
+    "line": 203,
+    "content": "pass",
+    "pattern": "pass"
+  },
+  {
+    "file": "src\\infrastructure\\security\\api_security.py",
+    "line": 229,
+    "content": "'required': ['email', 'password'],",
+    "pattern": "pass"
+  },
+  {
+    "file": "src\\infrastructure\\security\\api_security.py",
+    "line": 232,
+    "content": "'password': {'type': 'string', 'min_length': 6, 'max_length': 128},",
+    "pattern": "pass"
+  },
+  {
+    "file": "src\\infrastructure\\security\\api_security.py",
+    "line": 237,
+    "content": "'required': ['email', 'password', 'name', 'institution_id'],",
+    "pattern": "pass"
+  },
+  {
+    "file": "src\\infrastructure\\security\\api_security.py",
+    "line": 240,
+    "content": "'password': {'type': 'string', 'min_length': 8, 'max_length': 128},",
+    "pattern": "pass"
+  },
+  {
+    "file": "src\\infrastructure\\security\\api_security.py",
+    "line": 474,
+    "content": "pass",
+    "pattern": "pass"
+  },
+  {
+    "file": "src\\infrastructure\\security\\api_security.py",
+    "line": 529,
+    "content": "pass",
+    "pattern": "pass"
+  },
+  {
+    "file": "src\\infrastructure\\security\\api_security.py",
+    "line": 996,
+    "content": "pass",
+    "pattern": "pass"
+  },
+  {
+    "file": "src\\infrastructure\\security\\api_security.py",
+    "line": 1008,
+    "content": "pass",
+    "pattern": "pass"
+  },
+  {
+    "file": "src\\infrastructure\\security\\api_security.py",
+    "line": 1147,
+    "content": "pass",
+    "pattern": "pass"
+  },
+  {
+    "file": "src\\infrastructure\\security\\api_security.py",
+    "line": 1164,
+    "content": "r'passwd',",
+    "pattern": "pass"
+  },
+  {
+    "file": "src\\infrastructure\\security\\api_security.py",
+    "line": 1165,
+    "content": "r'etc/passwd',",
+    "pattern": "pass"
+  },
+  {
+    "file": "src\\infrastructure\\security\\device_fingerprint.py",
+    "line": 172,
+    "content": "similarity_threshold: 0-1, how similar must be to pass",
+    "pattern": "pass"
+  },
+  {
+    "file": "src\\infrastructure\\security\\device_session.py",
+    "line": 82,
+    "content": "pass",
+    "pattern": "pass"
+  },
+  {
+    "file": "src\\infrastructure\\security\\forensic_logging.py",
+    "line": 75,
+    "content": "pass",
+    "pattern": "pass"
+  },
+  {
+    "file": "src\\infrastructure\\security\\forensic_logging.py",
+    "line": 318,
+    "content": "pass # persist logic disabled",
+    "pattern": "pass"
+  },
+  {
+    "file": "src\\infrastructure\\security\\geolocation_security.py",
+    "line": 330,
+    "content": "pass",
+    "pattern": "pass"
+  },
+  {
+    "file": "src\\infrastructure\\security\\mitre_attack.py",
+    "line": 55,
+    "content": "REQUIRE_PASSWORD_CHANGE = 'require_password_change'",
+    "pattern": "pass"
+  },
+  {
+    "file": "src\\infrastructure\\security\\mitre_attack.py",
+    "line": 101,
+    "content": "pass",
+    "pattern": "pass"
+  },
+  {
+    "file": "src\\infrastructure\\security\\mitre_attack.py",
+    "line": 136,
+    "content": "response_actions=['revoke_all_sessions', 'require_password_change', 'escalate'],",
+    "pattern": "pass"
+  },
+  {
+    "file": "src\\infrastructure\\security\\mitre_attack.py",
+    "line": 158,
+    "content": "description='Pass-the-hash, pass-the-ticket, or WebAuthn bypass',",
+    "pattern": "pass"
+  },
+  {
+    "file": "src\\infrastructure\\security\\network_security.py",
+    "line": 1519,
+    "content": "pass",
+    "pattern": "pass"
+  },
+  {
+    "file": "src\\infrastructure\\security\\network_security.py",
+    "line": 1550,
+    "content": "pass",
+    "pattern": "pass"
+  },
+  {
+    "file": "src\\infrastructure\\security\\network_security.py",
+    "line": 1766,
+    "content": "pass",
+    "pattern": "pass"
+  },
+  {
+    "file": "src\\infrastructure\\security\\production_hardening.py",
+    "line": 41,
+    "content": "pass",
+    "pattern": "pass"
+  },
+  {
+    "file": "src\\infrastructure\\security\\production_hardening.py",
+    "line": 388,
+    "content": "'/etc/passwd',",
+    "pattern": "pass"
+  },
+  {
+    "file": "src\\infrastructure\\security\\redis_session_store.py",
+    "line": 31,
+    "content": "pass",
+    "pattern": "pass"
+  },
+  {
+    "file": "src\\infrastructure\\security\\security_monitor.py",
+    "line": 43,
+    "content": "'tor_detected', 'account_lockout', 'password_reset_abuse',",
+    "pattern": "pass"
+  },
+  {
+    "file": "src\\infrastructure\\security\\security_monitor.py",
+    "line": 48,
+    "content": "'mfa_failure', 'mfa_bypass_attempt',",
+    "pattern": "pass"
+  },
+  {
+    "file": "src\\infrastructure\\security\\security_monitor.py",
+    "line": 105,
+    "content": "'sql_injection_attempt', 'xss_attempt', 'mfa_bypass_attempt',",
+    "pattern": "pass"
+  },
+  {
+    "file": "src\\infrastructure\\security\\security_monitor.py",
+    "line": 238,
+    "content": "'mfa_bypass_attempt', 'attendance_fraud', 'offline_sync_tamper',",
+    "pattern": "pass"
+  },
+  {
+    "file": "src\\infrastructure\\security\\security_monitor.py",
+    "line": 328,
+    "content": "pass",
+    "pattern": "pass"
+  },
+  {
+    "file": "src\\infrastructure\\security\\security_monitor.py",
+    "line": 723,
+    "content": "pass",
+    "pattern": "pass"
+  },
+  {
+    "file": "src\\infrastructure\\security\\session_security.py",
+    "line": 254,
+    "content": "Invalidate all sessions for a user (e.g., password change, suspicious activity).",
+    "pattern": "pass"
+  },
+  {
+    "file": "src\\infrastructure\\security\\webauthn_service.py",
+    "line": 4,
+    "content": "Enterprise passkey authentication supporting:",
+    "pattern": "pass"
+  },
+  {
+    "file": "src\\infrastructure\\security\\webauthn_service.py",
+    "line": 5,
+    "content": "- Biometric passkeys (Touch ID, Windows Hello, Face ID)",
+    "pattern": "pass"
+  },
+  {
+    "file": "src\\infrastructure\\security\\webauthn_service.py",
+    "line": 11,
+    "content": "- Legacy password fallback",
+    "pattern": "pass"
+  },
+  {
+    "file": "src\\infrastructure\\security\\webauthn_service.py",
+    "line": 109,
+    "content": "\"\"\"WebAuthn/FIDO2 passwordless authentication service.\"\"\"",
+    "pattern": "pass"
+  },
+  {
+    "file": "src\\infrastructure\\security\\webauthn_service.py",
+    "line": 116,
+    "content": "pass",
+    "pattern": "pass"
+  },
+  {
+    "file": "src\\infrastructure\\security\\zerotrust_engine.py",
+    "line": 5,
+    "content": "- WebAuthn/FIDO2 passwordless authentication (3A)",
+    "pattern": "pass"
+  },
+  {
+    "file": "src\\infrastructure\\security\\zerotrust_engine.py",
+    "line": 67,
+    "content": "pass",
+    "pattern": "pass"
+  },
+  {
+    "file": "src\\infrastructure\\security\\zerotrust_engine.py",
+    "line": 84,
+    "content": "pass",
+    "pattern": "pass"
+  },
+  {
+    "file": "src\\infrastructure\\security\\zerotrust_engine.py",
+    "line": 107,
+    "content": "pass",
+    "pattern": "pass"
+  },
+  {
+    "file": "src\\infrastructure\\security\\zerotrust_engine.py",
+    "line": 119,
+    "content": "pass",
+    "pattern": "pass"
+  },
+  {
+    "file": "src\\infrastructure\\security\\zerotrust_engine.py",
+    "line": 133,
+    "content": "pass",
+    "pattern": "pass"
+  },
+  {
+    "file": "src\\infrastructure\\security\\zerotrust_engine.py",
+    "line": 145,
+    "content": "pass",
+    "pattern": "pass"
+  },
+  {
+    "file": "src\\innovation\\digital_twin.py",
+    "line": 48,
+    "content": "pass  # Triggers lazy cache invalidation",
+    "pattern": "pass"
+  },
+  {
+    "file": "src\\innovation\\invisible_validation.py",
+    "line": 381,
+    "content": "pass",
+    "pattern": "pass"
+  },
+  {
+    "file": "src\\innovation\\models.py",
+    "line": 19,
+    "content": "PASSIVE = \"passive\"",
+    "pattern": "pass"
+  },
+  {
+    "file": "src\\innovation\\participation.py",
+    "line": 3,
+    "content": "Classifies passive vs. active participation, generates engagement scores,",
+    "pattern": "pass"
+  },
+  {
+    "file": "src\\innovation\\participation.py",
+    "line": 35,
+    "content": "\"passive_threshold_minutes\": 10,",
+    "pattern": "pass"
+  },
+  {
+    "file": "src\\innovation\\reputation.py",
+    "line": 301,
+    "content": "pass",
+    "pattern": "pass"
+  },
+  {
+    "file": "src\\presentation\\routes\\auth.py",
+    "line": 1,
+    "content": "\"\"\"Authentication route blueprint \u2014 register, login, logout, password management.\"\"\"",
+    "pattern": "pass"
+  },
+  {
+    "file": "src\\presentation\\routes\\auth.py",
+    "line": 58,
+    "content": "password = data.get('password', '')",
+    "pattern": "pass"
+  },
+  {
+    "file": "src\\presentation\\routes\\auth.py",
+    "line": 69,
+    "content": "'password': password,",
+    "pattern": "pass"
+  },
+  {
+    "file": "src\\presentation\\routes\\auth.py",
+    "line": 82,
+    "content": "# Enterprise password policy enforcement",
+    "pattern": "pass"
+  },
+  {
+    "file": "src\\presentation\\routes\\auth.py",
+    "line": 83,
+    "content": "pw_valid, pw_error = PasswordPolicy.validate(password)",
+    "pattern": "pass"
+  },
+  {
+    "file": "src\\presentation\\routes\\auth.py",
+    "line": 85,
+    "content": "SecurityAuditLogger.log_event('weak_password', f'Weak password attempt: {pw_error}', risk_score=30)",
+    "pattern": "pass"
+  },
+  {
+    "file": "src\\presentation\\routes\\auth.py",
+    "line": 116,
+    "content": "password=password,",
+    "pattern": "pass"
+  },
+  {
+    "file": "src\\presentation\\routes\\auth.py",
+    "line": 182,
+    "content": "allowed_fields={'email', 'password', 'remember_me', 'device_fingerprint', 'institutionId', 'institution_id', 'captchaToken'},",
+    "pattern": "pass"
+  },
+  {
+    "file": "src\\presentation\\routes\\auth.py",
+    "line": 183,
+    "content": "required_fields={'email', 'password'}",
+    "pattern": "pass"
+  },
+  {
+    "file": "src\\presentation\\routes\\auth.py",
+    "line": 190,
+    "content": "if not sanitized_email or not data.get('password'):",
+    "pattern": "pass"
+  },
+  {
+    "file": "src\\presentation\\routes\\auth.py",
+    "line": 191,
+    "content": "SecurityAuditLogger.log_event('login_missing_fields', 'Missing email/password', risk_score=40)",
+    "pattern": "pass"
+  },
+  {
+    "file": "src\\presentation\\routes\\auth.py",
+    "line": 192,
+    "content": "return jsonify({'success': False, 'message': 'Email and password are required'}), 400",
+    "pattern": "pass"
+  },
+  {
+    "file": "src\\presentation\\routes\\auth.py",
+    "line": 222,
+    "content": "password=data['password'],",
+    "pattern": "pass"
+  },
+  {
+    "file": "src\\presentation\\routes\\auth.py",
+    "line": 246,
+    "content": "pass",
+    "pattern": "pass"
+  },
+  {
+    "file": "src\\presentation\\routes\\auth.py",
+    "line": 328,
+    "content": "@auth_bp.route('/change-password', methods=['POST'])",
+    "pattern": "pass"
+  },
+  {
+    "file": "src\\presentation\\routes\\auth.py",
+    "line": 332,
+    "content": "def change_password():",
+    "pattern": "pass"
+  },
+  {
+    "file": "src\\presentation\\routes\\auth.py",
+    "line": 335,
+    "content": "if not data or not data.get('current_password') or not data.get('new_password'):",
+    "pattern": "pass"
+  },
+  {
+    "file": "src\\presentation\\routes\\auth.py",
+    "line": 336,
+    "content": "return jsonify({'error': 'current_password and new_password required'}), 400",
+    "pattern": "pass"
+  },
+  {
+    "file": "src\\presentation\\routes\\auth.py",
+    "line": 338,
+    "content": "new_password = data['new_password']",
+    "pattern": "pass"
+  },
+  {
+    "file": "src\\presentation\\routes\\auth.py",
+    "line": 339,
+    "content": "pw_valid, pw_error = PasswordPolicy.validate(new_password)",
+    "pattern": "pass"
+  },
+  {
+    "file": "src\\presentation\\routes\\auth.py",
+    "line": 341,
+    "content": "SecurityAuditLogger.log_event('weak_password_change',",
+    "pattern": "pass"
+  },
+  {
+    "file": "src\\presentation\\routes\\auth.py",
+    "line": 342,
+    "content": "f'Weak new password: {pw_error}', risk_score=30)",
+    "pattern": "pass"
+  },
+  {
+    "file": "src\\presentation\\routes\\auth.py",
+    "line": 346,
+    "content": "ok = _auth_service.change_password(",
+    "pattern": "pass"
+  },
+  {
+    "file": "src\\presentation\\routes\\auth.py",
+    "line": 348,
+    "content": "current_password=data['current_password'],",
+    "pattern": "pass"
+  },
+  {
+    "file": "src\\presentation\\routes\\auth.py",
+    "line": 349,
+    "content": "new_password=new_password",
+    "pattern": "pass"
+  },
+  {
+    "file": "src\\presentation\\routes\\auth.py",
+    "line": 352,
+    "content": "SecurityAuditLogger.log_event('password_changed',",
+    "pattern": "pass"
+  },
+  {
+    "file": "src\\presentation\\routes\\auth.py",
+    "line": 356,
+    "content": "SecurityAuditLogger.log_event('password_change_failed',",
+    "pattern": "pass"
+  },
+  {
+    "file": "src\\presentation\\routes\\auth.py",
+    "line": 357,
+    "content": "f'Incorrect current password for user {user_id}', risk_score=50)",
+    "pattern": "pass"
+  },
+  {
+    "file": "src\\presentation\\routes\\auth.py",
+    "line": 358,
+    "content": "return jsonify({'error': 'Current password is incorrect'}), 401",
+    "pattern": "pass"
+  },
+  {
+    "file": "src\\presentation\\routes\\auth.py",
+    "line": 360,
+    "content": "SecurityAuditLogger.log_event('password_change_error',",
+    "pattern": "pass"
+  },
+  {
+    "file": "src\\presentation\\routes\\mail_routes.py",
+    "line": 114,
+    "content": "'password_reset': {",
+    "pattern": "pass"
+  },
+  {
+    "file": "src\\presentation\\routes\\mail_routes.py",
+    "line": 177,
+    "content": "'password_reset': {",
+    "pattern": "pass"
+  },
+  {
+    "file": "src\\presentation\\routes\\webauthn_routes.py",
+    "line": 4,
+    "content": "REST endpoints for passkey registration, authentication, and management.",
+    "pattern": "pass"
+  },
+  {
+    "file": "src\\presentation\\routes\\webauthn_routes.py",
+    "line": 34,
+    "content": "\"\"\"Generate registration options for creating a new passkey.\"\"\"",
+    "pattern": "pass"
+  },
+  {
+    "file": "src\\presentation\\routes\\webauthn_routes.py",
+    "line": 118,
+    "content": "\"\"\"Generate authentication options for a passkey login.\"\"\"",
+    "pattern": "pass"
+  },
+  {
+    "file": "src\\presentation\\routes\\webauthn_routes.py",
+    "line": 131,
+    "content": "'error': 'No active passkeys found for this user',",
+    "pattern": "pass"
+  },
+  {
+    "file": "src\\presentation\\routes\\webauthn_routes.py",
+    "line": 132,
+    "content": "'password_fallback': True,",
+    "pattern": "pass"
+  },
+  {
+    "file": "src\\presentation\\routes\\webauthn_routes.py",
+    "line": 149,
+    "content": "\"\"\"Verify a passkey assertion and log the user in.\"\"\"",
+    "pattern": "pass"
+  }
+]

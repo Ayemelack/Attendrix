@@ -1,4 +1,4 @@
-﻿<!DOCTYPE html>
+<!DOCTYPE html>
 <html lang="en">
 <head>
 <meta charset="UTF-8">
@@ -771,7 +771,11 @@ function closeSidebarMobile() {
 function apiFetch(url, cb, key) {
   var k = key || url;
   retryCount[k] = (retryCount[k] || 0) + 1;
-  fetch(url).then(function(r) { if (!r.ok) throw new Error('HTTP ' + r.status); return r.json(); }).then(function(d) { retryCount[k] = 0; cb(d); }).catch(function(err) { console.warn('API error:', url, err); if (typeof cb.error === 'function') cb.error(err); });
+  var token = localStorage.getItem('accessToken') || '';
+  fetch(url, { headers: { 'Authorization': 'Bearer ' + token } })
+    .then(function(r) { if (!r.ok) throw new Error('HTTP ' + r.status); return r.json(); })
+    .then(function(d) { retryCount[k] = 0; cb(d); })
+    .catch(function(err) { console.warn('API error:', url, err); if (typeof cb.error === 'function') cb.error(err); });
 }
 
 document.querySelectorAll('.nav-item[data-tab]').forEach(function(btn) {
@@ -1608,9 +1612,10 @@ function closeFeedbackDetail() {
 }
 
 function updateFeedbackStatus(id, status) {
+  var token = localStorage.getItem('accessToken') || '';
   fetch('/api/super-admin/feedback/' + id + '/moderate', {
     method: 'POST',
-    headers: {'Content-Type': 'application/json'},
+    headers: {'Content-Type': 'application/json', 'Authorization': 'Bearer ' + token},
     body: JSON.stringify({action: status === 'resolved' ? 'resolve' : status === 'archived' ? 'archive' : status, reason: 'Status update via workflow'})
   }).then(function(r) { return r.json(); }).then(function(d) {
     if (d.success) { viewFeedbackDetail(id); loadFeedbackList(); }
@@ -1621,9 +1626,10 @@ function updateFeedbackStatus(id, status) {
 function submitAdminReply(id) {
   var input = document.getElementById('fbAdminReply');
   if (!input || !input.value.trim()) return;
+  var token = localStorage.getItem('accessToken') || '';
   fetch('/api/super-admin/feedback/' + id + '/reply-admin', {
     method: 'POST',
-    headers: {'Content-Type': 'application/json'},
+    headers: {'Content-Type': 'application/json', 'Authorization': 'Bearer ' + token},
     body: JSON.stringify({body: input.value.trim()})
   }).then(function(r) { return r.json(); }).then(function(d) {
     if (d.success) { input.value = ''; viewFeedbackDetail(id); loadFeedbackList(); }
@@ -1634,9 +1640,10 @@ function submitAdminReply(id) {
 function submitAdminNote(id) {
   var input = document.getElementById('fbAdminNote');
   if (!input || !input.value.trim()) return;
+  var token = localStorage.getItem('accessToken') || '';
   fetch('/api/super-admin/feedback/' + id + '/note', {
     method: 'POST',
-    headers: {'Content-Type': 'application/json'},
+    headers: {'Content-Type': 'application/json', 'Authorization': 'Bearer ' + token},
     body: JSON.stringify({note: input.value.trim()})
   }).then(function(r) { return r.json(); }).then(function(d) {
     if (d.success) { input.value = ''; alert('Private note saved.'); }
@@ -1647,9 +1654,10 @@ function submitAdminNote(id) {
 function moderateFeedback(id, action) {
   var reason = action === 'flag' ? prompt('Flag reason:') : '';
   if (action === 'flag' && !reason) return;
+  var token = localStorage.getItem('accessToken') || '';
   fetch('/api/super-admin/feedback/' + id + '/moderate', {
     method: 'POST',
-    headers: {'Content-Type': 'application/json'},
+    headers: {'Content-Type': 'application/json', 'Authorization': 'Bearer ' + token},
     body: JSON.stringify({action: action, reason: reason || 'Moderated by admin'})
   }).then(function(r) { return r.json(); }).then(function(d) {
     if (d.success) { viewFeedbackDetail(id); loadFeedbackList(); }

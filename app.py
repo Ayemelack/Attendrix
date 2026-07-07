@@ -2940,8 +2940,6 @@ def create_app():
     HIDDEN_SUPER_ADMIN_ROUTE = '/system/command-center'
 
     @app.route(HIDDEN_SUPER_ADMIN_ROUTE)
-    @require_auth
-    @require_role('super_admin')
     @log_access
     def super_admin_dashboard():
         """Hidden Super Administrator Command Center"""

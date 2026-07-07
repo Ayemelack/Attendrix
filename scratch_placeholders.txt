@@ -1,0 +1,272 @@
+src\application\attendance_security_service.py:187: return []
+src\application\attendance_security_service.py:201: return None
+src\application\attendance_security_service.py:207: return None
+src\application\attendance_security_service.py:230: return None
+src\application\attendance_security_service.py:242: return None
+src\application\attendance_security_service.py:257: return None
+src\application\attendance_security_service.py:262: return None
+src\application\attendance_security_service.py:282: return None
+src\application\attendance_security_service.py:290: return None
+src\application\attendance_security_service.py:313: return None
+src\application\attendance_security_service.py:326: return None
+src\application\attendance_security_service.py:341: return None
+src\application\attendance_security_service.py:348: return None
+src\application\attendance_service.py:51: return None, errors
+src\application\attendance_service.py:58: return None, errors
+src\application\attendance_service.py:102: return None, errors
+src\application\attendance_service.py:588: return {}
+src\application\authentication_service.py:29: pass
+src\application\auth_service.py:183: pass
+src\application\auth_service.py:184: return None
+src\application\auth_service.py:196: pass
+src\application\auth_service.py:197: return None
+src\application\auth_service.py:316: return None
+src\application\auth_service.py:320: return None
+src\application\auth_service.py:331: return None
+src\application\auth_service.py:333: return None
+src\application\auth_service.py:336: return None
+src\application\auth_service.py:348: return None
+src\application\auth_service.py:352: return None
+src\application\auth_service.py:357: return None
+src\application\auth_service.py:359: return None
+src\application\auth_service.py:362: return None
+src\application\auth_service.py:443: return None
+src\application\auth_service.py:450: return None
+src\application\auth_service.py:588: return None
+src\application\auth_service.py:610: return None
+src\application\bilingual.py:116: pass
+src\application\biometric_service.py:383: return []
+src\application\biometric_service.py:408: return []
+src\application\dashboard_data_service.py:262: pass
+src\application\dashboard_data_service.py:526: return None
+src\application\dashboard_data_service.py:1072: pass
+src\application\dashboard_data_service.py:1100: pass
+src\application\demo_booking_service.py:50: return None
+src\application\demo_booking_service.py:54: return None
+src\application\demo_booking_service.py:63: return None
+src\application\demo_booking_service.py:104: return None
+src\application\demo_booking_service.py:110: return None
+src\application\demo_booking_service.py:116: return None
+src\application\demo_booking_service.py:122: return None
+src\application\demo_booking_service.py:129: return None
+src\application\demo_booking_service.py:233: return None
+src\application\demo_booking_service.py:436: pass
+src\application\demo_booking_service.py:449: return None
+src\application\demo_booking_service.py:460: return None
+src\application\demo_booking_service.py:462: pass
+src\application\demo_booking_service.py:484: return None
+src\application\demo_booking_service.py:494: return None
+src\application\demo_booking_service.py:498: return None
+src\application\demo_booking_service.py:509: return None
+src\application\demo_booking_service.py:511: pass
+src\application\demo_booking_service.py:534: return None
+src\application\demo_booking_service.py:542: return None
+src\application\demo_booking_service.py:546: return None
+src\application\demo_booking_service.py:557: return None
+src\application\demo_booking_service.py:559: pass
+src\application\feedback_service.py:65: pass
+src\application\network_presence_service.py:218: pass
+src\application\network_presence_service.py:284: return []
+src\application\network_presence_service.py:288: return []
+src\application\network_presence_service.py:292: pass
+src\application\network_scanner_service.py:314: return None
+src\application\network_scanner_service.py:316: return None
+src\application\network_scanner_service.py:362: pass
+src\application\network_scanner_service.py:364: pass
+src\application\network_scanner_service.py:567: pass
+src\application\network_scanner_service.py:579: pass
+src\application\network_scanner_service.py:600: pass
+src\application\network_scanner_service.py:744: return []
+src\application\network_scanner_service.py:759: pass
+src\application\network_scanner_service.py:857: pass
+src\application\persistent_auth_service.py:37: return None
+src\application\persistent_auth_service.py:44: return None
+src\application\persistent_auth_service.py:49: return None
+src\application\persistent_auth_service.py:94: return None
+src\application\persistent_auth_service.py:106: return None
+src\application\persistent_auth_service.py:113: return None
+src\application\persistent_auth_service.py:117: return None
+src\application\persistent_auth_service.py:122: return None
+src\application\persistent_auth_service.py:132: return None
+src\application\postgres_auth_service.py:183: return None
+src\application\postgres_auth_service.py:187: return None
+src\application\postgres_auth_service.py:198: return None
+src\application\postgres_auth_service.py:200: return None
+src\application\postgres_auth_service.py:203: return None
+src\application\postgres_auth_service.py:215: return None
+src\application\postgres_auth_service.py:219: return None
+src\application\postgres_auth_service.py:224: return None
+src\application\postgres_auth_service.py:226: return None
+src\application\postgres_auth_service.py:229: return None
+src\application\rbac.py:209: pass
+src\application\rbac.py:240: pass
+src\application\report_service.py:15: pass
+src\application\report_service.py:170: return None
+src\application\report_service.py:173: return None
+src\application\report_service.py:237: return None
+src\application\report_service.py:249: return None
+src\application\report_service.py:300: return None
+src\application\report_service.py:387: return None
+src\application\report_service.py:390: return None
+src\application\scheduling_service.py:59: return None, conflicts
+src\application\scheduling_service.py:101: return None, []
+src\application\scheduling_service.py:132: return []
+src\application\scheduling_service.py:373: return []
+src\application\scheduling_service.py:473: return {}
+src\application\scheduling_service.py:518: return {}
+src\application\student_dashboard_service.py:17: return None
+src\application\student_dashboard_service.py:65: pass
+src\application\student_dashboard_service.py:105: return {}
+src\application\student_dashboard_service.py:499: pass
+src\application\super_admin_service.py:595: return None
+src\application\voucher_management_service.py:57: return []
+src\application\voucher_management_service.py:184: return {}
+src\application\voucher_service.py:72: return None
+src\application\voucher_service.py:79: return None
+src\application\voucher_service.py:94: return None
+src\application\voucher_service.py:145: return []
+src\infrastructure\cloudflare_security.py:272: return None, None
+src\infrastructure\cloudflare_security.py:292: return None, None
+src\infrastructure\cloudflare_security.py:301: return []
+src\infrastructure\cloudflare_security.py:457: pass
+src\infrastructure\cloudflare_security.py:472: pass
+src\infrastructure\cloudflare_security.py:473: return None
+src\infrastructure\cloudflare_security.py:1555: pass
+src\infrastructure\cloudflare_security.py:1575: pass
+src\infrastructure\cloudflare_security.py:1581: return None
+src\infrastructure\cloudflare_security.py:1612: return None
+src\infrastructure\comprehensive_security.py:136: return None
+src\infrastructure\comprehensive_security.py:142: return None
+src\infrastructure\comprehensive_security.py:152: return None
+src\infrastructure\comprehensive_security.py:167: return None
+src\infrastructure\comprehensive_security.py:170: return None
+src\infrastructure\comprehensive_security.py:306: return None
+src\infrastructure\comprehensive_security.py:388: return None
+src\infrastructure\comprehensive_security.py:390: return None
+src\infrastructure\comprehensive_security.py:395: return None
+src\infrastructure\comprehensive_security.py:399: return None
+src\infrastructure\comprehensive_security.py:468: return None
+src\infrastructure\comprehensive_security.py:474: return None
+src\infrastructure\comprehensive_security.py:498: return None
+src\infrastructure\comprehensive_security.py:516: return None
+src\infrastructure\comprehensive_security.py:716: return None
+src\infrastructure\comprehensive_security.py:947: pass
+src\infrastructure\comprehensive_security.py:964: pass
+src\infrastructure\comprehensive_security.py:966: pass
+src\infrastructure\comprehensive_security.py:1061: return None
+src\infrastructure\comprehensive_security.py:1105: return None
+src\infrastructure\mail_service.py:168: return None
+src\infrastructure\mail_service.py:181: pass
+src\infrastructure\mail_service.py:191: return None
+src\infrastructure\mail_service.py:196: return None
+src\infrastructure\mail_service.py:267: return None
+src\infrastructure\mail_service.py:329: return None
+src\infrastructure\mail_service.py:602: return {}
+src\infrastructure\mail_service.py:624: return []
+src\infrastructure\mail_service.py:649: return []
+src\infrastructure\mail_service.py:681: return []
+src\infrastructure\mail_service.py:690: return None
+src\infrastructure\mail_service.py:707: return None
+src\infrastructure\mqtt_service.py:241: return []
+src\infrastructure\repositories.py:33: return None
+src\infrastructure\repositories.py:41: return None
+src\infrastructure\repositories.py:52: return []
+src\infrastructure\repositories.py:62: return []
+src\infrastructure\repositories.py:90: return []
+src\infrastructure\security_legacy.py:614: return None
+src\infrastructure\security_reinforcements.py:54: return None
+src\infrastructure\security_reinforcements.py:59: return None
+src\infrastructure\security_reinforcements.py:132: return None
+src\infrastructure\security_reinforcements.py:207: pass
+src\infrastructure\security_reinforcements.py:275: return None
+src\infrastructure\security_reinforcements.py:341: pass
+src\infrastructure\security_reinforcements.py:366: pass
+src\infrastructure\security_reinforcements.py:461: pass
+src\infrastructure\security_reinforcements.py:643: pass
+src\infrastructure\security_reinforcements.py:803: pass
+src\infrastructure\security_reinforcements.py:900: return None
+src\infrastructure\security_reinforcements.py:906: return None
+src\infrastructure\security_reinforcements.py:907: return None
+src\infrastructure\security_reinforcements.py:1121: return None
+src\infrastructure\security\abac_engine.py:94: return None
+src\infrastructure\security\account_isolation.py:87: return None
+src\infrastructure\security\account_isolation.py:104: return None
+src\infrastructure\security\account_isolation.py:200: return {}
+src\infrastructure\security\account_isolation.py:236: return {}
+src\infrastructure\security\admin_lockdown.py:185: return None
+src\infrastructure\security\admin_lockdown.py:189: return None
+src\infrastructure\security\admin_lockdown.py:334: pass
+src\infrastructure\security\admin_security.py:99: return None
+src\infrastructure\security\admin_security.py:115: return None
+src\infrastructure\security\admin_security.py:349: return None
+src\infrastructure\security\admin_security.py:354: return None
+src\infrastructure\security\admin_security.py:360: return None
+src\infrastructure\security\admin_security.py:365: return None
+src\infrastructure\security\api_security.py:142: pass
+src\infrastructure\security\api_security.py:159: pass
+src\infrastructure\security\api_security.py:203: pass
+src\infrastructure\security\api_security.py:474: pass
+src\infrastructure\security\api_security.py:529: pass
+src\infrastructure\security\api_security.py:996: pass
+src\infrastructure\security\api_security.py:1008: pass
+src\infrastructure\security\api_security.py:1108: return None, 0.0
+src\infrastructure\security\api_security.py:1118: return None, 0.0
+src\infrastructure\security\api_security.py:1142: return None, 0.0
+src\infrastructure\security\api_security.py:1147: pass
+src\infrastructure\security\api_security.py:1149: return None, 0.0
+src\infrastructure\security\attendance_anti_proxy.py:288: return None
+src\infrastructure\security\device_fingerprint.py:172: similarity_threshold: 0-1, how similar must be to pass
+src\infrastructure\security\device_session.py:165: return None
+src\infrastructure\security\device_session.py:372: return None
+src\infrastructure\security\device_session.py:381: return None
+src\infrastructure\security\forensic_logging.py:250: return None
+src\infrastructure\security\geolocation_security.py:208: return None
+src\infrastructure\security\geolocation_security.py:330: pass
+src\infrastructure\security\mitre_attack.py:160: description='Pass-the-hash, pass-the-ticket, or WebAuthn bypass',
+src\infrastructure\security\mitre_attack.py:252: return None
+src\infrastructure\security\mitre_attack.py:512: return None
+src\infrastructure\security\mitre_attack.py:519: return None
+src\infrastructure\security\network_security.py:1456: return None
+src\infrastructure\security\network_security.py:1519: pass
+src\infrastructure\security\network_security.py:1550: pass
+src\infrastructure\security\network_security.py:1729: return None
+src\infrastructure\security\network_security.py:1766: pass
+src\infrastructure\security\network_security.py:1767: return None
+src\infrastructure\security\offline_sync_security.py:170: return []
+src\infrastructure\security\production_hardening.py:41: pass
+src\infrastructure\security\redis_session_store.py:31: pass
+src\infrastructure\security\redis_session_store.py:94: return None
+src\infrastructure\security\redis_session_store.py:150: return None
+src\infrastructure\security\redis_session_store.py:154: return None
+src\infrastructure\security\redis_session_store.py:159: return None
+src\infrastructure\security\redis_session_store.py:164: return None
+src\infrastructure\security\redis_session_store.py:304: return []
+src\infrastructure\security\security_monitor.py:724: pass
+src\infrastructure\security\security_monitor.py:911: return None
+src\infrastructure\security\session_security.py:279: return None
+src\infrastructure\security\webauthn_service.py:161: return None
+src\infrastructure\security\webauthn_service.py:342: return []
+src\infrastructure\security\webauthn_service.py:353: return []
+src\infrastructure\security\webauthn_service.py:362: return None
+src\infrastructure\security\webauthn_service.py:367: return None
+src\infrastructure\security\webauthn_service.py:556: return None
+src\infrastructure\security\webauthn_service.py:568: return None
+src\infrastructure\security\webauthn_service.py:577: return None
+src\infrastructure\security\webauthn_service.py:587: return None
+src\infrastructure\security\webauthn_service.py:592: return None
+src\infrastructure\security\webauthn_service.py:602: return None
+src\infrastructure\security\webauthn_service.py:664: return None
+src\innovation\classroom.py:88: return []
+src\innovation\classroom.py:96: return []
+src\innovation\classroom.py:125: return None
+src\innovation\digital_twin.py:48: pass  # Triggers lazy cache invalidation
+src\innovation\digital_twin.py:145: return None
+src\innovation\digital_twin.py:149: return None
+src\innovation\ecosystem.py:353: return []
+src\innovation\intervention.py:69: return None
+src\innovation\intervention.py:73: return None
+src\innovation\intervention.py:77: return None
+src\innovation\invisible_validation.py:111: return None
+src\innovation\invisible_validation.py:381: pass
+src\innovation\reputation.py:301: pass
+src\presentation\routes\auth.py:243: pass

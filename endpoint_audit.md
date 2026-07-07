@@ -1,0 +1,25 @@
+# Endpoint Audit
+
+- static: /static/<path:filename>
+- auth.register: /api/auth/register
+- auth.signup: /api/auth/signup
+- auth.login: /api/auth/login
+- auth.refresh_token: /api/auth/refresh
+- auth.logout: /api/auth/logout
+- auth.change_password: /api/auth/change-password
+- pages.landing: /
+- pages.request_demo: /request-demo
+- pages.schedule_demo: /schedule-demo
+- pages.privacy_policy: /legal/privacy
+- pages.demo_prep: /demo-prep
+- pages.trial_gate: /trial-gate
+- pages.product_overview: /product-overview
+- pages.brochure: /brochure
+- pages.brochure_download: /api/brochure/download
+- pages.signup_voucher_page: /signup-voucher
+- pages.logout_page: /logout
+- pages.login_page: /login
+- pages.signup_page: /signup
+- pages.email_diagnostics_page: /email-diagnostics
+- pages.offline_page: /offline
+- pages.service_worker: /sw.js
