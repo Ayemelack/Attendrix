@@ -1,4 +1,4 @@
-﻿<!DOCTYPE html>
+<!DOCTYPE html>
 <html lang="en">
 <head>
     <meta charset="UTF-8">
@@ -687,6 +687,7 @@
                 showAlert(result.message || result.error || 'Invalid credentials', 'error');
             } else {
                 if (result.access_token) localStorage.setItem('accessToken', result.access_token);
+                if (result.token) localStorage.setItem('accessToken', result.token);
                 if (result.refresh_token) localStorage.setItem('refreshToken', result.refresh_token);
                 if (result.user) localStorage.setItem('user', JSON.stringify(result.user));
 
