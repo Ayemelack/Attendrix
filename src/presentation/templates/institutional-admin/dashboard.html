@@ -1,9 +1,9 @@
-﻿<!DOCTYPE html>
+<!DOCTYPE html>
 <html lang="en">
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Institutional Admin â€” Attendrix Ã°Å¸â€¡Â¨Ã°Å¸â€¡Â²</title>
+    <title>Institutional Admin — Attendrix ðŸ‡¨ðŸ‡²</title>
     <link rel="manifest" href="/static/manifest.json">
     <link rel="icon" type="image/svg+xml" href="/static/images/favicon.svg">
     <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet" crossorigin="anonymous">
@@ -47,7 +47,7 @@
         }
         .main-content { overflow-x: hidden; }
 
-        /* Ã¢â€â‚¬Ã¢â€â‚¬ SIDEBAR Ã¢â€â‚¬Ã¢â€â‚¬ */
+        /* â”€â”€ SIDEBAR â”€â”€ */
         .sidebar {
             position: fixed; top: 0; left: 0; width: var(--sidebar-w); height: 100vh;
             background: rgba(10,15,30,0.96); backdrop-filter: blur(20px);
@@ -91,10 +91,10 @@
             border-radius: 8px; background: rgba(255,255,255,0.05); color: var(--text-dim);
         }
 
-        /* Ã¢â€â‚¬Ã¢â€â‚¬ MAIN Ã¢â€â‚¬Ã¢â€â‚¬ */
+        /* â”€â”€ MAIN â”€â”€ */
         .main-content { margin-left: var(--sidebar-w); flex: 1; min-height: 100vh; }
 
-        /* Ã¢â€â‚¬Ã¢â€â‚¬ TOPBAR Ã¢â€â‚¬Ã¢â€â‚¬ */
+        /* â”€â”€ TOPBAR â”€â”€ */
         .topbar {
             display: flex; align-items: center; justify-content: space-between;
             padding: 0.55rem 1.25rem; background: rgba(10,15,30,0.85);
@@ -136,14 +136,14 @@
         .user-badge-top .uname { font-size: 0.7rem; font-weight: 600; color: rgba(255,255,255,0.65); }
         .sidebar-toggle { display: none; background: none; border: none; color: #fff; font-size: 1rem; cursor: pointer; padding: 0.1rem; }
 
-        /* Ã¢â€â‚¬Ã¢â€â‚¬ PAGE Ã¢â€â‚¬Ã¢â€â‚¬ */
+        /* â”€â”€ PAGE â”€â”€ */
         .page-content { padding: calc(56px + 1rem) 1.25rem 2rem; display: flex; flex-direction: column; gap: 1rem; }
 
-        /* Ã¢â€â‚¬Ã¢â€â‚¬ SECTIONS Ã¢â€â‚¬Ã¢â€â‚¬ */
+        /* â”€â”€ SECTIONS â”€â”€ */
         .section { display: none; }
         .section.active { display: block; }
 
-        /* Ã¢â€â‚¬Ã¢â€â‚¬ STATS Ã¢â€â‚¬Ã¢â€â‚¬ */
+        /* â”€â”€ STATS â”€â”€ */
         .stats-row { display: grid; grid-template-columns: repeat(auto-fit, minmax(160px, 1fr)); gap: 0.7rem; }
         .stat-card {
             background: var(--dark-card); backdrop-filter: blur(12px);
@@ -164,7 +164,7 @@
         .stat-card .stat-footer .up { color: var(--success); }
         .stat-card .stat-footer .down { color: var(--danger); }
 
-        /* Ã¢â€â‚¬Ã¢â€â‚¬ CARDS Ã¢â€â‚¬Ã¢â€â‚¬ */
+        /* â”€â”€ CARDS â”€â”€ */
         .card-noc {
             background: var(--dark-card); backdrop-filter: blur(12px);
             border: 1px solid rgba(255,255,255,0.06); border-radius: 10px; overflow: hidden;
@@ -181,7 +181,7 @@
         .card-noc .card-body { padding: 0.85rem 1rem; }
         .card-noc .card-body.compact { padding: 0.35rem 0; }
 
-        /* Ã¢â€â‚¬Ã¢â€â‚¬ ACTIVITY Ã¢â€â‚¬Ã¢â€â‚¬ */
+        /* â”€â”€ ACTIVITY â”€â”€ */
         .activity-item {
             display: flex; align-items: flex-start; gap: 0.55rem;
             padding: 0.45rem 1rem; border-bottom: 1px solid rgba(255,255,255,0.03);
@@ -194,7 +194,7 @@
         .activity-item .msg-col strong { color: #fff; font-weight: 600; }
         .activity-item .type-dot { width: 5px; height: 5px; border-radius: 50%; margin-top: 5px; flex-shrink: 0; }
 
-        /* Ã¢â€â‚¬Ã¢â€â‚¬ SECURITY Ã¢â€â‚¬Ã¢â€â‚¬ */
+        /* â”€â”€ SECURITY â”€â”€ */
         .alert-item {
             display: flex; align-items: center; gap: 0.55rem;
             padding: 0.4rem 1rem; border-bottom: 1px solid rgba(255,255,255,0.03);
@@ -214,7 +214,7 @@
         .alert-item .alert-time { font-size: 0.55rem; color: var(--text-dim); flex-shrink: 0; }
         .alert-item .alert-meta-item { font-size:0.5rem; color:var(--text-dim); display:inline-flex; align-items:center; gap:0.2rem; background:rgba(255,255,255,0.03); padding:0.04rem 0.3rem; border-radius:3px; }
 
-        /* Ã¢â€â‚¬Ã¢â€â‚¬ TABLES Ã¢â€â‚¬Ã¢â€â‚¬ */
+        /* â”€â”€ TABLES â”€â”€ */
         .table-noc { width: 100%; border-collapse: collapse; }
         .table-noc th {
             font-size: 0.55rem; font-weight: 700; text-transform: uppercase; letter-spacing: 0.3px;
@@ -234,7 +234,7 @@
         td .risk-medium { color: var(--warning); }
         td .risk-high { color: var(--danger); }
 
-        /* Ã¢â€â‚¬Ã¢â€â‚¬ NODES Ã¢â€â‚¬Ã¢â€â‚¬ */
+        /* â”€â”€ NODES â”€â”€ */
         .node-grid { display: flex; flex-wrap: wrap; gap: 0.55rem; }
         .node-item {
             display: flex; align-items: center; gap: 0.45rem; padding: 0.45rem 0.65rem;
@@ -247,22 +247,22 @@
         .node-item .node-name { font-weight: 600; color: rgba(255,255,255,0.75); }
         .node-item .node-meta { font-size: 0.55rem; color: var(--text-dim); }
 
-        /* Ã¢â€â‚¬Ã¢â€â‚¬ BROKER Ã¢â€â‚¬Ã¢â€â‚¬ */
+        /* â”€â”€ BROKER â”€â”€ */
         .broker-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(90px, 1fr)); gap: 0.55rem; }
         .broker-item { text-align: center; padding: 0.55rem 0.4rem; border-radius: 7px; background: rgba(255,255,255,0.02); border: 1px solid rgba(255,255,255,0.04); }
         .broker-item .broker-val { font-size: 1rem; font-weight: 700; color: #fff; }
         .broker-item .broker-label { font-size: 0.55rem; color: var(--text-dim); margin-top: 0.1rem; }
 
-        /* Ã¢â€â‚¬Ã¢â€â‚¬ CHARTS Ã¢â€â‚¬Ã¢â€â‚¬ */
+        /* â”€â”€ CHARTS â”€â”€ */
         .chart-wrap { position: relative; height: 160px; width: 100%; }
         .chart-wrap-tall { height: 200px; }
 
-        /* Ã¢â€â‚¬Ã¢â€â‚¬ LAYOUT Ã¢â€â‚¬Ã¢â€â‚¬ */
+        /* â”€â”€ LAYOUT â”€â”€ */
         .grid-2col { display: grid; grid-template-columns: 1fr 1fr; gap: 1rem; }
         .grid-3col { display: grid; grid-template-columns: 1fr 1fr 1fr; gap: 1rem; }
         .grid-sidebar { display: grid; grid-template-columns: 1fr 300px; gap: 1rem; }
 
-        /* Ã¢â€â‚¬Ã¢â€â‚¬ QUEUE Ã¢â€â‚¬Ã¢â€â‚¬ */
+        /* â”€â”€ QUEUE â”€â”€ */
         .queue-item {
             display: flex; align-items: center; justify-content: space-between;
             padding: 0.4rem 0; border-bottom: 1px solid rgba(255,255,255,0.03);
@@ -277,7 +277,7 @@
         .q-syncing { background: rgba(59,130,246,0.1); color: #93C5FD; }
         .q-failed { background: rgba(239,68,68,0.1); color: #FCA5A5; }
 
-        /* Ã¢â€â‚¬Ã¢â€â‚¬ QUICK ACTIONS Ã¢â€â‚¬Ã¢â€â‚¬ */
+        /* â”€â”€ QUICK ACTIONS â”€â”€ */
         .quick-actions {
             display: flex; gap: 0.4rem; flex-wrap: wrap;
         }
@@ -288,7 +288,7 @@
         }
         .qa-btn:hover { transform: translateY(-1px); filter: brightness(1.15); }
 
-        /* Ã¢â€â‚¬Ã¢â€â‚¬ STUDENT DRAWER Ã¢â€â‚¬Ã¢â€â‚¬ */
+        /* â”€â”€ STUDENT DRAWER â”€â”€ */
         .drawer-overlay { position:fixed; inset:0; background:rgba(0,0,0,0.5); z-index:2000; display:none; }
         .drawer-overlay.open { display:block; }
         .drawer-panel {
@@ -318,14 +318,14 @@
         .drawer-security-event { padding:0.3rem 0; border-bottom:1px solid rgba(255,255,255,0.03); font-size:0.7rem; }
         .drawer-security-event .sev-inline { font-size:0.5rem; font-weight:700; padding:0.04rem 0.3rem; border-radius:3px; text-transform:uppercase; margin-right:0.35rem; }
 
-        /* Ã¢â€â‚¬Ã¢â€â‚¬ NETWORK TOPOLOGY CANVAS Ã¢â€â‚¬Ã¢â€â‚¬ */
+        /* â”€â”€ NETWORK TOPOLOGY CANVAS â”€â”€ */
         .topology-wrap { position:relative; width:100%; height:280px; }
         .topology-wrap canvas { width:100%; height:100%; display:block; border-radius:6px; }
         .topology-legend { display:flex; gap:0.75rem; padding:0.4rem 0.5rem; font-size:0.6rem; color:var(--text-dim); flex-wrap:wrap; }
         .topology-legend span { display:flex; align-items:center; gap:0.25rem; }
         .topology-legend .dot { width:6px; height:6px; border-radius:50%; display:inline-block; }
 
-        /* Ã¢â€â‚¬Ã¢â€â‚¬ LIVE MONITORING WALL Ã¢â€â‚¬Ã¢â€â‚¬ */
+        /* â”€â”€ LIVE MONITORING WALL â”€â”€ */
         .live-checkin { display:flex; align-items:center; gap:0.55rem; padding:0.4rem 0.65rem; border-radius:7px; background:rgba(255,255,255,0.02); border:1px solid rgba(255,255,255,0.04); margin-bottom:0.3rem; animation:slideInRight 0.3s ease; }
         @keyframes slideInRight { from { transform:translateX(20px); opacity:0; } to { transform:translateX(0); opacity:1; } }
         .live-checkin .ci-avatar { width:24px; height:24px; border-radius:6px; background:linear-gradient(135deg,var(--primary),var(--accent)); display:flex; align-items:center; justify-content:center; font-size:0.55rem; font-weight:700; color:#fff; flex-shrink:0; }
@@ -346,7 +346,7 @@
         .live-alert-popup .la-msg { flex:1; font-size:0.7rem; color:rgba(255,255,255,0.7); }
         .live-alert-popup .la-time { font-size:0.55rem; color:var(--text-dim); flex-shrink:0; }
 
-        /* Ã¢â€â‚¬Ã¢â€â‚¬ CONNECTION QUALITY Ã¢â€â‚¬Ã¢â€â‚¬ */
+        /* â”€â”€ CONNECTION QUALITY â”€â”€ */
         .conn-quality {
             display:flex; align-items:center; gap:0.3rem; font-size:0.6rem; font-weight:600;
             padding:0.15rem 0.45rem; border-radius:10px; cursor:default; white-space:nowrap;
@@ -356,7 +356,7 @@
         .conn-degraded { background:rgba(245,158,11,0.08); border:1px solid rgba(245,158,11,0.12); color:var(--warning); }
         .conn-offline { background:rgba(239,68,68,0.08); border:1px solid rgba(239,68,68,0.12); color:var(--danger); }
 
-        /* Ã¢â€â‚¬Ã¢â€â‚¬ PAGINATION Ã¢â€â‚¬Ã¢â€â‚¬ */
+        /* â”€â”€ PAGINATION â”€â”€ */
         .pag-row { display:flex; align-items:center; justify-content:space-between; gap:0.5rem; flex-wrap:wrap; }
         .pag-info { font-size:0.6rem; color:var(--text-dim); }
         .pag-btns { display:flex; gap:0.2rem; }
@@ -371,10 +371,10 @@
         .student-row { cursor:pointer; transition:background 0.15s; }
         .student-row:hover td { background:rgba(79,70,229,0.06) !important; }
 
-        /* Ã¢â€â‚¬Ã¢â€â‚¬ ISP ROW Ã¢â€â‚¬Ã¢â€â‚¬ */
+        /* â”€â”€ ISP ROW â”€â”€ */
         .isp-row { display: flex; gap: 0.5rem; align-items: center; }
 
-        /* Ã¢â€â‚¬Ã¢â€â‚¬ MODAL FORM Ã¢â€â‚¬Ã¢â€â‚¬ */
+        /* â”€â”€ MODAL FORM â”€â”€ */
         .form-input:focus { border-color: var(--primary) !important; box-shadow: 0 0 0 2px rgba(79,70,229,0.15); }
         .form-input option { background: #1a1f35; color: #fff; }
         select.form-control option {
@@ -386,10 +386,10 @@
             color: #fff;
         }
 
-        /* Ã¢â€â‚¬Ã¢â€â‚¬ EMPTY Ã¢â€â‚¬Ã¢â€â‚¬ */
+        /* â”€â”€ EMPTY â”€â”€ */
         .empty-muted { text-align: center; padding: 1.5rem 1rem; color: var(--text-dim); font-size: 0.75rem; }
 
-        /* Ã¢â€â‚¬Ã¢â€â‚¬ SCROLLBAR Ã¢â€â‚¬Ã¢â€â‚¬ */
+        /* â”€â”€ SCROLLBAR â”€â”€ */
         ::-webkit-scrollbar { width: 3px; }
         ::-webkit-scrollbar-track { background: transparent; }
         ::-webkit-scrollbar-thumb { background: rgba(255,255,255,0.08); border-radius: 2px; }
@@ -448,116 +448,12 @@
             .lang-toggle { font-size: 0.55rem; padding: 0.1rem 0.35rem; }
         }
     </style>
-<style>
-/* Network Presence Table Pro UI */
-.np-table-container {
-    width: 100%;
-    overflow-x: auto;
-    border-radius: 12px;
-    border: 1px solid rgba(255, 255, 255, 0.08);
-    background: rgba(10, 15, 30, 0.4);
-    box-shadow: 0 4px 20px rgba(0, 0, 0, 0.2);
-}
-.np-table {
-    width: 100%;
-    border-collapse: separate;
-    border-spacing: 0;
-    font-size: 0.8rem;
-    white-space: nowrap;
-}
-.np-table th {
-    position: sticky;
-    top: 0;
-    background: rgba(20, 25, 45, 0.95);
-    backdrop-filter: blur(10px);
-    z-index: 10;
-    padding: 1rem 1.25rem;
-    font-weight: 600;
-    color: #94A3B8;
-    text-align: left;
-    text-transform: uppercase;
-    font-size: 0.7rem;
-    letter-spacing: 0.5px;
-    border-bottom: 1px solid rgba(255, 255, 255, 0.08);
-}
-.np-table td {
-    padding: 1rem 1.25rem;
-    vertical-align: middle;
-    color: #E2E8F0;
-    border-bottom: 1px solid rgba(255, 255, 255, 0.04);
-    transition: background-color 0.2s ease;
-}
-.np-table tbody tr:hover td {
-    background: rgba(255, 255, 255, 0.03);
-}
-.np-table tbody tr:last-child td {
-    border-bottom: none;
-}
-.np-truncate {
-    max-width: 150px;
-    overflow: hidden;
-    text-overflow: ellipsis;
-    white-space: nowrap;
-    display: inline-block;
-    vertical-align: bottom;
-}
-.np-badge {
-    display: inline-flex;
-    align-items: center;
-    gap: 6px;
-    padding: 0.35rem 0.6rem;
-    border-radius: 20px;
-    font-size: 0.7rem;
-    font-weight: 500;
-    letter-spacing: 0.2px;
-}
-.np-badge i {
-    font-size: 0.5rem;
-}
-/* Theme variants for badges */
-.np-badge.success { background: rgba(16, 185, 129, 0.1); color: #34D399; border: 1px solid rgba(52, 211, 153, 0.2); }
-.np-badge.warning { background: rgba(245, 158, 11, 0.1); color: #FBBF24; border: 1px solid rgba(251, 191, 36, 0.2); }
-.np-badge.danger { background: rgba(239, 68, 68, 0.1); color: #F87171; border: 1px solid rgba(248, 113, 113, 0.2); }
-.np-badge.neutral { background: rgba(148, 163, 184, 0.1); color: #94A3B8; border: 1px solid rgba(148, 163, 184, 0.2); }
-.np-badge.primary { background: rgba(99, 102, 241, 0.1); color: #818CF8; border: 1px solid rgba(129, 140, 248, 0.2); }
-
-.np-code {
-    font-family: 'JetBrains Mono', 'Fira Code', monospace;
-    font-size: 0.75rem;
-    background: rgba(0, 0, 0, 0.2);
-    padding: 0.2rem 0.4rem;
-    border-radius: 4px;
-    color: #CBD5E1;
-}
-.np-user-col {
-    display: flex;
-    align-items: center;
-    gap: 10px;
-}
-.np-avatar {
-    width: 28px;
-    height: 28px;
-    border-radius: 50%;
-    background: linear-gradient(135deg, var(--primary), var(--primary-dark));
-    display: flex;
-    align-items: center;
-    justify-content: center;
-    font-weight: 600;
-    font-size: 0.75rem;
-    color: #fff;
-    flex-shrink: 0;
-}
-.np-secondary-text {
-    font-size: 0.7rem;
-    color: #94A3B8;
-}
-</style>
 </head>
 <body>
 
 <div class="sidebar-overlay" id="sidebarOverlay"></div>
 
-<!-- Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬ SIDEBAR Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬ -->
+<!-- â”€â”€â”€ SIDEBAR â”€â”€â”€ -->
 <aside class="sidebar" id="sidebar">
     <div class="sidebar-brand">
         <div class="brand-icon"><svg viewBox="0 0 24 24" width="1em" height="1em" fill="none" style="display:inline-block;vertical-align:-.125em"><path d="M12 6.5L3.5 21" stroke="currentColor" stroke-width="2.2" stroke-linecap="round"/><path d="M12 6.5L20.5 21" stroke="currentColor" stroke-width="2.2" stroke-linecap="round"/><path d="M5 14.5L11 14.5" stroke="currentColor" stroke-width="2" stroke-linecap="round"/><path d="M13 14.5L19 14.5" stroke="currentColor" stroke-width="2" stroke-linecap="round"/><path d="M9.5 9.5Q12 6.2 14.5 9.5" stroke="currentColor" stroke-width="1.2" stroke-linecap="round" fill="none" opacity=".6"/><circle cx="12" cy="3.5" r="3" fill="currentColor"/><circle cx="3.5" cy="21" r="2.5" fill="currentColor"/><circle cx="20.5" cy="21" r="2.5" fill="currentColor"/></svg></div>
@@ -596,6 +492,9 @@
         <div class="nav-label">Live</div>
         <a href="#" data-section="livemon"><i class="fas fa-broadcast-tower"></i> <span>Live Monitor</span> <span class="badge-dot" id="liveBadge" style="background:var(--success);"></span></a>
         <a href="#" data-section="network-presence"><i class="fas fa-satellite-dish"></i> <span>Network Presence Monitor</span></a>
+            <a href="#" data-section="attendance-security" onclick="switchSection('attendance-security')">
+                <i class="fas fa-shield-alt"></i> Attendance Security Monitor
+            </a>
 
         <div style="margin-top:auto;padding-top:0.4rem;border-top:1px solid rgba(255,255,255,0.06);">
             <a href="/logout" id="logoutLink" style="color:rgba(239,68,68,0.5);">
@@ -605,7 +504,7 @@
     </nav>
 </aside>
 
-<!-- Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬ MAIN Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬ -->
+<!-- â”€â”€â”€ MAIN â”€â”€â”€ -->
 <div class="main-content">
 
     <!-- Top Bar -->
@@ -618,13 +517,13 @@
             </div>
         </div>
         <div class="topbar-strip" id="topbarStrip">
-            <span class="pill-indicator pill-green" id="upsIndicator"><span class="dot"></span> UPS: <span id="upsPct">â€”</span>%</span>
+            <span class="pill-indicator pill-green" id="upsIndicator"><span class="dot"></span> UPS: <span id="upsPct">—</span>%</span>
             <span class="pill-indicator" id="ispMtn"><span class="dot"></span> MTN</span>
             <span class="pill-indicator" id="ispOrange"><span class="dot"></span> Orange</span>
             <span class="pill-indicator pill-yellow" id="smsQueueIndicator"><i class="fas fa-sms"></i> <span id="smsQueueCount">0</span></span>
         </div>
         <div class="topbar-right">
-            <div class="conn-quality conn-online" id="connQuality" title="Connection quality"><span class="cq-dot" id="connDot" style="background:var(--success);"></span> <span id="connLabel">Online</span> <span id="connLatency" style="font-weight:400;opacity:0.6;">â€”ms</span></div>
+            <div class="conn-quality conn-online" id="connQuality" title="Connection quality"><span class="cq-dot" id="connDot" style="background:var(--success);"></span> <span id="connLabel">Online</span> <span id="connLatency" style="font-weight:400;opacity:0.6;">—ms</span></div>
             <button class="lang-toggle" id="langToggle" onclick="toggleLang()">FR</button>
             <div class="user-badge-top" id="userBadgeTop">
                 <div class="avatar" id="userAvatarTop">A</div>
@@ -639,13 +538,13 @@
         <!-- Quick Actions -->
         <div class="quick-actions" id="quickActions"></div>
 
-        <!-- Ã¢â€¢ÂÃ¢â€¢ÂÃ¢â€¢ÂÃ¢â€¢ÂÃ¢â€¢ÂÃ¢â€¢ÂÃ¢â€¢Â OVERVIEW Ã¢â€¢ÂÃ¢â€¢ÂÃ¢â€¢ÂÃ¢â€¢ÂÃ¢â€¢ÂÃ¢â€¢ÂÃ¢â€¢Â -->
+        <!-- â•â•â•â•â•â•â• OVERVIEW â•â•â•â•â•â•â• -->
         <div class="section active" id="section-overview">
             <div class="stats-row" id="overviewStats">
-                <div class="stat-card"><div class="stat-top"><span class="stat-label" data-i18n="total_students">Total Students</span><div class="stat-icon" style="background:rgba(79,70,229,0.12);color:#A5B4FC;"><i class="fas fa-users"></i></div></div><div class="stat-value" id="ovStudents">â€”</div><div class="stat-footer" data-i18n="all_faculties">Across all faculties</div></div>
-                <div class="stat-card"><div class="stat-top"><span class="stat-label" data-i18n="active_sessions">Active Sessions</span><div class="stat-icon" style="background:rgba(16,185,129,0.12);color:#6EE7B7;"><i class="fas fa-play-circle"></i></div></div><div class="stat-value" id="ovActiveSessions">â€”</div><div class="stat-footer up"><i class="fas fa-circle"></i> <span data-i18n="live_now">Live now</span></div></div>
-                <div class="stat-card"><div class="stat-top"><span class="stat-label" data-i18n="attendance_rate">Attendance Rate</span><div class="stat-icon" style="background:rgba(245,158,11,0.12);color:#FCD34D;"><i class="fas fa-chart-line"></i></div></div><div class="stat-value" id="ovAttendanceRate">â€”</div><div class="stat-footer" id="ovAttendanceFooter" data-i18n="this_semester">This semester</div></div>
-                <div class="stat-card"><div class="stat-top"><span class="stat-label" data-i18n="offline_nodes">Offline Nodes</span><div class="stat-icon" style="background:rgba(239,68,68,0.12);color:#FCA5A5;"><i class="fas fa-exclamation-triangle"></i></div></div><div class="stat-value" id="ovOfflineNodes">â€”</div><div class="stat-footer down" id="ovOfflineFooter"><span data-i18n="requires_attention">Requires attention</span></div></div>
+                <div class="stat-card"><div class="stat-top"><span class="stat-label" data-i18n="total_students">Total Students</span><div class="stat-icon" style="background:rgba(79,70,229,0.12);color:#A5B4FC;"><i class="fas fa-users"></i></div></div><div class="stat-value" id="ovStudents">—</div><div class="stat-footer" data-i18n="all_faculties">Across all faculties</div></div>
+                <div class="stat-card"><div class="stat-top"><span class="stat-label" data-i18n="active_sessions">Active Sessions</span><div class="stat-icon" style="background:rgba(16,185,129,0.12);color:#6EE7B7;"><i class="fas fa-play-circle"></i></div></div><div class="stat-value" id="ovActiveSessions">—</div><div class="stat-footer up"><i class="fas fa-circle"></i> <span data-i18n="live_now">Live now</span></div></div>
+                <div class="stat-card"><div class="stat-top"><span class="stat-label" data-i18n="attendance_rate">Attendance Rate</span><div class="stat-icon" style="background:rgba(245,158,11,0.12);color:#FCD34D;"><i class="fas fa-chart-line"></i></div></div><div class="stat-value" id="ovAttendanceRate">—</div><div class="stat-footer" id="ovAttendanceFooter" data-i18n="this_semester">This semester</div></div>
+                <div class="stat-card"><div class="stat-top"><span class="stat-label" data-i18n="offline_nodes">Offline Nodes</span><div class="stat-icon" style="background:rgba(239,68,68,0.12);color:#FCA5A5;"><i class="fas fa-exclamation-triangle"></i></div></div><div class="stat-value" id="ovOfflineNodes">—</div><div class="stat-footer down" id="ovOfflineFooter"><span data-i18n="requires_attention">Requires attention</span></div></div>
             </div>
             <div class="grid-sidebar">
                 <div class="card-noc">
@@ -659,7 +558,7 @@
             </div>
         </div>
 
-        <!-- Ã¢â€¢ÂÃ¢â€¢ÂÃ¢â€¢ÂÃ¢â€¢ÂÃ¢â€¢ÂÃ¢â€¢ÂÃ¢â€¢Â USERS Ã¢â€¢ÂÃ¢â€¢ÂÃ¢â€¢ÂÃ¢â€¢ÂÃ¢â€¢ÂÃ¢â€¢ÂÃ¢â€¢Â -->
+        <!-- â•â•â•â•â•â•â• USERS â•â•â•â•â•â•â• -->
         <div class="section" id="section-users">
             <div class="card-noc">
                 <div class="card-header">
@@ -679,7 +578,7 @@
             </div>
         </div>
 
-        <!-- Ã¢â€¢ÂÃ¢â€¢ÂÃ¢â€¢ÂÃ¢â€¢ÂÃ¢â€¢ÂÃ¢â€¢ÂÃ¢â€¢Â COURSES Ã¢â€¢ÂÃ¢â€¢ÂÃ¢â€¢ÂÃ¢â€¢ÂÃ¢â€¢ÂÃ¢â€¢ÂÃ¢â€¢Â -->
+        <!-- â•â•â•â•â•â•â• COURSES â•â•â•â•â•â•â• -->
         <div class="section" id="section-courses">
             <div class="card-noc">
                 <div class="card-header">
@@ -699,7 +598,7 @@
             </div>
         </div>
 
-        <!-- Ã¢â€¢ÂÃ¢â€¢ÂÃ¢â€¢ÂÃ¢â€¢ÂÃ¢â€¢ÂÃ¢â€¢ÂÃ¢â€¢Â DEPARTMENTS Ã¢â€¢ÂÃ¢â€¢ÂÃ¢â€¢ÂÃ¢â€¢ÂÃ¢â€¢ÂÃ¢â€¢ÂÃ¢â€¢Â -->
+        <!-- â•â•â•â•â•â•â• DEPARTMENTS â•â•â•â•â•â•â• -->
         <div class="section" id="section-departments">
             <div class="card-noc">
                 <div class="card-header">
@@ -719,7 +618,7 @@
             </div>
         </div>
 
-        <!-- Ã¢â€¢ÂÃ¢â€¢ÂÃ¢â€¢ÂÃ¢â€¢ÂÃ¢â€¢ÂÃ¢â€¢ÂÃ¢â€¢Â ENROLLMENTS Ã¢â€¢ÂÃ¢â€¢ÂÃ¢â€¢ÂÃ¢â€¢ÂÃ¢â€¢ÂÃ¢â€¢ÂÃ¢â€¢Â -->
+        <!-- â•â•â•â•â•â•â• ENROLLMENTS â•â•â•â•â•â•â• -->
         <div class="section" id="section-enrollments">
             <div class="card-noc">
                 <div class="card-header">
@@ -739,7 +638,7 @@
             </div>
         </div>
 
-        <!-- Ã¢â€¢ÂÃ¢â€¢ÂÃ¢â€¢ÂÃ¢â€¢ÂÃ¢â€¢ÂÃ¢â€¢ÂÃ¢â€¢Â STUDENTS Ã¢â€¢ÂÃ¢â€¢ÂÃ¢â€¢ÂÃ¢â€¢ÂÃ¢â€¢ÂÃ¢â€¢ÂÃ¢â€¢Â -->
+        <!-- â•â•â•â•â•â•â• STUDENTS â•â•â•â•â•â•â• -->
         <div class="section" id="section-students">
             <div class="card-noc">
                 <div class="card-header">
@@ -758,11 +657,11 @@
             </div>
         </div>
 
-        <!-- Ã¢â€¢ÂÃ¢â€¢ÂÃ¢â€¢ÂÃ¢â€¢ÂÃ¢â€¢ÂÃ¢â€¢ÂÃ¢â€¢Â SESSIONS Ã¢â€¢ÂÃ¢â€¢ÂÃ¢â€¢ÂÃ¢â€¢ÂÃ¢â€¢ÂÃ¢â€¢ÂÃ¢â€¢Â -->
+        <!-- â•â•â•â•â•â•â• SESSIONS â•â•â•â•â•â•â• -->
         <div class="section" id="section-sessions">
             <div class="stats-row" id="sessionStats">
-                <div class="stat-card"><div class="stat-top"><span class="stat-label" data-i18n="active_sessions">Active Sessions</span><div class="stat-icon" style="background:rgba(16,185,129,0.12);color:#6EE7B7;"><i class="fas fa-play-circle"></i></div></div><div class="stat-value" id="ssActive">â€”</div><div class="stat-footer" data-i18n="running_now">Running now</div></div>
-                <div class="stat-card"><div class="stat-top"><span class="stat-label" data-i18n="total_today">Total Today</span><div class="stat-icon" style="background:rgba(79,70,229,0.12);color:#A5B4FC;"><i class="fas fa-calendar-day"></i></div></div><div class="stat-value" id="ssTotal">â€”</div><div class="stat-footer" data-i18n="all_sessions">All sessions</div></div>
+                <div class="stat-card"><div class="stat-top"><span class="stat-label" data-i18n="active_sessions">Active Sessions</span><div class="stat-icon" style="background:rgba(16,185,129,0.12);color:#6EE7B7;"><i class="fas fa-play-circle"></i></div></div><div class="stat-value" id="ssActive">—</div><div class="stat-footer" data-i18n="running_now">Running now</div></div>
+                <div class="stat-card"><div class="stat-top"><span class="stat-label" data-i18n="total_today">Total Today</span><div class="stat-icon" style="background:rgba(79,70,229,0.12);color:#A5B4FC;"><i class="fas fa-calendar-day"></i></div></div><div class="stat-value" id="ssTotal">—</div><div class="stat-footer" data-i18n="all_sessions">All sessions</div></div>
             </div>
             <div class="card-noc">
                 <div class="card-header"><div class="card-title"><i class="fas fa-list"></i> <span data-i18n="live_sessions">Live Sessions</span></div></div>
@@ -776,11 +675,11 @@
             </div>
         </div>
 
-        <!-- Ã¢â€¢ÂÃ¢â€¢ÂÃ¢â€¢ÂÃ¢â€¢ÂÃ¢â€¢ÂÃ¢â€¢ÂÃ¢â€¢Â NETWORK Ã¢â€¢ÂÃ¢â€¢ÂÃ¢â€¢ÂÃ¢â€¢ÂÃ¢â€¢ÂÃ¢â€¢ÂÃ¢â€¢Â -->
+        <!-- â•â•â•â•â•â•â• NETWORK â•â•â•â•â•â•â• -->
         <div class="section" id="section-network">
             <div class="grid-2col">
                 <div class="card-noc">
-                    <div class="card-header"><div class="card-title"><i class="fas fa-project-diagram"></i> <span data-i18n="campus_nodes">Network Topology</span> <span style="font-size:0.55rem;font-weight:400;color:var(--text-dim);margin-left:0.4rem;">Live Ã‚Â· drag to explore</span></div></div>
+                    <div class="card-header"><div class="card-title"><i class="fas fa-project-diagram"></i> <span data-i18n="campus_nodes">Network Topology</span> <span style="font-size:0.55rem;font-weight:400;color:var(--text-dim);margin-left:0.4rem;">Live Â· drag to explore</span></div></div>
                     <div class="card-body">
                         <div class="topology-wrap"><canvas id="topologyCanvas"></canvas></div>
                         <div class="topology-legend" id="topologyLegend"></div>
@@ -797,10 +696,10 @@
                     <div class="card-header"><div class="card-title"><i class="fas fa-layer-group"></i> Mesh Sync Health</div></div>
                     <div class="card-body">
                         <div class="stats-row" id="meshStats">
-                            <div class="stat-card" style="flex:1;"><div class="stat-val" id="meshStatus" style="font-size:0.9rem;">â€”</div><div class="stat-label">Status</div></div>
-                            <div class="stat-card" style="flex:1;"><div class="stat-val" id="meshNodes">â€”</div><div class="stat-label">Nodes</div></div>
-                            <div class="stat-card" style="flex:1;"><div class="stat-val" id="meshSuccessRate">â€”</div><div class="stat-label">Success</div></div>
-                            <div class="stat-card" style="flex:1;"><div class="stat-val" id="meshTotalSyncs">â€”</div><div class="stat-label">Total Syncs</div></div>
+                            <div class="stat-card" style="flex:1;"><div class="stat-val" id="meshStatus" style="font-size:0.9rem;">—</div><div class="stat-label">Status</div></div>
+                            <div class="stat-card" style="flex:1;"><div class="stat-val" id="meshNodes">—</div><div class="stat-label">Nodes</div></div>
+                            <div class="stat-card" style="flex:1;"><div class="stat-val" id="meshSuccessRate">—</div><div class="stat-label">Success</div></div>
+                            <div class="stat-card" style="flex:1;"><div class="stat-val" id="meshTotalSyncs">—</div><div class="stat-label">Total Syncs</div></div>
                         </div>
                         <div class="node-grid" id="meshNodeDetails" style="margin-top:0.4rem;"></div>
                     </div>
@@ -809,9 +708,9 @@
                     <div class="card-header"><div class="card-title"><i class="fas fa-balance-scale"></i> Load Balance</div></div>
                     <div class="card-body">
                         <div class="stats-row" id="loadStats">
-                            <div class="stat-card" style="flex:1;"><div class="stat-val" id="loadStatus" style="font-size:0.9rem;">â€”</div><div class="stat-label">Status</div></div>
-                            <div class="stat-card" style="flex:1;"><div class="stat-val" id="loadSessions">â€”</div><div class="stat-label">Sessions</div></div>
-                            <div class="stat-card" style="flex:1;"><div class="stat-val" id="loadTarget">â€”</div><div class="stat-label">Target/Node</div></div>
+                            <div class="stat-card" style="flex:1;"><div class="stat-val" id="loadStatus" style="font-size:0.9rem;">—</div><div class="stat-label">Status</div></div>
+                            <div class="stat-card" style="flex:1;"><div class="stat-val" id="loadSessions">—</div><div class="stat-label">Sessions</div></div>
+                            <div class="stat-card" style="flex:1;"><div class="stat-val" id="loadTarget">—</div><div class="stat-label">Target/Node</div></div>
                         </div>
                         <div style="font-size:0.6rem;color:var(--text-dim);margin-top:0.4rem;" id="loadRec"></div>
                         <div class="stats-row" style="margin-top:0.4rem;gap:0.3rem;" id="overloadGrid"></div>
@@ -824,7 +723,7 @@
             </div>
         </div>
 
-        <!-- Ã¢â€¢ÂÃ¢â€¢ÂÃ¢â€¢ÂÃ¢â€¢ÂÃ¢â€¢ÂÃ¢â€¢ÂÃ¢â€¢Â SECURITY Ã¢â€¢ÂÃ¢â€¢ÂÃ¢â€¢ÂÃ¢â€¢ÂÃ¢â€¢ÂÃ¢â€¢ÂÃ¢â€¢Â -->
+        <!-- â•â•â•â•â•â•â• SECURITY â•â•â•â•â•â•â• -->
         <div class="section" id="section-security">
             <div class="card-noc">
                 <div class="card-header">
@@ -835,13 +734,13 @@
             </div>
         </div>
 
-        <!-- Ã¢â€¢ÂÃ¢â€¢ÂÃ¢â€¢ÂÃ¢â€¢ÂÃ¢â€¢ÂÃ¢â€¢ÂÃ¢â€¢Â OFFLINE SYNC Ã¢â€¢ÂÃ¢â€¢ÂÃ¢â€¢ÂÃ¢â€¢ÂÃ¢â€¢ÂÃ¢â€¢ÂÃ¢â€¢Â -->
+        <!-- â•â•â•â•â•â•â• OFFLINE SYNC â•â•â•â•â•â•â• -->
         <div class="section" id="section-offline">
             <div class="stats-row" id="offlineStats">
-                <div class="stat-card"><div class="stat-top"><span class="stat-label" data-i18n="pending_syncs">Pending Syncs</span><div class="stat-icon" style="background:rgba(245,158,11,0.12);color:#FCD34D;"><i class="fas fa-hourglass-half"></i></div></div><div class="stat-value" id="offPending">â€”</div><div class="stat-footer" data-i18n="in_queue">In queue</div></div>
-                <div class="stat-card"><div class="stat-top"><span class="stat-label" data-i18n="success_rate">Success Rate</span><div class="stat-icon" style="background:rgba(16,185,129,0.12);color:#6EE7B7;"><i class="fas fa-check-circle"></i></div></div><div class="stat-value" id="offSuccessRate">â€”</div><div class="stat-footer" data-i18n="last_24h">Last 24h</div></div>
-                <div class="stat-card"><div class="stat-top"><span class="stat-label" data-i18n="last_sync">Last Sync</span><div class="stat-icon" style="background:rgba(59,130,246,0.12);color:#93C5FD;"><i class="fas fa-history"></i></div></div><div class="stat-value" id="offLastSync" style="font-size:0.9rem;">â€”</div><div class="stat-footer" data-i18n="timestamp">Timestamp</div></div>
-                <div class="stat-card"><div class="stat-top"><span class="stat-label" data-i18n="nodes_offline">Nodes Offline</span><div class="stat-icon" style="background:rgba(239,68,68,0.12);color:#FCA5A5;"><i class="fas fa-plug"></i></div></div><div class="stat-value" id="offNodesOffline">â€”</div><div class="stat-footer" data-i18n="disconnected">Disconnected</div></div>
+                <div class="stat-card"><div class="stat-top"><span class="stat-label" data-i18n="pending_syncs">Pending Syncs</span><div class="stat-icon" style="background:rgba(245,158,11,0.12);color:#FCD34D;"><i class="fas fa-hourglass-half"></i></div></div><div class="stat-value" id="offPending">—</div><div class="stat-footer" data-i18n="in_queue">In queue</div></div>
+                <div class="stat-card"><div class="stat-top"><span class="stat-label" data-i18n="success_rate">Success Rate</span><div class="stat-icon" style="background:rgba(16,185,129,0.12);color:#6EE7B7;"><i class="fas fa-check-circle"></i></div></div><div class="stat-value" id="offSuccessRate">—</div><div class="stat-footer" data-i18n="last_24h">Last 24h</div></div>
+                <div class="stat-card"><div class="stat-top"><span class="stat-label" data-i18n="last_sync">Last Sync</span><div class="stat-icon" style="background:rgba(59,130,246,0.12);color:#93C5FD;"><i class="fas fa-history"></i></div></div><div class="stat-value" id="offLastSync" style="font-size:0.9rem;">—</div><div class="stat-footer" data-i18n="timestamp">Timestamp</div></div>
+                <div class="stat-card"><div class="stat-top"><span class="stat-label" data-i18n="nodes_offline">Nodes Offline</span><div class="stat-icon" style="background:rgba(239,68,68,0.12);color:#FCA5A5;"><i class="fas fa-plug"></i></div></div><div class="stat-value" id="offNodesOffline">—</div><div class="stat-footer" data-i18n="disconnected">Disconnected</div></div>
             </div>
             <div class="card-noc">
                 <div class="card-header"><div class="card-title"><i class="fas fa-list-ul"></i> <span data-i18n="sync_queue">Sync Queue</span></div><div style="display:flex;align-items:center;gap:0.5rem;"><span id="offQueueStats"></span><span id="offEstimate" style="font-size:0.6rem;color:var(--text-dim);"></span></div></div>
@@ -849,13 +748,13 @@
             </div>
         </div>
 
-        <!-- Ã¢â€¢ÂÃ¢â€¢ÂÃ¢â€¢ÂÃ¢â€¢ÂÃ¢â€¢ÂÃ¢â€¢ÂÃ¢â€¢Â P2P RECOVERY Ã¢â€¢ÂÃ¢â€¢ÂÃ¢â€¢ÂÃ¢â€¢ÂÃ¢â€¢ÂÃ¢â€¢ÂÃ¢â€¢Â -->
+        <!-- â•â•â•â•â•â•â• P2P RECOVERY â•â•â•â•â•â•â• -->
         <div class="section" id="section-p2p">
             <div class="stats-row" id="p2pStats">
-                <div class="stat-card"><div class="stat-top"><span class="stat-label" data-i18n="total_peers">Total Peers</span><div class="stat-icon" style="background:rgba(79,70,229,0.12);color:#A5B4FC;"><i class="fas fa-server"></i></div></div><div class="stat-value" id="p2pTotal">â€”</div><div class="stat-footer" data-i18n="network_nodes">Network nodes</div></div>
-                <div class="stat-card"><div class="stat-top"><span class="stat-label" data-i18n="online_peers">Online Peers</span><div class="stat-icon" style="background:rgba(16,185,129,0.12);color:#6EE7B7;"><i class="fas fa-wifi"></i></div></div><div class="stat-value" id="p2pOnline">â€”</div><div class="stat-footer up"><i class="fas fa-circle"></i> <span data-i18n="connected">Connected</span></div></div>
-                <div class="stat-card"><div class="stat-top"><span class="stat-label" data-i18n="msgs_relayed">Msgs Relayed</span><div class="stat-icon" style="background:rgba(245,158,11,0.12);color:#FCD34D;"><i class="fas fa-exchange-alt"></i></div></div><div class="stat-value" id="p2pRelayed">â€”</div><div class="stat-footer" data-i18n="gossip_protocol">Gossip protocol</div></div>
-                <div class="stat-card"><div class="stat-top"><span class="stat-label" data-i18n="recovery_eta">Recovery ETA</span><div class="stat-icon" style="background:rgba(6,182,212,0.12);color:#67E8F9;"><i class="fas fa-clock"></i></div></div><div class="stat-value" id="p2pEta" style="font-size:1rem;">â€”</div><div class="stat-footer" data-i18n="estimated">Estimated</div></div>
+                <div class="stat-card"><div class="stat-top"><span class="stat-label" data-i18n="total_peers">Total Peers</span><div class="stat-icon" style="background:rgba(79,70,229,0.12);color:#A5B4FC;"><i class="fas fa-server"></i></div></div><div class="stat-value" id="p2pTotal">—</div><div class="stat-footer" data-i18n="network_nodes">Network nodes</div></div>
+                <div class="stat-card"><div class="stat-top"><span class="stat-label" data-i18n="online_peers">Online Peers</span><div class="stat-icon" style="background:rgba(16,185,129,0.12);color:#6EE7B7;"><i class="fas fa-wifi"></i></div></div><div class="stat-value" id="p2pOnline">—</div><div class="stat-footer up"><i class="fas fa-circle"></i> <span data-i18n="connected">Connected</span></div></div>
+                <div class="stat-card"><div class="stat-top"><span class="stat-label" data-i18n="msgs_relayed">Msgs Relayed</span><div class="stat-icon" style="background:rgba(245,158,11,0.12);color:#FCD34D;"><i class="fas fa-exchange-alt"></i></div></div><div class="stat-value" id="p2pRelayed">—</div><div class="stat-footer" data-i18n="gossip_protocol">Gossip protocol</div></div>
+                <div class="stat-card"><div class="stat-top"><span class="stat-label" data-i18n="recovery_eta">Recovery ETA</span><div class="stat-icon" style="background:rgba(6,182,212,0.12);color:#67E8F9;"><i class="fas fa-clock"></i></div></div><div class="stat-value" id="p2pEta" style="font-size:1rem;">—</div><div class="stat-footer" data-i18n="estimated">Estimated</div></div>
             </div>
             <div class="card-noc">
                 <div class="card-header"><div class="card-title"><i class="fas fa-project-diagram"></i> <span data-i18n="peer_list">Peer List</span></div></div>
@@ -868,13 +767,13 @@
             </div>
         </div>
 
-        <!-- Ã¢â€¢ÂÃ¢â€¢ÂÃ¢â€¢ÂÃ¢â€¢ÂÃ¢â€¢ÂÃ¢â€¢ÂÃ¢â€¢Â COMPLIANCE Ã¢â€¢ÂÃ¢â€¢ÂÃ¢â€¢ÂÃ¢â€¢ÂÃ¢â€¢ÂÃ¢â€¢ÂÃ¢â€¢Â -->
+        <!-- â•â•â•â•â•â•â• COMPLIANCE â•â•â•â•â•â•â• -->
         <div class="section" id="section-compliance">
             <div class="stats-row" id="complianceStats">
-                <div class="stat-card"><div class="stat-top"><span class="stat-label" data-i18n="exam_mode">Exam Mode</span><div class="stat-icon" style="background:rgba(239,68,68,0.12);color:#FCA5A5;"><i class="fas fa-gavel"></i></div></div><div class="stat-value" id="compExamMode" style="font-size:1rem;">â€”</div><div class="stat-footer" id="compExamType" data-i18n="exam_type">â€”</div></div>
-                <div class="stat-card"><div class="stat-top"><span class="stat-label" data-i18n="minesec">MINESEC</span><div class="stat-icon" style="background:rgba(16,185,129,0.12);color:#6EE7B7;"><i class="fas fa-file-alt"></i></div></div><div class="stat-value" id="compCompliance">â€”</div><div class="stat-footer" data-i18n="report_ready">Report ready</div></div>
-                <div class="stat-card"><div class="stat-top"><span class="stat-label" data-i18n="pending_reports">Pending Reports</span><div class="stat-icon" style="background:rgba(245,158,11,0.12);color:#FCD34D;"><i class="fas fa-hourglass-half"></i></div></div><div class="stat-value" id="compPending">â€”</div><div class="stat-footer" data-i18n="to_submit">To submit</div></div>
-                <div class="stat-card"><div class="stat-top"><span class="stat-label" data-i18n="gce_candidates">GCE Candidates</span><div class="stat-icon" style="background:rgba(59,130,246,0.12);color:#93C5FD;"><i class="fas fa-user-graduate"></i></div></div><div class="stat-value" id="compGce">â€”</div><div class="stat-footer" data-i18n="registered">Registered</div></div>
+                <div class="stat-card"><div class="stat-top"><span class="stat-label" data-i18n="exam_mode">Exam Mode</span><div class="stat-icon" style="background:rgba(239,68,68,0.12);color:#FCA5A5;"><i class="fas fa-gavel"></i></div></div><div class="stat-value" id="compExamMode" style="font-size:1rem;">—</div><div class="stat-footer" id="compExamType" data-i18n="exam_type">—</div></div>
+                <div class="stat-card"><div class="stat-top"><span class="stat-label" data-i18n="minesec">MINESEC</span><div class="stat-icon" style="background:rgba(16,185,129,0.12);color:#6EE7B7;"><i class="fas fa-file-alt"></i></div></div><div class="stat-value" id="compCompliance">—</div><div class="stat-footer" data-i18n="report_ready">Report ready</div></div>
+                <div class="stat-card"><div class="stat-top"><span class="stat-label" data-i18n="pending_reports">Pending Reports</span><div class="stat-icon" style="background:rgba(245,158,11,0.12);color:#FCD34D;"><i class="fas fa-hourglass-half"></i></div></div><div class="stat-value" id="compPending">—</div><div class="stat-footer" data-i18n="to_submit">To submit</div></div>
+                <div class="stat-card"><div class="stat-top"><span class="stat-label" data-i18n="gce_candidates">GCE Candidates</span><div class="stat-icon" style="background:rgba(59,130,246,0.12);color:#93C5FD;"><i class="fas fa-user-graduate"></i></div></div><div class="stat-value" id="compGce">—</div><div class="stat-footer" data-i18n="registered">Registered</div></div>
             </div>
             <div class="card-noc">
                 <div class="card-header">
@@ -887,13 +786,13 @@
             </div>
         </div>
 
-        <!-- Ã¢â€¢ÂÃ¢â€¢ÂÃ¢â€¢ÂÃ¢â€¢ÂÃ¢â€¢ÂÃ¢â€¢ÂÃ¢â€¢Â PAYMENTS Ã¢â€¢ÂÃ¢â€¢ÂÃ¢â€¢ÂÃ¢â€¢ÂÃ¢â€¢ÂÃ¢â€¢ÂÃ¢â€¢Â -->
+        <!-- â•â•â•â•â•â•â• PAYMENTS â•â•â•â•â•â•â• -->
         <div class="section" id="section-payments">
             <div class="stats-row" id="paymentStats">
-                <div class="stat-card"><div class="stat-top"><span class="stat-label" data-i18n="voucher_sales">Voucher Sales</span><div class="stat-icon" style="background:rgba(16,185,129,0.12);color:#6EE7B7;"><i class="fas fa-coins"></i></div></div><div class="stat-value" id="paySales" style="font-size:1rem;">â€”</div><div class="stat-footer" data-i18n="xaf">XAF</div></div>
-                <div class="stat-card"><div class="stat-top"><span class="stat-label" data-i18n="pending_txns">Pending Txns</span><div class="stat-icon" style="background:rgba(245,158,11,0.12);color:#FCD34D;"><i class="fas fa-clock"></i></div></div><div class="stat-value" id="payPending">â€”</div><div class="stat-footer" data-i18n="all_providers">All providers</div></div>
-                <div class="stat-card"><div class="stat-top"><span class="stat-label" data-i18n="sms_queue">SMS Queue</span><div class="stat-icon" style="background:rgba(59,130,246,0.12);color:#93C5FD;"><i class="fas fa-sms"></i></div></div><div class="stat-value" id="paySms">â€”</div><div class="stat-footer" data-i18n="pending_alerts">Pending alerts</div></div>
-                <div class="stat-card"><div class="stat-top"><span class="stat-label" data-i18n="refunds">Refunds</span><div class="stat-icon" style="background:rgba(239,68,68,0.12);color:#FCA5A5;"><i class="fas fa-undo"></i></div></div><div class="stat-value" id="payRefunds">â€”</div><div class="stat-footer" data-i18n="in_queue">In queue</div></div>
+                <div class="stat-card"><div class="stat-top"><span class="stat-label" data-i18n="voucher_sales">Voucher Sales</span><div class="stat-icon" style="background:rgba(16,185,129,0.12);color:#6EE7B7;"><i class="fas fa-coins"></i></div></div><div class="stat-value" id="paySales" style="font-size:1rem;">—</div><div class="stat-footer" data-i18n="xaf">XAF</div></div>
+                <div class="stat-card"><div class="stat-top"><span class="stat-label" data-i18n="pending_txns">Pending Txns</span><div class="stat-icon" style="background:rgba(245,158,11,0.12);color:#FCD34D;"><i class="fas fa-clock"></i></div></div><div class="stat-value" id="payPending">—</div><div class="stat-footer" data-i18n="all_providers">All providers</div></div>
+                <div class="stat-card"><div class="stat-top"><span class="stat-label" data-i18n="sms_queue">SMS Queue</span><div class="stat-icon" style="background:rgba(59,130,246,0.12);color:#93C5FD;"><i class="fas fa-sms"></i></div></div><div class="stat-value" id="paySms">—</div><div class="stat-footer" data-i18n="pending_alerts">Pending alerts</div></div>
+                <div class="stat-card"><div class="stat-top"><span class="stat-label" data-i18n="refunds">Refunds</span><div class="stat-icon" style="background:rgba(239,68,68,0.12);color:#FCA5A5;"><i class="fas fa-undo"></i></div></div><div class="stat-value" id="payRefunds">—</div><div class="stat-footer" data-i18n="in_queue">In queue</div></div>
             </div>
             <div class="card-noc">
                 <div class="card-header"><div class="card-title"><i class="fas fa-receipt"></i> <span data-i18n="recent_transactions">Recent Transactions</span></div>
@@ -911,13 +810,13 @@
             </div>
         </div>
 
-        <!-- Ã¢â€¢ÂÃ¢â€¢ÂÃ¢â€¢ÂÃ¢â€¢ÂÃ¢â€¢ÂÃ¢â€¢ÂÃ¢â€¢Â VOUCHERS Ã¢â€¢ÂÃ¢â€¢ÂÃ¢â€¢ÂÃ¢â€¢ÂÃ¢â€¢ÂÃ¢â€¢ÂÃ¢â€¢Â -->
+        <!-- â•â•â•â•â•â•â• VOUCHERS â•â•â•â•â•â•â• -->
         <div class="section" id="section-vouchers">
             <div class="stats-row" id="voucherStats">
-                <div class="stat-card"><div class="stat-top"><span class="stat-label">Total Vouchers</span><div class="stat-icon" style="background:rgba(79,70,229,0.12);color:#A5B4FC;"><i class="fas fa-ticket-alt"></i></div></div><div class="stat-value" id="vTotal">â€”</div><div class="stat-footer">All created</div></div>
-                <div class="stat-card"><div class="stat-top"><span class="stat-label">Used</span><div class="stat-icon" style="background:rgba(16,185,129,0.12);color:#6EE7B7;"><i class="fas fa-check-circle"></i></div></div><div class="stat-value" id="vUsed">â€”</div><div class="stat-footer up"><i class="fas fa-circle"></i> Claimed</div></div>
-                <div class="stat-card"><div class="stat-top"><span class="stat-label">Unused</span><div class="stat-icon" style="background:rgba(245,158,11,0.12);color:#FCD34D;"><i class="fas fa-clock"></i></div></div><div class="stat-value" id="vUnused">â€”</div><div class="stat-footer">Available</div></div>
-                <div class="stat-card"><div class="stat-top"><span class="stat-label">Expired</span><div class="stat-icon" style="background:rgba(239,68,68,0.12);color:#FCA5A5;"><i class="fas fa-hourglass-end"></i></div></div><div class="stat-value" id="vExpired">â€”</div><div class="stat-footer down"><i class="fas fa-exclamation-circle"></i> Past expiry</div></div>
+                <div class="stat-card"><div class="stat-top"><span class="stat-label">Total Vouchers</span><div class="stat-icon" style="background:rgba(79,70,229,0.12);color:#A5B4FC;"><i class="fas fa-ticket-alt"></i></div></div><div class="stat-value" id="vTotal">—</div><div class="stat-footer">All created</div></div>
+                <div class="stat-card"><div class="stat-top"><span class="stat-label">Used</span><div class="stat-icon" style="background:rgba(16,185,129,0.12);color:#6EE7B7;"><i class="fas fa-check-circle"></i></div></div><div class="stat-value" id="vUsed">—</div><div class="stat-footer up"><i class="fas fa-circle"></i> Claimed</div></div>
+                <div class="stat-card"><div class="stat-top"><span class="stat-label">Unused</span><div class="stat-icon" style="background:rgba(245,158,11,0.12);color:#FCD34D;"><i class="fas fa-clock"></i></div></div><div class="stat-value" id="vUnused">—</div><div class="stat-footer">Available</div></div>
+                <div class="stat-card"><div class="stat-top"><span class="stat-label">Expired</span><div class="stat-icon" style="background:rgba(239,68,68,0.12);color:#FCA5A5;"><i class="fas fa-hourglass-end"></i></div></div><div class="stat-value" id="vExpired">—</div><div class="stat-footer down"><i class="fas fa-exclamation-circle"></i> Past expiry</div></div>
             </div>
             <div class="grid-2col" style="margin-bottom:0.7rem;">
                 <div class="card-noc">
@@ -961,7 +860,7 @@
             </div>
         </div>
 
-        <!-- Ã¢â€¢ÂÃ¢â€¢ÂÃ¢â€¢ÂÃ¢â€¢ÂÃ¢â€¢ÂÃ¢â€¢ÂÃ¢â€¢Â REPORTS Ã¢â€¢ÂÃ¢â€¢ÂÃ¢â€¢ÂÃ¢â€¢ÂÃ¢â€¢ÂÃ¢â€¢ÂÃ¢â€¢Â -->
+        <!-- â•â•â•â•â•â•â• REPORTS â•â•â•â•â•â•â• -->
         <div class="section" id="section-reports">
             <div class="card-noc">
                 <div class="card-header"><div class="card-title"><i class="fas fa-file-export"></i> <span data-i18n="generate_reports">Generate Reports</span></div></div>
@@ -973,19 +872,19 @@
                         <button class="qa-btn" style="background:rgba(239,68,68,0.15);" onclick="downloadReport('security')"><i class="fas fa-file-csv"></i> <span data-i18n="security_log">Security Log</span></button>
                     </div>
                     <div style="font-size:0.7rem;color:var(--text-dim);margin-top:0.75rem;">
-                        <i class="fas fa-info-circle me-1"></i> <span data-i18n="reports_info">MINESEC-compliant XML Ã‚Â· Excel Ã‚Â· CSV Ã‚Â· PDF formats available. Print for physical backup.</span>
+                        <i class="fas fa-info-circle me-1"></i> <span data-i18n="reports_info">MINESEC-compliant XML Â· Excel Â· CSV Â· PDF formats available. Print for physical backup.</span>
                     </div>
                 </div>
             </div>
         </div>
 
-        <!-- Ã¢â€¢ÂÃ¢â€¢ÂÃ¢â€¢ÂÃ¢â€¢ÂÃ¢â€¢ÂÃ¢â€¢ÂÃ¢â€¢Â LIVE MONITORING WALL Ã¢â€¢ÂÃ¢â€¢ÂÃ¢â€¢ÂÃ¢â€¢ÂÃ¢â€¢ÂÃ¢â€¢ÂÃ¢â€¢Â -->
+        <!-- â•â•â•â•â•â•â• LIVE MONITORING WALL â•â•â•â•â•â•â• -->
         <div class="section" id="section-livemon">
             <div class="stats-row" id="liveStats">
-                <div class="stat-card"><div class="stat-top"><span class="stat-label" data-i18n="live_sessions">Live Sessions</span><div class="stat-icon" style="background:rgba(16,185,129,0.12);color:#6EE7B7;"><i class="fas fa-play-circle"></i></div></div><div class="stat-value" id="lmActive">â€”</div><div class="stat-footer up"><i class="fas fa-circle"></i> <span data-i18n="running_now">Running now</span></div></div>
-                <div class="stat-card"><div class="stat-top"><span class="stat-label" data-i18n="todays_checkins">Today's Check-ins</span><div class="stat-icon" style="background:rgba(79,70,229,0.12);color:#A5B4FC;"><i class="fas fa-user-check"></i></div></div><div class="stat-value" id="lmCheckins">â€”</div><div class="stat-footer" data-i18n="realtime_count">Real-time count</div></div>
-                <div class="stat-card"><div class="stat-top"><span class="stat-label" data-i18n="attendance_rate_live">Attendance Rate</span><div class="stat-icon" style="background:rgba(245,158,11,0.12);color:#FCD34D;"><i class="fas fa-chart-line"></i></div></div><div class="stat-value" id="lmRate">â€”</div><div class="stat-footer" data-i18n="live_average">Live average</div></div>
-                <div class="stat-card"><div class="stat-top"><span class="stat-label" data-i18n="fraud_alerts">Fraud Alerts</span><div class="stat-icon" style="background:rgba(239,68,68,0.12);color:#FCA5A5;"><i class="fas fa-exclamation-triangle"></i></div></div><div class="stat-value" id="lmFraud">â€”</div><div class="stat-footer down" data-i18n="requires_attention">Requires attention</div></div>
+                <div class="stat-card"><div class="stat-top"><span class="stat-label" data-i18n="live_sessions">Live Sessions</span><div class="stat-icon" style="background:rgba(16,185,129,0.12);color:#6EE7B7;"><i class="fas fa-play-circle"></i></div></div><div class="stat-value" id="lmActive">—</div><div class="stat-footer up"><i class="fas fa-circle"></i> <span data-i18n="running_now">Running now</span></div></div>
+                <div class="stat-card"><div class="stat-top"><span class="stat-label" data-i18n="todays_checkins">Today's Check-ins</span><div class="stat-icon" style="background:rgba(79,70,229,0.12);color:#A5B4FC;"><i class="fas fa-user-check"></i></div></div><div class="stat-value" id="lmCheckins">—</div><div class="stat-footer" data-i18n="realtime_count">Real-time count</div></div>
+                <div class="stat-card"><div class="stat-top"><span class="stat-label" data-i18n="attendance_rate_live">Attendance Rate</span><div class="stat-icon" style="background:rgba(245,158,11,0.12);color:#FCD34D;"><i class="fas fa-chart-line"></i></div></div><div class="stat-value" id="lmRate">—</div><div class="stat-footer" data-i18n="live_average">Live average</div></div>
+                <div class="stat-card"><div class="stat-top"><span class="stat-label" data-i18n="fraud_alerts">Fraud Alerts</span><div class="stat-icon" style="background:rgba(239,68,68,0.12);color:#FCA5A5;"><i class="fas fa-exclamation-triangle"></i></div></div><div class="stat-value" id="lmFraud">—</div><div class="stat-footer down" data-i18n="requires_attention">Requires attention</div></div>
             </div>
             <div class="grid-2col">
                 <div class="card-noc">
@@ -1003,7 +902,7 @@
             </div>
         </div>
 
-        <!-- â”€â”€ NETWORK PRESENCE MONITOR â”€â”€ -->
+        <!-- ── NETWORK PRESENCE MONITOR ── -->
         <div class="section" id="section-network-presence">
             <!-- Configuration row -->
             <div class="card-noc" style="margin-bottom: 1rem;">
@@ -1030,7 +929,7 @@
                         <span class="stat-label">Connected Users</span>
                         <div class="stat-icon" style="background:rgba(79,70,229,0.12);color:#A5B4FC;"><i class="fas fa-users"></i></div>
                     </div>
-                    <div class="stat-value" id="npStatActive">â€”</div>
+                    <div class="stat-value" id="npStatActive">—</div>
                     <div class="stat-footer"><span id="npStatOnline">0</span> Online, <span id="npStatIdle">0</span> Idle</div>
                 </div>
                 <div class="stat-card" style="margin-bottom:0;">
@@ -1038,7 +937,7 @@
                         <span class="stat-label">On Campus</span>
                         <div class="stat-icon" style="background:rgba(16,185,129,0.12);color:#6EE7B7;"><i class="fas fa-map-marker-alt"></i></div>
                     </div>
-                    <div class="stat-value" id="npStatOnCampus">â€”</div>
+                    <div class="stat-value" id="npStatOnCampus">—</div>
                     <div class="stat-footer">Within IP ranges</div>
                 </div>
                 <div class="stat-card" style="margin-bottom:0;">
@@ -1046,7 +945,7 @@
                         <span class="stat-label">Outside Campus</span>
                         <div class="stat-icon" style="background:rgba(239,68,68,0.12);color:#FCA5A5;"><i class="fas fa-external-link-alt"></i></div>
                     </div>
-                    <div class="stat-value" id="npStatOutsideCampus">â€”</div>
+                    <div class="stat-value" id="npStatOutsideCampus">—</div>
                     <div class="stat-footer">Outside IP ranges</div>
                 </div>
                 <div class="stat-card" style="margin-bottom:0;">
@@ -1054,49 +953,48 @@
                         <span class="stat-label">Attendance Marked</span>
                         <div class="stat-icon" style="background:rgba(245,158,11,0.12);color:#FCD34D;"><i class="fas fa-check-double"></i></div>
                     </div>
-                    <div class="stat-value" id="npStatAttendanceMarked">â€”</div>
+                    <div class="stat-value" id="npStatAttendanceMarked">—</div>
                     <div class="stat-footer">Dynamic calendar date check</div>
                 </div>
             </div>
 
             <!-- Table Card -->
-            <div class="card-noc" style="padding: 0; background: transparent; box-shadow: none;">
-                <div class="card-header" style="display:flex;justify-content:space-between;align-items:center;flex-wrap:wrap;gap:10px; padding: 1.5rem; background: rgba(255,255,255,0.02); border-radius: 12px 12px 0 0; border: 1px solid rgba(255,255,255,0.08); border-bottom: none;">
+            <div class="card-noc">
+                <div class="card-header" style="display:flex;justify-content:space-between;align-items:center;flex-wrap:wrap;gap:10px;">
                     <div class="card-title">
-                        <i class="fas fa-network-wired" style="color: var(--primary-light);"></i> <span style="font-weight: 600; letter-spacing: 0.3px;">Connected User Presence</span>
-                        <span id="npLastUpdated" style="font-size:0.7rem;font-weight:400;color:var(--text-dim);margin-left:0.6rem;"></span>
+                        <i class="fas fa-list-alt"></i> <span>Connected User Presence</span>
+                        <span id="npLastUpdated" style="font-size:0.6rem;font-weight:400;color:var(--text-dim);margin-left:0.4rem;"></span>
                     </div>
                     <div style="display:flex;gap:10px;align-items:center;">
-                        <div style="position: relative;">
-                            <i class="fas fa-search" style="position: absolute; left: 10px; top: 50%; transform: translateY(-50%); color: #64748B; font-size: 0.75rem;"></i>
-                            <input type="text" id="npSearchInput" oninput="filterPresenceTable()" placeholder="Search users, IPs..." style="background:rgba(15,23,42,0.6);border:1px solid rgba(255,255,255,0.1);border-radius:8px;padding:0.4rem 0.75rem 0.4rem 2rem;color:#fff;font-size:0.8rem;outline:none; width: 220px; transition: border-color 0.2s;">
-                        </div>
-                        <button class="btn btn-outline-secondary btn-sm" onclick="loadNetworkPresence()" style="background:rgba(255,255,255,0.05);border:1px solid rgba(255,255,255,0.1);color:#E2E8F0;font-size:0.8rem;padding:0.4rem 0.8rem;border-radius:8px;cursor:pointer; transition: all 0.2s;"><i class="fas fa-sync-alt"></i> Refresh</button>
+                        <input type="text" id="npSearchInput" oninput="filterPresenceTable()" placeholder="Search connected users..." style="background:rgba(255,255,255,0.04);border:1px solid rgba(255,255,255,0.08);border-radius:6px;padding:0.25rem 0.5rem;color:#fff;font-size:0.7rem;outline:none;">
+                        <button class="btn btn-outline-secondary btn-sm" onclick="loadNetworkPresence()" style="background:rgba(255,255,255,0.02);border:1px solid rgba(255,255,255,0.08);color:#fff;font-size:0.7rem;padding:0.25rem 0.5rem;cursor:pointer;"><i class="fas fa-sync-alt"></i> Refresh</button>
                     </div>
                 </div>
-                <div class="np-table-container" style="border-top-left-radius: 0; border-top-right-radius: 0;">
-                    <table class="np-table">
-                        <thead>
-                            <tr>
-                                <th>User Name</th>
-                                <th>ID / Registration</th>
-                                <th>Role</th>
-                                <th>Presence Status</th>
-                                <th>Network Classification</th>
-                                <th>IP Address</th>
-                                <th>Device</th>
-                                <th>Browser / OS</th>
-                                <th>Attendance</th>
-                                <th>Face Auth</th>
-                                <th>Last Activity</th>
-                            </tr>
-                        </thead>
-                        <tbody id="npPresenceTableBody">
-                            <tr>
-                                <td colspan="11" style="text-align:center;padding:3rem;color:#94A3B8;"><i class="fas fa-spinner fa-spin me-2"></i> Loading presence logs...</td>
-                            </tr>
-                        </tbody>
-                    </table>
+                <div class="card-body compact">
+                    <div class="table-wrap">
+                        <table style="width:100%;">
+                            <thead>
+                                <tr>
+                                    <th>User Name</th>
+                                    <th>ID / Registration</th>
+                                    <th>Role</th>
+                                    <th>Presence Status</th>
+                                    <th>Network Classification</th>
+                                    <th>IP Address</th>
+                                    <th>Device</th>
+                                    <th>Browser / OS</th>
+                                    <th>Attendance</th>
+                                    <th>Face Auth</th>
+                                    <th>Last Activity</th>
+                                </tr>
+                            </thead>
+                            <tbody id="npPresenceTableBody">
+                                <tr>
+                                    <td colspan="11" style="text-align:center;padding:1rem;color:var(--text-dim);">Loading presence logs...</td>
+                                </tr>
+                            </tbody>
+                        </table>
+                    </div>
                 </div>
             </div>
         </div>
@@ -1104,7 +1002,144 @@
     </div>
 </div>
 
-<!-- Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬ STUDENT DETAIL DRAWER Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬ -->
+
+        <!-- 🛡 ATTENDANCE SECURITY MONITOR 🛡 -->
+        <div class="section" id="section-attendance-security">
+            <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:1.5rem;">
+                <div>
+                    <h5 style="color:#fff;font-weight:600;font-size:1.15rem;margin:0;display:flex;align-items:center;gap:10px;">
+                        <i class="fas fa-shield-alt" style="color:var(--danger);"></i> Attendance Security Monitor
+                    </h5>
+                    <p style="color:var(--text-dim);font-size:0.75rem;margin:0.25rem 0 0 0;">Real-time audit of suspicious presence and authentication activities.</p>
+                </div>
+            </div>
+
+            <!-- Stats Row -->
+            <div class="stats-row" style="margin-bottom:1.5rem;">
+                <div class="stat-card">
+                    <div class="stat-icon" style="background:rgba(239,68,68,0.1);color:var(--danger);"><i class="fas fa-exclamation-triangle"></i></div>
+                    <div class="stat-title">Active Alerts</div>
+                    <div class="stat-value" id="asStatActive">0</div>
+                </div>
+                <div class="stat-card">
+                    <div class="stat-icon" style="background:rgba(239,68,68,0.1);color:var(--danger);"><i class="fas fa-radiation"></i></div>
+                    <div class="stat-title">High/Critical Risk</div>
+                    <div class="stat-value" id="asStatHigh">0</div>
+                </div>
+                <div class="stat-card">
+                    <div class="stat-icon" style="background:rgba(245,158,11,0.1);color:var(--warning);"><i class="fas fa-search"></i></div>
+                    <div class="stat-title">Medium/Low Risk</div>
+                    <div class="stat-value" id="asStatMediumLow">0</div>
+                </div>
+                <div class="stat-card">
+                    <div class="stat-icon" style="background:rgba(16,185,129,0.1);color:var(--success);"><i class="fas fa-shield-check"></i></div>
+                    <div class="stat-title">Resolved Alerts</div>
+                    <div class="stat-value" id="asStatResolved">0</div>
+                </div>
+                <div class="stat-card">
+                    <div class="stat-icon" style="background:rgba(59,130,246,0.1);color:var(--primary);"><i class="fas fa-calendar-day"></i></div>
+                    <div class="stat-title">Today's Total</div>
+                    <div class="stat-value" id="asStatToday">0</div>
+                </div>
+            </div>
+
+            <!-- Filters & Search -->
+            <div style="background:var(--dark-card);border:1px solid rgba(255,255,255,0.06);border-radius:12px;padding:1rem;margin-bottom:1rem;display:flex;gap:1rem;align-items:center;flex-wrap:wrap;">
+                <div style="flex:1;min-width:250px;position:relative;">
+                    <i class="fas fa-search" style="position:absolute;left:12px;top:50%;transform:translateY(-50%);color:var(--text-dim);font-size:0.8rem;"></i>
+                    <input type="text" id="asSearchInput" class="form-control" placeholder="Search by name, reg num, IP, type..." style="background:rgba(0,0,0,0.2);border:1px solid rgba(255,255,255,0.08);color:#fff;font-size:0.8rem;padding-left:35px;border-radius:8px;" onkeyup="filterAttendanceSecurityTable()">
+                </div>
+                <div style="display:flex;gap:0.75rem;">
+                    <select id="asFilterSeverity" class="form-select" style="background:rgba(0,0,0,0.2);border:1px solid rgba(255,255,255,0.08);color:#fff;font-size:0.8rem;min-width:140px;" onchange="filterAttendanceSecurityTable()">
+                        <option value="">All Severities</option>
+                        <option value="high">High/Critical</option>
+                        <option value="medium">Medium</option>
+                        <option value="low">Low</option>
+                    </select>
+                    <select id="asFilterStatus" class="form-select" style="background:rgba(0,0,0,0.2);border:1px solid rgba(255,255,255,0.08);color:#fff;font-size:0.8rem;min-width:140px;" onchange="filterAttendanceSecurityTable()">
+                        <option value="">All Statuses</option>
+                        <option value="active">Active Only</option>
+                        <option value="resolved">Resolved Only</option>
+                    </select>
+                </div>
+            </div>
+
+            <!-- Feed Table -->
+            <div class="card-noc" style="margin-bottom:2rem;">
+                <div class="card-body" style="padding:0;overflow-x:auto;">
+                    <table class="table-noc" style="min-width:1000px;">
+                        <thead>
+                            <tr>
+                                <th>Time</th>
+                                <th>User</th>
+                                <th>Reg. No.</th>
+                                <th>Role</th>
+                                <th>Event Type</th>
+                                <th>Severity</th>
+                                <th>Device</th>
+                                <th>IP Address</th>
+                                <th>Network</th>
+                                <th>Status</th>
+                                <th>Action</th>
+                            </tr>
+                        </thead>
+                        <tbody id="asTableBody">
+                            <!-- Populated via JS -->
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+        </div>
+
+        <!-- 🛡 ATTENDANCE SECURITY ALERT MODAL 🛡 -->
+        <div class="modal fade" id="securityAlertModal" tabindex="-1" aria-hidden="true">
+          <div class="modal-dialog modal-dialog-centered modal-lg">
+            <div class="modal-content" style="background:rgba(15,23,42,0.98);border:1px solid rgba(255,255,255,0.08);border-radius:12px;">
+              <div class="modal-header" style="border-bottom:1px solid rgba(255,255,255,0.06);padding:1rem 1.5rem;">
+                <h6 class="modal-title" style="color:#fff;font-weight:600;font-size:0.9rem;display:flex;align-items:center;gap:10px;">
+                    <i class="fas fa-shield-alt" style="color:var(--danger);"></i> Alert Details
+                    <span id="saModalSeverity" class="np-badge" style="font-size:0.6rem;"></span>
+                </h6>
+                <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal" style="font-size:0.75rem;"></button>
+              </div>
+              <div class="modal-body" style="padding:1.5rem;">
+                <div style="display:grid;grid-template-columns:1fr 1fr;gap:1.5rem;">
+                    <div style="background:rgba(255,255,255,0.02);border:1px solid rgba(255,255,255,0.05);border-radius:8px;padding:1rem;">
+                        <h6 style="color:#94A3B8;font-size:0.7rem;text-transform:uppercase;margin-bottom:1rem;letter-spacing:0.5px;">User Context</h6>
+                        <div style="display:flex;flex-direction:column;gap:0.75rem;">
+                            <div><span class="np-secondary-text">Name:</span> <strong id="saModalUser" style="color:#E2E8F0;margin-left:5px;"></strong></div>
+                            <div><span class="np-secondary-text">Role:</span> <span id="saModalRole" class="np-badge primary" style="margin-left:5px;padding:0.15rem 0.5rem;"></span></div>
+                            <div><span class="np-secondary-text">Reg No:</span> <code id="saModalReg" class="np-code" style="margin-left:5px;"></code></div>
+                        </div>
+                    </div>
+                    <div style="background:rgba(255,255,255,0.02);border:1px solid rgba(255,255,255,0.05);border-radius:8px;padding:1rem;">
+                        <h6 style="color:#94A3B8;font-size:0.7rem;text-transform:uppercase;margin-bottom:1rem;letter-spacing:0.5px;">Network & Device</h6>
+                        <div style="display:flex;flex-direction:column;gap:0.75rem;">
+                            <div><span class="np-secondary-text">IP Address:</span> <code id="saModalIP" class="np-code" style="margin-left:5px;"></code></div>
+                            <div><span class="np-secondary-text">Network:</span> <strong id="saModalNetwork" style="color:#E2E8F0;margin-left:5px;"></strong></div>
+                            <div><span class="np-secondary-text">Device:</span> <span id="saModalDevice" style="color:#E2E8F0;margin-left:5px;"></span></div>
+                            <div><span class="np-secondary-text">OS/Browser:</span> <span id="saModalBrowser" style="color:#E2E8F0;margin-left:5px;"></span></div>
+                        </div>
+                    </div>
+                </div>
+                <div style="margin-top:1.5rem;background:rgba(239,68,68,0.05);border:1px solid rgba(239,68,68,0.1);border-radius:8px;padding:1rem;">
+                    <h6 style="color:#FCA5A5;font-size:0.7rem;text-transform:uppercase;margin-bottom:1rem;letter-spacing:0.5px;">Incident Details</h6>
+                    <div style="display:flex;flex-direction:column;gap:0.75rem;">
+                        <div><span style="color:#FCA5A5;font-size:0.75rem;">Time:</span> <span id="saModalTime" style="color:#E2E8F0;margin-left:5px;"></span></div>
+                        <div><span style="color:#FCA5A5;font-size:0.75rem;">Type:</span> <strong id="saModalType" style="color:#E2E8F0;margin-left:5px;"></strong></div>
+                        <div><span style="color:#FCA5A5;font-size:0.75rem;">Reason:</span> <p id="saModalReason" style="color:#E2E8F0;margin-top:5px;font-size:0.8rem;background:rgba(0,0,0,0.2);padding:0.75rem;border-radius:6px;border:1px solid rgba(255,255,255,0.05);"></p></div>
+                    </div>
+                </div>
+              </div>
+              <div class="modal-footer" style="border-top:1px solid rgba(255,255,255,0.06);padding:0.8rem 1.5rem;" id="saModalFooter">
+                <button class="qa-btn" style="background:rgba(255,255,255,0.06);color:rgba(255,255,255,0.7);font-size:0.75rem;" data-bs-dismiss="modal">Dismiss</button>
+                <button class="qa-btn" id="saModalResolveBtn" style="background:var(--success);color:#fff;font-size:0.75rem;"><i class="fas fa-check me-1"></i> Mark Resolved</button>
+              </div>
+            </div>
+          </div>
+        </div>
+
+<!-- â”€â”€â”€ STUDENT DETAIL DRAWER â”€â”€â”€ -->
 <div class="drawer-overlay" id="drawerOverlay" onclick="closeStudentDrawer()"></div>
 <div class="drawer-panel" id="studentDrawer">
     <div class="drawer-header">
@@ -1118,7 +1153,7 @@
 
 <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js" crossorigin="anonymous"></script>
 
-<!-- Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬ ACTION MODAL Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬ -->
+<!-- â”€â”€â”€ ACTION MODAL â”€â”€â”€ -->
 <div class="modal fade" id="actionModal" tabindex="-1" aria-hidden="true">
   <div class="modal-dialog modal-dialog-centered modal-sm">
     <div class="modal-content" style="background:rgba(15,23,42,0.98);border:1px solid rgba(255,255,255,0.08);border-radius:10px;">
@@ -1135,7 +1170,7 @@
   </div>
 </div>
 
-<!-- Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬ USER CRUD MODAL Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬ -->
+<!-- â”€â”€â”€ USER CRUD MODAL â”€â”€â”€ -->
 <div class="modal fade" id="userModal" tabindex="-1" aria-hidden="true">
   <div class="modal-dialog modal-dialog-centered modal-md">
     <div class="modal-content" style="background:rgba(15,23,42,0.98);border:1px solid rgba(255,255,255,0.08);border-radius:10px;">
@@ -1151,7 +1186,7 @@
         <div class="form-group" style="margin-top:0.5rem;"><label style="font-size:0.7rem;color:var(--text-dim);">Phone</label><input type="text" id="userPhone" class="form-control" style="background:rgba(255,255,255,0.04);border:1px solid rgba(255,255,255,0.08);color:#fff;font-size:0.75rem;padding:0.35rem 0.5rem;border-radius:6px;width:100%;"></div>
         <div class="form-group" style="margin-top:0.5rem;"><label style="font-size:0.7rem;color:var(--text-dim);">Password (only for new users)</label><div style="position:relative;"><input type="password" id="userPassword" class="form-control" style="background:rgba(255,255,255,0.04);border:1px solid rgba(255,255,255,0.08);color:#fff;font-size:0.75rem;padding:0.35rem 2rem 0.35rem 0.5rem;border-radius:6px;width:100%;"><button type="button" id="toggleUserPassword" style="position:absolute;right:0.5rem;top:50%;transform:translateY(-50%);background:none;border:none;color:rgba(255,255,255,0.3);cursor:pointer;padding:0.1rem;font-size:0.8rem;line-height:1;" tabindex="-1"><i class="fas fa-eye"></i></button></div></div>
         <div class="form-group" style="margin-top:0.5rem;"><label style="font-size:0.7rem;color:var(--text-dim);">Role</label><select id="userRole" class="form-control" style="background:rgba(255,255,255,0.04);border:1px solid rgba(255,255,255,0.08);color:#fff;font-size:0.75rem;padding:0.35rem 0.5rem;border-radius:6px;width:100%;"><option value="student">Student</option><option value="lecturer">Lecturer</option><option value="institutional_admin">Admin</option></select></div>
-        <div class="form-group" style="margin-top:0.5rem;"><label style="font-size:0.7rem;color:var(--text-dim);">Department</label><select id="userDept" class="form-control" style="background:rgba(255,255,255,0.04);border:1px solid rgba(255,255,255,0.08);color:#fff;font-size:0.75rem;padding:0.35rem 0.5rem;border-radius:6px;width:100%;"><option value="">â€” None â€”</option></select></div>
+        <div class="form-group" style="margin-top:0.5rem;"><label style="font-size:0.7rem;color:var(--text-dim);">Department</label><select id="userDept" class="form-control" style="background:rgba(255,255,255,0.04);border:1px solid rgba(255,255,255,0.08);color:#fff;font-size:0.75rem;padding:0.35rem 0.5rem;border-radius:6px;width:100%;"><option value="">— None —</option></select></div>
       </div>
       <div class="modal-footer" style="border-top:1px solid rgba(255,255,255,0.06);padding:0.6rem 1rem;">
         <button class="qa-btn" style="background:rgba(255,255,255,0.06);color:rgba(255,255,255,0.5);font-size:0.7rem;" data-bs-dismiss="modal">Cancel</button>
@@ -1161,7 +1196,7 @@
   </div>
 </div>
 
-<!-- Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬ COURSE CRUD MODAL Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬ -->
+<!-- â”€â”€â”€ COURSE CRUD MODAL â”€â”€â”€ -->
 <div class="modal fade" id="courseModal" tabindex="-1" aria-hidden="true">
   <div class="modal-dialog modal-dialog-centered modal-md">
     <div class="modal-content" style="background:rgba(15,23,42,0.98);border:1px solid rgba(255,255,255,0.08);border-radius:10px;">
@@ -1173,8 +1208,8 @@
         <input type="hidden" id="courseEditId">
         <div class="form-group"><label style="font-size:0.7rem;color:var(--text-dim);">Course Code</label><input type="text" id="courseCode" class="form-control" style="background:rgba(255,255,255,0.04);border:1px solid rgba(255,255,255,0.08);color:#fff;font-size:0.75rem;padding:0.35rem 0.5rem;border-radius:6px;width:100%;"></div>
         <div class="form-group" style="margin-top:0.5rem;"><label style="font-size:0.7rem;color:var(--text-dim);">Course Name</label><input type="text" id="courseName" class="form-control" style="background:rgba(255,255,255,0.04);border:1px solid rgba(255,255,255,0.08);color:#fff;font-size:0.75rem;padding:0.35rem 0.5rem;border-radius:6px;width:100%;"></div>
-        <div class="form-group" style="margin-top:0.5rem;"><label style="font-size:0.7rem;color:var(--text-dim);">Department</label><select id="courseDept" class="form-control" style="background:rgba(255,255,255,0.04);border:1px solid rgba(255,255,255,0.08);color:#fff;font-size:0.75rem;padding:0.35rem 0.5rem;border-radius:6px;width:100%;"><option value="">â€” None â€”</option></select></div>
-        <div class="form-group" style="margin-top:0.5rem;"><label style="font-size:0.7rem;color:var(--text-dim);">Lecturer</label><select id="courseLecturer" class="form-control" style="background:rgba(255,255,255,0.04);border:1px solid rgba(255,255,255,0.08);color:#fff;font-size:0.75rem;padding:0.35rem 0.5rem;border-radius:6px;width:100%;"><option value="">â€” None â€”</option></select></div>
+        <div class="form-group" style="margin-top:0.5rem;"><label style="font-size:0.7rem;color:var(--text-dim);">Department</label><select id="courseDept" class="form-control" style="background:rgba(255,255,255,0.04);border:1px solid rgba(255,255,255,0.08);color:#fff;font-size:0.75rem;padding:0.35rem 0.5rem;border-radius:6px;width:100%;"><option value="">— None —</option></select></div>
+        <div class="form-group" style="margin-top:0.5rem;"><label style="font-size:0.7rem;color:var(--text-dim);">Lecturer</label><select id="courseLecturer" class="form-control" style="background:rgba(255,255,255,0.04);border:1px solid rgba(255,255,255,0.08);color:#fff;font-size:0.75rem;padding:0.35rem 0.5rem;border-radius:6px;width:100%;"><option value="">— None —</option></select></div>
         <div class="form-group" style="margin-top:0.5rem;"><label style="font-size:0.7rem;color:var(--text-dim);">Credits</label><input type="number" id="courseCredits" class="form-control" value="3" style="background:rgba(255,255,255,0.04);border:1px solid rgba(255,255,255,0.08);color:#fff;font-size:0.75rem;padding:0.35rem 0.5rem;border-radius:6px;width:100%;"></div>
         <div class="form-group" style="margin-top:0.5rem;"><label style="font-size:0.7rem;color:var(--text-dim);">Description</label><textarea id="courseDescription" rows="2" class="form-control" style="background:rgba(255,255,255,0.04);border:1px solid rgba(255,255,255,0.08);color:#fff;font-size:0.75rem;padding:0.35rem 0.5rem;border-radius:6px;width:100%;"></textarea></div>
       </div>
@@ -1186,7 +1221,7 @@
   </div>
 </div>
 
-<!-- Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬ DEPARTMENT CRUD MODAL Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬ -->
+<!-- â”€â”€â”€ DEPARTMENT CRUD MODAL â”€â”€â”€ -->
 <div class="modal fade" id="deptModal" tabindex="-1" aria-hidden="true">
   <div class="modal-dialog modal-dialog-centered modal-md">
     <div class="modal-content" style="background:rgba(15,23,42,0.98);border:1px solid rgba(255,255,255,0.08);border-radius:10px;">
@@ -1198,7 +1233,7 @@
         <input type="hidden" id="deptEditId">
         <div class="form-group"><label style="font-size:0.7rem;color:var(--text-dim);">Department Code</label><input type="text" id="deptCode" class="form-control" style="background:rgba(255,255,255,0.04);border:1px solid rgba(255,255,255,0.08);color:#fff;font-size:0.75rem;padding:0.35rem 0.5rem;border-radius:6px;width:100%;"></div>
         <div class="form-group" style="margin-top:0.5rem;"><label style="font-size:0.7rem;color:var(--text-dim);">Department Name</label><input type="text" id="deptName" class="form-control" style="background:rgba(255,255,255,0.04);border:1px solid rgba(255,255,255,0.08);color:#fff;font-size:0.75rem;padding:0.35rem 0.5rem;border-radius:6px;width:100%;"></div>
-        <div class="form-group" style="margin-top:0.5rem;"><label style="font-size:0.7rem;color:var(--text-dim);">Department Head</label><select id="deptHead" class="form-control" style="background:rgba(255,255,255,0.04);border:1px solid rgba(255,255,255,0.08);color:#fff;font-size:0.75rem;padding:0.35rem 0.5rem;border-radius:6px;width:100%;"><option value="">â€” None â€”</option></select></div>
+        <div class="form-group" style="margin-top:0.5rem;"><label style="font-size:0.7rem;color:var(--text-dim);">Department Head</label><select id="deptHead" class="form-control" style="background:rgba(255,255,255,0.04);border:1px solid rgba(255,255,255,0.08);color:#fff;font-size:0.75rem;padding:0.35rem 0.5rem;border-radius:6px;width:100%;"><option value="">— None —</option></select></div>
         <div class="form-group" style="margin-top:0.5rem;"><label style="font-size:0.7rem;color:var(--text-dim);">Description</label><textarea id="deptDescription" rows="2" class="form-control" style="background:rgba(255,255,255,0.04);border:1px solid rgba(255,255,255,0.08);color:#fff;font-size:0.75rem;padding:0.35rem 0.5rem;border-radius:6px;width:100%;"></textarea></div>
       </div>
       <div class="modal-footer" style="border-top:1px solid rgba(255,255,255,0.06);padding:0.6rem 1rem;">
@@ -1209,7 +1244,7 @@
   </div>
 </div>
 
-<!-- Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬ ENROLLMENT MODAL Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬ -->
+<!-- â”€â”€â”€ ENROLLMENT MODAL â”€â”€â”€ -->
 <div class="modal fade" id="enrollmentModal" tabindex="-1" aria-hidden="true">
   <div class="modal-dialog modal-dialog-centered modal-md">
     <div class="modal-content" style="background:rgba(15,23,42,0.98);border:1px solid rgba(255,255,255,0.08);border-radius:10px;">
@@ -1218,8 +1253,8 @@
         <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal" style="font-size:0.7rem;"></button>
       </div>
       <div class="modal-body" style="padding:0.85rem 1rem;">
-        <div class="form-group"><label style="font-size:0.7rem;color:var(--text-dim);">Student</label><select id="enrollmentStudent" class="form-control" style="background:rgba(255,255,255,0.04);border:1px solid rgba(255,255,255,0.08);color:#fff;font-size:0.75rem;padding:0.35rem 0.5rem;border-radius:6px;width:100%;"><option value="">â€” Select Student â€”</option></select></div>
-        <div class="form-group" style="margin-top:0.5rem;"><label style="font-size:0.7rem;color:var(--text-dim);">Course</label><select id="enrollmentCourse" class="form-control" style="background:rgba(255,255,255,0.04);border:1px solid rgba(255,255,255,0.08);color:#fff;font-size:0.75rem;padding:0.35rem 0.5rem;border-radius:6px;width:100%;"><option value="">â€” Select Course â€”</option></select></div>
+        <div class="form-group"><label style="font-size:0.7rem;color:var(--text-dim);">Student</label><select id="enrollmentStudent" class="form-control" style="background:rgba(255,255,255,0.04);border:1px solid rgba(255,255,255,0.08);color:#fff;font-size:0.75rem;padding:0.35rem 0.5rem;border-radius:6px;width:100%;"><option value="">— Select Student —</option></select></div>
+        <div class="form-group" style="margin-top:0.5rem;"><label style="font-size:0.7rem;color:var(--text-dim);">Course</label><select id="enrollmentCourse" class="form-control" style="background:rgba(255,255,255,0.04);border:1px solid rgba(255,255,255,0.08);color:#fff;font-size:0.75rem;padding:0.35rem 0.5rem;border-radius:6px;width:100%;"><option value="">— Select Course —</option></select></div>
       </div>
       <div class="modal-footer" style="border-top:1px solid rgba(255,255,255,0.06);padding:0.6rem 1rem;">
         <button class="qa-btn" style="background:rgba(255,255,255,0.06);color:rgba(255,255,255,0.5);font-size:0.7rem;" data-bs-dismiss="modal">Cancel</button>
@@ -1229,7 +1264,7 @@
   </div>
 </div>
 
-<!-- Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬ VOUCHER GENERATE MODAL Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬ -->
+<!-- â”€â”€â”€ VOUCHER GENERATE MODAL â”€â”€â”€ -->
 <div class="modal fade" id="voucherGenerateModal" tabindex="-1" aria-hidden="true">
   <div class="modal-dialog modal-dialog-centered modal-dialog-scrollable modal-md">
     <div class="modal-content" style="background:rgba(15,23,42,0.98);border:1px solid rgba(255,255,255,0.08);border-radius:10px;">
@@ -1240,8 +1275,8 @@
       <div class="modal-body" style="padding:0.85rem 1rem;">
         <div class="form-group"><label style="font-size:0.7rem;color:var(--text-dim);">Role</label><select id="vGenRole" class="form-control" style="background:rgba(255,255,255,0.04);border:1px solid rgba(255,255,255,0.08);color:#fff;font-size:0.75rem;padding:0.35rem 0.5rem;border-radius:6px;width:100%;"><option value="student">Student</option><option value="lecturer">Lecturer</option><option value="institutional_admin">Admin</option></select></div>
         <div class="form-group" style="margin-top:0.5rem;"><label style="font-size:0.7rem;color:var(--text-dim);">Quantity</label><input type="number" id="vGenQuantity" class="form-control" value="10" min="1" max="500" style="background:rgba(255,255,255,0.04);border:1px solid rgba(255,255,255,0.08);color:#fff;font-size:0.75rem;padding:0.35rem 0.5rem;border-radius:6px;width:100%;"></div>
-        <div class="form-group" style="margin-top:0.5rem;"><label style="font-size:0.7rem;color:var(--text-dim);">Email Binding <span style="color:var(--text-dim);font-weight:400;">(optional â€” lock all to one email)</span></label><input type="email" id="vGenEmail" class="form-control" placeholder="user@example.com" style="background:rgba(255,255,255,0.04);border:1px solid rgba(255,255,255,0.08);color:#fff;font-size:0.75rem;padding:0.35rem 0.5rem;border-radius:6px;width:100%;"></div>
-        <div class="form-group" style="margin-top:0.5rem;"><label style="font-size:0.7rem;color:var(--text-dim);">Email Recipients <span style="color:var(--text-dim);font-weight:400;">(optional â€” one per line, 1:1 with quantity)</span></label><textarea id="vGenRecipients" rows="2" class="form-control" placeholder="user1@example.com&#10;user2@example.com" style="background:rgba(255,255,255,0.04);border:1px solid rgba(255,255,255,0.08);color:#fff;font-size:0.75rem;padding:0.35rem 0.5rem;border-radius:6px;width:100%;"></textarea></div>
+        <div class="form-group" style="margin-top:0.5rem;"><label style="font-size:0.7rem;color:var(--text-dim);">Email Binding <span style="color:var(--text-dim);font-weight:400;">(optional — lock all to one email)</span></label><input type="email" id="vGenEmail" class="form-control" placeholder="user@example.com" style="background:rgba(255,255,255,0.04);border:1px solid rgba(255,255,255,0.08);color:#fff;font-size:0.75rem;padding:0.35rem 0.5rem;border-radius:6px;width:100%;"></div>
+        <div class="form-group" style="margin-top:0.5rem;"><label style="font-size:0.7rem;color:var(--text-dim);">Email Recipients <span style="color:var(--text-dim);font-weight:400;">(optional — one per line, 1:1 with quantity)</span></label><textarea id="vGenRecipients" rows="2" class="form-control" placeholder="user1@example.com&#10;user2@example.com" style="background:rgba(255,255,255,0.04);border:1px solid rgba(255,255,255,0.08);color:#fff;font-size:0.75rem;padding:0.35rem 0.5rem;border-radius:6px;width:100%;"></textarea></div>
         <div id="vGenResult" style="margin-top:0.5rem;display:none;padding:0.5rem;border-radius:6px;font-size:0.75rem;max-height:200px;overflow-y:auto;"></div>
       </div>
       <div class="modal-footer" style="border-top:1px solid rgba(255,255,255,0.06);padding:0.6rem 1rem;">
@@ -1252,7 +1287,7 @@
   </div>
 </div>
 
-<!-- Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬ PAYMENT MODAL Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬ -->
+<!-- â”€â”€â”€ PAYMENT MODAL â”€â”€â”€ -->
 <div class="modal fade" id="paymentModal" tabindex="-1" aria-hidden="true">
   <div class="modal-dialog modal-dialog-centered modal-md">
     <div class="modal-content" style="background:rgba(15,23,42,0.98);border:1px solid rgba(255,255,255,0.08);border-radius:10px;">
@@ -1337,7 +1372,7 @@
         setTimeout(() => { t.style.opacity = '0'; t.style.transition = 'opacity 0.3s'; setTimeout(() => t.remove(), 300); }, 3500);
     }
 
-    // Ã¢â€â‚¬Ã¢â€â‚¬ BILINGUAL (EN/FR) Ã¢â€â‚¬Ã¢â€â‚¬
+    // â”€â”€ BILINGUAL (EN/FR) â”€â”€
     async function toggleLang() {
         currentLang = currentLang === 'en' ? 'fr' : 'en';
         localStorage.setItem('attendrix_lang', currentLang);
@@ -1361,7 +1396,7 @@
         });
     }
 
-    // Ã¢â€â‚¬Ã¢â€â‚¬ NAVIGATION Ã¢â€â‚¬Ã¢â€â‚¬
+    // â”€â”€ NAVIGATION â”€â”€
     document.querySelectorAll('.sidebar-nav a[data-section]').forEach(link => {
         link.addEventListener('click', function(e) {
             e.preventDefault();
@@ -1383,7 +1418,7 @@
         document.getElementById('sidebarOverlay').classList.remove('show');
     });
 
-    // Ã¢â€â‚¬Ã¢â€â‚¬ LOAD USER Ã¢â€â‚¬Ã¢â€â‚¬
+    // â”€â”€ LOAD USER â”€â”€
     function loadUser() {
         try { const r = localStorage.getItem('user'); if (r) userData = JSON.parse(r); } catch(e) {}
         if (userData) {
@@ -1393,7 +1428,7 @@
         }
     }
 
-    // Ã¢â€â‚¬Ã¢â€â‚¬ QUICK ACTIONS Ã¢â€â‚¬Ã¢â€â‚¬
+    // â”€â”€ QUICK ACTIONS â”€â”€
     async function loadQuickActions() {
         try {
             const res = await apiFetch('/api/institutional/quick-actions');
@@ -1407,7 +1442,7 @@
         } catch(e) {}
     }
 
-    // Ã¢â€â‚¬Ã¢â€â‚¬ ACTION HANDLER DISPATCH Ã¢â€â‚¬Ã¢â€â‚¬
+    // â”€â”€ ACTION HANDLER DISPATCH â”€â”€
     function handleQuickAction(actionId) {
         switch(actionId) {
             case 'qa_session': openActionModal('session'); break;
@@ -1420,7 +1455,7 @@
         }
     }
 
-    // Ã¢â€â‚¬Ã¢â€â‚¬ ACTION MODAL Ã¢â€â‚¬Ã¢â€â‚¬
+    // â”€â”€ ACTION MODAL â”€â”€
     const actionForms = {
         session: {
             title: 'New Attendance Session',
@@ -1515,7 +1550,7 @@
         try {
             const res = await apiFetch(form.endpoint, {method: 'POST', body: JSON.stringify(payload)});
             if (res && res.ok) {
-                showToast(form.title + ' â€” completed successfully', 'success');
+                showToast(form.title + ' — completed successfully', 'success');
                 bootstrap.Modal.getInstance(document.getElementById('actionModal')).hide();
                 // Refresh relevant sections
                 loadOverview(); loadActivityFeed(); loadSecurityAlerts();
@@ -1543,7 +1578,7 @@
                     method: 'POST',
                     body: JSON.stringify({type: 'sync_completed', message: 'Force sync completed from admin panel', faculty: 'Infrastructure'})
                 });
-                showToast('Force sync completed â€” all pending records synchronized', 'success');
+                showToast('Force sync completed — all pending records synchronized', 'success');
             } else {
                 showToast('Sync processing returned a warning', 'error');
             }
@@ -1585,14 +1620,14 @@
             document.body.removeChild(a); URL.revokeObjectURL(url);
             await apiFetch('/api/institutional/activity-log', {
                 method: 'POST',
-                body: JSON.stringify({type: 'backup', message: 'Manual backup completed â€” ' + backup.summary.users + ' users, ' + backup.summary.courses + ' courses', faculty: 'System'})
+                body: JSON.stringify({type: 'backup', message: 'Manual backup completed — ' + backup.summary.users + ' users, ' + backup.summary.courses + ' courses', faculty: 'System'})
             });
-            showToast('Backup completed â€” ' + backup.summary.users + ' users, ' + backup.summary.courses + ' courses exported', 'success');
+            showToast('Backup completed — ' + backup.summary.users + ' users, ' + backup.summary.courses + ' courses exported', 'success');
             loadActivityFeed();
         } catch(e) { showToast('Error: ' + e.message, 'error'); }
     }
 
-    // Ã¢â€â‚¬Ã¢â€â‚¬ OVERVIEW Ã¢â€â‚¬Ã¢â€â‚¬
+    // â”€â”€ OVERVIEW â”€â”€
     async function loadOverview() {
         try {
             const [shRes, trendRes, netRes, offRes, infraRes, innovNetRes] = await Promise.all([
@@ -1612,7 +1647,7 @@
             }
             if (trendRes && trendRes.ok) {
                 const d = await trendRes.json();
-                document.getElementById('ovAttendanceRate').textContent = d.average ? d.average + '%' : 'â€”';
+                document.getElementById('ovAttendanceRate').textContent = d.average ? d.average + '%' : '—';
                 if (d.daily_rates) renderAttendanceChart(d.dates, d.daily_rates);
             }
             if (netRes && netRes.ok) {
@@ -1630,10 +1665,10 @@
             }
             if (offRes && offRes.ok) {
                 const d = await offRes.json();
-                document.getElementById('offPending').textContent = d.pending_syncs ?? 'â€”';
-                document.getElementById('offSuccessRate').textContent = d.sync_success_rate ? d.sync_success_rate + '%' : 'â€”';
-                document.getElementById('offLastSync').textContent = d.last_sync ? new Date(d.last_sync).toLocaleTimeString() : 'â€”';
-                document.getElementById('offNodesOffline').textContent = d.nodes_offline ?? 'â€”';
+                document.getElementById('offPending').textContent = d.pending_syncs ?? '—';
+                document.getElementById('offSuccessRate').textContent = d.sync_success_rate ? d.sync_success_rate + '%' : '—';
+                document.getElementById('offLastSync').textContent = d.last_sync ? new Date(d.last_sync).toLocaleTimeString() : '—';
+                document.getElementById('offNodesOffline').textContent = d.nodes_offline ?? '—';
                 if (d.queue) renderSyncQueue(d.queue);
                 /* Also load enhanced offline queue stats */
                 try {
@@ -1642,7 +1677,7 @@
                         const qs = await qsRes.json();
                         var qsEl = document.getElementById('offQueueStats');
                         if (qsEl && qs.total > 0) {
-                            qsEl.innerHTML = '<span class="pill-indicator ' + (qs.queue_healthy ? 'pill-green' : 'pill-yellow') + '">Queue: ' + qs.pending + ' pend Ã‚Â· ' + qs.failed + ' fail Ã‚Â· ' + qs.synced + ' done</span>';
+                            qsEl.innerHTML = '<span class="pill-indicator ' + (qs.queue_healthy ? 'pill-green' : 'pill-yellow') + '">Queue: ' + qs.pending + ' pend Â· ' + qs.failed + ' fail Â· ' + qs.synced + ' done</span>';
                         }
                     }
                 } catch(e) {}
@@ -1668,12 +1703,12 @@
         } catch(e) { console.error('Overview error:', e); }
     }
 
-    // Ã¢â€â‚¬Ã¢â€â‚¬ INFRASTRUCTURE Ã¢â€â‚¬Ã¢â€â‚¬
+    // â”€â”€ INFRASTRUCTURE â”€â”€
     function renderInfrastructure(d) {
         // UPS
         const ups = d.ups || {};
         const upsEl = document.getElementById('upsIndicator');
-        document.getElementById('upsPct').textContent = ups.charge_pct ?? 'â€”';
+        document.getElementById('upsPct').textContent = ups.charge_pct ?? '—';
         if (ups.status === 'on_battery') { upsEl.className = 'pill-indicator pill-yellow'; }
         else if ((ups.charge_pct || 100) < 30) { upsEl.className = 'pill-indicator pill-red'; }
         else { upsEl.className = 'pill-indicator pill-green'; }
@@ -1688,7 +1723,7 @@
         if (orange) { orEl.className = 'pill-indicator ' + (orange.status === 'up' ? 'pill-green' : orange.status === 'degraded' ? 'pill-yellow' : 'pill-red'); orEl.innerHTML = '<span class="dot"></span> Orange ' + orange.latency_ms + 'ms'; }
     }
 
-    // Ã¢â€â‚¬Ã¢â€â‚¬ INNOVATION NETWORK (Mesh Health + Load Balance) Ã¢â€â‚¬Ã¢â€â‚¬
+    // â”€â”€ INNOVATION NETWORK (Mesh Health + Load Balance) â”€â”€
     function renderInnovationNetwork(d) {
         // Mesh health
         var mh = d.mesh_health || {};
@@ -1697,9 +1732,9 @@
             msEl.textContent = (mh.mesh_status || 'N/A').toUpperCase();
             msEl.style.color = mh.mesh_status === 'healthy' ? '#10B981' : mh.mesh_status === 'degraded' ? '#F59E0B' : '#EF4444';
         }
-        document.getElementById('meshNodes').textContent = mh.nodes_assessed ?? 'â€”';
-        document.getElementById('meshSuccessRate').textContent = mh.overall_success_rate ? (mh.overall_success_rate * 100).toFixed(1) + '%' : 'â€”';
-        document.getElementById('meshTotalSyncs').textContent = mh.total_syncs_assessed ?? 'â€”';
+        document.getElementById('meshNodes').textContent = mh.nodes_assessed ?? '—';
+        document.getElementById('meshSuccessRate').textContent = mh.overall_success_rate ? (mh.overall_success_rate * 100).toFixed(1) + '%' : '—';
+        document.getElementById('meshTotalSyncs').textContent = mh.total_syncs_assessed ?? '—';
 
         var mnd = document.getElementById('meshNodeDetails');
         var details = mh.node_details || {};
@@ -1708,7 +1743,7 @@
             mnd.innerHTML = keys.map(function(k) {
                 var n = details[k];
                 var c = n.status === 'healthy' ? '#10B981' : n.status === 'degraded' ? '#F59E0B' : '#EF4444';
-                return '<div class="node-item" style="justify-content:space-between;"><span style="color:#fff;font-size:0.65rem;">' + k + '</span><span style="color:' + c + ';font-size:0.6rem;">' + n.status + ' Ã‚Â· ' + (n.success_rate * 100).toFixed(0) + '% Ã‚Â· ' + n.avg_duration_ms + 'ms</span></div>';
+                return '<div class="node-item" style="justify-content:space-between;"><span style="color:#fff;font-size:0.65rem;">' + k + '</span><span style="color:' + c + ';font-size:0.6rem;">' + n.status + ' Â· ' + (n.success_rate * 100).toFixed(0) + '% Â· ' + n.avg_duration_ms + 'ms</span></div>';
             }).join('');
         } else if (mnd) {
             mnd.innerHTML = '<div class="empty-muted" style="font-size:0.6rem;">No mesh nodes assessed</div>';
@@ -1722,8 +1757,8 @@
             lsEl.textContent = lbl.toUpperCase();
             lsEl.style.color = lbl === 'balanced' || lbl === 'idle' ? '#10B981' : '#F59E0B';
         }
-        document.getElementById('loadSessions').textContent = lb.total_sessions ?? 'â€”';
-        document.getElementById('loadTarget').textContent = lb.target_per_node ?? 'â€”';
+        document.getElementById('loadSessions').textContent = lb.total_sessions ?? '—';
+        document.getElementById('loadTarget').textContent = lb.target_per_node ?? '—';
         document.getElementById('loadRec').textContent = lb.recommendation || '';
 
         var og = document.getElementById('overloadGrid');
@@ -1737,7 +1772,7 @@
         }
     }
 
-    // Ã¢â€â‚¬Ã¢â€â‚¬ ACTIVITY Ã¢â€â‚¬Ã¢â€â‚¬
+    // â”€â”€ ACTIVITY â”€â”€
     async function loadActivityFeed() {
         try {
             const res = await apiFetch('/api/institutional/activity-feed');
@@ -1752,7 +1787,7 @@
         } catch(e) {}
     }
 
-    // Ã¢â€â‚¬Ã¢â€â‚¬ STUDENTS Ã¢â€â‚¬Ã¢â€â‚¬
+    // â”€â”€ STUDENTS â”€â”€
     async function loadStudents() {
         try {
             const url = '/api/institutional/students?page=' + studentPage + '&per_page=12&search=' + encodeURIComponent(studentSearch);
@@ -1774,23 +1809,23 @@
         } catch(e) {}
     }
 
-    // Ã¢â€â‚¬Ã¢â€â‚¬ SESSION TABLE Ã¢â€â‚¬Ã¢â€â‚¬
+    // â”€â”€ SESSION TABLE â”€â”€
     function renderSessionTable(sessions, total, page, totalPages) {
         const tb = document.getElementById('sessionTableBody');
         if (!sessions || sessions.length === 0) { tb.innerHTML = '<tr><td colspan="8"><div class="empty-muted">No sessions</div></td></tr>'; renderPagination('sessionPagination', 1, 1, function(){}); return; }
         tb.innerHTML = sessions.map(s =>
-            '<tr><td style="font-weight:600;color:#fff;">' + s.course + '</td><td>' + s.lecturer + '</td><td>' + s.total_students + '</td><td>' + s.present + '</td><td style="font-weight:600;color:' + (s.attendance_rate >= 80 ? '#10B981' : s.attendance_rate >= 60 ? '#F59E0B' : '#EF4444') + ';">' + s.attendance_rate + '%</td><td><span class="status-pill pill-' + s.status + '">' + s.status + '</span></td><td>' + (s.health ? '<span style="color:' + (s.health.broker === 'healthy' ? '#10B981' : '#F59E0B') + ';"><i class="fas fa-circle" style="font-size:0.45rem;"></i> ' + s.health.broker + '</span>' : 'â€”') + '</td><td>' + (s.health ? s.health.latency_ms + 'ms' : 'â€”') + '</td></tr>'
+            '<tr><td style="font-weight:600;color:#fff;">' + s.course + '</td><td>' + s.lecturer + '</td><td>' + s.total_students + '</td><td>' + s.present + '</td><td style="font-weight:600;color:' + (s.attendance_rate >= 80 ? '#10B981' : s.attendance_rate >= 60 ? '#F59E0B' : '#EF4444') + ';">' + s.attendance_rate + '%</td><td><span class="status-pill pill-' + s.status + '">' + s.status + '</span></td><td>' + (s.health ? '<span style="color:' + (s.health.broker === 'healthy' ? '#10B981' : '#F59E0B') + ';"><i class="fas fa-circle" style="font-size:0.45rem;"></i> ' + s.health.broker + '</span>' : '—') + '</td><td>' + (s.health ? s.health.latency_ms + 'ms' : '—') + '</td></tr>'
         ).join('');
         renderPagination('sessionPagination', page, totalPages, function(p) { sessionPage = p; loadOverview(); });
     }
 
-    // Ã¢â€â‚¬Ã¢â€â‚¬ NETWORK NODES Ã¢â€â‚¬Ã¢â€â‚¬
+    // â”€â”€ NETWORK NODES â”€â”€
     function renderNetworkNodes(nodes) {
         const grid = document.getElementById('nodeGrid');
         if (!grid) return;
         if (!nodes || nodes.length === 0) { grid.innerHTML = '<div class="empty-muted">No nodes</div>'; return; }
         grid.innerHTML = nodes.map(n =>
-            '<div class="node-item node-' + n.status + '"><div class="node-status"></div><div><div class="node-name">' + n.name + '</div><div class="node-meta">' + n.latency_ms + 'ms Ã‚Â· ' + n.packet_loss + '% loss</div></div></div>'
+            '<div class="node-item node-' + n.status + '"><div class="node-status"></div><div><div class="node-name">' + n.name + '</div><div class="node-meta">' + n.latency_ms + 'ms Â· ' + n.packet_loss + '% loss</div></div></div>'
         ).join('');
     }
 
@@ -1801,10 +1836,10 @@
             '<div class="broker-item"><div class="broker-val">' + (broker.connected_nodes || 0) + '/' + (broker.total_nodes || 0) + '</div><div class="broker-label">Connected</div></div>' +
             '<div class="broker-item"><div class="broker-val">' + (broker.dropped_messages || 0) + '</div><div class="broker-label">Dropped</div></div>' +
             '<div class="broker-item"><div class="broker-val">' + (broker.bandwidth_mbps || 0) + '</div><div class="broker-label">Mbps</div></div>' +
-            '<div class="broker-item"><div class="broker-val">' + (broker.uptime || 'â€”') + '</div><div class="broker-label">Uptime</div></div>';
+            '<div class="broker-item"><div class="broker-val">' + (broker.uptime || '—') + '</div><div class="broker-label">Uptime</div></div>';
     }
 
-    // Ã¢â€â‚¬Ã¢â€â‚¬ SECURITY Ã¢â€â‚¬Ã¢â€â‚¬
+    // â”€â”€ SECURITY â”€â”€
     const _secDedupCache = new Map();
     function _isDuplicate(a, windowSec) {
         var k = a.event_type + '|' + (a.user_id || '') + '|' + a.message;
@@ -1815,7 +1850,7 @@
         return false;
     }
     function _fmtTimestamp(iso) {
-        if (!iso) return 'â€”';
+        if (!iso) return '—';
         try {
             var d = new Date(iso.indexOf('+') > 0 || iso.indexOf('Z') > 0 || iso.indexOf('T') > 0 ? iso : iso.replace(' ', 'T'));
             if (isNaN(d.getTime())) return iso.slice(11, 16) || iso;
@@ -1850,16 +1885,16 @@
         } catch(e) {}
     }
 
-    // Ã¢â€â‚¬Ã¢â€â‚¬ SYNC QUEUE Ã¢â€â‚¬Ã¢â€â‚¬
+    // â”€â”€ SYNC QUEUE â”€â”€
     function renderSyncQueue(queue) {
         const body = document.getElementById('syncQueueBody');
         if (!queue || queue.length === 0) { body.innerHTML = '<div class="empty-muted">No pending syncs</div>'; return; }
         body.innerHTML = queue.map(q =>
-            '<div class="queue-item"><div><strong style="color:#fff;">' + q.node + '</strong><br><span style="color:var(--text-dim);font-size:0.65rem;">' + q.records + ' records Ã‚Â· since ' + q.since + '</span></div><span class="q-status q-' + q.status + '">' + q.status + '</span></div>'
+            '<div class="queue-item"><div><strong style="color:#fff;">' + q.node + '</strong><br><span style="color:var(--text-dim);font-size:0.65rem;">' + q.records + ' records Â· since ' + q.since + '</span></div><span class="q-status q-' + q.status + '">' + q.status + '</span></div>'
         ).join('');
     }
 
-    // Ã¢â€â‚¬Ã¢â€â‚¬ P2P SYNC Ã¢â€â‚¬Ã¢â€â‚¬
+    // â”€â”€ P2P SYNC â”€â”€
     async function loadP2pSync() {
         try {
             const res = await apiFetch('/api/institutional/p2p-sync');
@@ -1867,8 +1902,8 @@
             const d = await res.json();
             document.getElementById('p2pTotal').textContent = d.total_neighbors || 0;
             document.getElementById('p2pOnline').textContent = d.online_neighbors || 0;
-            document.getElementById('p2pRelayed').textContent = d.messages_relayed ? (d.messages_relayed > 1000 ? (d.messages_relayed/1000).toFixed(1) + 'k' : d.messages_relayed) : 'â€”';
-            document.getElementById('p2pEta').textContent = d.last_gossip_round ? Math.floor((Date.now() - new Date(d.last_gossip_round).getTime())/1000) + 's ago' : 'â€”';
+            document.getElementById('p2pRelayed').textContent = d.messages_relayed ? (d.messages_relayed > 1000 ? (d.messages_relayed/1000).toFixed(1) + 'k' : d.messages_relayed) : '—';
+            document.getElementById('p2pEta').textContent = d.last_gossip_round ? Math.floor((Date.now() - new Date(d.last_gossip_round).getTime())/1000) + 's ago' : '—';
             document.getElementById('p2pCount').textContent = (d.total_neighbors || 0) - (d.offline_neighbors || 0) + '/' + (d.total_neighbors || 0);
 
             const tb = document.getElementById('p2pTableBody');
@@ -1880,17 +1915,17 @@
         } catch(e) {}
     }
 
-    // Ã¢â€â‚¬Ã¢â€â‚¬ COMPLIANCE Ã¢â€â‚¬Ã¢â€â‚¬
+    // â”€â”€ COMPLIANCE â”€â”€
     async function loadCompliance() {
         try {
             const res = await apiFetch('/api/institutional/compliance');
             if (!res || !res.ok) return;
             const d = await res.json();
-            document.getElementById('compExamMode').textContent = d.exam_mode ? 'Ã°Å¸Å¸Â¢ ACTIVE' : 'Ã¢Å¡Âª Inactive';
-            document.getElementById('compExamType').textContent = d.exam_type || 'â€”';
-            document.getElementById('compCompliance').textContent = d.report_compliance_pct ? d.report_compliance_pct + '%' : 'â€”';
-            document.getElementById('compPending').textContent = d.pending_reports ?? 'â€”';
-            document.getElementById('compGce').textContent = d.gce_candidates ?? 'â€”';
+            document.getElementById('compExamMode').textContent = d.exam_mode ? 'ðŸŸ¢ ACTIVE' : 'âšª Inactive';
+            document.getElementById('compExamType').textContent = d.exam_type || '—';
+            document.getElementById('compCompliance').textContent = d.report_compliance_pct ? d.report_compliance_pct + '%' : '—';
+            document.getElementById('compPending').textContent = d.pending_reports ?? '—';
+            document.getElementById('compGce').textContent = d.gce_candidates ?? '—';
 
             const ab = document.getElementById('complianceAuditBody');
             const trail = d.audit_trail || [];
@@ -1901,7 +1936,7 @@
         } catch(e) {}
     }
 
-    // Ã¢â€â‚¬Ã¢â€â‚¬ COMPLIANCE EXPORT Ã¢â€â‚¬Ã¢â€â‚¬
+    // â”€â”€ COMPLIANCE EXPORT â”€â”€
     async function exportComplianceReport() {
         try {
             const res = await apiFetch('/api/institutional/compliance/exam-mode', {
@@ -1921,16 +1956,16 @@
         } catch(e) { showToast('Error: ' + e.message, 'error'); }
     }
 
-    // Ã¢â€â‚¬Ã¢â€â‚¬ PAYMENTS Ã¢â€â‚¬Ã¢â€â‚¬
+    // â”€â”€ PAYMENTS â”€â”€
     async function loadPayments() {
         try {
             const res = await apiFetch('/api/institutional/payments?page=' + paymentPage + '&per_page=10');
             if (!res || !res.ok) return;
             const d = await res.json();
-            document.getElementById('paySales').textContent = d.voucher_sales_xaf ? (d.voucher_sales_xaf/1000).toFixed(0) + 'k' : 'â€”';
-            document.getElementById('payPending').textContent = d.pending_txns ?? 'â€”';
-            document.getElementById('paySms').textContent = d.sms_queue_count ?? 'â€”';
-            document.getElementById('payRefunds').textContent = d.refund_queue ?? 'â€”';
+            document.getElementById('paySales').textContent = d.voucher_sales_xaf ? (d.voucher_sales_xaf/1000).toFixed(0) + 'k' : '—';
+            document.getElementById('payPending').textContent = d.pending_txns ?? '—';
+            document.getElementById('paySms').textContent = d.sms_queue_count ?? '—';
+            document.getElementById('payRefunds').textContent = d.refund_queue ?? '—';
             document.getElementById('smsQueueCount').textContent = d.sms_queue_count ?? '0';
             document.getElementById('paymentBadge').textContent = d.pending_txns ?? '0';
 
@@ -1944,7 +1979,7 @@
         } catch(e) {}
     }
 
-    // Ã¢â€â‚¬Ã¢â€â‚¬ PAGINATION RENDERER Ã¢â€â‚¬Ã¢â€â‚¬
+    // â”€â”€ PAGINATION RENDERER â”€â”€
     function renderPagination(containerId, currentPage, totalPages, onClick) {
         const container = document.getElementById(containerId);
         if (!container) return;
@@ -1965,7 +2000,7 @@
         window[containerId + '_goto'] = onClick;
     }
 
-    // Ã¢â€â‚¬Ã¢â€â‚¬ STUDENT DETAIL DRAWER Ã¢â€â‚¬Ã¢â€â‚¬
+    // â”€â”€ STUDENT DETAIL DRAWER â”€â”€
     async function openStudentDrawer(studentId) {
         document.getElementById('drawerOverlay').classList.add('open');
         document.getElementById('studentDrawer').classList.add('open');
@@ -1987,15 +2022,15 @@
         var html = '';
         // Profile section
         html += '<div class="drawer-section"><div class="drawer-section-title"><i class="fas fa-id-card me-1"></i> Profile</div>';
-        html += '<div class="drawer-field"><span class="label">Email</span><span class="value">' + (p.email || 'â€”') + '</span></div>';
-        html += '<div class="drawer-field"><span class="label">Student ID</span><span class="value">' + (p.student_id || 'â€”') + '</span></div>';
-        html += '<div class="drawer-field"><span class="label">Faculty</span><span class="value">' + (p.faculty || 'â€”') + '</span></div>';
-        html += '<div class="drawer-field"><span class="label">Phone</span><span class="value">' + (p.phone || 'â€”') + '</span></div>';
+        html += '<div class="drawer-field"><span class="label">Email</span><span class="value">' + (p.email || '—') + '</span></div>';
+        html += '<div class="drawer-field"><span class="label">Student ID</span><span class="value">' + (p.student_id || '—') + '</span></div>';
+        html += '<div class="drawer-field"><span class="label">Faculty</span><span class="value">' + (p.faculty || '—') + '</span></div>';
+        html += '<div class="drawer-field"><span class="label">Phone</span><span class="value">' + (p.phone || '—') + '</span></div>';
         html += '<div class="drawer-field"><span class="label">Status</span><span class="value" style="color:' + (p.is_active ? '#10B981' : '#EF4444') + ';">' + (p.is_active ? 'Active' : 'Inactive') + '</span></div>';
         html += '<div class="drawer-field"><span class="label">Trusted Device</span><span class="value">' + (p.trusted_device ? '<i class="fas fa-check-circle" style="color:#10B981;"></i> Yes' : '<i class="fas fa-times-circle" style="color:#EF4444;"></i> No') + '</span></div>';
         html += '<div class="drawer-field"><span class="label">VPN Detected</span><span class="value">' + (p.vpn_detected ? '<span style="color:#EF4444;font-weight:600;">Yes</span>' : 'No') + '</span></div>';
-        html += '<div class="drawer-field"><span class="label">Last Login</span><span class="value">' + (p.last_login ? new Date(p.last_login).toLocaleDateString() : 'â€”') + '</span></div>';
-        html += '<div class="drawer-field"><span class="label">Registered</span><span class="value">' + (p.created_at ? new Date(p.created_at).toLocaleDateString() : 'â€”') + '</span></div>';
+        html += '<div class="drawer-field"><span class="label">Last Login</span><span class="value">' + (p.last_login ? new Date(p.last_login).toLocaleDateString() : '—') + '</span></div>';
+        html += '<div class="drawer-field"><span class="label">Registered</span><span class="value">' + (p.created_at ? new Date(p.created_at).toLocaleDateString() : '—') + '</span></div>';
         html += '</div>';
 
         // Attendance section
@@ -2033,7 +2068,7 @@
         document.getElementById('studentDrawer').classList.remove('open');
     }
 
-    // Ã¢â€â‚¬Ã¢â€â‚¬ REPORT DOWNLOAD Ã¢â€â‚¬Ã¢â€â‚¬
+    // â”€â”€ REPORT DOWNLOAD â”€â”€
     async function downloadReport(type) {
         try {
             showToast('Generating ' + type + ' report...', 'info');
@@ -2072,7 +2107,7 @@
         } catch(e) { showToast('Download failed: ' + e.message, 'error'); }
     }
 
-    // Ã¢â€â‚¬Ã¢â€â‚¬ CHARTS Ã¢â€â‚¬Ã¢â€â‚¬
+    // â”€â”€ CHARTS â”€â”€
     function renderAttendanceChart(dates, rates) {
         const ctx = document.getElementById('attendanceChart').getContext('2d');
         if (attendanceChartInstance) attendanceChartInstance.destroy();
@@ -2135,7 +2170,7 @@
         } catch(e) {}
     }
 
-    // Ã¢â€â‚¬Ã¢â€â‚¬ LOGOUT Ã¢â€â‚¬Ã¢â€â‚¬
+    // â”€â”€ LOGOUT â”€â”€
     document.getElementById('logoutLink').addEventListener('click', function(e) {
         e.preventDefault();
         const t = getToken();
@@ -2146,7 +2181,7 @@
         window.location.href = '/login';
     });
 
-    // Ã¢â€â‚¬Ã¢â€â‚¬ SSE REAL-TIME CONNECTION Ã¢â€â‚¬Ã¢â€â‚¬
+    // â”€â”€ SSE REAL-TIME CONNECTION â”€â”€
     let sseClient = null;
     let sseReconnectTimer = null;
 
@@ -2258,7 +2293,7 @@
         if (data && data.health === false) { updateConnQuality('offline', 'Unhealthy'); return; }
     }
 
-    // Ã¢â€â‚¬Ã¢â€â‚¬ CONNECTION QUALITY MONITOR Ã¢â€â‚¬Ã¢â€â‚¬
+    // â”€â”€ CONNECTION QUALITY MONITOR â”€â”€
     let pingHistory = [];
 
     async function measurePing() {
@@ -2299,12 +2334,12 @@
             updateConnQuality(conn.effectiveType === '4g' ? 'online' : conn.effectiveType === '3g' ? 'degraded' : 'offline', conn.effectiveType);
             conn.addEventListener('change', function() {
                 var ct = conn.effectiveType || 'unknown';
-                updateConnQuality(ct === '4g' ? 'online' : ct === '3g' ? 'degraded' : 'offline', ct + ' Ã‚Â· ' + (conn.downlink || '?') + 'Mbps');
+                updateConnQuality(ct === '4g' ? 'online' : ct === '3g' ? 'degraded' : 'offline', ct + ' Â· ' + (conn.downlink || '?') + 'Mbps');
             });
         }
     }
 
-    // Ã¢â€â‚¬Ã¢â€â‚¬ NETWORK TOPOLOGY VISUALIZER (handled by network-topology.js / AttendrixTopology) Ã¢â€â‚¬Ã¢â€â‚¬
+    // â”€â”€ NETWORK TOPOLOGY VISUALIZER (handled by network-topology.js / AttendrixTopology) â”€â”€
 
     function drawTopology(ctx) {
         var W = ctx.canvas.width, H = ctx.canvas.height;
@@ -2402,7 +2437,7 @@
         }
     }
 
-    // Ã¢â€â‚¬Ã¢â€â‚¬ LIVE MONITORING Ã¢â€â‚¬Ã¢â€â‚¬
+    // â”€â”€ LIVE MONITORING â”€â”€
     var _liveFallbackTimer = null;
 
     function appendLiveCheckin(c) {
@@ -2410,14 +2445,14 @@
         var name = c.student_name || 'Unknown';
         var status = c.status === 'late' ? 'late' : 'present';
         var initial = name.charAt(0);
-        var timeStr = c.marked_at ? new Date(c.marked_at).toLocaleTimeString([], {hour:'2-digit', minute:'2-digit'}) : 'â€”';
-        var method = c.is_suspicious ? 'Ã¢Å¡Â  Proxy' : 'QR Scan';
+        var timeStr = c.marked_at ? new Date(c.marked_at).toLocaleTimeString([], {hour:'2-digit', minute:'2-digit'}) : '—';
+        var method = c.is_suspicious ? 'âš  Proxy' : 'QR Scan';
 
         var div = document.createElement('div');
         div.className = 'live-checkin';
         div.innerHTML =
             '<div class="ci-avatar">' + initial + '</div>' +
-            '<div class="ci-info"><div class="ci-name">' + name + '</div><div class="ci-meta">' + timeStr + ' Ã‚Â· ' + method + '</div></div>' +
+            '<div class="ci-info"><div class="ci-name">' + name + '</div><div class="ci-meta">' + timeStr + ' Â· ' + method + '</div></div>' +
             '<span class="ci-status ci-' + status + '">' + status.toUpperCase() + '</span>';
 
         var count = feed.querySelectorAll('.live-checkin').length;
@@ -2451,7 +2486,7 @@
         alertFeed.insertBefore(aDiv, alertFeed.firstChild);
         if (alertFeed.children.length > 10) alertFeed.removeChild(alertFeed.lastChild);
         document.getElementById('lmFraud').textContent = alertFeed.querySelectorAll('.live-alert-popup').length;
-        document.getElementById('liveAlertCount').textContent = 'Ã‚Â· ' + alertFeed.querySelectorAll('.live-alert-popup').length + ' events';
+        document.getElementById('liveAlertCount').textContent = 'Â· ' + alertFeed.querySelectorAll('.live-alert-popup').length + ' events';
         var badge = document.getElementById('liveBadge');
         if (badge) { badge.style.background = '#EF4444'; setTimeout(function(){badge.style.background = 'var(--success)';}, 3000); }
     }
@@ -2479,7 +2514,7 @@
                 status: status,
                 marked_at: new Date().toISOString(),
                 is_suspicious: Math.random() < 0.08,
-                suspicion_reason: Math.random() < 0.08 ? ('Duplicate QR scan blocked â€” ' + name) : '',
+                suspicion_reason: Math.random() < 0.08 ? ('Duplicate QR scan blocked — ' + name) : '',
             });
         }, 4000);
     }
@@ -2497,13 +2532,13 @@
                     status: i < 5 ? 'present' : 'late',
                     marked_at: d.toISOString(),
                     is_suspicious: i === 0,
-                    suspicion_reason: i === 0 ? 'Duplicate QR scan blocked â€” Timing anomaly detected' : ''
+                    suspicion_reason: i === 0 ? 'Duplicate QR scan blocked — Timing anomaly detected' : ''
                 });
             }
         }
     }
 
-    // Ã¢â€â‚¬Ã¢â€â‚¬ USER MANAGEMENT CRUD Ã¢â€â‚¬Ã¢â€â‚¬
+    // â”€â”€ USER MANAGEMENT CRUD â”€â”€
     let userPage = 1, userSearch = '', userTimer = null;
     function debounceUserSearch() { clearTimeout(userTimer); userTimer = setTimeout(function(){ userPage=1; loadUsers(); }, 300); }
     async function loadUsers() {
@@ -2571,7 +2606,7 @@
         loadUsers();
     }
 
-    // Ã¢â€â‚¬Ã¢â€â‚¬ Password Toggle Ã¢â€â‚¬Ã¢â€â‚¬
+    // â”€â”€ Password Toggle â”€â”€
     document.addEventListener('DOMContentLoaded', function() {
         var toggleBtn = document.getElementById('toggleUserPassword');
         if (toggleBtn) {
@@ -2589,7 +2624,7 @@
         }
     });
 
-    // Ã¢â€â‚¬Ã¢â€â‚¬ COURSE MANAGEMENT CRUD Ã¢â€â‚¬Ã¢â€â‚¬
+    // â”€â”€ COURSE MANAGEMENT CRUD â”€â”€
     let coursePage = 1, courseSearch = '', courseTimer = null;
     function debounceCourseSearch() { clearTimeout(courseTimer); courseTimer = setTimeout(function(){ coursePage=1; loadCourses(); }, 300); }
     async function loadCourses() {
@@ -2600,7 +2635,7 @@
         tbody.innerHTML = '';
         (data.courses||[]).forEach(function(c) {
             var statusHtml = c.is_active ? '<span style="color:#10B981;">Active</span>' : '<span style="color:#EF4444;">Inactive</span>';
-            tbody.innerHTML += '<tr><td>'+c.code+'</td><td>'+c.name+'</td><td>'+(c.department_name||c.department_id||'â€”')+'</td><td>'+c.credits+'</td><td>'+statusHtml+'</td><td><button class="qa-btn" style="background:rgba(245,158,11,0.15);padding:0.15rem 0.4rem;font-size:0.6rem;" onclick="editCourse(\''+c.id+'\')"><i class="fas fa-edit"></i></button> <button class="qa-btn" style="background:rgba(239,68,68,0.15);padding:0.15rem 0.4rem;font-size:0.6rem;" onclick="deleteCourse(\''+c.id+'\')"><i class="fas fa-trash"></i></button></td></tr>';
+            tbody.innerHTML += '<tr><td>'+c.code+'</td><td>'+c.name+'</td><td>'+(c.department_name||c.department_id||'—')+'</td><td>'+c.credits+'</td><td>'+statusHtml+'</td><td><button class="qa-btn" style="background:rgba(245,158,11,0.15);padding:0.15rem 0.4rem;font-size:0.6rem;" onclick="editCourse(\''+c.id+'\')"><i class="fas fa-edit"></i></button> <button class="qa-btn" style="background:rgba(239,68,68,0.15);padding:0.15rem 0.4rem;font-size:0.6rem;" onclick="deleteCourse(\''+c.id+'\')"><i class="fas fa-trash"></i></button></td></tr>';
         });
         renderPagination('coursePagination', data.page, data.total_pages, function(p){ coursePage=p; loadCourses(); });
     }
@@ -2656,7 +2691,7 @@
         loadCourses();
     }
 
-    // Ã¢â€â‚¬Ã¢â€â‚¬ DEPARTMENT MANAGEMENT CRUD Ã¢â€â‚¬Ã¢â€â‚¬
+    // â”€â”€ DEPARTMENT MANAGEMENT CRUD â”€â”€
     let deptPage = 1, deptSearch = '', deptTimer = null;
     function debounceDeptSearch() { clearTimeout(deptTimer); deptTimer = setTimeout(function(){ deptPage=1; loadDepartments(); }, 300); }
     async function loadDepartments() {
@@ -2667,7 +2702,7 @@
         tbody.innerHTML = '';
         (data.departments||[]).forEach(function(d) {
             var statusHtml = d.is_active ? '<span style="color:#10B981;">Active</span>' : '<span style="color:#EF4444;">Inactive</span>';
-            tbody.innerHTML += '<tr><td>'+d.code+'</td><td>'+d.name+'</td><td>'+(d.head_name||d.head_id||'â€”')+'</td><td>'+statusHtml+'</td><td><button class="qa-btn" style="background:rgba(245,158,11,0.15);padding:0.15rem 0.4rem;font-size:0.6rem;" onclick="editDept(\''+d.id+'\')"><i class="fas fa-edit"></i></button> <button class="qa-btn" style="background:rgba(239,68,68,0.15);padding:0.15rem 0.4rem;font-size:0.6rem;" onclick="deleteDept(\''+d.id+'\')"><i class="fas fa-trash"></i></button></td></tr>';
+            tbody.innerHTML += '<tr><td>'+d.code+'</td><td>'+d.name+'</td><td>'+(d.head_name||d.head_id||'—')+'</td><td>'+statusHtml+'</td><td><button class="qa-btn" style="background:rgba(245,158,11,0.15);padding:0.15rem 0.4rem;font-size:0.6rem;" onclick="editDept(\''+d.id+'\')"><i class="fas fa-edit"></i></button> <button class="qa-btn" style="background:rgba(239,68,68,0.15);padding:0.15rem 0.4rem;font-size:0.6rem;" onclick="deleteDept(\''+d.id+'\')"><i class="fas fa-trash"></i></button></td></tr>';
         });
         renderPagination('deptPagination', data.page, data.total_pages, function(p){ deptPage=p; loadDepartments(); });
     }
@@ -2716,7 +2751,7 @@
         loadDepartments();
     }
 
-    // Ã¢â€â‚¬Ã¢â€â‚¬ ENROLLMENT MANAGEMENT CRUD Ã¢â€â‚¬Ã¢â€â‚¬
+    // â”€â”€ ENROLLMENT MANAGEMENT CRUD â”€â”€
     let enrollmentPage = 1, enrollmentSearch = '', enrollmentTimer = null;
     function debounceEnrollmentSearch() { clearTimeout(enrollmentTimer); enrollmentTimer = setTimeout(function(){ enrollmentPage=1; loadEnrollments(); }, 300); }
     async function loadEnrollments() {
@@ -2727,7 +2762,7 @@
         tbody.innerHTML = '';
         (data.enrollments||[]).forEach(function(e) {
             var statusHtml = e.is_active ? '<span style="color:#10B981;">Active</span>' : '<span style="color:#EF4444;">Dropped</span>';
-            tbody.innerHTML += '<tr><td>'+e.student_name+'</td><td>'+e.course_name+'</td><td>'+e.course_code+'</td><td>'+(e.enrollment_date ? new Date(e.enrollment_date).toLocaleDateString() : 'â€”')+'</td><td>'+statusHtml+'</td><td><button class="qa-btn" style="background:rgba(239,68,68,0.15);padding:0.15rem 0.4rem;font-size:0.6rem;" onclick="deleteEnrollment(\''+e.id+'\')"><i class="fas fa-user-minus"></i></button></td></tr>';
+            tbody.innerHTML += '<tr><td>'+e.student_name+'</td><td>'+e.course_name+'</td><td>'+e.course_code+'</td><td>'+(e.enrollment_date ? new Date(e.enrollment_date).toLocaleDateString() : '—')+'</td><td>'+statusHtml+'</td><td><button class="qa-btn" style="background:rgba(239,68,68,0.15);padding:0.15rem 0.4rem;font-size:0.6rem;" onclick="deleteEnrollment(\''+e.id+'\')"><i class="fas fa-user-minus"></i></button></td></tr>';
         });
         renderPagination('enrollmentPagination', data.page, data.total_pages, function(p){ enrollmentPage=p; loadEnrollments(); });
     }
@@ -2752,7 +2787,7 @@
         loadEnrollments();
     }
 
-    // Ã¢â€â‚¬Ã¢â€â‚¬ VOUCHER MANAGEMENT Ã¢â€â‚¬Ã¢â€â‚¬
+    // â”€â”€ VOUCHER MANAGEMENT â”€â”€
     let voucherPage = 1, voucherSearchVal = '', voucherTimer = null;
     let vRoleChartInstance = null, vStatusChartInstance = null;
     function debounceVoucherSearch() { clearTimeout(voucherTimer); voucherTimer = setTimeout(function(){ voucherPage=1; loadVouchers(); }, 300); }
@@ -2801,14 +2836,14 @@
             if (statusLabel === 'used') { statusClass = 'pill-completed'; }
             else if (statusLabel === 'expired') { statusClass = 'pill-syncing'; }
             else if (statusLabel === 'revoked') { statusClass = ''; }
-            var usedBy = v.used_by || 'â€”';
+            var usedBy = v.used_by || '—';
             if (v.used_by_email) usedBy = v.used_by_email;
             var actionsHtml = '';
             if (v._status === 'active') {
                 actionsHtml = '<button class="qa-btn" style="background:rgba(239,68,68,0.15);padding:0.15rem 0.4rem;font-size:0.6rem;" onclick="revokeVoucher(\''+v.id+'\')"><i class="fas fa-ban"></i></button>';
             }
             actionsHtml += '<button class="qa-btn" style="background:rgba(99,102,241,0.15);padding:0.15rem 0.4rem;font-size:0.6rem;margin-left:0.2rem;" onclick="copyVoucherCode(\''+v.code+'\')"><i class="fas fa-copy"></i></button>';
-            tb.innerHTML += '<tr><td style="font-weight:600;color:#fff;font-family:monospace;font-size:0.75rem;">'+v.code+'</td><td>'+v.role.replace(/_/g,' ').replace(/\b\w/g,function(l){return l.toUpperCase()})+'</td><td><span class="status-pill '+(statusClass||'')+'" style="'+(statusLabel==='revoked'?'background:rgba(239,68,68,0.1);color:#FCA5A5;border:1px solid rgba(239,68,68,0.15)':'')+'">'+statusLabel.toUpperCase()+'</span></td><td style="max-width:120px;overflow:hidden;text-overflow:ellipsis;" title="'+usedBy+'">'+usedBy+'</td><td style="font-size:0.6rem;">'+(v.created_at ? new Date(v.created_at).toLocaleDateString() : 'â€”')+'</td><td style="font-size:0.6rem;">'+(v.expires_at ? new Date(v.expires_at).toLocaleDateString() : 'â€”')+'</td><td>'+actionsHtml+'</td></tr>';
+            tb.innerHTML += '<tr><td style="font-weight:600;color:#fff;font-family:monospace;font-size:0.75rem;">'+v.code+'</td><td>'+v.role.replace(/_/g,' ').replace(/\b\w/g,function(l){return l.toUpperCase()})+'</td><td><span class="status-pill '+(statusClass||'')+'" style="'+(statusLabel==='revoked'?'background:rgba(239,68,68,0.1);color:#FCA5A5;border:1px solid rgba(239,68,68,0.15)':'')+'">'+statusLabel.toUpperCase()+'</span></td><td style="max-width:120px;overflow:hidden;text-overflow:ellipsis;" title="'+usedBy+'">'+usedBy+'</td><td style="font-size:0.6rem;">'+(v.created_at ? new Date(v.created_at).toLocaleDateString() : '—')+'</td><td style="font-size:0.6rem;">'+(v.expires_at ? new Date(v.expires_at).toLocaleDateString() : '—')+'</td><td>'+actionsHtml+'</td></tr>';
         });
         renderPagination('voucherPagination', data.page, data.total_pages, function(p){ voucherPage=p; loadVouchers(); });
     }
@@ -2963,7 +2998,7 @@
         } catch(e) { showToast('Export failed: ' + e.message, 'error'); }
     }
 
-    // Ã¢â€â‚¬Ã¢â€â‚¬ DROPDOWN HELPERS Ã¢â€â‚¬Ã¢â€â‚¬
+    // â”€â”€ DROPDOWN HELPERS â”€â”€
     async function loadDeptDropdown(selectId) {
         var sel = document.getElementById(selectId);
         if (!sel) return;
@@ -2971,17 +3006,17 @@
         sel.innerHTML = '<option value="">Loading...</option>';
         try {
             var res = await apiFetch('/api/institutional/lookup/departments');
-            if (!res || !res.ok) { sel.innerHTML = '<option value="">â€” Error loading â€”</option>'; return; }
+            if (!res || !res.ok) { sel.innerHTML = '<option value="">— Error loading —</option>'; return; }
             var data = await res.json();
             var depts = data.departments || [];
             if (depts.length === 0) {
-                sel.innerHTML = '<option value="">â€” No departments available â€”</option>';
+                sel.innerHTML = '<option value="">— No departments available —</option>';
             } else {
-                sel.innerHTML = '<option value="">â€” None â€”</option>';
+                sel.innerHTML = '<option value="">— None —</option>';
                 depts.forEach(function(d){ sel.innerHTML += '<option value="'+d.id+'">'+d.name+' ('+d.code+')</option>'; });
             }
             sel.value = val;
-        } catch(e) { sel.innerHTML = '<option value="">â€” Error â€”</option>'; }
+        } catch(e) { sel.innerHTML = '<option value="">— Error —</option>'; }
     }
     async function loadLecturerDropdown(selectId) {
         var sel = document.getElementById(selectId);
@@ -2990,12 +3025,12 @@
         sel.innerHTML = '<option value="">Loading...</option>';
         try {
             var res = await apiFetch('/api/institutional/lookup/lecturers');
-            if (!res || !res.ok) { sel.innerHTML = '<option value="">â€” Error loading â€”</option>'; return; }
+            if (!res || !res.ok) { sel.innerHTML = '<option value="">— Error loading —</option>'; return; }
             var data = await res.json();
-            sel.innerHTML = '<option value="">â€” None â€”</option>';
+            sel.innerHTML = '<option value="">— None —</option>';
             (data.lecturers||[]).forEach(function(l){ sel.innerHTML += '<option value="'+l.id+'">'+l.name+'</option>'; });
             sel.value = val;
-        } catch(e) { sel.innerHTML = '<option value="">â€” Error â€”</option>'; }
+        } catch(e) { sel.innerHTML = '<option value="">— Error —</option>'; }
     }
     async function loadStudentDropdown(selectId) {
         var sel = document.getElementById(selectId);
@@ -3003,11 +3038,11 @@
         sel.innerHTML = '<option value="">Loading...</option>';
         try {
             var res = await apiFetch('/api/institutional/lookup/students');
-            if (!res || !res.ok) { sel.innerHTML = '<option value="">â€” Error loading â€”</option>'; return; }
+            if (!res || !res.ok) { sel.innerHTML = '<option value="">— Error loading —</option>'; return; }
             var data = await res.json();
-            sel.innerHTML = '<option value="">â€” Select Student â€”</option>';
+            sel.innerHTML = '<option value="">— Select Student —</option>';
             (data.students||[]).forEach(function(s){ sel.innerHTML += '<option value="'+s.id+'">'+s.first_name+' '+s.last_name+' ('+s.email+')</option>'; });
-        } catch(e) { sel.innerHTML = '<option value="">â€” Error â€”</option>'; }
+        } catch(e) { sel.innerHTML = '<option value="">— Error —</option>'; }
     }
     async function loadCourseDropdown(selectId) {
         var sel = document.getElementById(selectId);
@@ -3015,14 +3050,14 @@
         sel.innerHTML = '<option value="">Loading...</option>';
         try {
             var res = await apiFetch('/api/institutional/lookup/courses');
-            if (!res || !res.ok) { sel.innerHTML = '<option value="">â€” Error loading â€”</option>'; return; }
+            if (!res || !res.ok) { sel.innerHTML = '<option value="">— Error loading —</option>'; return; }
             var data = await res.json();
-            sel.innerHTML = '<option value="">â€” Select Course â€”</option>';
+            sel.innerHTML = '<option value="">— Select Course —</option>';
             (data.courses||[]).forEach(function(c){ sel.innerHTML += '<option value="'+c.id+'">'+c.name+' ('+c.code+')</option>'; });
-        } catch(e) { sel.innerHTML = '<option value="">â€” Error â€”</option>'; }
+        } catch(e) { sel.innerHTML = '<option value="">— Error —</option>'; }
     }
 
-    // â”€â”€ PHASE D: SMS & PAYMENT â”€â”€
+    // ── PHASE D: SMS & PAYMENT ──
     async function openPaymentModal() {
         document.getElementById('payPhone').value = '237';
         document.getElementById('payAmount').value = '1000';
@@ -3064,7 +3099,7 @@
         }
     }
 
-    // Ã¢â€â‚¬Ã¢â€â‚¬ EXTENDED TRANSLATIONS Ã¢â€â‚¬Ã¢â€â‚¬
+    // â”€â”€ EXTENDED TRANSLATIONS â”€â”€
     async function loadExtendedTranslations() {
         try {
             var res = await apiFetch('/api/institutional/translations/extended?lang=' + currentLang);
@@ -3078,7 +3113,7 @@
         } catch(e) { /* extended translations are optional */ }
     }
 
-    // â”€â”€ NETWORK PRESENCE MONITOR LOGIC â”€â”€
+    // ── NETWORK PRESENCE MONITOR LOGIC ──
     var rawPresenceData = [];
 
     function npEsc(str) {
@@ -3123,6 +3158,165 @@
             showToast('Error: ' + e.message, 'error');
         }
     }
+
+
+// --- ATTENDANCE SECURITY MONITOR ---
+let attendanceSecurityData = [];
+let asPollTimer = null;
+
+const asLink = document.querySelector('.sidebar-nav a[data-section="attendance-security"]');
+if (asLink) {
+    asLink.addEventListener('click', function() {
+        if (!document.getElementById('section-attendance-security').classList.contains('active')) {
+            loadAttendanceSecurity();
+        }
+        if (!asPollTimer) {
+            asPollTimer = setInterval(() => {
+                if (document.getElementById('section-attendance-security').classList.contains('active')) {
+                    loadAttendanceSecurity(true);
+                }
+            }, 15000);
+        }
+    });
+}
+
+async function loadAttendanceSecurity(silent = false) {
+    const tbody = document.getElementById('asTableBody');
+    if (!silent && tbody) {
+        tbody.innerHTML = '<tr><td colspan="11" style="text-align:center;padding:3rem;color:#94A3B8;"><i class="fas fa-spinner fa-spin me-2"></i> Loading security feed...</td></tr>';
+    }
+    
+    try {
+        const res = await fetch('/api/institutional/attendance-security/logs', {
+            headers: { 'Authorization': 'Bearer ' + localStorage.getItem('accessToken') }
+        });
+        if (res.status === 401) { window.location.href = '/login'; return; }
+        const data = await res.json();
+        
+        if (data.alerts) {
+            attendanceSecurityData = data.alerts;
+            updateAttendanceSecurityStats();
+            filterAttendanceSecurityTable();
+        }
+    } catch (err) {
+        console.error('Error loading attendance security logs:', err);
+        if (!silent && tbody) tbody.innerHTML = '<tr><td colspan="11" style="text-align:center;padding:3rem;color:var(--danger);"><i class="fas fa-exclamation-triangle me-2"></i> Failed to load security feed</td></tr>';
+    }
+}
+
+function updateAttendanceSecurityStats() {
+    const today = new Date().toISOString().split('T')[0];
+    let active = 0, high = 0, medLow = 0, resolved = 0, todayCount = 0;
+    
+    attendanceSecurityData.forEach(alert => {
+        if (alert.is_resolved) resolved++;
+        else active++;
+        
+        if (alert.severity === 'high' || alert.severity === 'critical') high++;
+        else if (alert.severity === 'medium' || alert.severity === 'low') medLow++;
+        
+        if (alert.time && alert.time.startsWith(today)) todayCount++;
+    });
+    
+    const sa = document.getElementById('asStatActive'); if(sa) sa.textContent = active;
+    const sh = document.getElementById('asStatHigh'); if(sh) sh.textContent = high;
+    const sm = document.getElementById('asStatMediumLow'); if(sm) sm.textContent = medLow;
+    const sr = document.getElementById('asStatResolved'); if(sr) sr.textContent = resolved;
+    const st = document.getElementById('asStatToday'); if(st) st.textContent = todayCount;
+}
+
+function filterAttendanceSecurityTable() {
+    const severityFilter = document.getElementById('asFilterSeverity').value.toLowerCase();
+    const statusFilter = document.getElementById('asFilterStatus').value.toLowerCase();
+    const searchVal = document.getElementById('asSearchInput').value.toLowerCase();
+    const tbody = document.getElementById('asTableBody');
+    if (!tbody) return;
+    
+    let html = '';
+    let count = 0;
+    
+    attendanceSecurityData.forEach((a, i) => {
+        if (severityFilter && a.severity.toLowerCase() !== severityFilter && !(severityFilter === 'high' && a.severity.toLowerCase() === 'critical')) return;
+        if (statusFilter === 'active' && a.is_resolved) return;
+        if (statusFilter === 'resolved' && !a.is_resolved) return;
+        
+        if (searchVal) {
+            const searchable = `${a.user_name} ${a.reg_number} ${a.ip_address} ${a.event_type} ${a.message}`.toLowerCase();
+            if (!searchable.includes(searchVal)) return;
+        }
+        
+        count++;
+        
+        const timeFmt = new Date(a.time).toLocaleString([], {month:'short', day:'numeric', hour:'2-digit', minute:'2-digit', second:'2-digit'});
+        
+        let sevClass = 'np-badge ' + (a.severity === 'high' || a.severity === 'critical' ? 'danger' : (a.severity === 'medium' ? 'warning' : 'primary'));
+        let roleClass = a.role === 'student' ? 'primary' : 'warning';
+        
+        let statHtml = a.is_resolved 
+            ? `<span style="color:var(--success);font-size:0.75rem;"><i class="fas fa-check-circle"></i> Resolved</span>`
+            : `<span style="color:var(--danger);font-size:0.75rem;"><i class="fas fa-exclamation-circle"></i> Active</span>`;
+            
+        html += `<tr style="cursor:pointer;" onclick="openSecurityAlertModal(${i})">
+            <td style="color:#94A3B8;font-size:0.75rem;">${timeFmt}</td>
+            <td style="font-weight:500;">${a.user_name}</td>
+            <td><code class="np-code">${a.reg_number}</code></td>
+            <td><span class="np-badge ${roleClass}" style="text-transform:capitalize;">${a.role}</span></td>
+            <td>${a.event_type}</td>
+            <td><span class="${sevClass}" style="text-transform:capitalize;">${a.severity}</span></td>
+            <td><span class="np-secondary-text"><i class="fas fa-laptop" style="font-size:0.6rem;margin-right:4px;"></i>${a.device}</span></td>
+            <td><code class="np-code">${a.ip_address}</code></td>
+            <td>${a.network}</td>
+            <td>${statHtml}</td>
+            <td><button class="btn btn-sm btn-outline-secondary" style="font-size:0.7rem;padding:0.2rem 0.5rem;border-color:rgba(255,255,255,0.1);color:#CBD5E1;">Details</button></td>
+        </tr>`;
+    });
+    
+    if (count === 0) {
+        tbody.innerHTML = `<tr><td colspan="11" style="text-align:center;padding:3rem;color:#94A3B8;"><div style="font-size:2rem;margin-bottom:1rem;color:rgba(255,255,255,0.1);"><i class="fas fa-shield-check"></i></div>No alerts match the selected filters.</td></tr>`;
+    } else {
+        tbody.innerHTML = html;
+    }
+}
+
+function openSecurityAlertModal(index) {
+    const a = attendanceSecurityData[index];
+    if (!a) return;
+    
+    document.getElementById('saModalUser').textContent = a.user_name;
+    document.getElementById('saModalRole').textContent = a.role.toUpperCase();
+    document.getElementById('saModalReg').textContent = a.reg_number;
+    
+    document.getElementById('saModalIP').textContent = a.ip_address;
+    document.getElementById('saModalNetwork').textContent = a.network;
+    document.getElementById('saModalDevice').textContent = a.device;
+    document.getElementById('saModalBrowser').textContent = a.browser + ' / ' + a.os;
+    
+    document.getElementById('saModalTime').textContent = new Date(a.time).toLocaleString();
+    document.getElementById('saModalType').textContent = a.event_type;
+    document.getElementById('saModalReason').textContent = a.message;
+    
+    const sevBadge = document.getElementById('saModalSeverity');
+    sevBadge.textContent = a.severity.toUpperCase();
+    sevBadge.className = 'np-badge ' + (a.severity === 'high' || a.severity === 'critical' ? 'danger' : (a.severity === 'medium' ? 'warning' : 'primary'));
+    
+    const resolveBtn = document.getElementById('saModalResolveBtn');
+    if (a.is_resolved) {
+        resolveBtn.style.display = 'none';
+    } else {
+        resolveBtn.style.display = 'inline-block';
+        resolveBtn.onclick = function() {
+            a.is_resolved = true;
+            updateAttendanceSecurityStats();
+            filterAttendanceSecurityTable();
+            const modal = bootstrap.Modal.getInstance(document.getElementById('securityAlertModal'));
+            modal.hide();
+        };
+    }
+    
+    const modal = new bootstrap.Modal(document.getElementById('securityAlertModal'));
+    modal.show();
+}
+
 
     async function loadNetworkPresence() {
         const tbody = document.getElementById('npPresenceTableBody');
@@ -3170,43 +3364,18 @@
     function renderPresenceTable(items) {
         const tbody = document.getElementById('npPresenceTableBody');
         if (!items || items.length === 0) {
-            tbody.innerHTML = '<tr><td colspan="11" style="text-align:center;padding:3rem;color:#94A3B8;"><i class="fas fa-info-circle me-2"></i> No connected users found.</td></tr>';
+            tbody.innerHTML = '<tr><td colspan="11" style="text-align:center;padding:1rem;color:var(--text-dim);">No connected users found.</td></tr>';
             return;
         }
         
         tbody.innerHTML = items.map(p => {
-            const getStatusProps = (status, type) => {
-                let sClass = 'neutral';
-                let icon = 'fa-circle';
-                
-                if (type === 'login') {
-                    if (status === 'Online') { sClass = 'success'; icon = 'fa-circle'; }
-                    else if (status === 'Idle') { sClass = 'warning'; icon = 'fa-moon'; }
-                    else { sClass = 'danger'; icon = 'fa-circle'; status = 'Offline'; }
-                } else if (type === 'network') {
-                    if (status === 'On Campus') { sClass = 'success'; icon = 'fa-map-marker-alt'; }
-                    else if (status === 'Outside Campus') { sClass = 'warning'; icon = 'fa-external-link-alt'; }
-                    else { sClass = 'danger'; icon = 'fa-exclamation-triangle'; status = 'Suspicious'; }
-                } else if (type === 'attendance') {
-                    if (status === 'Marked') { sClass = 'success'; icon = 'fa-check'; }
-                    else if (status === 'N/A') { sClass = 'neutral'; icon = 'fa-minus'; }
-                    else { sClass = 'danger'; icon = 'fa-times'; status = 'Not Marked'; }
-                } else if (type === 'face') {
-                    if (status === 'Verified') { sClass = 'success'; icon = 'fa-check-circle'; }
-                    else if (status === 'Failed') { sClass = 'danger'; icon = 'fa-times-circle'; }
-                    else if (status === 'N/A') { sClass = 'neutral'; icon = 'fa-minus'; }
-                    else { sClass = 'warning'; icon = 'fa-clock'; status = 'Pending'; }
-                }
-                return { class: sClass, icon: icon, text: status };
-            };
-
-            const loginP = getStatusProps(p.login_status, 'login');
-            const netP = getStatusProps(p.network_status, 'network');
-            const attP = getStatusProps(p.attendance_status, 'attendance');
-            const faceP = getStatusProps(p.face_status, 'face');
+            const statusClass = p.login_status === 'Online' ? 'success' : (p.login_status === 'Idle' ? 'warning' : 'danger');
+            const netClass = p.network_status === 'On Campus' ? 'success' : 'danger';
+            const attClass = p.attendance_status === 'Marked' ? 'success' : (p.attendance_status === 'N/A' ? 'muted' : 'danger');
+            const faceClass = p.face_status === 'Verified' ? 'success' : (p.face_status === 'N/A' ? 'muted' : (p.face_status === 'Failed' ? 'danger' : 'warning'));
             
             const formatTime = (isoStr) => {
-                if (!isoStr) return 'â€”';
+                if (!isoStr) return '—';
                 try {
                     const d = new Date(isoStr);
                     return d.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit', second: '2-digit' }) + ' ' + d.toLocaleDateString([], { month: 'short', day: 'numeric' });
@@ -3217,21 +3386,18 @@
             
             const deviceIcon = p.device_type === 'Mobile' ? 'fa-mobile-alt' : (p.device_type === 'Tablet' ? 'fa-tablet-alt' : 'fa-desktop');
             
-                        const name = npEsc(p.student_name || 'Unknown');
-            const initial = name.charAt(0).toUpperCase();
-            
             return '<tr>' +
-                '<td><div class="np-user-col"><div class="np-avatar">' + initial + '</div><span class="np-truncate" title="' + name + '" style="font-weight: 500;">' + name + '</span></div></td>' +
-                '<td><span class="np-code np-truncate" title="' + npEsc(p.student_id || '—') + '" style="max-width: 100px;">' + npEsc(p.student_id || '—') + '</span></td>' +
-                '<td><span class="np-badge primary" style="background: transparent; border: 1px solid rgba(255,255,255,0.1); color: #CBD5E1;">' + npEsc(p.role) + '</span></td>' +
-                '<td><span class="np-badge ' + loginP.class + '"><i class="fas ' + loginP.icon + '"></i> ' + loginP.text + '</span></td>' +
-                '<td><span class="np-badge ' + netP.class + '"><i class="fas ' + netP.icon + '"></i> ' + netP.text + '</span></td>' +
-                '<td><span class="np-code">' + npEsc(p.ip_address || '—') + '</span></td>' +
-                '<td><span style="display:flex; align-items:center; gap:6px;"><i class="fas ' + deviceIcon + ' np-secondary-text"></i> <span class="np-truncate" title="' + npEsc(p.device_type) + '" style="max-width: 80px;">' + npEsc(p.device_type) + '</span></span></td>' +
-                '<td><div style="display:flex; flex-direction:column; gap:2px;"><span class="np-truncate" title="' + npEsc(p.browser) + '" style="max-width: 110px;">' + npEsc(p.browser) + '</span><span class="np-secondary-text np-truncate" title="' + npEsc(p.os) + '" style="max-width: 110px; font-size: 0.65rem;">' + npEsc(p.os) + '</span></div></td>' +
-                '<td><span class="np-badge ' + attP.class + '"><i class="fas ' + attP.icon + '"></i> ' + attP.text + '</span></td>' +
-                '<td><span class="np-badge ' + faceP.class + '"><i class="fas ' + faceP.icon + '"></i> ' + faceP.text + '</span></td>' +
-                '<td>' + formatTime(p.last_activity_time) + '</td>' +
+                '<td><strong>' + npEsc(p.student_name || 'Unknown') + '</strong></td>' +
+                '<td><code>' + npEsc(p.student_id || '—') + '</code></td>' +
+                '<td><span class="badge" style="background:rgba(255,255,255,0.06);color:var(--text-dim);font-size:0.6rem;padding:0.15rem 0.35rem;">' + npEsc(p.role) + '</span></td>' +
+                '<td><span class="badge" style="background:var(--' + statusClass + '-dim);color:var(--' + statusClass + ');font-size:0.65rem;padding:0.15rem 0.4rem;"><i class="fas fa-circle me-1" style="font-size:0.45rem;"></i>' + npEsc(p.login_status) + '</span></td>' +
+                '<td><span class="badge" style="background:var(--' + netClass + '-dim);color:var(--' + netClass + ');font-size:0.65rem;padding:0.15rem 0.4rem;">' + npEsc(p.network_status) + '</span></td>' +
+                '<td><code>' + npEsc(p.ip_address || '—') + '</code></td>' +
+                '<td><i class="fas ' + deviceIcon + ' me-1" style="color:var(--text-dim);"></i> ' + npEsc(p.device_type) + '</td>' +
+                '<td style="font-size:0.7rem;color:var(--text-dim);">' + npEsc(p.browser) + ' / ' + npEsc(p.os) + '</td>' +
+                '<td><span class="badge" style="background:var(--' + attClass + '-dim);color:var(--' + attClass + ');font-size:0.65rem;padding:0.15rem 0.4rem;">' + npEsc(p.attendance_status) + '</span></td>' +
+                '<td><span class="badge" style="background:var(--' + faceClass + '-dim);color:var(--' + faceClass + ');font-size:0.65rem;padding:0.15rem 0.4rem;">' + npEsc(p.face_status) + '</span></td>' +
+                '<td style="font-size:0.7rem;color:var(--text-dim);">' + formatTime(p.last_activity_time) + '</td>' +
             '</tr>';
         }).join('');
     }
@@ -3261,7 +3427,7 @@
         }
     }, 20000);
 
-    // Ã¢â€â‚¬Ã¢â€â‚¬ INIT Ã¢â€â‚¬Ã¢â€â‚¬
+    // â”€â”€ INIT â”€â”€
     document.addEventListener('DOMContentLoaded', async function() {
         // Language init
         document.getElementById('langToggle').textContent = currentLang === 'en' ? 'FR' : 'EN';
@@ -3304,12 +3470,12 @@
         // Connection quality monitoring
         startConnectionMonitor();
 
-        // Live check-in monitoring â€” SSE-driven, with fallback simulation
+        // Live check-in monitoring — SSE-driven, with fallback simulation
         startFallbackCheckinSimulation();
         initLiveMonitor();
     });
 
-    // Ã¢â€â‚¬Ã¢â€â‚¬ ADDITIONAL STYLES Ã¢â€â‚¬Ã¢â€â‚¬
+    // â”€â”€ ADDITIONAL STYLES â”€â”€
     (function() {
         var ss = document.createElement('style');
         ss.textContent = '@keyframes toastIn { from { transform: translateX(100%); opacity: 0; } to { transform: translateX(0); opacity: 1; } }';
@@ -3332,4 +3498,3 @@
 <script src="/static/js/responsive.js"></script>
 </body>
 </html>
-

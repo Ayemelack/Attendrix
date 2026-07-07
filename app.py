@@ -4100,6 +4100,53 @@ def create_app():
     else:
         logger.warning("Innovation blueprint not available — skipping registration")
 
+
+    # ── Institutional Admin Attendance Security Logs ──
+    @app.route('/api/institutional/attendance-security/logs', methods=['GET'])
+    @require_auth
+    @require_role('institutional_admin', 'super_admin')
+    def institutional_attendance_security_logs():
+        try:
+            db_session = app.extensions['sqlalchemy'].db.session
+            from src.infrastructure.models import SecurityLog, User, UserProfile, NetworkPresence
+            
+            logs = db_session.query(
+                SecurityLog, User, UserProfile, NetworkPresence
+            ).join(
+                User, SecurityLog.user_id == User.id
+            ).outerjoin(
+                UserProfile, User.id == UserProfile.user_id
+            ).outerjoin(
+                NetworkPresence, SecurityLog.session_id == NetworkPresence.session_id
+            ).order_by(SecurityLog.created_at.desc()).limit(100).all()
+            
+            alerts = []
+            for sl, u, up, np in logs:
+                alerts.append({
+                    'id': sl.id,
+                    'time': sl.created_at.isoformat() if sl.created_at else None,
+                    'user_id': u.id,
+                    'user_name': f"{up.first_name or ''} {up.last_name or ''}".strip() if up else u.email,
+                    'reg_number': up.student_id if up and up.student_id else '—',
+                    'role': u.role,
+                    'event_type': sl.event_type,
+                    'severity': sl.severity,
+                    'message': sl.description,
+                    'ip_address': sl.ip_address or (np.ip_address if np else '—'),
+                    'device': np.device_type if np else 'Unknown',
+                    'browser': np.browser if np else 'Unknown',
+                    'os': np.os if np else 'Unknown',
+                    'network': np.network_type if np else 'Unknown',
+                    'is_resolved': sl.is_resolved
+                })
+                
+            return jsonify({'success': True, 'alerts': alerts}), 200
+            
+        except Exception as e:
+            import logging
+            logging.error(f"Attendance security logs error: {str(e)}")
+            return jsonify({'success': False, 'error': 'Failed to load security logs'}), 500
+
     return app
 
 
