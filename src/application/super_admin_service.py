@@ -654,6 +654,24 @@ class SuperAdminService:
             voucher.revoked = True
             voucher.revoked_at = datetime.utcnow()
             pg_repos.voucher.update(voucher)
+            
+            # Log the revocation if audit log exists
+            try:
+                from src.infrastructure.repositories import audit_log_repo
+                import uuid
+                audit_log_repo.add({
+                    'id': str(uuid.uuid4()),
+                    'timestamp': datetime.utcnow().isoformat(),
+                    'action': 'revoke_voucher',
+                    'resource': 'voucher',
+                    'resource_id': voucher_id,
+                    'details': {'code': voucher.code, 'role': str(voucher.role)},
+                    'user_id': 'system_super_admin'
+                })
+            except Exception as e:
+                import logging
+                logging.getLogger(__name__).warning(f"Failed to write audit log for voucher revocation: {e}")
+                
             return True
         return False
 
@@ -685,7 +703,8 @@ class SuperAdminService:
             'role': voucher.role.value if hasattr(voucher.role, 'value') else str(voucher.role),
             'institution': inst_name,
             'expires_at': voucher.expires_at.strftime('%Y-%m-%d') if voucher.expires_at else 'Never',
-            'custom_message': message
+            'custom_message': message,
+            'registration_instructions': 'To register, visit the Attendrix portal and enter your voucher code during signup.'
         }
         
         # Queue email
@@ -697,13 +716,17 @@ class SuperAdminService:
                 recipient_name=name
             )
             
+            # Re-fetch voucher to avoid detached instance errors if mail_service committed the session
+            voucher = pg_repos.voucher.get(voucher_id)
+            if not voucher:
+                return False
+                
             # Update tracking fields
-            now = datetime.utcnow()
             voucher.assigned_to_email = email
             voucher.assigned_to_name = name
-            voucher.assigned_at = now
+            voucher.assigned_at = datetime.utcnow()
             voucher.email_sent_status = 'queued' if queued_id else 'failed'
-            voucher.email_sent_at = now
+            voucher.email_sent_at = datetime.utcnow()
             pg_repos.voucher.update(voucher)
             return bool(queued_id)
         except Exception as e:

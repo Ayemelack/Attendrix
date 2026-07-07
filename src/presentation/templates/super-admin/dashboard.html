@@ -6,6 +6,17 @@
 <title>System Command Center — Attendrix</title>
 <link rel="icon" type="image/svg+xml" href="/static/images/favicon.svg">
 <script>
+    // Route Guard: Verify Authentication and Role
+    (function() {
+        var token = localStorage.getItem('accessToken');
+        var u = localStorage.getItem('user');
+        var role = null;
+        if (u) { try { role = JSON.parse(u).role; } catch(e) {} }
+        if (!token || role !== 'super_admin') {
+            window.location.replace('/login');
+        }
+    })();
+
     if ('serviceWorker' in navigator) {
         window.addEventListener('load', function() {
             navigator.serviceWorker.register('/sw.js', { scope: '/' }).then(function(reg) {
@@ -969,10 +980,10 @@ function renderVouchersTable(data) {
     
     if (emailStatusHtml) assignHtml += '<div style="margin-top:2px;">' + emailStatusHtml + ' <span style="font-size:0.75rem;color:var(--text-muted);">' + fmtTime(v.email_sent_at) + '</span></div>';
 
-    var actions = '<button class="btn-action" onclick="copyVoucherCode(\'" + v.code + "\')" title="Copy Code"><i class="fas fa-copy"></i></button>';
+    var actions = '<button class="btn-action" onclick="copyVoucherCode(\'' + v.code + '\')" title="Copy Code"><i class="fas fa-copy"></i></button>';
     if (!v.revoked && !v.is_used) {
-      actions += '<button class="btn-action primary" onclick="openEmailVoucherModal(\'" + v.id + "\')" title="Send via Email"><i class="fas fa-paper-plane"></i></button>';
-      actions += '<button class="btn-action danger" onclick="revokeVoucher(\'" + v.id + "\')" title="Revoke"><i class="fas fa-ban"></i></button>';
+      actions += '<button class="btn-action primary" onclick="openEmailVoucherModal(\'' + v.id + '\')" title="Send via Email"><i class="fas fa-paper-plane"></i></button>';
+      actions += '<button class="btn-action danger" onclick="revokeVoucher(\'' + v.id + '\')" title="Revoke"><i class="fas fa-ban"></i></button>';
     }
 
     return '<tr>' +
@@ -1002,11 +1013,37 @@ function filterVouchers() {
 }
 
 function copyVoucherCode(code) {
-  navigator.clipboard.writeText(code).then(function() {
-    alert("Voucher copied successfully.");
-  }).catch(function() {
-    prompt("Copy code manually:", code);
-  });
+  if (navigator.clipboard && window.isSecureContext) {
+    navigator.clipboard.writeText(code).then(function() {
+      alert("Voucher code copied successfully.");
+    }).catch(function() {
+      fallbackCopyTextToClipboard(code);
+    });
+  } else {
+    fallbackCopyTextToClipboard(code);
+  }
+}
+
+function fallbackCopyTextToClipboard(text) {
+  var textArea = document.createElement("textarea");
+  textArea.value = text;
+  textArea.style.position = "fixed";
+  textArea.style.top = "0";
+  textArea.style.left = "0";
+  document.body.appendChild(textArea);
+  textArea.focus();
+  textArea.select();
+  try {
+    var successful = document.execCommand('copy');
+    if (successful) {
+      alert("Voucher code copied successfully.");
+    } else {
+      prompt("Copy code manually:", text);
+    }
+  } catch (err) {
+    prompt("Copy code manually:", text);
+  }
+  document.body.removeChild(textArea);
 }
 
 function openEmailVoucherModal(id) {
@@ -1036,6 +1073,7 @@ function submitEmailVoucher() {
     if (d.success) {
       document.getElementById('emailVoucherModal').style.display = 'none';
       loadVouchers(); // Refresh
+      alert('Voucher sent successfully.');
     } else {
       alert('Failed: ' + d.error);
     }
@@ -1105,7 +1143,7 @@ function submitCreateVoucher() {
 }
 
 function revokeVoucher(id) {
-  if (!confirm('Revoke this voucher?')) return;
+  if (!confirm('Are you sure you want to revoke this voucher?')) return;
   fetch(API_BASE + '/vouchers/' + id + '/revoke', { method: 'POST', headers: { 'Authorization': 'Bearer ' + localStorage.getItem('accessToken') } })
   .then(r => r.json()).then(d => {
     if (d.success) loadVouchers();

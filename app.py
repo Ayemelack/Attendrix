@@ -3523,7 +3523,7 @@ def create_app():
             from src.application.voucher_management_service import VoucherManagementService
             voucher_service = VoucherManagementService()
             
-            if not code or len(code) != 8 or not code.isalnum() or not code.isupper():
+            if not code or len(code) not in (8, 12) or not code.isalnum() or not code.isupper():
                 return jsonify({
                     'valid': False,
                     'error': 'Invalid voucher format',

@@ -1,4 +1,4 @@
-﻿<!DOCTYPE html>
+<!DOCTYPE html>
 <html lang="en">
 <head>
     <meta charset="UTF-8">
@@ -475,7 +475,7 @@
             <label for="voucherCode">Voucher Code</label>
             <i class="fas fa-hashtag input-icon"></i>
             <input type="text" class="form-control" id="voucherCode"
-                   placeholder="" maxlength="8" autocomplete="off"
+                   placeholder="" maxlength="12" autocomplete="off"
                    oninput="document.getElementById('validateVoucherBtn').disabled=!this.value.trim();">
         </div>
 
@@ -744,7 +744,7 @@
         if (validatingVoucher) return;
         const code = document.getElementById('voucherCode').value.trim().toUpperCase();
         if (!code) { showAlert('Please enter a voucher code', 'error'); return; }
-        if (code.length !== 8) { showAlert('Voucher code must be exactly 8 characters', 'error'); return; }
+        if (code.length !== 8 && code.length !== 12) { showAlert('Voucher code must be 8 or 12 characters', 'error'); return; }
         if (!/^[A-Z0-9]+$/.test(code)) { showAlert('Voucher code contains invalid characters', 'error'); return; }
 
         try {
