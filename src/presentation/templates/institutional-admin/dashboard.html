@@ -800,7 +800,290 @@
 
 </div>
 <!-- ├óΓÇ¥Γé¼├óΓÇ¥Γé¼├óΓÇ¥Γé¼ STUDENT DETAIL DRAWER ├óΓÇ¥Γé¼├óΓÇ¥Γé¼├óΓÇ¥Γé¼ -->
-    <!-- 🛡 ATTENDANCE SECURITY MONITOR 🛡 -->
+    
+
+
+        <!-- â•â•â•â•â•â•â• SECURITY â•â•â•â•â•â•â• -->
+        <div class="section" id="section-security">
+            <div class="card-noc">
+                <div class="card-header">
+                    <div class="card-title"><i class="fas fa-shield-alt"></i> <span data-i18n="security_alerts">Security Alerts</span></div>
+                    <span style="font-size:0.6rem;color:var(--text-dim);" data-i18n="last_24h">Last 24 hours</span>
+                </div>
+                <div class="card-body compact" id="securityAlertList"><div class="empty-muted" data-i18n="loading">Loading...</div></div>
+            </div>
+        </div>
+
+        <!-- â•â•â•â•â•â•â• OFFLINE SYNC â•â•â•â•â•â•â• -->
+        <div class="section" id="section-offline">
+            <div class="stats-row" id="offlineStats">
+                <div class="stat-card"><div class="stat-top"><span class="stat-label" data-i18n="pending_syncs">Pending Syncs</span><div class="stat-icon" style="background:rgba(245,158,11,0.12);color:#FCD34D;"><i class="fas fa-hourglass-half"></i></div></div><div class="stat-value" id="offPending">—</div><div class="stat-footer" data-i18n="in_queue">In queue</div></div>
+                <div class="stat-card"><div class="stat-top"><span class="stat-label" data-i18n="success_rate">Success Rate</span><div class="stat-icon" style="background:rgba(16,185,129,0.12);color:#6EE7B7;"><i class="fas fa-check-circle"></i></div></div><div class="stat-value" id="offSuccessRate">—</div><div class="stat-footer" data-i18n="last_24h">Last 24h</div></div>
+                <div class="stat-card"><div class="stat-top"><span class="stat-label" data-i18n="last_sync">Last Sync</span><div class="stat-icon" style="background:rgba(59,130,246,0.12);color:#93C5FD;"><i class="fas fa-history"></i></div></div><div class="stat-value" id="offLastSync" style="font-size:0.9rem;">—</div><div class="stat-footer" data-i18n="timestamp">Timestamp</div></div>
+                <div class="stat-card"><div class="stat-top"><span class="stat-label" data-i18n="nodes_offline">Nodes Offline</span><div class="stat-icon" style="background:rgba(239,68,68,0.12);color:#FCA5A5;"><i class="fas fa-plug"></i></div></div><div class="stat-value" id="offNodesOffline">—</div><div class="stat-footer" data-i18n="disconnected">Disconnected</div></div>
+            </div>
+            <div class="card-noc">
+                <div class="card-header"><div class="card-title"><i class="fas fa-list-ul"></i> <span data-i18n="sync_queue">Sync Queue</span></div><div style="display:flex;align-items:center;gap:0.5rem;"><span id="offQueueStats"></span><span id="offEstimate" style="font-size:0.6rem;color:var(--text-dim);"></span></div></div>
+                <div class="card-body compact" id="syncQueueBody"><div class="empty-muted" data-i18n="loading">Loading...</div></div>
+            </div>
+        </div>
+
+        <!-- â•â•â•â•â•â•â• P2P RECOVERY â•â•â•â•â•â•â• -->
+        <div class="section" id="section-p2p">
+            <div class="stats-row" id="p2pStats">
+                <div class="stat-card"><div class="stat-top"><span class="stat-label" data-i18n="total_peers">Total Peers</span><div class="stat-icon" style="background:rgba(79,70,229,0.12);color:#A5B4FC;"><i class="fas fa-server"></i></div></div><div class="stat-value" id="p2pTotal">—</div><div class="stat-footer" data-i18n="network_nodes">Network nodes</div></div>
+                <div class="stat-card"><div class="stat-top"><span class="stat-label" data-i18n="online_peers">Online Peers</span><div class="stat-icon" style="background:rgba(16,185,129,0.12);color:#6EE7B7;"><i class="fas fa-wifi"></i></div></div><div class="stat-value" id="p2pOnline">—</div><div class="stat-footer up"><i class="fas fa-circle"></i> <span data-i18n="connected">Connected</span></div></div>
+                <div class="stat-card"><div class="stat-top"><span class="stat-label" data-i18n="msgs_relayed">Msgs Relayed</span><div class="stat-icon" style="background:rgba(245,158,11,0.12);color:#FCD34D;"><i class="fas fa-exchange-alt"></i></div></div><div class="stat-value" id="p2pRelayed">—</div><div class="stat-footer" data-i18n="gossip_protocol">Gossip protocol</div></div>
+                <div class="stat-card"><div class="stat-top"><span class="stat-label" data-i18n="recovery_eta">Recovery ETA</span><div class="stat-icon" style="background:rgba(6,182,212,0.12);color:#67E8F9;"><i class="fas fa-clock"></i></div></div><div class="stat-value" id="p2pEta" style="font-size:1rem;">—</div><div class="stat-footer" data-i18n="estimated">Estimated</div></div>
+            </div>
+            <div class="card-noc">
+                <div class="card-header"><div class="card-title"><i class="fas fa-project-diagram"></i> <span data-i18n="peer_list">Peer List</span></div></div>
+                <div class="card-body compact" style="overflow-x:auto;">
+                    <table class="table-noc">
+                        <thead><tr><th data-i18n="peer_id">Peer</th><th data-i18n="address">Address</th><th data-i18n="status">Status</th><th data-i18n="latency">Latency</th><th data-i18n="blocks_synced">Blocks</th></tr></thead>
+                        <tbody id="p2pTableBody"></tbody>
+                    </table>
+                </div>
+            </div>
+        </div>
+
+        <!-- â•â•â•â•â•â•â• COMPLIANCE â•â•â•â•â•â•â• -->
+        <div class="section" id="section-compliance">
+            <div class="stats-row" id="complianceStats">
+                <div class="stat-card"><div class="stat-top"><span class="stat-label" data-i18n="exam_mode">Exam Mode</span><div class="stat-icon" style="background:rgba(239,68,68,0.12);color:#FCA5A5;"><i class="fas fa-gavel"></i></div></div><div class="stat-value" id="compExamMode" style="font-size:1rem;">—</div><div class="stat-footer" id="compExamType" data-i18n="exam_type">—</div></div>
+                <div class="stat-card"><div class="stat-top"><span class="stat-label" data-i18n="minesec">MINESEC</span><div class="stat-icon" style="background:rgba(16,185,129,0.12);color:#6EE7B7;"><i class="fas fa-file-alt"></i></div></div><div class="stat-value" id="compCompliance">—</div><div class="stat-footer" data-i18n="report_ready">Report ready</div></div>
+                <div class="stat-card"><div class="stat-top"><span class="stat-label" data-i18n="pending_reports">Pending Reports</span><div class="stat-icon" style="background:rgba(245,158,11,0.12);color:#FCD34D;"><i class="fas fa-hourglass-half"></i></div></div><div class="stat-value" id="compPending">—</div><div class="stat-footer" data-i18n="to_submit">To submit</div></div>
+                <div class="stat-card"><div class="stat-top"><span class="stat-label" data-i18n="gce_candidates">GCE Candidates</span><div class="stat-icon" style="background:rgba(59,130,246,0.12);color:#93C5FD;"><i class="fas fa-user-graduate"></i></div></div><div class="stat-value" id="compGce">—</div><div class="stat-footer" data-i18n="registered">Registered</div></div>
+            </div>
+            <div class="card-noc">
+                <div class="card-header">
+                    <div class="card-title"><i class="fas fa-clipboard-list"></i> <span data-i18n="audit_trail">Audit Trail</span></div>
+                    <div style="display:flex;gap:0.4rem;">
+                        <button class="qa-btn" style="background:rgba(79,70,229,0.15);padding:0.25rem 0.6rem;font-size:0.6rem;" onclick="exportComplianceReport()"><i class="fas fa-file-export"></i> <span data-i18n="export_minesec">Export</span></button>
+                    </div>
+                </div>
+                <div class="card-body compact" id="complianceAuditBody"><div class="empty-muted" data-i18n="loading">Loading...</div></div>
+            </div>
+        </div>
+
+        <!-- â•â•â•â•â•â•â• PAYMENTS â•â•â•â•â•â•â• -->
+        <div class="section" id="section-payments">
+            <div class="stats-row" id="paymentStats">
+                <div class="stat-card"><div class="stat-top"><span class="stat-label" data-i18n="voucher_sales">Voucher Sales</span><div class="stat-icon" style="background:rgba(16,185,129,0.12);color:#6EE7B7;"><i class="fas fa-coins"></i></div></div><div class="stat-value" id="paySales" style="font-size:1rem;">—</div><div class="stat-footer" data-i18n="xaf">XAF</div></div>
+                <div class="stat-card"><div class="stat-top"><span class="stat-label" data-i18n="pending_txns">Pending Txns</span><div class="stat-icon" style="background:rgba(245,158,11,0.12);color:#FCD34D;"><i class="fas fa-clock"></i></div></div><div class="stat-value" id="payPending">—</div><div class="stat-footer" data-i18n="all_providers">All providers</div></div>
+                <div class="stat-card"><div class="stat-top"><span class="stat-label" data-i18n="sms_queue">SMS Queue</span><div class="stat-icon" style="background:rgba(59,130,246,0.12);color:#93C5FD;"><i class="fas fa-sms"></i></div></div><div class="stat-value" id="paySms">—</div><div class="stat-footer" data-i18n="pending_alerts">Pending alerts</div></div>
+                <div class="stat-card"><div class="stat-top"><span class="stat-label" data-i18n="refunds">Refunds</span><div class="stat-icon" style="background:rgba(239,68,68,0.12);color:#FCA5A5;"><i class="fas fa-undo"></i></div></div><div class="stat-value" id="payRefunds">—</div><div class="stat-footer" data-i18n="in_queue">In queue</div></div>
+            </div>
+            <div class="card-noc">
+                <div class="card-header"><div class="card-title"><i class="fas fa-receipt"></i> <span data-i18n="recent_transactions">Recent Transactions</span></div>
+                    <div style="display:flex;gap:0.4rem;">
+                        <button class="qa-btn" style="background:rgba(16,185,129,0.15);padding:0.25rem 0.6rem;font-size:0.6rem;" onclick="openPaymentModal()"><i class="fas fa-plus"></i> <span data-i18n="process_payment">Pay</span></button>
+                    </div>
+                </div>
+                <div class="card-body compact" style="overflow-x:auto;">
+                    <table class="table-noc">
+                        <thead><tr><th data-i18n="id">ID</th><th data-i18n="phone">Phone</th><th data-i18n="montant_xaf">Montant (XAF)</th><th data-i18n="provider">Provider</th><th data-i18n="status">Status</th><th data-i18n="time">Time</th></tr></thead>
+                        <tbody id="paymentTableBody"></tbody>
+                    </table>
+                    <div class="pagination-controls" id="paymentPagination" style="display:none;padding:0.5rem 1rem;border-top:1px solid rgba(255,255,255,0.04);"></div>
+                </div>
+            </div>
+        </div>
+
+        <!-- â•â•â•â•â•â•â• VOUCHERS â•â•â•â•â•â•â• -->
+        <div class="section" id="section-vouchers">
+            <div class="stats-row" id="voucherStats">
+                <div class="stat-card"><div class="stat-top"><span class="stat-label">Total Vouchers</span><div class="stat-icon" style="background:rgba(79,70,229,0.12);color:#A5B4FC;"><i class="fas fa-ticket-alt"></i></div></div><div class="stat-value" id="vTotal">—</div><div class="stat-footer">All created</div></div>
+                <div class="stat-card"><div class="stat-top"><span class="stat-label">Used</span><div class="stat-icon" style="background:rgba(16,185,129,0.12);color:#6EE7B7;"><i class="fas fa-check-circle"></i></div></div><div class="stat-value" id="vUsed">—</div><div class="stat-footer up"><i class="fas fa-circle"></i> Claimed</div></div>
+                <div class="stat-card"><div class="stat-top"><span class="stat-label">Unused</span><div class="stat-icon" style="background:rgba(245,158,11,0.12);color:#FCD34D;"><i class="fas fa-clock"></i></div></div><div class="stat-value" id="vUnused">—</div><div class="stat-footer">Available</div></div>
+                <div class="stat-card"><div class="stat-top"><span class="stat-label">Expired</span><div class="stat-icon" style="background:rgba(239,68,68,0.12);color:#FCA5A5;"><i class="fas fa-hourglass-end"></i></div></div><div class="stat-value" id="vExpired">—</div><div class="stat-footer down"><i class="fas fa-exclamation-circle"></i> Past expiry</div></div>
+            </div>
+            <div class="grid-2col" style="margin-bottom:0.7rem;">
+                <div class="card-noc">
+                    <div class="card-header"><div class="card-title"><i class="fas fa-chart-pie"></i> <span>Vouchers by Role</span></div></div>
+                    <div class="card-body"><div class="chart-wrap" style="height:140px;"><canvas id="voucherRoleChart"></canvas></div></div>
+                </div>
+                <div class="card-noc">
+                    <div class="card-header"><div class="card-title"><i class="fas fa-chart-donut"></i> <span>Voucher Status</span></div></div>
+                    <div class="card-body"><div class="chart-wrap" style="height:140px;"><canvas id="voucherStatusChart"></canvas></div></div>
+                </div>
+            </div>
+            <div class="card-noc">
+                <div class="card-header">
+                    <div class="card-title"><i class="fas fa-ticket-alt"></i> <span>Voucher Management</span></div>
+                    <div style="display:flex;gap:0.4rem;align-items:center;flex-wrap:wrap;">
+                        <input type="text" id="voucherSearch" placeholder="Search code..." style="background:rgba(255,255,255,0.04);border:1px solid rgba(255,255,255,0.08);border-radius:6px;padding:0.25rem 0.55rem;color:#fff;font-size:0.7rem;outline:none;width:140px;" oninput="debounceVoucherSearch()">
+                        <select id="voucherStatusFilter" style="background:rgba(255,255,255,0.04);border:1px solid rgba(255,255,255,0.08);border-radius:6px;padding:0.25rem 0.4rem;color:rgba(255,255,255,0.6);font-size:0.65rem;outline:none;" onchange="loadVouchers()">
+                            <option value="">All Status</option>
+                            <option value="active">Active</option>
+                            <option value="used">Used</option>
+                            <option value="expired">Expired</option>
+                            <option value="revoked">Revoked</option>
+                        </select>
+                        <select id="voucherRoleFilter" style="background:rgba(255,255,255,0.04);border:1px solid rgba(255,255,255,0.08);border-radius:6px;padding:0.25rem 0.4rem;color:rgba(255,255,255,0.6);font-size:0.65rem;outline:none;" onchange="loadVouchers()">
+                            <option value="">All Roles</option>
+                            <option value="student">Student</option>
+                            <option value="lecturer">Lecturer</option>
+                            <option value="institutional_admin">Admin</option>
+                        </select>
+                        <button class="qa-btn" style="background:rgba(79,70,229,0.15);padding:0.3rem 0.7rem;font-size:0.65rem;" onclick="openVoucherGenerateModal()"><i class="fas fa-plus"></i> Generate</button>
+                        <button class="qa-btn" style="background:rgba(16,185,129,0.15);padding:0.3rem 0.7rem;font-size:0.65rem;" onclick="exportVouchersCSV()"><i class="fas fa-file-csv"></i> CSV</button>
+                    </div>
+                </div>
+                <div class="card-body compact" style="overflow-x:auto;">
+                    <table class="table-noc">
+                        <thead><tr><th>Code</th><th>Role</th><th>Status</th><th>Used By</th><th>Created</th><th>Expires</th><th>Actions</th></tr></thead>
+                        <tbody id="voucherTableBody"></tbody>
+                    </table>
+                    <div class="pagination-controls" id="voucherPagination" style="display:none;padding:0.5rem 1rem;border-top:1px solid rgba(255,255,255,0.04);"></div>
+                </div>
+            </div>
+        </div>
+
+        <!-- â•â•â•â•â•â•â• REPORTS â•â•â•â•â•â•â• -->
+        <div class="section" id="section-reports">
+            <div class="card-noc">
+                <div class="card-header"><div class="card-title"><i class="fas fa-file-export"></i> <span data-i18n="generate_reports">Generate Reports</span></div></div>
+                <div class="card-body">
+                    <div class="quick-actions">
+                        <button class="qa-btn" style="background:rgba(79,70,229,0.15);" onclick="downloadReport('summary')"><i class="fas fa-file-pdf"></i> <span data-i18n="attendance_report">Attendance Report</span></button>
+                        <button class="qa-btn" style="background:rgba(16,185,129,0.15);" onclick="downloadReport('minesec')"><i class="fas fa-file-code"></i> <span data-i18n="minesec_xml">MINESEC XML</span></button>
+                        <button class="qa-btn" style="background:rgba(245,158,11,0.15);" onclick="downloadReport('network')"><i class="fas fa-file-excel"></i> <span data-i18n="network_report">Network Report</span></button>
+                        <button class="qa-btn" style="background:rgba(239,68,68,0.15);" onclick="downloadReport('security')"><i class="fas fa-file-csv"></i> <span data-i18n="security_log">Security Log</span></button>
+                    </div>
+                    <div style="font-size:0.7rem;color:var(--text-dim);margin-top:0.75rem;">
+                        <i class="fas fa-info-circle me-1"></i> <span data-i18n="reports_info">MINESEC-compliant XML Â· Excel Â· CSV Â· PDF formats available. Print for physical backup.</span>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- â•â•â•â•â•â•â• LIVE MONITORING WALL â•â•â•â•â•â•â• -->
+        <div class="section" id="section-livemon">
+            <div class="stats-row" id="liveStats">
+                <div class="stat-card"><div class="stat-top"><span class="stat-label" data-i18n="live_sessions">Live Sessions</span><div class="stat-icon" style="background:rgba(16,185,129,0.12);color:#6EE7B7;"><i class="fas fa-play-circle"></i></div></div><div class="stat-value" id="lmActive">—</div><div class="stat-footer up"><i class="fas fa-circle"></i> <span data-i18n="running_now">Running now</span></div></div>
+                <div class="stat-card"><div class="stat-top"><span class="stat-label" data-i18n="todays_checkins">Today's Check-ins</span><div class="stat-icon" style="background:rgba(79,70,229,0.12);color:#A5B4FC;"><i class="fas fa-user-check"></i></div></div><div class="stat-value" id="lmCheckins">—</div><div class="stat-footer" data-i18n="realtime_count">Real-time count</div></div>
+                <div class="stat-card"><div class="stat-top"><span class="stat-label" data-i18n="attendance_rate_live">Attendance Rate</span><div class="stat-icon" style="background:rgba(245,158,11,0.12);color:#FCD34D;"><i class="fas fa-chart-line"></i></div></div><div class="stat-value" id="lmRate">—</div><div class="stat-footer" data-i18n="live_average">Live average</div></div>
+                <div class="stat-card"><div class="stat-top"><span class="stat-label" data-i18n="fraud_alerts">Fraud Alerts</span><div class="stat-icon" style="background:rgba(239,68,68,0.12);color:#FCA5A5;"><i class="fas fa-exclamation-triangle"></i></div></div><div class="stat-value" id="lmFraud">—</div><div class="stat-footer down" data-i18n="requires_attention">Requires attention</div></div>
+            </div>
+            <div class="grid-2col">
+                <div class="card-noc">
+                    <div class="card-header"><div class="card-title"><i class="fas fa-user-check"></i> <span data-i18n="live_checkins">Live Check-ins</span> <span style="font-size:0.55rem;font-weight:400;color:var(--text-dim);margin-left:0.4rem;">Students checking in now</span></div></div>
+                    <div class="card-body" id="liveCheckinFeed" style="max-height:320px;overflow-y:auto;">
+                        <div class="empty-muted">Waiting for check-ins...</div>
+                    </div>
+                </div>
+                <div class="card-noc">
+                    <div class="card-header"><div class="card-title"><i class="fas fa-bell"></i> <span data-i18n="live_alerts">Live Alerts</span> <span id="liveAlertCount" style="font-size:0.55rem;font-weight:400;color:var(--text-dim);margin-left:0.4rem;"></span></div></div>
+                    <div class="card-body" id="liveAlertFeed" style="max-height:320px;overflow-y:auto;">
+                        <div class="empty-muted" data-i18n="no_data">No alerts</div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- ── NETWORK PRESENCE MONITOR ── -->
+        <div class="section" id="section-network-presence">
+            <!-- Configuration row -->
+            <div class="card-noc" style="margin-bottom: 1rem;">
+                <div class="card-header">
+                    <div class="card-title">
+                        <i class="fas fa-cog"></i> <span>Campus Network Configuration</span>
+                    </div>
+                </div>
+                <div class="card-body">
+                    <p style="font-size:0.75rem;color:var(--text-dim);margin-bottom:10px;">
+                        Configure authorized campus network IP ranges (one range/wildcard per line, e.g. <code>192.168.x.x</code> or <code>10.x.x.x</code>). Classifying connections as "On Campus" is based solely on matching these configured institutional ranges.
+                    </p>
+                    <div style="display:flex;gap:10px;align-items:flex-end;">
+                        <textarea id="npConfigRanges" rows="2" class="form-control" style="background:rgba(255,255,255,0.04);border:1px solid rgba(255,255,255,0.08);color:#fff;font-size:0.75rem;border-radius:6px;padding:0.4rem 0.55rem;resize:vertical;flex:1;" placeholder="192.168.x.x&#10;10.x.x.x"></textarea>
+                        <button class="btn btn-primary" onclick="savePresenceConfig()" style="height:36px;padding:0 1rem;font-size:0.75rem;border-radius:6px;">Save Settings</button>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Summary Cards -->
+            <div class="stats-row" style="margin-bottom: 1rem; display: grid; grid-template-columns: repeat(auto-fit, minmax(200px, 1fr)); gap: 1rem;">
+                <div class="stat-card" style="margin-bottom:0;">
+                    <div class="stat-top">
+                        <span class="stat-label">Connected Users</span>
+                        <div class="stat-icon" style="background:rgba(79,70,229,0.12);color:#A5B4FC;"><i class="fas fa-users"></i></div>
+                    </div>
+                    <div class="stat-value" id="npStatActive">—</div>
+                    <div class="stat-footer"><span id="npStatOnline">0</span> Online, <span id="npStatIdle">0</span> Idle</div>
+                </div>
+                <div class="stat-card" style="margin-bottom:0;">
+                    <div class="stat-top">
+                        <span class="stat-label">On Campus</span>
+                        <div class="stat-icon" style="background:rgba(16,185,129,0.12);color:#6EE7B7;"><i class="fas fa-map-marker-alt"></i></div>
+                    </div>
+                    <div class="stat-value" id="npStatOnCampus">—</div>
+                    <div class="stat-footer">Within IP ranges</div>
+                </div>
+                <div class="stat-card" style="margin-bottom:0;">
+                    <div class="stat-top">
+                        <span class="stat-label">Outside Campus</span>
+                        <div class="stat-icon" style="background:rgba(239,68,68,0.12);color:#FCA5A5;"><i class="fas fa-external-link-alt"></i></div>
+                    </div>
+                    <div class="stat-value" id="npStatOutsideCampus">—</div>
+                    <div class="stat-footer">Outside IP ranges</div>
+                </div>
+                <div class="stat-card" style="margin-bottom:0;">
+                    <div class="stat-top">
+                        <span class="stat-label">Attendance Marked</span>
+                        <div class="stat-icon" style="background:rgba(245,158,11,0.12);color:#FCD34D;"><i class="fas fa-check-double"></i></div>
+                    </div>
+                    <div class="stat-value" id="npStatAttendanceMarked">—</div>
+                    <div class="stat-footer">Dynamic calendar date check</div>
+                </div>
+            </div>
+
+            <!-- Table Card -->
+            <div class="card-noc">
+                <div class="card-header" style="display:flex;justify-content:space-between;align-items:center;flex-wrap:wrap;gap:10px;">
+                    <div class="card-title">
+                        <i class="fas fa-list-alt"></i> <span>Connected User Presence</span>
+                        <span id="npLastUpdated" style="font-size:0.6rem;font-weight:400;color:var(--text-dim);margin-left:0.4rem;"></span>
+                    </div>
+                    <div style="display:flex;gap:10px;align-items:center;">
+                        <input type="text" id="npSearchInput" oninput="filterPresenceTable()" placeholder="Search connected users..." style="background:rgba(255,255,255,0.04);border:1px solid rgba(255,255,255,0.08);border-radius:6px;padding:0.25rem 0.5rem;color:#fff;font-size:0.7rem;outline:none;">
+                        <button class="btn btn-outline-secondary btn-sm" onclick="loadNetworkPresence()" style="background:rgba(255,255,255,0.02);border:1px solid rgba(255,255,255,0.08);color:#fff;font-size:0.7rem;padding:0.25rem 0.5rem;cursor:pointer;"><i class="fas fa-sync-alt"></i> Refresh</button>
+                    </div>
+                </div>
+                <div class="card-body compact">
+                    <div class="table-wrap">
+                        <table style="width:100%;">
+                            <thead>
+                                <tr>
+                                    <th>User Name</th>
+                                    <th>ID / Registration</th>
+                                    <th>Role</th>
+                                    <th>Presence Status</th>
+                                    <th>Network Classification</th>
+                                    <th>IP Address</th>
+                                    <th>Device</th>
+                                    <th>Browser / OS</th>
+                                    <th>Attendance</th>
+                                    <th>Face Auth</th>
+                                    <th>Last Activity</th>
+                                </tr>
+                            </thead>
+                            <tbody id="npPresenceTableBody">
+                                <tr>
+                                    <td colspan="11" style="text-align:center;padding:1rem;color:var(--text-dim);">Loading presence logs...</td>
+                                </tr>
+                            </tbody>
+                        </table>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+    </div>
+</div>
+
+
+        <!-- 🛡 ATTENDANCE SECURITY MONITOR 🛡 -->
         <div class="section" id="section-attendance-security">
             <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:1.5rem;">
                 <div>
@@ -3225,7 +3508,8 @@ function openSecurityAlertModal(index) {
     }, 20000);
 
     // â”€â”€ INIT â”€â”€
-        let rawScannerData = [];\n    let scanPollInterval = null;
+        let rawScannerData = [];
+    let scanPollInterval = null;
 
     async function triggerDeepScan() {
         const btn = document.getElementById('nsTriggerScanBtn');
