@@ -3517,7 +3517,7 @@ function openSecurityAlertModal(index) {
         btn.innerHTML = '<i class="fas fa-spinner fa-spin"></i> Initializing...';
         
         try {
-            const res = await apiFetch('/api/institutional/network-scanner/scan', { method: 'POST' });
+            const res = await apiFetch('/api/institutional/network-scanner/scan', { method: 'POST', body: JSON.stringify({}) });
             if (res.ok) {
                 document.getElementById('nsScanStatusIndicator').style.display = 'flex';
                 // Start active polling

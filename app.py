@@ -1661,6 +1661,33 @@ def create_app():
             logger.error(f"Error fetching connected users presence: {e}")
             return jsonify({'error': 'Failed to load presence list'}), 500
 
+    @app.route('/api/institutional/network-scanner/status', methods=['GET'])
+    @require_auth
+    @require_role('institutional_admin', 'super_admin')
+    @log_access
+    def get_network_scanner_status():
+        try:
+            from src.application.network_scanner_service import network_scanner_service
+            status = network_scanner_service.get_status()
+            return jsonify(status), 200
+        except Exception as e:
+            logger.error(f"Error fetching network scanner status: {e}")
+            return jsonify({'error': 'Failed to load scanner status'}), 500
+
+    @app.route('/api/institutional/network-scanner/scan', methods=['POST'])
+    @require_auth
+    @require_role('institutional_admin', 'super_admin')
+    @log_access
+    def trigger_network_scan():
+        try:
+            institution_id = request.current_user.get('institution_id')
+            from src.application.network_scanner_service import network_scanner_service
+            network_scanner_service.run_deep_scan(institution_id)
+            return jsonify({'message': 'Scan initiated successfully'}), 200
+        except Exception as e:
+            logger.error(f"Error initiating network scan: {e}")
+            return jsonify({'error': 'Failed to start scan'}), 500
+
     @app.route('/api/innovation/infrastructure/status')
     @require_auth
     @require_role('institutional_admin', 'super_admin')
