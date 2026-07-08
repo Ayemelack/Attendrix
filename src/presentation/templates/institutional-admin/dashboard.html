@@ -472,7 +472,7 @@
         <a href="#" data-section="sessions"><i class="fas fa-chalkboard-teacher"></i> <span data-i18n="sessions">Sessions</span></a>
 
         <div class="nav-label" data-i18n="infrastructure">Infrastructure</div>
-        <a href="#" data-section="network"><i class="fas fa-network-wired"></i> <span data-i18n="network">Network</span></a>
+        <a href="#" data-section="network-scanner"><i class="fas fa-network-wired"></i> <span>Network Scanner</span></a>
         <a href="#" data-section="security"><i class="fas fa-shield-alt"></i> <span data-i18n="security">Security</span> <span class="badge-dot" id="securityBadge" style="background:var(--danger);"></span></a>
 
         <div class="nav-label" data-i18n="recovery">Offline &amp; Recovery</div>
@@ -676,52 +676,474 @@
         </div>
 
         <!-- â•â•â•â•â•â•â• NETWORK â•â•â•â•â•â•â• -->
-        <div class="section" id="section-network">
-            <div class="grid-2col">
-                <div class="card-noc">
-                    <div class="card-header"><div class="card-title"><i class="fas fa-project-diagram"></i> <span data-i18n="campus_nodes">Network Topology</span> <span style="font-size:0.55rem;font-weight:400;color:var(--text-dim);margin-left:0.4rem;">Live Â· drag to explore</span></div></div>
-                    <div class="card-body">
-                        <div class="topology-wrap"><canvas id="topologyCanvas"></canvas></div>
-                        <div class="topology-legend" id="topologyLegend"></div>
-                        <div class="node-grid" id="nodeGrid"></div>
-                    </div>
+                <!-- ── PROFESSIONAL NETWORK SCANNER ── -->
+        <div class="section" id="section-network-scanner">
+            
+            <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:1.5rem;flex-wrap:wrap;gap:1rem;">
+                <div>
+                    <h5 style="color:#fff;font-weight:700;font-size:1.2rem;margin:0;display:flex;align-items:center;gap:10px;">
+                        <i class="fas fa-radar" style="color:var(--primary-light);"></i> Enterprise Network Scanner
+                    </h5>
+                    <p style="color:var(--text-dim);font-size:0.75rem;margin:0.25rem 0 0 0;">Deep inspection, port scanning, topology mapping, and host classification.</p>
                 </div>
-                <div class="card-noc">
-                    <div class="card-header"><div class="card-title"><i class="fas fa-server"></i> MQTT Broker</div></div>
-                    <div class="card-body"><div class="broker-grid" id="brokerGrid"></div></div>
+                <div style="display:flex;gap:10px;align-items:center;">
+                    <div id="nsScanStatusIndicator" style="display:none;align-items:center;gap:0.5rem;margin-right:1rem;">
+                        <div style="width:120px;height:6px;background:rgba(255,255,255,0.1);border-radius:3px;overflow:hidden;box-shadow:inset 0 1px 2px rgba(0,0,0,0.2);">
+                            <div id="nsProgressBar" style="height:100%;width:0%;background:linear-gradient(90deg, var(--primary), var(--primary-light));transition:width 0.3s;position:relative;overflow:hidden;">
+                                <div style="position:absolute;top:0;left:0;right:0;bottom:0;background:linear-gradient(90deg, transparent, rgba(255,255,255,0.4), transparent);animation:shimmer 1.5s infinite;"></div>
+                            </div>
+                        </div>
+                        <span id="nsProgressText" style="font-size:0.75rem;font-weight:500;color:#fff;">Scanning...</span>
+                    </div>
+                    <button class="qa-btn" id="nsTriggerScanBtn" style="background:linear-gradient(135deg, var(--primary), #4338CA);border:none;padding:0.5rem 1rem;font-size:0.8rem;font-weight:600;color:#fff;border-radius:6px;cursor:pointer;box-shadow:0 4px 6px rgba(0,0,0,0.1);transition:transform 0.2s, box-shadow 0.2s;" onclick="triggerDeepScan()">
+                        <i class="fas fa-crosshairs"></i> Initiate Deep Scan
+                    </button>
                 </div>
             </div>
-            <div class="grid-2col" style="margin-top:0.75rem;">
-                <div class="card-noc">
-                    <div class="card-header"><div class="card-title"><i class="fas fa-layer-group"></i> Mesh Sync Health</div></div>
-                    <div class="card-body">
-                        <div class="stats-row" id="meshStats">
-                            <div class="stat-card" style="flex:1;"><div class="stat-val" id="meshStatus" style="font-size:0.9rem;">—</div><div class="stat-label">Status</div></div>
-                            <div class="stat-card" style="flex:1;"><div class="stat-val" id="meshNodes">—</div><div class="stat-label">Nodes</div></div>
-                            <div class="stat-card" style="flex:1;"><div class="stat-val" id="meshSuccessRate">—</div><div class="stat-label">Success</div></div>
-                            <div class="stat-card" style="flex:1;"><div class="stat-val" id="meshTotalSyncs">—</div><div class="stat-label">Total Syncs</div></div>
-                        </div>
-                        <div class="node-grid" id="meshNodeDetails" style="margin-top:0.4rem;"></div>
+
+            <!-- Summary Cards -->
+            <div class="stats-row" style="margin-bottom: 1.5rem; display: grid; grid-template-columns: repeat(auto-fit, minmax(200px, 1fr)); gap: 1rem;">
+                <div class="stat-card" style="margin-bottom:0;background:linear-gradient(145deg, rgba(255,255,255,0.03), rgba(255,255,255,0.01));border:1px solid rgba(255,255,255,0.05);border-radius:10px;">
+                    <div class="stat-top">
+                        <span class="stat-label" style="font-weight:600;letter-spacing:0.5px;">Hosts Discovered</span>
+                        <div class="stat-icon" style="background:rgba(79,70,229,0.15);color:#A5B4FC;box-shadow:0 0 10px rgba(79,70,229,0.2);"><i class="fas fa-server"></i></div>
+                    </div>
+                    <div class="stat-value" id="nsStatTotal" style="font-size:1.8rem;font-weight:700;">0</div>
+                    <div class="stat-footer" style="color:var(--text-dim);font-size:0.7rem;">On local subnet</div>
+                </div>
+                <div class="stat-card" style="margin-bottom:0;background:linear-gradient(145deg, rgba(255,255,255,0.03), rgba(255,255,255,0.01));border:1px solid rgba(255,255,255,0.05);border-radius:10px;">
+                    <div class="stat-top">
+                        <span class="stat-label" style="font-weight:600;letter-spacing:0.5px;">Avg Latency</span>
+                        <div class="stat-icon" style="background:rgba(16,185,129,0.15);color:#6EE7B7;box-shadow:0 0 10px rgba(16,185,129,0.2);"><i class="fas fa-tachometer-alt"></i></div>
+                    </div>
+                    <div class="stat-value" id="nsStatLatency" style="font-size:1.8rem;font-weight:700;">0 ms</div>
+                    <div class="stat-footer" style="color:var(--text-dim);font-size:0.7rem;">Response time</div>
+                </div>
+                <div class="stat-card" style="margin-bottom:0;background:linear-gradient(145deg, rgba(255,255,255,0.03), rgba(255,255,255,0.01));border:1px solid rgba(255,255,255,0.05);border-radius:10px;">
+                    <div class="stat-top">
+                        <span class="stat-label" style="font-weight:600;letter-spacing:0.5px;">Registered Devices</span>
+                        <div class="stat-icon" style="background:rgba(59,130,246,0.15);color:#93C5FD;box-shadow:0 0 10px rgba(59,130,246,0.2);"><i class="fas fa-user-shield"></i></div>
+                    </div>
+                    <div class="stat-value" id="nsStatRegistered" style="font-size:1.8rem;font-weight:700;">0</div>
+                    <div class="stat-footer" style="color:var(--text-dim);font-size:0.7rem;">Verified Attendrix users</div>
+                </div>
+                <div class="stat-card" style="margin-bottom:0;background:linear-gradient(145deg, rgba(255,255,255,0.03), rgba(255,255,255,0.01));border:1px solid rgba(255,255,255,0.05);border-radius:10px;">
+                    <div class="stat-top">
+                        <span class="stat-label" style="font-weight:600;letter-spacing:0.5px;">Unknown Endpoints</span>
+                        <div class="stat-icon" style="background:rgba(239,68,68,0.15);color:#FCA5A5;box-shadow:0 0 10px rgba(239,68,68,0.2);"><i class="fas fa-mask"></i></div>
+                    </div>
+                    <div class="stat-value" id="nsStatUnknown" style="font-size:1.8rem;font-weight:700;">0</div>
+                    <div class="stat-footer" style="color:var(--text-dim);font-size:0.7rem;">Unauthenticated hosts</div>
+                </div>
+            </div>
+
+            <!-- Network Topology Visualization -->
+            <div class="card-noc" style="margin-bottom: 1.5rem; border:1px solid rgba(255,255,255,0.08);border-radius:10px;background:rgba(15,23,42,0.6);box-shadow:0 10px 25px rgba(0,0,0,0.2);">
+                <div class="card-header" style="border-bottom:1px solid rgba(255,255,255,0.05);padding:1rem 1.25rem;">
+                    <div class="card-title" style="font-weight:600;font-size:0.9rem;">
+                        <i class="fas fa-project-diagram" style="color:var(--primary-light);margin-right:8px;"></i> <span>Network Topology</span>
                     </div>
                 </div>
-                <div class="card-noc">
-                    <div class="card-header"><div class="card-title"><i class="fas fa-balance-scale"></i> Load Balance</div></div>
-                    <div class="card-body">
-                        <div class="stats-row" id="loadStats">
-                            <div class="stat-card" style="flex:1;"><div class="stat-val" id="loadStatus" style="font-size:0.9rem;">—</div><div class="stat-label">Status</div></div>
-                            <div class="stat-card" style="flex:1;"><div class="stat-val" id="loadSessions">—</div><div class="stat-label">Sessions</div></div>
-                            <div class="stat-card" style="flex:1;"><div class="stat-val" id="loadTarget">—</div><div class="stat-label">Target/Node</div></div>
+                <div class="card-body" style="padding:1.5rem;position:relative;min-height:200px;display:flex;align-items:center;justify-content:center;overflow-x:auto;">
+                    <div id="nsTopologyContainer" style="display:flex;flex-direction:column;align-items:center;gap:2rem;width:100%;">
+                        <div style="text-align:center;color:var(--text-dim);font-size:0.85rem;padding:2rem;">
+                            <i class="fas fa-network-wired" style="font-size:2.5rem;opacity:0.2;margin-bottom:1rem;display:block;"></i>
+                            Waiting for scan results to build topology map...
                         </div>
-                        <div style="font-size:0.6rem;color:var(--text-dim);margin-top:0.4rem;" id="loadRec"></div>
-                        <div class="stats-row" style="margin-top:0.4rem;gap:0.3rem;" id="overloadGrid"></div>
                     </div>
                 </div>
             </div>
-            <div class="card-noc" style="margin-top:0.75rem;">
-                <div class="card-header"><div class="card-title"><i class="fas fa-tachometer-alt"></i> <span data-i18n="faculty_comparison">Faculty Comparison</span></div></div>
-                <div class="card-body"><div class="chart-wrap chart-wrap-tall"><canvas id="facultyChart"></canvas></div></div>
+
+            <!-- Device Inventory Table -->
+            <div class="card-noc" style="border:1px solid rgba(255,255,255,0.08);border-radius:10px;background:rgba(15,23,42,0.6);box-shadow:0 10px 25px rgba(0,0,0,0.2);">
+                <div class="card-header" style="display:flex;justify-content:space-between;align-items:center;flex-wrap:wrap;gap:10px;border-bottom:1px solid rgba(255,255,255,0.05);padding:1rem 1.25rem;">
+                    <div class="card-title" style="font-weight:600;font-size:0.9rem;">
+                        <i class="fas fa-th-list" style="color:var(--primary-light);margin-right:8px;"></i> <span>Device Inventory</span>
+                        <span id="nsLastUpdated" style="font-size:0.65rem;font-weight:400;color:var(--text-dim);margin-left:0.8rem;background:rgba(255,255,255,0.05);padding:0.2rem 0.5rem;border-radius:4px;">No recent scan</span>
+                    </div>
+                    <div style="display:flex;gap:10px;align-items:center;">
+                        <div style="position:relative;">
+                            <i class="fas fa-search" style="position:absolute;left:10px;top:50%;transform:translateY(-50%);color:var(--text-dim);font-size:0.7rem;"></i>
+                            <input type="text" id="nsSearchInput" oninput="filterNetworkScannerTable()" placeholder="Search IP, MAC, hostname, OS..." style="background:rgba(0,0,0,0.2);border:1px solid rgba(255,255,255,0.1);border-radius:6px;padding:0.4rem 0.6rem 0.4rem 2rem;color:#fff;font-size:0.75rem;outline:none;width:250px;transition:border-color 0.2s;">
+                        </div>
+                        <button id="nsRefreshBtn" class="btn btn-outline-secondary btn-sm" onclick="refreshNetworkScanner()" style="background:rgba(255,255,255,0.05);border:1px solid rgba(255,255,255,0.1);color:#fff;font-size:0.75rem;padding:0.4rem 0.8rem;border-radius:6px;cursor:pointer;transition:background 0.2s;"><i class="fas fa-sync-alt"></i></button>
+                    </div>
+                </div>
+                <div class="card-body" style="padding:0;overflow-x:auto;">
+                    <table style="width:100%;border-collapse:collapse;font-size:0.8rem;" id="nsInventoryTable">
+                        <thead style="background:rgba(0,0,0,0.2);border-bottom:1px solid rgba(255,255,255,0.05);">
+                            <tr>
+                                <th style="padding:0.8rem 1rem;text-align:left;color:var(--text-dim);font-weight:600;white-space:nowrap;">Device</th>
+                                <th style="padding:0.8rem 1rem;text-align:left;color:var(--text-dim);font-weight:600;white-space:nowrap;">IP Address</th>
+                                <th style="padding:0.8rem 1rem;text-align:left;color:var(--text-dim);font-weight:600;white-space:nowrap;">MAC / Vendor</th>
+                                <th style="padding:0.8rem 1rem;text-align:left;color:var(--text-dim);font-weight:600;white-space:nowrap;">OS / Type</th>
+                                <th style="padding:0.8rem 1rem;text-align:left;color:var(--text-dim);font-weight:600;white-space:nowrap;">Status &amp; Risk</th>
+                                <th style="padding:0.8rem 1rem;text-align:left;color:var(--text-dim);font-weight:600;white-space:nowrap;">Linked User</th>
+                                <th style="padding:0.8rem 1rem;text-align:center;color:var(--text-dim);font-weight:600;white-space:nowrap;">Details</th>
+                            </tr>
+                        </thead>
+                        <tbody id="nsDeviceTableBody">
+                            <tr>
+                                <td colspan="7" style="text-align:center;padding:4rem 2rem;color:var(--text-dim);">
+                                    <div onclick="triggerDeepScan()" onmouseover="this.style.background='rgba(255,255,255,0.05)'" onmouseout="this.style.background='rgba(255,255,255,0.02)'" style="background:rgba(255,255,255,0.02);display:inline-block;padding:2rem 3rem;border-radius:12px;border:1px dashed rgba(255,255,255,0.1);cursor:pointer;transition:background 0.3s;">
+                                        <i class="fas fa-satellite-dish" style="font-size:2.5rem;color:var(--primary);opacity:0.5;margin-bottom:1rem;display:block;"></i>
+                                        <h6 style="color:#fff;margin:0 0 0.5rem 0;font-size:1rem;">Ready to Scan</h6>
+                                        <p style="margin:0;font-size:0.8rem;max-width:300px;">Click here or "Initiate Deep Scan" above to discover hosts, identify services, and map the local network topology.</p>
+                                    </div>
+                                </td>
+                            </tr>
+                        </tbody>
+                    </table>
+                </div>
             </div>
         </div>
+
+</div>
+<!-- ├óΓÇ¥Γé¼├óΓÇ¥Γé¼├óΓÇ¥Γé¼ STUDENT DETAIL DRAWER ├óΓÇ¥Γé¼├óΓÇ¥Γé¼├óΓÇ¥Γé¼ -->
+    // ΓöÇΓöÇ PROFESSIONAL NETWORK SCANNER ΓöÇΓöÇ
+    let rawScannerData = [];
+    let scanPollInterval = null;
+
+    async function triggerDeepScan() {
+        const btn = document.getElementById('nsTriggerScanBtn');
+        btn.disabled = true;
+        btn.innerHTML = '<i class="fas fa-spinner fa-spin"></i> Initializing...';
+        
+        try {
+            const res = await apiFetch('/api/institutional/network-scanner/scan', { method: 'POST' });
+            if (res.ok) {
+                document.getElementById('nsScanStatusIndicator').style.display = 'flex';
+                // Start active polling
+                if (scanPollInterval) clearInterval(scanPollInterval);
+                scanPollInterval = setInterval(pollScanStatus, 1500);
+            } else {
+                alert('Failed to start scan.');
+                btn.disabled = false;
+                btn.innerHTML = '<i class="fas fa-crosshairs"></i> Initiate Deep Scan';
+            }
+        } catch(e) {
+            alert('Error starting scan.');
+            btn.disabled = false;
+            btn.innerHTML = '<i class="fas fa-crosshairs"></i> Initiate Deep Scan';
+        }
+    }
+
+    async function pollScanStatus() {
+        await loadNetworkScanner();
+    }
+
+    async function refreshNetworkScanner() {
+        const btn = document.getElementById('nsRefreshBtn');
+        if(btn) {
+            btn.innerHTML = '<i class="fas fa-sync-alt fa-spin"></i>';
+            btn.disabled = true;
+        }
+        await loadNetworkScanner();
+        if(btn) {
+            btn.innerHTML = '<i class="fas fa-sync-alt"></i>';
+            btn.disabled = false;
+        }
+    }
+
+    async function loadNetworkScanner() {
+        const tbody = document.getElementById('nsDeviceTableBody');
+        try {
+            const res = await apiFetch('/api/institutional/network-scanner/status');
+            if (!res || !res.ok) {
+                if (tbody.innerHTML.includes('Click "Initiate Deep Scan"')) return;
+                tbody.innerHTML = '<tr><td colspan="8" style="text-align:center;padding:1rem;color:var(--text-dim);">Error loading scanner status.</td></tr>';
+                return;
+            }
+            const data = await res.json();
+            rawScannerData = data.devices || [];
+
+            // Update scanning progress UI
+            const isScanning = data.is_scanning;
+            const progress = data.progress || 0;
+            const btn = document.getElementById('nsTriggerScanBtn');
+            const ind = document.getElementById('nsScanStatusIndicator');
+            const pbar = document.getElementById('nsProgressBar');
+            const ptext = document.getElementById('nsProgressText');
+
+            if (isScanning) {
+                ind.style.display = 'flex';
+                pbar.style.width = progress + '%';
+                ptext.textContent = 'Scanning... ' + progress + '%';
+                btn.disabled = true;
+                btn.innerHTML = '<i class="fas fa-radar fa-spin"></i> Scanning...';
+            } else {
+                ind.style.display = 'none';
+                btn.disabled = false;
+                btn.innerHTML = '<i class="fas fa-crosshairs"></i> Initiate Deep Scan';
+                if (scanPollInterval) {
+                    clearInterval(scanPollInterval);
+                    scanPollInterval = null;
+                }
+            }
+
+            // Only calculate stats if we have devices or if scan just finished
+            if (rawScannerData.length > 0) {
+                let total = rawScannerData.length;
+                let registered = 0;
+                let unknown = 0;
+                let totalLatency = 0;
+                let latencyCount = 0;
+
+                rawScannerData.forEach(d => {
+                    if (d.classification === 'Registered Device') registered++;
+                    else unknown++;
+                    
+                    if (d.latency_ms > 0) {
+                        totalLatency += d.latency_ms;
+                        latencyCount++;
+                    }
+                });
+
+                document.getElementById('nsStatTotal').textContent = total;
+                document.getElementById('nsStatLatency').textContent = latencyCount > 0 ? Math.round(totalLatency / latencyCount) + 'ms' : 'ΓÇö';
+                document.getElementById('nsStatRegistered').textContent = registered;
+                document.getElementById('nsStatUnknown').textContent = unknown;
+                
+                if (data.last_scan_time) {
+                    const d = new Date(data.last_scan_time);
+                    document.getElementById('nsLastUpdated').textContent = 'Last scan: ' + d.toLocaleTimeString();
+                }
+
+                renderNetworkScannerTable(rawScannerData);
+            }
+        } catch(e) {
+            console.error('Scan status fetch error', e);
+        }
+    }
+
+    function renderNetworkScannerTable(items) {
+        const tbody = document.getElementById('nsDeviceTableBody');
+        if (!items || items.length === 0) {
+            tbody.innerHTML = '<tr><td colspan="7" style="text-align:center;padding:4rem 2rem;color:var(--text-dim);"><div onclick="triggerDeepScan()" onmouseover="this.style.background=\\\'rgba(255,255,255,0.05)\\\'" onmouseout="this.style.background=\\\'rgba(255,255,255,0.02)\\\'" style="background:rgba(255,255,255,0.02);display:inline-block;padding:2rem 3rem;border-radius:12px;border:1px dashed rgba(255,255,255,0.1);cursor:pointer;transition:background 0.3s;"><i class="fas fa-satellite-dish" style="font-size:2.5rem;color:var(--primary);opacity:0.5;margin-bottom:1rem;display:block;"></i><h6 style="color:#fff;margin:0 0 0.5rem 0;font-size:1rem;">Ready to Scan</h6><p style="margin:0;font-size:0.8rem;max-width:300px;">Click here or "Initiate Deep Scan" above to discover hosts, identify services, and map the local network topology.</p></div></td></tr>';
+            return;
+        }
+
+        tbody.innerHTML = items.map((d, idx) => {
+            const isReg = d.classification === 'Registered Device';
+            const classBadge = isReg ? 'success' : 'danger';
+            
+            // Format Open Ports
+            let portsHtml = '<span style="color:var(--text-dim);">No open ports detected</span>';
+            if (d.open_ports && d.open_ports.length > 0) {
+                portsHtml = '<div style="display:flex;flex-wrap:wrap;gap:0.4rem;">' + d.open_ports.map(p => 
+                    `<div style="background:rgba(255,255,255,0.05);border:1px solid rgba(255,255,255,0.1);border-radius:4px;padding:0.2rem 0.5rem;display:flex;align-items:center;gap:0.4rem;"><span style="color:var(--primary-light);font-weight:600;font-family:monospace;">${p.port}</span><span style="color:var(--text-dim);font-size:0.7rem;">${p.service}</span></div>`
+                ).join('') + '</div>';
+            }
+            
+            // Format Latency & Status
+            const isOnline = d.latency_ms >= 0;
+            let latencyHtml = '<span style="color:var(--danger);font-size:0.75rem;display:flex;align-items:center;gap:0.3rem;"><i class="fas fa-circle" style="font-size:0.4rem;"></i> Offline</span>';
+            let lColor = 'var(--danger)';
+            if (isOnline) {
+                lColor = d.latency_ms < 50 ? 'var(--success)' : (d.latency_ms < 150 ? 'var(--warning)' : 'var(--danger)');
+                latencyHtml = `<span style="color:${lColor};font-size:0.75rem;font-weight:600;display:flex;align-items:center;gap:0.3rem;"><span class="cq-dot" style="background:${lColor};animation:pulse 2s infinite;"></span> Online (${d.latency_ms}ms)</span>`;
+            }
+
+            const devIcon = d.device_type === 'Mobile' ? 'fa-mobile-alt' :
+                (d.device_type === 'Tablet' ? 'fa-tablet-alt' :
+                (d.device_type === 'Laptop' ? 'fa-laptop' :
+                (d.device_type === 'Network Infrastructure' ? 'fa-network-wired' :
+                (d.device_type === 'Printer' ? 'fa-print' :
+                (d.device_type === 'Virtual Machine' ? 'fa-cloud' : 'fa-desktop')))));
+
+            const formatTime = (isoStr) => {
+                if (!isoStr) return 'ΓÇö';
+                try {
+                    const dt = new Date(isoStr);
+                    return dt.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' }) + ' ' + dt.toLocaleDateString([], { month: 'short', day: 'numeric' });
+                } catch(e) {
+                    return isoStr;
+                }
+            };
+
+            const detailsId = `nsDetailsRow_${idx}`;
+
+            return `<tr style="border-bottom:1px solid rgba(255,255,255,0.03);background:rgba(0,0,0,0.1);">
+                <td style="padding:0.8rem 1rem;">
+                    <div style="display:flex;align-items:center;gap:0.8rem;">
+                        <div style="width:32px;height:32px;border-radius:8px;background:rgba(255,255,255,0.05);display:flex;align-items:center;justify-content:center;color:var(--text-dim);"><i class="fas ${devIcon}"></i></div>
+                        <div>
+                            <div style="font-weight:600;color:#fff;">${npEsc(d.hostname || 'Unknown Host')}</div>
+                            <div style="font-size:0.65rem;color:var(--text-dim);">${npEsc(d.device_type || 'Unknown Type')}</div>
+                        </div>
+                    </div>
+                </td>
+                <td style="padding:0.8rem 1rem;"><code>${npEsc(d.ip_address || 'ΓÇö')}</code></td>
+                <td style="padding:0.8rem 1rem;">
+                    <div style="font-size:0.7rem;font-family:monospace;color:#fff;">${npEsc(d.mac_address || 'ΓÇö')}</div>
+                    <div style="font-size:0.65rem;color:var(--text-dim);">${npEsc(d.manufacturer || 'Unknown Vendor')}</div>
+                </td>
+                <td style="padding:0.8rem 1rem;">
+                    <div style="font-size:0.75rem;color:#fff;">${npEsc(d.os || 'Unknown OS')}</div>
+                </td>
+                <td style="padding:0.8rem 1rem;">
+                    <div style="margin-bottom:0.2rem;">${latencyHtml}</div>
+                    <span class="badge" style="background:var(--${classBadge}-dim);color:var(--${classBadge});font-size:0.6rem;padding:0.15rem 0.4rem;">${npEsc(d.classification || 'Unknown')}</span>
+                </td>
+                <td style="padding:0.8rem 1rem;">
+                    <div style="font-size:0.75rem;color:#fff;">${npEsc(d.associated_user || 'ΓÇö')}</div>
+                    <div style="font-size:0.65rem;color:var(--text-dim);">${isReg ? 'Authenticated' : 'No Session'}</div>
+                </td>
+                <td style="padding:0.8rem 1rem;text-align:center;">
+                    <button class="btn btn-sm" onclick="toggleNsDetails('${detailsId}')" style="background:rgba(255,255,255,0.05);border:1px solid rgba(255,255,255,0.1);color:#fff;border-radius:6px;cursor:pointer;padding:0.3rem 0.6rem;"><i class="fas fa-chevron-down" id="icon_${detailsId}"></i></button>
+                </td>
+            </tr>
+            <tr id="${detailsId}" style="display:none;background:rgba(0,0,0,0.3);border-bottom:1px solid rgba(255,255,255,0.05);">
+                <td colspan="7" style="padding:1.5rem;">
+                    <div style="display:grid;grid-template-columns:repeat(auto-fit, minmax(250px, 1fr));gap:1.5rem;">
+                        <div>
+                            <h6 style="color:var(--text-dim);font-size:0.7rem;text-transform:uppercase;margin:0 0 0.5rem 0;letter-spacing:1px;">Network Identity</h6>
+                            <div style="display:grid;grid-template-columns:100px 1fr;gap:0.5rem;font-size:0.8rem;">
+                                <span style="color:var(--text-dim);">IPv4:</span><span style="color:#fff;font-family:monospace;">${npEsc(d.ip_address || 'ΓÇö')}</span>
+                                <span style="color:var(--text-dim);">MAC:</span><span style="color:#fff;font-family:monospace;">${npEsc(d.mac_address || 'ΓÇö')}</span>
+                                <span style="color:var(--text-dim);">Vendor:</span><span style="color:#fff;">${npEsc(d.manufacturer || 'ΓÇö')}</span>
+                                <span style="color:var(--text-dim);">Hostname:</span><span style="color:#fff;">${npEsc(d.hostname || 'ΓÇö')}</span>
+                                <span style="color:var(--text-dim);">Last Seen:</span><span style="color:#fff;">${formatTime(d.last_seen)}</span>
+                            </div>
+                        </div>
+                        <div>
+                            <h6 style="color:var(--text-dim);font-size:0.7rem;text-transform:uppercase;margin:0 0 0.5rem 0;letter-spacing:1px;">Detected Services & Ports</h6>
+                            ${portsHtml}
+                        </div>
+                    </div>
+                </td>
+            </tr>`;
+        }).join('');
+
+        renderNetworkTopology(items);
+    }
+
+    function toggleNsDetails(id) {
+        const el = document.getElementById(id);
+        const icon = document.getElementById('icon_' + id);
+        if (el.style.display === 'none') {
+            el.style.display = 'table-row';
+            icon.classList.replace('fa-chevron-down', 'fa-chevron-up');
+        } else {
+            el.style.display = 'none';
+            icon.classList.replace('fa-chevron-up', 'fa-chevron-down');
+        }
+    }
+
+    function renderNetworkTopology(items) {
+        const container = document.getElementById('nsTopologyContainer');
+        if (!items || items.length === 0) {
+            container.innerHTML = '<div style="text-align:center;color:var(--text-dim);font-size:0.85rem;padding:2rem;"><i class="fas fa-network-wired" style="font-size:2.5rem;opacity:0.2;margin-bottom:1rem;display:block;"></i>No devices to map.</div>';
+            return;
+        }
+
+        let onlineCount = 0;
+        let authCount = 0;
+        let unknownCount = 0;
+
+        items.forEach(d => {
+            if (d.latency_ms >= 0) onlineCount++;
+            if (d.classification === 'Registered Device') authCount++;
+            else unknownCount++;
+        });
+
+        const gatewayNode = `
+            <div style="background:rgba(79,70,229,0.1);border:1px solid rgba(79,70,229,0.3);border-radius:12px;padding:1rem;text-align:center;width:140px;box-shadow:0 0 20px rgba(79,70,229,0.1);z-index:2;position:relative;">
+                <i class="fas fa-route" style="font-size:1.8rem;color:var(--primary-light);margin-bottom:0.5rem;"></i>
+                <div style="font-weight:600;font-size:0.8rem;color:#fff;">Gateway Route</div>
+                <div style="font-size:0.65rem;color:var(--text-dim);">${items.length} Connections</div>
+            </div>
+        `;
+
+        // Render up to 6 nodes maximum for the visualization to not clutter
+        const maxNodes = 6;
+        const displayItems = items.slice(0, maxNodes);
+        
+        let nodesHtml = '';
+        displayItems.forEach((d, i) => {
+            const isReg = d.classification === 'Registered Device';
+            const color = isReg ? 'var(--success)' : 'var(--danger)';
+            const bg = isReg ? 'rgba(16,185,129,0.1)' : 'rgba(239,68,68,0.1)';
+            const icon = d.device_type === 'Mobile' ? 'fa-mobile-alt' : (d.device_type === 'Laptop' ? 'fa-laptop' : 'fa-desktop');
+            
+            nodesHtml += `
+                <div style="background:${bg};border:1px solid ${color};border-radius:10px;padding:0.75rem;text-align:center;width:110px;z-index:2;position:relative;display:flex;flex-direction:column;align-items:center;">
+                    <i class="fas ${icon}" style="font-size:1.2rem;color:${color};margin-bottom:0.4rem;"></i>
+                    <div style="font-weight:600;font-size:0.7rem;color:#fff;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;width:100%;">${npEsc(d.ip_address)}</div>
+                </div>
+            `;
+        });
+
+        if (items.length > maxNodes) {
+            nodesHtml += `
+                <div style="background:rgba(255,255,255,0.05);border:1px dashed rgba(255,255,255,0.2);border-radius:10px;padding:0.75rem;text-align:center;width:110px;z-index:2;position:relative;display:flex;flex-direction:column;align-items:center;justify-content:center;">
+                    <span style="font-size:0.8rem;color:var(--text-dim);font-weight:600;">+${items.length - maxNodes} More</span>
+                </div>
+            `;
+        }
+
+        container.innerHTML = `
+            <div style="display:flex;flex-direction:column;align-items:center;width:100%;padding:1rem 0;">
+                ${gatewayNode}
+                
+                <!-- Connecting lines -->
+                <div style="height:30px;width:2px;background:rgba(255,255,255,0.1);"></div>
+                <div style="height:2px;width:min(100%, ${displayItems.length * 130}px);background:rgba(255,255,255,0.1);"></div>
+                <div style="display:flex;justify-content:space-around;width:min(100%, ${displayItems.length * 130 + 130}px);margin-top:-1px;">
+                    ${displayItems.map(() => '<div style="height:20px;width:2px;background:rgba(255,255,255,0.1);"></div>').join('')}
+                    ${items.length > maxNodes ? '<div style="height:20px;width:2px;background:rgba(255,255,255,0.1);"></div>' : ''}
+                </div>
+                
+                <div style="display:flex;justify-content:center;gap:20px;flex-wrap:wrap;width:100%;margin-top:0;">
+                    ${nodesHtml}
+                </div>
+            </div>
+            
+            <div style="display:flex;gap:1.5rem;margin-top:1rem;padding-top:1.5rem;border-top:1px solid rgba(255,255,255,0.05);width:100%;justify-content:center;">
+                <div style="display:flex;align-items:center;gap:0.5rem;font-size:0.75rem;color:var(--text-dim);"><i class="fas fa-circle" style="color:var(--success);font-size:0.5rem;"></i> ${authCount} Authenticated</div>
+                <div style="display:flex;align-items:center;gap:0.5rem;font-size:0.75rem;color:var(--text-dim);"><i class="fas fa-circle" style="color:var(--danger);font-size:0.5rem;"></i> ${unknownCount} Unverified</div>
+                <div style="display:flex;align-items:center;gap:0.5rem;font-size:0.75rem;color:var(--text-dim);"><i class="fas fa-wifi" style="color:var(--primary-light);"></i> ${onlineCount} Responding</div>
+            </div>
+        `;
+    }
+
+    function filterNetworkScannerTable() {
+        const query = document.getElementById('nsSearchInput').value.toLowerCase();
+        if (!query) {
+            renderNetworkScannerTable(rawScannerData);
+            return;
+        }
+        const filtered = rawScannerData.filter(d => {
+            return (d.ip_address || '').toLowerCase().includes(query) ||
+                   (d.hostname || '').toLowerCase().includes(query) ||
+                   (d.mac_address || '').toLowerCase().includes(query) ||
+                   (d.associated_user || '').toLowerCase().includes(query) ||
+                   (d.os || '').toLowerCase().includes(query) ||
+                   (d.manufacturer || '').toLowerCase().includes(query) ||
+                   (d.classification || '').toLowerCase().includes(query);
+        });
+        renderNetworkScannerTable(filtered);
+    }
+
+    // Set up near real-time periodic updates for network presence (every 20 seconds, tab-active only)
+    setInterval(() => {
+        const sec = document.getElementById('section-network-scanner');
+        if (sec && sec.classList.contains('active')) {
+            // Only poll passively if not actively scanning
+            if (!document.getElementById('nsScanStatusIndicator') || document.getElementById('nsScanStatusIndicator').style.display === 'none') {
+                loadNetworkScanner();
+            }
+        }
+    }, 20000);
+
+        // Network Scanner click hook
+        const nsLink = document.querySelector('.sidebar-nav a[data-section="network-scanner"]');
+        if (nsLink) {
+            nsLink.addEventListener('click', function() {
+                loadNetworkScanner();
+            });
+        }
+
 
         <!-- â•â•â•â•â•â•â• SECURITY â•â•â•â•â•â•â• -->
         <div class="section" id="section-security">
@@ -3428,6 +3850,349 @@ function openSecurityAlertModal(index) {
     }, 20000);
 
     // â”€â”€ INIT â”€â”€
+        let scanPollInterval = null;
+
+    async function triggerDeepScan() {
+        const btn = document.getElementById('nsTriggerScanBtn');
+        btn.disabled = true;
+        btn.innerHTML = '<i class="fas fa-spinner fa-spin"></i> Initializing...';
+        
+        try {
+            const res = await apiFetch('/api/institutional/network-scanner/scan', { method: 'POST' });
+            if (res.ok) {
+                document.getElementById('nsScanStatusIndicator').style.display = 'flex';
+                // Start active polling
+                if (scanPollInterval) clearInterval(scanPollInterval);
+                scanPollInterval = setInterval(pollScanStatus, 1500);
+            } else {
+                alert('Failed to start scan.');
+                btn.disabled = false;
+                btn.innerHTML = '<i class="fas fa-crosshairs"></i> Initiate Deep Scan';
+            }
+        } catch(e) {
+            alert('Error starting scan.');
+            btn.disabled = false;
+            btn.innerHTML = '<i class="fas fa-crosshairs"></i> Initiate Deep Scan';
+        }
+    }
+
+    async function pollScanStatus() {
+        await loadNetworkScanner();
+    }
+
+    async function refreshNetworkScanner() {
+        const btn = document.getElementById('nsRefreshBtn');
+        if(btn) {
+            btn.innerHTML = '<i class="fas fa-sync-alt fa-spin"></i>';
+            btn.disabled = true;
+        }
+        await loadNetworkScanner();
+        if(btn) {
+            btn.innerHTML = '<i class="fas fa-sync-alt"></i>';
+            btn.disabled = false;
+        }
+    }
+
+    async function loadNetworkScanner() {
+        const tbody = document.getElementById('nsDeviceTableBody');
+        try {
+            const res = await apiFetch('/api/institutional/network-scanner/status');
+            if (!res || !res.ok) {
+                if (tbody.innerHTML.includes('Click "Initiate Deep Scan"')) return;
+                tbody.innerHTML = '<tr><td colspan="8" style="text-align:center;padding:1rem;color:var(--text-dim);">Error loading scanner status.</td></tr>';
+                return;
+            }
+            const data = await res.json();
+            rawScannerData = data.devices || [];
+
+            // Update scanning progress UI
+            const isScanning = data.is_scanning;
+            const progress = data.progress || 0;
+            const btn = document.getElementById('nsTriggerScanBtn');
+            const ind = document.getElementById('nsScanStatusIndicator');
+            const pbar = document.getElementById('nsProgressBar');
+            const ptext = document.getElementById('nsProgressText');
+
+            if (isScanning) {
+                ind.style.display = 'flex';
+                pbar.style.width = progress + '%';
+                ptext.textContent = 'Scanning... ' + progress + '%';
+                btn.disabled = true;
+                btn.innerHTML = '<i class="fas fa-radar fa-spin"></i> Scanning...';
+            } else {
+                ind.style.display = 'none';
+                btn.disabled = false;
+                btn.innerHTML = '<i class="fas fa-crosshairs"></i> Initiate Deep Scan';
+                if (scanPollInterval) {
+                    clearInterval(scanPollInterval);
+                    scanPollInterval = null;
+                }
+            }
+
+            // Only calculate stats if we have devices or if scan just finished
+            if (rawScannerData.length > 0) {
+                let total = rawScannerData.length;
+                let registered = 0;
+                let unknown = 0;
+                let totalLatency = 0;
+                let latencyCount = 0;
+
+                rawScannerData.forEach(d => {
+                    if (d.classification === 'Registered Device') registered++;
+                    else unknown++;
+                    
+                    if (d.latency_ms > 0) {
+                        totalLatency += d.latency_ms;
+                        latencyCount++;
+                    }
+                });
+
+                document.getElementById('nsStatTotal').textContent = total;
+                document.getElementById('nsStatLatency').textContent = latencyCount > 0 ? Math.round(totalLatency / latencyCount) + 'ms' : 'ΓÇö';
+                document.getElementById('nsStatRegistered').textContent = registered;
+                document.getElementById('nsStatUnknown').textContent = unknown;
+                
+                if (data.last_scan_time) {
+                    const d = new Date(data.last_scan_time);
+                    document.getElementById('nsLastUpdated').textContent = 'Last scan: ' + d.toLocaleTimeString();
+                }
+
+                renderNetworkScannerTable(rawScannerData);
+            }
+        } catch(e) {
+            console.error('Scan status fetch error', e);
+        }
+    }
+
+    function renderNetworkScannerTable(items) {
+        const tbody = document.getElementById('nsDeviceTableBody');
+        if (!items || items.length === 0) {
+            tbody.innerHTML = '<tr><td colspan="7" style="text-align:center;padding:4rem 2rem;color:var(--text-dim);"><div onclick="triggerDeepScan()" onmouseover="this.style.background=\\\'rgba(255,255,255,0.05)\\\'" onmouseout="this.style.background=\\\'rgba(255,255,255,0.02)\\\'" style="background:rgba(255,255,255,0.02);display:inline-block;padding:2rem 3rem;border-radius:12px;border:1px dashed rgba(255,255,255,0.1);cursor:pointer;transition:background 0.3s;"><i class="fas fa-satellite-dish" style="font-size:2.5rem;color:var(--primary);opacity:0.5;margin-bottom:1rem;display:block;"></i><h6 style="color:#fff;margin:0 0 0.5rem 0;font-size:1rem;">Ready to Scan</h6><p style="margin:0;font-size:0.8rem;max-width:300px;">Click here or "Initiate Deep Scan" above to discover hosts, identify services, and map the local network topology.</p></div></td></tr>';
+            return;
+        }
+
+        tbody.innerHTML = items.map((d, idx) => {
+            const isReg = d.classification === 'Registered Device';
+            const classBadge = isReg ? 'success' : 'danger';
+            
+            // Format Open Ports
+            let portsHtml = '<span style="color:var(--text-dim);">No open ports detected</span>';
+            if (d.open_ports && d.open_ports.length > 0) {
+                portsHtml = '<div style="display:flex;flex-wrap:wrap;gap:0.4rem;">' + d.open_ports.map(p => 
+                    `<div style="background:rgba(255,255,255,0.05);border:1px solid rgba(255,255,255,0.1);border-radius:4px;padding:0.2rem 0.5rem;display:flex;align-items:center;gap:0.4rem;"><span style="color:var(--primary-light);font-weight:600;font-family:monospace;">${p.port}</span><span style="color:var(--text-dim);font-size:0.7rem;">${p.service}</span></div>`
+                ).join('') + '</div>';
+            }
+            
+            // Format Latency & Status
+            const isOnline = d.latency_ms >= 0;
+            let latencyHtml = '<span style="color:var(--danger);font-size:0.75rem;display:flex;align-items:center;gap:0.3rem;"><i class="fas fa-circle" style="font-size:0.4rem;"></i> Offline</span>';
+            let lColor = 'var(--danger)';
+            if (isOnline) {
+                lColor = d.latency_ms < 50 ? 'var(--success)' : (d.latency_ms < 150 ? 'var(--warning)' : 'var(--danger)');
+                latencyHtml = `<span style="color:${lColor};font-size:0.75rem;font-weight:600;display:flex;align-items:center;gap:0.3rem;"><span class="cq-dot" style="background:${lColor};animation:pulse 2s infinite;"></span> Online (${d.latency_ms}ms)</span>`;
+            }
+
+            const devIcon = d.device_type === 'Mobile' ? 'fa-mobile-alt' :
+                (d.device_type === 'Tablet' ? 'fa-tablet-alt' :
+                (d.device_type === 'Laptop' ? 'fa-laptop' :
+                (d.device_type === 'Network Infrastructure' ? 'fa-network-wired' :
+                (d.device_type === 'Printer' ? 'fa-print' :
+                (d.device_type === 'Virtual Machine' ? 'fa-cloud' : 'fa-desktop')))));
+
+            const formatTime = (isoStr) => {
+                if (!isoStr) return 'ΓÇö';
+                try {
+                    const dt = new Date(isoStr);
+                    return dt.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' }) + ' ' + dt.toLocaleDateString([], { month: 'short', day: 'numeric' });
+                } catch(e) {
+                    return isoStr;
+                }
+            };
+
+            const detailsId = `nsDetailsRow_${idx}`;
+
+            return `<tr style="border-bottom:1px solid rgba(255,255,255,0.03);background:rgba(0,0,0,0.1);">
+                <td style="padding:0.8rem 1rem;">
+                    <div style="display:flex;align-items:center;gap:0.8rem;">
+                        <div style="width:32px;height:32px;border-radius:8px;background:rgba(255,255,255,0.05);display:flex;align-items:center;justify-content:center;color:var(--text-dim);"><i class="fas ${devIcon}"></i></div>
+                        <div>
+                            <div style="font-weight:600;color:#fff;">${npEsc(d.hostname || 'Unknown Host')}</div>
+                            <div style="font-size:0.65rem;color:var(--text-dim);">${npEsc(d.device_type || 'Unknown Type')}</div>
+                        </div>
+                    </div>
+                </td>
+                <td style="padding:0.8rem 1rem;"><code>${npEsc(d.ip_address || 'ΓÇö')}</code></td>
+                <td style="padding:0.8rem 1rem;">
+                    <div style="font-size:0.7rem;font-family:monospace;color:#fff;">${npEsc(d.mac_address || 'ΓÇö')}</div>
+                    <div style="font-size:0.65rem;color:var(--text-dim);">${npEsc(d.manufacturer || 'Unknown Vendor')}</div>
+                </td>
+                <td style="padding:0.8rem 1rem;">
+                    <div style="font-size:0.75rem;color:#fff;">${npEsc(d.os || 'Unknown OS')}</div>
+                </td>
+                <td style="padding:0.8rem 1rem;">
+                    <div style="margin-bottom:0.2rem;">${latencyHtml}</div>
+                    <span class="badge" style="background:var(--${classBadge}-dim);color:var(--${classBadge});font-size:0.6rem;padding:0.15rem 0.4rem;">${npEsc(d.classification || 'Unknown')}</span>
+                </td>
+                <td style="padding:0.8rem 1rem;">
+                    <div style="font-size:0.75rem;color:#fff;">${npEsc(d.associated_user || 'ΓÇö')}</div>
+                    <div style="font-size:0.65rem;color:var(--text-dim);">${isReg ? 'Authenticated' : 'No Session'}</div>
+                </td>
+                <td style="padding:0.8rem 1rem;text-align:center;">
+                    <button class="btn btn-sm" onclick="toggleNsDetails('${detailsId}')" style="background:rgba(255,255,255,0.05);border:1px solid rgba(255,255,255,0.1);color:#fff;border-radius:6px;cursor:pointer;padding:0.3rem 0.6rem;"><i class="fas fa-chevron-down" id="icon_${detailsId}"></i></button>
+                </td>
+            </tr>
+            <tr id="${detailsId}" style="display:none;background:rgba(0,0,0,0.3);border-bottom:1px solid rgba(255,255,255,0.05);">
+                <td colspan="7" style="padding:1.5rem;">
+                    <div style="display:grid;grid-template-columns:repeat(auto-fit, minmax(250px, 1fr));gap:1.5rem;">
+                        <div>
+                            <h6 style="color:var(--text-dim);font-size:0.7rem;text-transform:uppercase;margin:0 0 0.5rem 0;letter-spacing:1px;">Network Identity</h6>
+                            <div style="display:grid;grid-template-columns:100px 1fr;gap:0.5rem;font-size:0.8rem;">
+                                <span style="color:var(--text-dim);">IPv4:</span><span style="color:#fff;font-family:monospace;">${npEsc(d.ip_address || 'ΓÇö')}</span>
+                                <span style="color:var(--text-dim);">MAC:</span><span style="color:#fff;font-family:monospace;">${npEsc(d.mac_address || 'ΓÇö')}</span>
+                                <span style="color:var(--text-dim);">Vendor:</span><span style="color:#fff;">${npEsc(d.manufacturer || 'ΓÇö')}</span>
+                                <span style="color:var(--text-dim);">Hostname:</span><span style="color:#fff;">${npEsc(d.hostname || 'ΓÇö')}</span>
+                                <span style="color:var(--text-dim);">Last Seen:</span><span style="color:#fff;">${formatTime(d.last_seen)}</span>
+                            </div>
+                        </div>
+                        <div>
+                            <h6 style="color:var(--text-dim);font-size:0.7rem;text-transform:uppercase;margin:0 0 0.5rem 0;letter-spacing:1px;">Detected Services & Ports</h6>
+                            ${portsHtml}
+                        </div>
+                    </div>
+                </td>
+            </tr>`;
+        }).join('');
+
+        renderNetworkTopology(items);
+    }
+
+    function toggleNsDetails(id) {
+        const el = document.getElementById(id);
+        const icon = document.getElementById('icon_' + id);
+        if (el.style.display === 'none') {
+            el.style.display = 'table-row';
+            icon.classList.replace('fa-chevron-down', 'fa-chevron-up');
+        } else {
+            el.style.display = 'none';
+            icon.classList.replace('fa-chevron-up', 'fa-chevron-down');
+        }
+    }
+
+    function renderNetworkTopology(items) {
+        const container = document.getElementById('nsTopologyContainer');
+        if (!items || items.length === 0) {
+            container.innerHTML = '<div style="text-align:center;color:var(--text-dim);font-size:0.85rem;padding:2rem;"><i class="fas fa-network-wired" style="font-size:2.5rem;opacity:0.2;margin-bottom:1rem;display:block;"></i>No devices to map.</div>';
+            return;
+        }
+
+        let onlineCount = 0;
+        let authCount = 0;
+        let unknownCount = 0;
+
+        items.forEach(d => {
+            if (d.latency_ms >= 0) onlineCount++;
+            if (d.classification === 'Registered Device') authCount++;
+            else unknownCount++;
+        });
+
+        const gatewayNode = `
+            <div style="background:rgba(79,70,229,0.1);border:1px solid rgba(79,70,229,0.3);border-radius:12px;padding:1rem;text-align:center;width:140px;box-shadow:0 0 20px rgba(79,70,229,0.1);z-index:2;position:relative;">
+                <i class="fas fa-route" style="font-size:1.8rem;color:var(--primary-light);margin-bottom:0.5rem;"></i>
+                <div style="font-weight:600;font-size:0.8rem;color:#fff;">Gateway Route</div>
+                <div style="font-size:0.65rem;color:var(--text-dim);">${items.length} Connections</div>
+            </div>
+        `;
+
+        // Render up to 6 nodes maximum for the visualization to not clutter
+        const maxNodes = 6;
+        const displayItems = items.slice(0, maxNodes);
+        
+        let nodesHtml = '';
+        displayItems.forEach((d, i) => {
+            const isReg = d.classification === 'Registered Device';
+            const color = isReg ? 'var(--success)' : 'var(--danger)';
+            const bg = isReg ? 'rgba(16,185,129,0.1)' : 'rgba(239,68,68,0.1)';
+            const icon = d.device_type === 'Mobile' ? 'fa-mobile-alt' : (d.device_type === 'Laptop' ? 'fa-laptop' : 'fa-desktop');
+            
+            nodesHtml += `
+                <div style="background:${bg};border:1px solid ${color};border-radius:10px;padding:0.75rem;text-align:center;width:110px;z-index:2;position:relative;display:flex;flex-direction:column;align-items:center;">
+                    <i class="fas ${icon}" style="font-size:1.2rem;color:${color};margin-bottom:0.4rem;"></i>
+                    <div style="font-weight:600;font-size:0.7rem;color:#fff;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;width:100%;">${npEsc(d.ip_address)}</div>
+                </div>
+            `;
+        });
+
+        if (items.length > maxNodes) {
+            nodesHtml += `
+                <div style="background:rgba(255,255,255,0.05);border:1px dashed rgba(255,255,255,0.2);border-radius:10px;padding:0.75rem;text-align:center;width:110px;z-index:2;position:relative;display:flex;flex-direction:column;align-items:center;justify-content:center;">
+                    <span style="font-size:0.8rem;color:var(--text-dim);font-weight:600;">+${items.length - maxNodes} More</span>
+                </div>
+            `;
+        }
+
+        container.innerHTML = `
+            <div style="display:flex;flex-direction:column;align-items:center;width:100%;padding:1rem 0;">
+                ${gatewayNode}
+                
+                <!-- Connecting lines -->
+                <div style="height:30px;width:2px;background:rgba(255,255,255,0.1);"></div>
+                <div style="height:2px;width:min(100%, ${displayItems.length * 130}px);background:rgba(255,255,255,0.1);"></div>
+                <div style="display:flex;justify-content:space-around;width:min(100%, ${displayItems.length * 130 + 130}px);margin-top:-1px;">
+                    ${displayItems.map(() => '<div style="height:20px;width:2px;background:rgba(255,255,255,0.1);"></div>').join('')}
+                    ${items.length > maxNodes ? '<div style="height:20px;width:2px;background:rgba(255,255,255,0.1);"></div>' : ''}
+                </div>
+                
+                <div style="display:flex;justify-content:center;gap:20px;flex-wrap:wrap;width:100%;margin-top:0;">
+                    ${nodesHtml}
+                </div>
+            </div>
+            
+            <div style="display:flex;gap:1.5rem;margin-top:1rem;padding-top:1.5rem;border-top:1px solid rgba(255,255,255,0.05);width:100%;justify-content:center;">
+                <div style="display:flex;align-items:center;gap:0.5rem;font-size:0.75rem;color:var(--text-dim);"><i class="fas fa-circle" style="color:var(--success);font-size:0.5rem;"></i> ${authCount} Authenticated</div>
+                <div style="display:flex;align-items:center;gap:0.5rem;font-size:0.75rem;color:var(--text-dim);"><i class="fas fa-circle" style="color:var(--danger);font-size:0.5rem;"></i> ${unknownCount} Unverified</div>
+                <div style="display:flex;align-items:center;gap:0.5rem;font-size:0.75rem;color:var(--text-dim);"><i class="fas fa-wifi" style="color:var(--primary-light);"></i> ${onlineCount} Responding</div>
+            </div>
+        `;
+    }
+
+    function filterNetworkScannerTable() {
+        const query = document.getElementById('nsSearchInput').value.toLowerCase();
+        if (!query) {
+            renderNetworkScannerTable(rawScannerData);
+            return;
+        }
+        const filtered = rawScannerData.filter(d => {
+            return (d.ip_address || '').toLowerCase().includes(query) ||
+                   (d.hostname || '').toLowerCase().includes(query) ||
+                   (d.mac_address || '').toLowerCase().includes(query) ||
+                   (d.associated_user || '').toLowerCase().includes(query) ||
+                   (d.os || '').toLowerCase().includes(query) ||
+                   (d.manufacturer || '').toLowerCase().includes(query) ||
+                   (d.classification || '').toLowerCase().includes(query);
+        });
+        renderNetworkScannerTable(filtered);
+    }
+
+    // Set up near real-time periodic updates for network presence (every 20 seconds, tab-active only)
+    setInterval(() => {
+        const sec = document.getElementById('section-network-scanner');
+        if (sec && sec.classList.contains('active')) {
+            // Only poll passively if not actively scanning
+            if (!document.getElementById('nsScanStatusIndicator') || document.getElementById('nsScanStatusIndicator').style.display === 'none') {
+                loadNetworkScanner();
+            }
+        }
+    }, 20000);
+
+        // Network Scanner click hook
+        const nsLink = document.querySelector('.sidebar-nav a[data-section="network-scanner"]');
+        if (nsLink) {
+            nsLink.addEventListener('click', function() {
+                loadNetworkScanner();
+            });
+        }
+
+
     document.addEventListener('DOMContentLoaded', async function() {
         // Language init
         document.getElementById('langToggle').textContent = currentLang === 'en' ? 'FR' : 'EN';
