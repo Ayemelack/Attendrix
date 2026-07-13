@@ -729,9 +729,6 @@ class IPNetworkSecurityManager:
 
     @classmethod
     def is_suspicious_port_scan(cls, path: str) -> bool:
-        if path.startswith('/api/institutional/network-scanner'):
-            return False
-            
         port_patterns = [
             r':(22|23|25|135|139|445|1433|3306|3389|5432|6379|27017)[/\s]',
             r'scan', r'nmap', r'masscan', r'port.*check',
